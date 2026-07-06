@@ -65,12 +65,26 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
       cursor: pointer;
+      position: relative;
     }
 
     .annonce-card:hover {
       transform: translateY(-6px);
       box-shadow: 0 6px 16px rgba(75, 26, 62, 0.12);
       border-color: #B28E3D;
+    }
+
+    .annonce-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #d9534f;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      z-index: 10;
     }
 
     .annonce-image {
@@ -185,6 +199,16 @@
       color: #4B1A3E;
     }
 
+    .modal-banner-compromis {
+      background: #d9534f;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+
     .modal-gallery {
       width: 100%;
       height: 400px;
@@ -269,6 +293,11 @@
 
     .modal-actions .btn {
       flex: 1;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     @media (max-width: 768px) {
@@ -366,6 +395,9 @@
   <div id="modal-annonce" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
+      
+      <div id="modal-compromis-banner"></div>
+
       <div class="modal-gallery">
         <img id="modal-photo" src="" alt="">
         <div class="gallery-controls">
@@ -475,7 +507,7 @@
         const { data, error } = await supabase
           .from('annonces')
           .select('*, annonce_medias(*)')
-          .eq('statut', 'disponible');
+          .in('statut', ['disponible', 'compromis']);
 
         if (error) throw error;
 
@@ -498,9 +530,11 @@
       grid.innerHTML = annonces.map(annonce => {
         const photo = annonce.annonce_medias?.find(m => m.type === 'photo')?.url || '';
         const prix = new Intl.NumberFormat('fr-FR').format(annonce.prix);
+        const badge = annonce.statut === 'compromis' ? '<div class="annonce-badge">Sous compromis</div>' : '';
 
         return `
           <div class="annonce-card" onclick="openModal('${annonce.id}')">
+            ${badge}
             <div class="annonce-image">
               ${photo ? `<img src="${photo}" alt="">` : '🏠'}
             </div>
@@ -560,6 +594,23 @@
       document.getElementById('modal-ges').textContent = currentAnnonce.ges + ' kWh/m²/an';
       document.getElementById('modal-description').textContent = currentAnnonce.description;
       document.getElementById('modal-vendeur').textContent = currentAnnonce.telephone_contact || 'Jocelyne';
+
+      const bannerDiv = document.getElementById('modal-compromis-banner');
+      if (currentAnnonce.statut === 'compromis' && currentAnnonce.date_fin_compromis) {
+        const dateFinFr = new Date(currentAnnonce.date_fin_compromis).toLocaleDateString('fr-FR');
+        bannerDiv.innerHTML = `<div class="modal-banner-compromis">⏱️ Sous compromis jusqu'au ${dateFinFr}</div>`;
+      } else {
+        bannerDiv.innerHTML = '';
+      }
+
+      const btnVisite = document.getElementById('btn-demander-visite');
+      if (currentAnnonce.statut === 'compromis') {
+        btnVisite.disabled = true;
+        btnVisite.textContent = '❌ Annonce sous compromis';
+      } else {
+        btnVisite.disabled = false;
+        btnVisite.textContent = '📅 Demander une visite';
+      }
 
       if (photos.length > 0) {
         updatePhoto(photos);
