@@ -40,9 +40,20 @@
       padding-bottom: 8px;
     }
 
+    .filter-group label {
+      display: block;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .filter-group input[type="checkbox"],
+    .filter-group input[type="text"] {
+      margin-right: 8px;
+    }
+
     .annonces-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 25px;
     }
 
@@ -53,6 +64,7 @@
       border: 1px solid #e8e6e0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      cursor: pointer;
     }
 
     .annonce-card:hover {
@@ -64,12 +76,19 @@
     .annonce-image {
       width: 100%;
       height: 200px;
-      background: linear-gradient(135deg, #4B1A3E 0%, #6B2A5E 100%);
+      background: #f0f0f0;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-size: 3rem;
+      overflow: hidden;
+    }
+
+    .annonce-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .annonce-body {
@@ -88,9 +107,10 @@
     }
 
     .annonce-title {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       color: #4B1A3E;
       margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .annonce-location {
@@ -100,45 +120,155 @@
     }
 
     .annonce-price {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
-      color: #4B1A3E;
-      margin-bottom: 12px;
+      color: #B28E3D;
+      margin-bottom: 10px;
     }
 
     .annonce-details {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       margin: 12px 0;
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .annonce-action {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .annonce-action .btn {
-      flex: 1;
-      padding: 10px 12px;
       font-size: 0.85rem;
+      color: #666;
     }
 
     .empty-state {
       grid-column: 1 / -1;
       text-align: center;
-      padding: 40px;
+      padding: 60px 40px;
       color: #666;
     }
 
-    .construction-banner {
-      background: #FFF3CD;
-      border-left: 4px solid #B28E3D;
-      padding: 20px;
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: auto;
+      padding: 40px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .close-modal {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .close-modal:hover {
+      color: #4B1A3E;
+    }
+
+    .modal-gallery {
+      width: 100%;
+      height: 400px;
+      background: #f0f0f0;
+      border-radius: 8px;
       margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-controls {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .gallery-controls button {
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      padding: 8px 12px;
       border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .modal-details {
+      margin-bottom: 30px;
+    }
+
+    .modal-details h2 {
+      color: #4B1A3E;
+      margin-bottom: 15px;
+    }
+
+    .modal-info {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .modal-info-item {
+      padding: 12px;
+      background: #F5F3F0;
+      border-radius: 4px;
+    }
+
+    .modal-info-label {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .modal-info-value {
+      color: #4B1A3E;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .modal-description {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #F5F3F0;
+      border-left: 4px solid #B28E3D;
+      border-radius: 4px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 15px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
     }
 
     @media (max-width: 768px) {
@@ -153,11 +283,23 @@
       .annonces-grid {
         grid-template-columns: 1fr;
       }
+
+      .modal-content {
+        width: 95%;
+        padding: 20px;
+      }
+
+      .modal-info {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
   <header>
     <div class="container">
       <div class="logo"><strong>ALB</strong> Immobilier</div>
@@ -171,48 +313,49 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <section class="section">
     <div class="container">
       <h1>Annonces Immobilières</h1>
 
-      <div class="construction-banner">
-        <strong>🚧 Section en construction</strong><br>
-        Les annonces seront bientôt disponibles. Vous pourrez y découvrir les propriétés listées par les particuliers et les professionnels.
-      </div>
-
       <div class="annonces-container">
-        <!-- Sidebar Filters -->
         <aside class="filters-sidebar">
           <h3 style="margin-top: 0;">Filtres</h3>
 
           <div class="filter-group">
-            <h4>Type</h4>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <label style="margin: 0;">
-                <input type="checkbox" name="type"> Maisons
-              </label>
-              <label style="margin: 0;">
-                <input type="checkbox" name="type"> Appartements
-              </label>
-            </div>
+            <h4>Type de bien</h4>
+            <label><input type="checkbox" name="filter-type" value="maison"> Maison</label>
+            <label><input type="checkbox" name="filter-type" value="appartement"> Appartement</label>
           </div>
 
           <div class="filter-group">
-            <h4>Budget</h4>
-            <input type="range" min="0" max="1000000" step="50000" style="width: 100%;">
-            <p style="font-size: 0.9rem; margin-top: 8px;">0 € - 1 000 000 €</p>
+            <h4>Localisation</h4>
+            <input type="text" id="filter-ville" placeholder="Entrez une ville" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
           </div>
 
-          <button class="btn btn-secondary btn-block">Appliquer</button>
+          <div class="filter-group">
+            <h4>Budget (€)</h4>
+            <input type="range" id="filter-budget" min="0" max="1000000" step="50000" style="width: 100%;">
+            <p style="font-size: 0.9rem; margin-top: 8px;">0 € - <span id="budget-display">1 000 000</span> €</p>
+          </div>
+
+          <div class="filter-group">
+            <h4>DPE</h4>
+            <label><input type="checkbox" name="filter-dpe" value="A"> A</label>
+            <label><input type="checkbox" name="filter-dpe" value="B"> B</label>
+            <label><input type="checkbox" name="filter-dpe" value="C"> C</label>
+            <label><input type="checkbox" name="filter-dpe" value="D"> D</label>
+            <label><input type="checkbox" name="filter-dpe" value="E"> E</label>
+            <label><input type="checkbox" name="filter-dpe" value="F"> F</label>
+            <label><input type="checkbox" name="filter-dpe" value="G"> G</label>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="btn-reset-filters">Réinitialiser</button>
         </aside>
 
-        <!-- Annonces Grid -->
         <div>
           <div id="annonces-grid" class="annonces-grid">
             <div class="empty-state">
-              <h3>Aucune annonce pour le moment</h3>
-              <p>Les annonces seront disponibles à partir du lancement officiel (27 juillet 2026)</p>
+              <h3>Chargement...</h3>
             </div>
           </div>
         </div>
@@ -220,7 +363,61 @@
     </div>
   </section>
 
-  <!-- Footer -->
+  <div id="modal-annonce" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <div class="modal-gallery">
+        <img id="modal-photo" src="" alt="">
+        <div class="gallery-controls">
+          <button id="btn-photo-prev">← Précédent</button>
+          <span id="photo-counter"></span>
+          <button id="btn-photo-next">Suivant →</button>
+        </div>
+      </div>
+
+      <div class="modal-details">
+        <h2 id="modal-title"></h2>
+        
+        <div class="modal-info">
+          <div class="modal-info-item">
+            <div class="modal-info-label">Prix</div>
+            <div class="modal-info-value" id="modal-price"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">Localisation</div>
+            <div class="modal-info-value" id="modal-location"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">Type de bien</div>
+            <div class="modal-info-value" id="modal-type"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">DPE</div>
+            <div class="modal-info-value" id="modal-dpe"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">GES (kWh/m²/an)</div>
+            <div class="modal-info-value" id="modal-ges"></div>
+          </div>
+          <div class="modal-info-item">
+            <div class="modal-info-label">Contact</div>
+            <div class="modal-info-value" id="modal-vendeur"></div>
+          </div>
+        </div>
+
+        <div class="modal-description">
+          <h4>Description</h4>
+          <p id="modal-description"></p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="btn-demander-visite">📅 Demander une visite</button>
+          <button class="btn btn-secondary" id="btn-contacter">📧 Contacter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div class="container">
       <div class="footer-brand"><strong>ALB</strong> Immobilier</div>
@@ -234,11 +431,188 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+
   <script>
-    // Mobile menu
     document.querySelector('.menu-toggle').addEventListener('click', function() {
       document.querySelector('nav').classList.toggle('active');
     });
+
+    let allAnnonces = [];
+    let currentPhotoIndex = 0;
+    let currentAnnonce = null;
+
+    const budgetInput = document.getElementById('filter-budget');
+    const budgetDisplay = document.getElementById('budget-display');
+
+    budgetInput.addEventListener('input', (e) => {
+      budgetDisplay.textContent = new Intl.NumberFormat('fr-FR').format(e.target.value);
+      filterAnnonces();
+    });
+
+    document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
+    document.querySelectorAll('input[name="filter-type"]').forEach(checkbox => {
+      checkbox.addEventListener('change', filterAnnonces);
+    });
+    document.querySelectorAll('input[name="filter-dpe"]').forEach(checkbox => {
+      checkbox.addEventListener('change', filterAnnonces);
+    });
+    document.getElementById('filter-ville').addEventListener('input', filterAnnonces);
+
+    const modal = document.getElementById('modal-annonce');
+    const closeBtn = document.querySelector('.close-modal');
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.getElementById('btn-photo-prev').addEventListener('click', previousPhoto);
+    document.getElementById('btn-photo-next').addEventListener('click', nextPhoto);
+
+    async function loadAnnonces() {
+      try {
+        const { data, error } = await supabase
+          .from('annonces')
+          .select('*, annonce_medias(*)')
+          .eq('statut', 'disponible');
+
+        if (error) throw error;
+
+        allAnnonces = data || [];
+        renderAnnonces(allAnnonces);
+      } catch (error) {
+        console.error('Erreur:', error);
+        document.getElementById('annonces-grid').innerHTML = '<div class="empty-state"><h3>Erreur: ' + error.message + '</h3></div>';
+      }
+    }
+
+    function renderAnnonces(annonces) {
+      const grid = document.getElementById('annonces-grid');
+
+      if (annonces.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><h3>Aucune annonce trouvée</h3><p>Essayez d\'ajuster vos filtres.</p></div>';
+        return;
+      }
+
+      grid.innerHTML = annonces.map(annonce => {
+        const photo = annonce.annonce_medias?.find(m => m.type === 'photo')?.url || '';
+        const prix = new Intl.NumberFormat('fr-FR').format(annonce.prix);
+
+        return `
+          <div class="annonce-card" onclick="openModal('${annonce.id}')">
+            <div class="annonce-image">
+              ${photo ? `<img src="${photo}" alt="">` : '🏠'}
+            </div>
+            <div class="annonce-body">
+              <span class="annonce-type">${annonce.type_bien}</span>
+              <h3 class="annonce-title">${annonce.titre}</h3>
+              <p class="annonce-location">📍 ${annonce.ville}, ${annonce.code_postal}</p>
+              <p class="annonce-price">${prix} €</p>
+              <div class="annonce-details">
+                <span>DPE: ${annonce.dpe}</span>
+                <span>GES: ${annonce.ges}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterAnnonces() {
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="filter-type"]:checked')).map(el => el.value);
+      const selectedDpes = Array.from(document.querySelectorAll('input[name="filter-dpe"]:checked')).map(el => el.value);
+      const ville = document.getElementById('filter-ville').value.toLowerCase();
+      const maxBudget = parseInt(document.getElementById('filter-budget').value);
+
+      const filtered = allAnnonces.filter(annonce => {
+        const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(annonce.type_bien);
+        const dpeMatch = selectedDpes.length === 0 || selectedDpes.includes(annonce.dpe);
+        const villeMatch = ville === '' || annonce.ville.toLowerCase().includes(ville);
+        const budgetMatch = annonce.prix <= maxBudget;
+
+        return typeMatch && dpeMatch && villeMatch && budgetMatch;
+      });
+
+      renderAnnonces(filtered);
+    }
+
+    function resetFilters() {
+      document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+      document.getElementById('filter-ville').value = '';
+      document.getElementById('filter-budget').value = 1000000;
+      budgetDisplay.textContent = '1 000 000';
+      renderAnnonces(allAnnonces);
+    }
+
+    function openModal(id) {
+      currentAnnonce = allAnnonces.find(a => a.id === id);
+      if (!currentAnnonce) return;
+
+      currentPhotoIndex = 0;
+      const photos = currentAnnonce.annonce_medias?.filter(m => m.type === 'photo') || [];
+
+      document.getElementById('modal-title').textContent = currentAnnonce.titre;
+      document.getElementById('modal-price').textContent = new Intl.NumberFormat('fr-FR').format(currentAnnonce.prix) + ' €';
+      document.getElementById('modal-location').textContent = currentAnnonce.ville + ', ' + currentAnnonce.code_postal;
+      document.getElementById('modal-type').textContent = currentAnnonce.type_bien;
+      document.getElementById('modal-dpe').textContent = currentAnnonce.dpe;
+      document.getElementById('modal-ges').textContent = currentAnnonce.ges + ' kWh/m²/an';
+      document.getElementById('modal-description').textContent = currentAnnonce.description;
+      document.getElementById('modal-vendeur').textContent = currentAnnonce.telephone_contact || 'Jocelyne';
+
+      if (photos.length > 0) {
+        updatePhoto(photos);
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      currentAnnonce = null;
+    }
+
+    function updatePhoto(photos) {
+      if (photos.length === 0) return;
+      const photo = photos[currentPhotoIndex];
+      document.getElementById('modal-photo').src = photo.url;
+      document.getElementById('photo-counter').textContent = `${currentPhotoIndex + 1}/${photos.length}`;
+    }
+
+    function previousPhoto() {
+      if (!currentAnnonce) return;
+      const photos = currentAnnonce.annonce_medias?.filter(m => m.type === 'photo') || [];
+      if (photos.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
+      updatePhoto(photos);
+    }
+
+    function nextPhoto() {
+      if (!currentAnnonce) return;
+      const photos = currentAnnonce.annonce_medias?.filter(m => m.type === 'photo') || [];
+      if (photos.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
+      updatePhoto(photos);
+    }
+
+    document.getElementById('btn-demander-visite').addEventListener('click', async () => {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        alert('Veuillez d\'abord vous connecter');
+        window.location.href = 'espace-perso.html';
+        return;
+      }
+      alert('Redirection vers le simulateur (à coder)');
+    });
+
+    document.getElementById('btn-contacter').addEventListener('click', () => {
+      if (currentAnnonce?.telephone_contact) {
+        window.location.href = `tel:${currentAnnonce.telephone_contact}`;
+      }
+    });
+
+    loadAnnonces();
   </script>
 </body>
 </html>
