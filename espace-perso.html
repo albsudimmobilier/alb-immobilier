@@ -75,7 +75,7 @@
       display: block;
     }
 
-    .onboarding-form {
+    .form-annonce {
       max-width: 600px;
     }
 
@@ -98,6 +98,18 @@
       border: 1px solid #ddd;
       border-radius: 4px;
       font-family: 'Montserrat', sans-serif;
+      box-sizing: border-box;
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-group small {
+      display: block;
+      color: #666;
+      margin-top: 5px;
     }
 
     .checkbox-group {
@@ -118,60 +130,6 @@
       font-weight: 400;
     }
 
-    .role-selection {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .role-option {
-      border: 2px solid #ddd;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .role-option:hover {
-      border-color: #B28E3D;
-      background: #F5F3F0;
-    }
-
-    .role-option input[type="radio"] {
-      margin-bottom: 10px;
-    }
-
-    .zone-checkboxes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-    }
-
-    .zone-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .zone-checkbox input {
-      width: auto;
-    }
-
-    .success-message {
-      background: #D4EDDA;
-      border: 1px solid #C3E6CB;
-      color: #155724;
-      padding: 20px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-
     .file-upload {
       border: 2px dashed #B28E3D;
       padding: 20px;
@@ -189,16 +147,61 @@
       display: none;
     }
 
-    .alert {
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
+    #photo-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .alert-warning {
-      background: #FFF3CD;
-      border: 1px solid #FFEEBA;
-      color: #856404;
+    #photo-preview .preview-item,
+    #video-preview .preview-item {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #photo-preview img,
+    #video-preview video {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preview-item .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-item .remove-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+
+    #video-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
     }
 
     @media (max-width: 768px) {
@@ -209,11 +212,14 @@
       .sidebar {
         position: static;
       }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
   <header>
     <div class="container">
       <div class="logo"><strong>ALB</strong> Immobilier</div>
@@ -227,186 +233,136 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <section class="section">
     <div class="container">
       <h1>Mon Espace ALB Immobilier</h1>
 
       <div class="dashboard">
-        <!-- Sidebar -->
         <aside class="sidebar">
           <h3>Menu</h3>
           <div class="sidebar-nav">
-            <button class="tab-btn active" data-tab="inscription">
-              📝 Inscription
-            </button>
-            <button class="tab-btn" data-tab="mon-profil">
-              👤 Mon Profil
-            </button>
-            <button class="tab-btn" data-tab="mes-services">
-              💼 Mes Services
-            </button>
-            <button class="tab-btn" data-tab="avis">
-              ⭐ Avis & Notation
-            </button>
-            <button class="tab-btn" data-tab="parametres">
-              ⚙️ Paramètres
-            </button>
+            <button class="tab-btn active" data-tab="creer-annonce">🏠 Créer Annonce</button>
+            <button class="tab-btn" data-tab="mes-annonces">📋 Mes Annonces</button>
+            <button class="tab-btn" data-tab="mes-visites">📅 Mes Visites</button>
+            <button class="tab-btn" data-tab="mon-compte">👤 Mon Compte</button>
           </div>
         </aside>
 
-        <!-- Main Content -->
         <div class="main-content">
-          
-          <!-- Inscription Tab -->
-          <div id="inscription" class="section-content active">
-            <h2>Créer mon profil ALB Immobilier</h2>
-
-            <div class="alert alert-warning">
-              <strong>ℹ️ Plateforme en construction</strong><br>
-              Les inscriptions ouvertes complètes commenceront le 27 juillet 2026.
-              Pour l'instant, vous pouvez nous contacter pour rejoindre la communauté bêta.
-            </div>
-
-            <form id="onboarding-form" class="onboarding-form" style="opacity: 0.6; pointer-events: none;">
-              <!-- Email -->
+          <div id="creer-annonce" class="section-content active">
+            <h2>Créer une Annonce</h2>
+            <form id="form-annonce" class="form-annonce">
               <div class="form-group">
-                <label>Email *</label>
-                <input type="email" name="email" required disabled>
+                <label>Titre de l'annonce *</label>
+                <input type="text" name="titre" placeholder="ex: Maison 3 chambres avec jardin" required>
               </div>
 
-              <!-- Role Selection -->
               <div class="form-group">
-                <label>Je suis *</label>
-                <div class="role-selection">
-                  <div class="role-option">
-                    <input type="radio" name="role" value="particulier" disabled>
-                    <label>👤 Particulier</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="artisan" disabled>
-                    <label>🔧 Artisan</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="courtier" disabled>
-                    <label>💼 Courtier</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="agent_immobilier" disabled>
-                    <label>🏠 Agent immo</label>
-                  </div>
+                <label>Description détaillée *</label>
+                <textarea name="description" placeholder="Décrivez votre bien..." required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Prix (€) *</label>
+                <input type="number" name="prix" placeholder="250000" required min="0">
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Code Postal *</label>
+                  <input type="text" name="code_postal" placeholder="83000" required>
+                </div>
+                <div class="form-group">
+                  <label>Ville *</label>
+                  <input type="text" name="ville" placeholder="Toulon" required>
                 </div>
               </div>
 
-              <!-- Name -->
               <div class="form-group">
-                <label>Nom & Prénom *</label>
-                <input type="text" name="nom_prenom" placeholder="Votre nom complet" required disabled>
+                <label>Adresse complète *</label>
+                <input type="text" name="adresse_complete" placeholder="123 Rue de la Paix, 83000 Toulon" required>
               </div>
 
-              <!-- Phone -->
               <div class="form-group">
-                <label>Téléphone *</label>
-                <input type="tel" name="phone" required disabled>
-              </div><!-- SIRET -->
-<div class="form-group">
-  <label>SIRET / Numéro d'inscription *</label>
-  <input type="text" name="siret" 
-         placeholder="14 chiffres (ex: 12345678901234)" 
-         required disabled>
-  <small style="color: #666; margin-top: 5px; display: block;">
-    ℹ️ Uniquement visible par ALB Immobilier pour vérification
-  </small>
-</div>
-
-              <!-- Location -->
-              <div class="form-group">
-                <label>Ville *</label>
-                <input type="text" name="ville" required disabled>
+                <label>Type de bien *</label>
+                <select name="type_bien" required>
+                  <option value="">-- Sélectionner --</option>
+                  <option value="maison">Maison</option>
+                  <option value="appartement">Appartement</option>
+                </select>
               </div>
 
-              <!-- Zones (for pros) -->
-              <div class="form-group" id="zones-group" style="display: none;">
-                <label>Zones d'intervention</label>
-                <div class="zone-checkboxes">
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Toulon et environs" disabled>
-                    <label>Toulon</label>
-                  </div>
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Centre Var" disabled>
-                    <label>Centre Var</label>
-                  </div>
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Est Var/Golfe" disabled>
-                    <label>Est Var/Golfe</label>
-                  </div>
+              <div class="form-group">
+                <label>DPE (Diagnostic Energétique) *</label>
+                <select name="dpe" required>
+                  <option value="">-- Sélectionner --</option>
+                  <option value="A">A (Très efficient)</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                  <option value="F">F</option>
+                  <option value="G">G (Très énergivore)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>GES (kWh/m²/an) *</label>
+                <input type="number" name="ges" placeholder="150" required min="0">
+              </div>
+
+              <div class="form-group">
+                <label>Téléphone de contact *</label>
+                <input type="tel" name="telephone_contact" placeholder="06 12 34 56 78" required>
+              </div>
+
+              <div class="form-group">
+                <label>Photos (MIN 1, MAX 10) *</label>
+                <div class="file-upload" id="photo-upload-area">
+                  <p>📸 Cliquez ou glissez vos photos ici</p>
+                  <input type="file" id="photo-input" name="photos" accept="image/*" multiple>
                 </div>
+                <div id="photo-preview"></div>
               </div>
 
-              <!-- Description -->
               <div class="form-group">
-                <label>Votre présentation</label>
-                <textarea name="description" placeholder="Parlez-nous de vous..." disabled></textarea>
-              </div>
-
-              <!-- CGU -->
-              <div class="checkbox-group">
-                <input type="checkbox" name="cgu" id="cgu" disabled>
-                <label for="cgu">
-                  J'accepte les <a href="cgu.html" target="_blank">Conditions Générales d'Utilisation</a> *
-                </label>
+                <label>Vidéos (MAX 2, optionnel)</label>
+                <small>Les vidéos seront envoyées au potentiel acheteur s'il le souhaite. Vous pourrez les modifier ou supprimer à tout moment.</small>
+                <div class="file-upload" id="video-upload-area">
+                  <p>🎬 Cliquez ou glissez vos vidéos ici</p>
+                  <input type="file" id="video-input" name="videos" accept="video/*" multiple>
+                </div>
+                <div id="video-preview"></div>
               </div>
 
               <div class="checkbox-group">
-                <input type="checkbox" name="rgpd" id="rgpd" disabled>
-                <label for="rgpd">
-                  J'accepte la <a href="confidentialite.html" target="_blank">Politique de Confidentialité</a> *
-                </label>
+                <input type="checkbox" name="mandat_exclusif_refuse" id="mandat" required>
+                <label for="mandat">Je certifie ne pas être en mandat exclusif avec un agent immobilier *</label>
               </div>
 
-              <button type="submit" class="btn btn-primary" disabled>
-                Rejoindre ALB Immobilier
-              </button>
+              <button type="submit" class="btn btn-primary" id="btn-create-annonce">Créer mon annonce</button>
             </form>
-
-            <div style="margin-top: 30px; padding: 20px; background: #F5F3F0; border-radius: 8px;">
-              <h3 style="margin-top: 0;">Vous êtes courtier ou professionnel immobilier ?</h3>
-              <p>Nous avons un programme partenariat spécial. <strong>Contactez Joce directement :</strong></p>
-              <p><strong>📧 contact@albimmobilier.fr</strong></p>
-            </div>
           </div>
 
-          <!-- Mon Profil Tab -->
-          <div id="mon-profil" class="section-content">
-            <h2>Mon Profil</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          <div id="mes-annonces" class="section-content">
+            <h2>Mes Annonces</h2>
+            <p>Vos annonces apparaîtront ici une fois créées.</p>
           </div>
 
-          <!-- Mes Services Tab -->
-          <div id="mes-services" class="section-content">
-            <h2>Mes Services</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          <div id="mes-visites" class="section-content">
+            <h2>Mes Visites</h2>
+            <p>Vos demandes de visite et confirmations apparaîtront ici.</p>
           </div>
 
-          <!-- Avis Tab -->
-          <div id="avis" class="section-content">
-            <h2>Avis & Notation</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          <div id="mon-compte" class="section-content">
+            <h2>Mon Compte</h2>
+            <p>Paramètres et informations de votre compte.</p>
           </div>
-
-          <!-- Paramètres Tab -->
-          <div id="parametres" class="section-content">
-            <h2>Paramètres</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
-          </div>
-
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
   <footer>
     <div class="container">
       <div class="footer-brand"><strong>ALB</strong> Immobilier</div>
@@ -420,26 +376,21 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+
   <script>
-    // Mobile menu
     document.querySelector('.menu-toggle').addEventListener('click', function() {
       document.querySelector('nav').classList.toggle('active');
     });
 
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const tabName = this.dataset.tab;
-        
-        // Hide all sections
         document.querySelectorAll('.section-content').forEach(section => {
           section.classList.remove('active');
         });
-
-        // Show selected section
         document.getElementById(tabName).classList.add('active');
-
-        // Update active button
         document.querySelectorAll('.tab-btn').forEach(b => {
           b.classList.remove('active');
         });
@@ -447,76 +398,228 @@
       });
     });
 
-    // Show/hide zones and SIRET when role is selected
-document.querySelectorAll('input[name="role"]').forEach(radio => {
-  radio.addEventListener('change', function() {
-    const zonesGroup = document.getElementById('zones-group');
-    const siretInput = document.querySelector('input[name="siret"]');
-    
-    if (['artisan', 'courtier', 'agent_immobilier', 'mandataire_immobilier'].includes(this.value)) {
-      zonesGroup.style.display = 'block';
-      siretInput.required = true;  // SIRET obligatoire pour pros
-      siretInput.disabled = false; // SIRET activé
-    } else {
-      zonesGroup.style.display = 'none';
-      siretInput.required = false; // SIRET pas obligatoire pour particuliers
-      siretInput.disabled = true;  // SIRET désactivé
-    }
-  });
-  // Gestion de la soumission du formulaire d'inscription
-document.getElementById('onboarding-form')?.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  try {
-    const formData = new FormData(this);
-    
-    // Récupérer les données
-    const email = formData.get('email');
-    const role = formData.get('role');
-    const nom_prenom = formData.get('nom_prenom');
-    const phone = formData.get('phone');
-    const ville = formData.get('ville');
-    const siret = formData.get('siret');
-    const description = formData.get('description');
-    const cgu = formData.get('cgu');
-    const rgpd = formData.get('rgpd');
-    
-    // Récupérer les zones sélectionnées
-    const zones = Array.from(document.querySelectorAll('input[name="zones"]:checked'))
-      .map(el => el.value);
-    
-    // Envoyer à Supabase
-    const response = await fetch('https://kutbxyinpokebjdemlnq.supabase.co/rest/v1/profiles', {
-      method: 'POST',
-      headers: {
-        'apikey': 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        role,
-        nom_prenom,
-        phone: phone || null,
-        ville,
-        siret: siret || null,
-        description: description || null,
-        zones_intervention: zones,
-        statut_verifie: false,
-      })
+    const photoInput = document.getElementById('photo-input');
+    const photoUploadArea = document.getElementById('photo-upload-area');
+    const photoPreview = document.getElementById('photo-preview');
+    let selectedFiles = [];
+
+    photoUploadArea?.addEventListener('click', () => photoInput.click());
+    photoUploadArea?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      photoUploadArea.style.background = '#F5F3F0';
     });
-    
-    if (response.ok) {
-      alert('✅ Inscription reçue ! Nous vous contacterons sous 48h.');
-      document.getElementById('onboarding-form').reset();
-    } else {
-      alert('❌ Erreur lors de l\'inscription. Veuillez réessayer.');
-      console.error('Supabase error:', await response.json());
+    photoUploadArea?.addEventListener('dragleave', () => {
+      photoUploadArea.style.background = 'transparent';
+    });
+    photoUploadArea?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      photoUploadArea.style.background = 'transparent';
+      handlePhotoFiles(e.dataTransfer.files);
+    });
+    photoInput?.addEventListener('change', (e) => {
+      handlePhotoFiles(e.target.files);
+    });
+
+    function handlePhotoFiles(files) {
+      if (selectedFiles.length + files.length > 10) {
+        alert('Maximum 10 photos');
+        return;
+      }
+      Array.from(files).forEach(file => {
+        const fileObj = {
+          file: file,
+          id: Date.now() + Math.random()
+        };
+        selectedFiles.push(fileObj);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const div = document.createElement('div');
+          div.className = 'preview-item';
+          div.dataset.id = fileObj.id;
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          const btn = document.createElement('button');
+          btn.className = 'remove-btn';
+          btn.type = 'button';
+          btn.textContent = '✕';
+          btn.onclick = (evt) => {
+            evt.preventDefault();
+            selectedFiles = selectedFiles.filter(f => f.id !== fileObj.id);
+            div.remove();
+          };
+          div.appendChild(img);
+          div.appendChild(btn);
+          photoPreview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  } catch (error) {
-    alert('❌ Une erreur s\'est produite.');
-    console.error('Error:', error);
-  }
-});
-});  </script>
+
+    const videoInput = document.getElementById('video-input');
+    const videoUploadArea = document.getElementById('video-upload-area');
+    const videoPreview = document.getElementById('video-preview');
+    let selectedVideos = [];
+
+    videoUploadArea?.addEventListener('click', () => videoInput.click());
+    videoUploadArea?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      videoUploadArea.style.background = '#F5F3F0';
+    });
+    videoUploadArea?.addEventListener('dragleave', () => {
+      videoUploadArea.style.background = 'transparent';
+    });
+    videoUploadArea?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      videoUploadArea.style.background = 'transparent';
+      handleVideoFiles(e.dataTransfer.files);
+    });
+    videoInput?.addEventListener('change', (e) => {
+      handleVideoFiles(e.target.files);
+    });
+
+    function handleVideoFiles(files) {
+      if (selectedVideos.length + files.length > 2) {
+        alert('Maximum 2 vidéos');
+        return;
+      }
+      Array.from(files).forEach(file => {
+        const fileObj = {
+          file: file,
+          id: Date.now() + Math.random()
+        };
+        selectedVideos.push(fileObj);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const div = document.createElement('div');
+          div.className = 'preview-item';
+          div.dataset.id = fileObj.id;
+          const video = document.createElement('video');
+          video.src = e.target.result;
+          video.style.backgroundColor = '#000';
+          const btn = document.createElement('button');
+          btn.className = 'remove-btn';
+          btn.type = 'button';
+          btn.textContent = '✕';
+          btn.onclick = (evt) => {
+            evt.preventDefault();
+            selectedVideos = selectedVideos.filter(v => v.id !== fileObj.id);
+            div.remove();
+          };
+          div.appendChild(video);
+          div.appendChild(btn);
+          videoPreview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.getElementById('form-annonce')?.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (selectedFiles.length === 0) {
+        alert('Minimum 1 photo obligatoire');
+        return;
+      }
+
+      const btn = document.getElementById('btn-create-annonce');
+      btn.disabled = true;
+      btn.textContent = '⏳ Création en cours...';
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          alert('Vous devez être connecté');
+          return;
+        }
+
+        const formData = new FormData(this);
+        
+        const { data: annonce, error: annoError } = await supabase
+          .from('annonces')
+          .insert([{
+            vendeur_id: user.id,
+            titre: formData.get('titre'),
+            description: formData.get('description'),
+            prix: parseFloat(formData.get('prix')),
+            code_postal: formData.get('code_postal'),
+            ville: formData.get('ville'),
+            adresse_complete: formData.get('adresse_complete'),
+            type_bien: formData.get('type_bien'),
+            dpe: formData.get('dpe'),
+            ges: parseFloat(formData.get('ges')),
+            telephone_contact: formData.get('telephone_contact'),
+            mandat_exclusif_refuse: true,
+            statut: 'en_attente'
+          }])
+          .select();
+
+        if (annoError) throw annoError;
+
+        const annonce_id = annonce[0].id;
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const fileObj = selectedFiles[i];
+          const fileName = `${annonce_id}_${i}_${Date.now()}.jpg`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('annonces')
+            .upload(`${annonce_id}/photos/${fileName}`, fileObj.file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: urlData } = supabase.storage
+            .from('annonces')
+            .getPublicUrl(`${annonce_id}/photos/${fileName}`);
+
+          await supabase
+            .from('annonce_medias')
+            .insert([{
+              annonce_id: annonce_id,
+              url: urlData.publicUrl,
+              type: 'photo',
+              ordre: i
+            }]);
+        }
+
+        for (let i = 0; i < selectedVideos.length; i++) {
+          const fileObj = selectedVideos[i];
+          const fileName = `${annonce_id}_${i}_${Date.now()}.mp4`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('annonces')
+            .upload(`${annonce_id}/videos/${fileName}`, fileObj.file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: urlData } = supabase.storage
+            .from('annonces')
+            .getPublicUrl(`${annonce_id}/videos/${fileName}`);
+
+          await supabase
+            .from('annonce_medias')
+            .insert([{
+              annonce_id: annonce_id,
+              url: urlData.publicUrl,
+              type: 'video',
+              ordre: i
+            }]);
+        }
+
+        alert('✅ Annonce créée ! Jocelyne va vous recontacter pour valider.');
+        document.getElementById('form-annonce').reset();
+        photoPreview.innerHTML = '';
+        videoPreview.innerHTML = '';
+        selectedFiles = [];
+        selectedVideos = [];
+
+      } catch (error) {
+        alert('❌ Erreur: ' + error.message);
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Créer mon annonce';
+      }
+    });
+  </script>
 </body>
 </html>
