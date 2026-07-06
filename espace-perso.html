@@ -447,17 +447,22 @@
       });
     });
 
-    // Show/hide zones when role is selected
-    document.querySelectorAll('input[name="role"]').forEach(radio => {
-      radio.addEventListener('change', function() {
-        const zonesGroup = document.getElementById('zones-group');
-        if (['artisan', 'courtier', 'agent_immobilier'].includes(this.value)) {
-          zonesGroup.style.display = 'block';
-        } else {
-          zonesGroup.style.display = 'none';
-        }
-      });
-    });
-  </script>
+    // Show/hide zones and SIRET when role is selected
+document.querySelectorAll('input[name="role"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const zonesGroup = document.getElementById('zones-group');
+    const siretInput = document.querySelector('input[name="siret"]');
+    
+    if (['artisan', 'courtier', 'agent_immobilier', 'mandataire_immobilier'].includes(this.value)) {
+      zonesGroup.style.display = 'block';
+      siretInput.required = true;  // SIRET obligatoire pour pros
+      siretInput.disabled = false; // SIRET activé
+    } else {
+      zonesGroup.style.display = 'none';
+      siretInput.required = false; // SIRET pas obligatoire pour particuliers
+      siretInput.disabled = true;  // SIRET désactivé
+    }
+  });
+});  </script>
 </body>
 </html>
