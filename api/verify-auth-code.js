@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default async function handler(req, res) {
@@ -11,49 +10,38 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, code } = req.body;
-
-    if (!email || !code) {
-      return res.status(400).json({ error: 'Email and code are required' });
+    const { email, pin } = req.body;
+    if (!email || !pin) {
+      return res.status(400).json({ error: 'Email and PIN are required' });
     }
 
-    // Récupérer le code de la base de données
-    const { data: authCodeData, error: fetchError } = await supabase
-      .from('auth_codes')
-      .select('*')
+    // Récupérer le profil et vérifier le PIN
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, pin')
       .eq('email', email)
-      .eq('code', code)
       .single();
 
-    if (fetchError || !authCodeData) {
-      return res.status(401).json({ error: 'Invalid code' });
+    if (fetchError || !profile) {
+      return res.status(401).json({ error: 'User not found' });
     }
 
-    // Vérifier que le code n'a pas expiré
-    const now = new Date();
-    const expiresAt = new Date(authCodeData.expires_at);
-
-    if (now > expiresAt) {
-      return res.status(401).json({ error: 'Code expired' });
+    // Vérifier que le PIN correspond
+    if (profile.pin !== pin) {
+      return res.status(401).json({ error: 'Invalid PIN' });
     }
 
-    // Code valide ! Supprimer le code utilisé
-    await supabase
-      .from('auth_codes')
-      .delete()
-      .eq('id', authCodeData.id);
-
-    // Créer une session Supabase ou retourner un token
-    // Pour l'instant, on retourne juste que c'est OK
+    // PIN valide!
     return res.status(200).json({
       success: true,
-      message: 'Code verified',
+      message: 'PIN verified',
       email,
+      userId: profile.id,
     });
   } catch (error) {
-    console.error('Error verifying auth code:', error);
+    console.error('Error verifying PIN:', error);
     return res.status(500).json({
-      error: error.message || 'Failed to verify code',
+      error: error.message || 'Failed to verify PIN',
     });
   }
 }
