@@ -3,11 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const brevoApiKey = process.env.BREVO_API_KEY;
-
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Fonction pour envoyer l'email via Brevo
-async function sendEmailViaBrevo(email, authCode, fullName) {
+async function sendEmailViaBrevo(email, pin, fullName) {
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -17,7 +16,7 @@ async function sendEmailViaBrevo(email, authCode, fullName) {
     body: JSON.stringify({
       to: [{ email, name: fullName || email }],
       from: { email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' },
-      subject: `Votre code de connexion ALB Immobilier: ${authCode}`,
+      subject: `Votre code de connexion ALB Immobilier: ${pin}`,
       htmlContent: `
         <html>
           <body style="font-family: Montserrat, Arial; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -31,14 +30,13 @@ async function sendEmailViaBrevo(email, authCode, fullName) {
               <p style="color: #666; margin: 20px 0;">Utilisez ce code pour vous connecter à votre compte :</p>
               
               <div style="background-color: #4B1A3E; color: #B28E3D; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 5px;">${authCode}</p>
+                <p style="font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 5px;">${pin}</p>
               </div>
               
-              <p style="color: #999; font-size: 12px; margin-top: 20px;">Ce code expire dans 10 minutes.</p>
+              <p style="color: #999; font-size: 12px; margin-top: 20px;">Ce code est permanent. Vous pouvez le modifier dans votre compte.</p>
             </div>
             
             <div style="margin-top: 30px; text-align: center; color: #999; font-size: 12px;">
-              <p>Si vous n'avez pas demandé ce code, vous pouvez l'ignorer.</p>
               <p>&copy; 2026 ALB Immobilier. Tous droits réservés.</p>
             </div>
           </body>
@@ -51,12 +49,11 @@ async function sendEmailViaBrevo(email, authCode, fullName) {
     const error = await response.json();
     throw new Error(`Brevo error: ${error.message}`);
   }
-
   return response.json();
 }
 
-// Fonction pour générer un code 4-chiffres aléatoire
-function generateAuthCode() {
+// Générer PIN 4-chiffres
+function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
@@ -67,50 +64,52 @@ export default async function handler(req, res) {
 
   try {
     const { email } = req.body;
-
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    // Générer le code 4-chiffres
-    const authCode = generateAuthCode();
-
-    // Sauvegarder le code dans Supabase (table auth_codes)
-    const { error: dbError } = await supabase
-      .from('auth_codes')
-      .insert([
-        {
-          email,
-          code: authCode,
-          expires_at: new Date(Date.now() + 10 * 60000).toISOString(), // Expire dans 10 minutes
-        },
-      ]);
-
-    if (dbError) {
-      console.error('Supabase error:', dbError);
-      return res.status(500).json({ error: 'Failed to create auth code' });
-    }
-
-    // Récupérer le nom complet du profil si existe
-    const { data: profile } = await supabase
+    // 1. Vérifier si l'utilisateur existe
+    const { data: profile, error: fetchError } = await supabase
       .from('profiles')
-      .select('prenom, nom')
+      .select('pin, prenom, nom')
       .eq('email', email)
       .single();
 
-    const fullName = profile ? `${profile.prenom} ${profile.nom}` : email;
+    let pin;
 
-    // Envoyer l'email via Brevo
-    await sendEmailViaBrevo(email, authCode, fullName);
+    if (fetchError || !profile) {
+      // NOUVEL UTILISATEUR: générer un PIN et créer le profil
+      pin = generatePin();
+      const { error: createError } = await supabase
+        .from('profiles')
+        .insert([{ email, pin }]);
+      if (createError) {
+        return res.status(500).json({ error: 'Failed to create profile' });
+      }
+    } else if (profile.pin) {
+      // UTILISATEUR EXISTANT: utiliser son PIN existant
+      pin = profile.pin;
+    } else {
+      // UTILISATEUR EXISTANT SANS PIN: générer et sauvegarder
+      pin = generatePin();
+      await supabase
+        .from('profiles')
+        .update({ pin })
+        .eq('email', email);
+    }
+
+    // 2. Envoyer l'email avec le PIN
+    const fullName = profile ? `${profile.prenom} ${profile.nom}` : email;
+    await sendEmailViaBrevo(email, pin, fullName);
 
     return res.status(200).json({
-      message: 'Auth code sent successfully',
+      message: 'PIN sent successfully',
       email,
     });
   } catch (error) {
-    console.error('Error sending auth code:', error);
+    console.error('Error sending PIN:', error);
     return res.status(500).json({
-      error: error.message || 'Failed to send auth code',
+      error: error.message || 'Failed to send PIN',
     });
   }
 }
