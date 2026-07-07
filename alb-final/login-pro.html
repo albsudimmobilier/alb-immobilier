@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Pro - ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .login-container {
+      max-width: 400px;
+      margin: 60px auto;
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      border: 1px solid #e8e6e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      color: #4B1A3E;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #4B1A3E;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #B28E3D;
+      box-shadow: 0 0 5px rgba(178, 142, 61, 0.3);
+    }
+
+    .pin-input {
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 8px;
+      font-weight: bold;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #4B1A3E;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+
+    .btn-login:hover {
+      background: #6B2A5E;
+    }
+
+    .btn-login:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+    }
+
+    .signup-link a {
+      color: #B28E3D;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .success-message {
+      color: #388e3c;
+      background: #e8f5e9;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        margin: 20px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo"><strong>ALB</strong> Immobilier</div>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="pros.html">Nos Pros</a>
+        <a href="annonces.html">Annonces</a>
+        <a href="espace-perso.html" class="nav-btn">Mon Compte</a>
+      </nav>
+      <button class="menu-toggle">☰</button>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="login-container">
+        <div class="login-header">
+          <h1>Connexion Professionnels</h1>
+          <p>Accédez à votre espace ALB</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label>Email professionnel *</label>
+            <input type="email" name="email" placeholder="contact@votreentreprise.fr" required autofocus>
+          </div>
+
+          <div class="form-group">
+            <label>Code PIN (4 chiffres) *</label>
+            <input type="text" name="pin" placeholder="0000" maxlength="4" inputmode="numeric" class="pin-input" required>
+            <small style="color: #999; display: block; margin-top: 5px;">Vous avez reçu ce code par email lors de votre inscription</small>
+          </div>
+
+          <button type="submit" class="btn-login" id="btn-login">Se connecter</button>
+        </form>
+
+        <div class="signup-link">
+          Pas encore inscrit? <a href="signup-pro.html">Créer un compte</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-brand"><strong>ALB</strong> Immobilier</div>
+      <div class="footer-center">
+        <p>contact@albimmobilier.fr</p>
+      </div>
+      <div class="footer-legal">
+        <a href="cgu.html">CGU</a>
+        <a href="confidentialite.html">Confidentialité</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelector('.menu-toggle').addEventListener('click', function() {
+      document.querySelector('nav').classList.toggle('active');
+    });
+
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-message');
+    const successMsg = document.getElementById('success-message');
+    const submitBtn = document.getElementById('btn-login');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Vérification...';
+
+      try {
+        const email = document.querySelector('input[name="email"]').value;
+        const pin = document.querySelector('input[name="pin"]').value;
+
+        if (pin.length !== 4 || isNaN(pin)) {
+          throw new Error('Le code PIN doit être 4 chiffres');
+        }
+
+        // Appeler l'API verify-auth-code
+        const response = await fetch('/api/verify-auth-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, pin }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Code PIN invalide');
+        }
+
+        successMsg.textContent = '✅ Authentification réussie! Redirection en cours...';
+        successMsg.style.display = 'block';
+
+        // Redirection vers espace pro après 2 secondes
+        setTimeout(() => {
+          window.location.href = 'espace-perso.html?role=pro';
+        }, 2000);
+
+      } catch (error) {
+        errorMsg.textContent = '❌ ' + error.message;
+        errorMsg.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Se connecter';
+      }
+    });
+  </script>
+</body>
+</html>
