@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Espace - ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .dashboard {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .sidebar {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+      border: 1px solid #e8e6e0;
+      border-left: 4px solid #B28E3D;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+      color: #4B1A3E;
+      border-bottom: 2px solid #B28E3D;
+      padding-bottom: 10px;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sidebar-nav button {
+      background: none;
+      border: none;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.3s;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .sidebar-nav button:hover,
+    .sidebar-nav button.active {
+      background: #F5F3F0;
+      color: #4B1A3E;
+    }
+
+    .main-content {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid #e8e6e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-content {
+      display: none;
+    }
+
+    .section-content.active {
+      display: block;
+    }
+
+    .onboarding-form {
+      max-width: 600px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #4B1A3E;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: 400;
+    }
+
+    .role-selection {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .role-option {
+      border: 2px solid #ddd;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .role-option:hover {
+      border-color: #B28E3D;
+      background: #F5F3F0;
+    }
+
+    .role-option input[type="radio"] {
+      margin-bottom: 10px;
+    }
+
+    .zone-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .zone-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .zone-checkbox input {
+      width: auto;
+    }
+
+    .success-message {
+      background: #D4EDDA;
+      border: 1px solid #C3E6CB;
+      color: #155724;
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .file-upload {
+      border: 2px dashed #B28E3D;
+      padding: 20px;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .file-upload:hover {
+      background: #F5F3F0;
+    }
+
+    .file-upload input {
+      display: none;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .alert-warning {
+      background: #FFF3CD;
+      border: 1px solid #FFEEBA;
+      color: #856404;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <header>
+    <div class="container">
+      <div class="logo"><strong>ALB</strong> Immobilier</div>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="pros.html">Nos Pros</a>
+        <a href="annonces.html">Annonces</a>
+        <a href="espace-perso.html" class="active nav-btn">Mon Compte</a>
+      </nav>
+      <button class="menu-toggle">☰</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <section class="section">
+    <div class="container">
+      <h1>Mon Espace ALB Immobilier</h1>
+
+      <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <h3>Menu</h3>
+          <div class="sidebar-nav">
+            <button class="tab-btn active" data-tab="inscription">
+              📝 Inscription
+            </button>
+            <button class="tab-btn" data-tab="mon-profil">
+              👤 Mon Profil
+            </button>
+            <button class="tab-btn" data-tab="mes-services">
+              💼 Mes Services
+            </button>
+            <button class="tab-btn" data-tab="avis">
+              ⭐ Avis & Notation
+            </button>
+            <button class="tab-btn" data-tab="parametres">
+              ⚙️ Paramètres
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          
+          <!-- Inscription Tab -->
+          <div id="inscription" class="section-content active">
+            <h2>Créer mon profil ALB Immobilier</h2>
+
+            <div class="alert alert-warning">
+              <strong>ℹ️ Plateforme en construction</strong><br>
+              Les inscriptions ouvertes complètes commenceront le 27 juillet 2026.
+              Pour l'instant, vous pouvez nous contacter pour rejoindre la communauté bêta.
+            </div>
+
+            <form id="onboarding-form" class="onboarding-form" style="opacity: 0.6; pointer-events: none;">
+              <!-- Email -->
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" name="email" required disabled>
+              </div>
+
+              <!-- Role Selection -->
+              <div class="form-group">
+                <label>Je suis *</label>
+                <div class="role-selection">
+                  <div class="role-option">
+                    <input type="radio" name="role" value="particulier" disabled>
+                    <label>👤 Particulier</label>
+                  </div>
+                  <div class="role-option">
+                    <input type="radio" name="role" value="artisan" disabled>
+                    <label>🔧 Artisan</label>
+                  </div>
+                  <div class="role-option">
+                    <input type="radio" name="role" value="courtier" disabled>
+                    <label>💼 Courtier</label>
+                  </div>
+                  <div class="role-option">
+                    <input type="radio" name="role" value="agent_immobilier" disabled>
+                    <label>🏠 Agent immo</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Name -->
+              <div class="form-group">
+                <label>Nom & Prénom *</label>
+                <input type="text" name="nom_prenom" placeholder="Votre nom complet" required disabled>
+              </div>
+
+              <!-- Phone -->
+              <div class="form-group">
+                <label>Téléphone *</label>
+                <input type="tel" name="phone" required disabled>
+              </div>
+
+              <!-- Location -->
+              <div class="form-group">
+                <label>Ville *</label>
+                <input type="text" name="ville" required disabled>
+              </div>
+
+              <!-- Zones (for pros) -->
+              <div class="form-group" id="zones-group" style="display: none;">
+                <label>Zones d'intervention</label>
+                <div class="zone-checkboxes">
+                  <div class="zone-checkbox">
+                    <input type="checkbox" name="zones" value="Toulon et environs" disabled>
+                    <label>Toulon</label>
+                  </div>
+                  <div class="zone-checkbox">
+                    <input type="checkbox" name="zones" value="Centre Var" disabled>
+                    <label>Centre Var</label>
+                  </div>
+                  <div class="zone-checkbox">
+                    <input type="checkbox" name="zones" value="Est Var/Golfe" disabled>
+                    <label>Est Var/Golfe</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label>Votre présentation</label>
+                <textarea name="description" placeholder="Parlez-nous de vous..." disabled></textarea>
+              </div>
+
+              <!-- CGU -->
+              <div class="checkbox-group">
+                <input type="checkbox" name="cgu" id="cgu" disabled>
+                <label for="cgu">
+                  J'accepte les <a href="cgu.html" target="_blank">Conditions Générales d'Utilisation</a> *
+                </label>
+              </div>
+
+              <div class="checkbox-group">
+                <input type="checkbox" name="rgpd" id="rgpd" disabled>
+                <label for="rgpd">
+                  J'accepte la <a href="confidentialite.html" target="_blank">Politique de Confidentialité</a> *
+                </label>
+              </div>
+
+              <button type="submit" class="btn btn-primary" disabled>
+                Rejoindre ALB Immobilier
+              </button>
+            </form>
+
+            <div style="margin-top: 30px; padding: 20px; background: #F5F3F0; border-radius: 8px;">
+              <h3 style="margin-top: 0;">Vous êtes courtier ou professionnel immobilier ?</h3>
+              <p>Nous avons un programme partenariat spécial. <strong>Contactez Joce directement :</strong></p>
+              <p><strong>📧 contact@albimmobilier.fr</strong></p>
+            </div>
+          </div>
+
+          <!-- Mon Profil Tab -->
+          <div id="mon-profil" class="section-content">
+            <h2>Mon Profil</h2>
+            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          </div>
+
+          <!-- Mes Services Tab -->
+          <div id="mes-services" class="section-content">
+            <h2>Mes Services</h2>
+            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          </div>
+
+          <!-- Avis Tab -->
+          <div id="avis" class="section-content">
+            <h2>Avis & Notation</h2>
+            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          </div>
+
+          <!-- Paramètres Tab -->
+          <div id="parametres" class="section-content">
+            <h2>Paramètres</h2>
+            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-brand"><strong>ALB</strong> Immobilier</div>
+      <div class="footer-center">
+        <p>contact@albimmobilier.fr</p>
+      </div>
+      <div class="footer-legal">
+        <a href="cgu.html">CGU</a>
+        <a href="confidentialite.html">Confidentialité</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu
+    document.querySelector('.menu-toggle').addEventListener('click', function() {
+      document.querySelector('nav').classList.toggle('active');
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const tabName = this.dataset.tab;
+        
+        // Hide all sections
+        document.querySelectorAll('.section-content').forEach(section => {
+          section.classList.remove('active');
+        });
+
+        // Show selected section
+        document.getElementById(tabName).classList.add('active');
+
+        // Update active button
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active');
+        });
+        this.classList.add('active');
+      });
+    });
+
+    // Show/hide zones when role is selected
+    document.querySelectorAll('input[name="role"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const zonesGroup = document.getElementById('zones-group');
+        if (['artisan', 'courtier', 'agent_immobilier'].includes(this.value)) {
+          zonesGroup.style.display = 'block';
+        } else {
+          zonesGroup.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
