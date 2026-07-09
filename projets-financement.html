@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projet Financement - ALB Immobilier</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #4B1A3E;
+      --doré: #B28E3D;
+      --crème: #F5F1EB;
+      --success: #2E7D32;
+      --error: #D32F2F;
+      --warning: #F57C00;
+      --text-primary: #2b2b2b;
+      --text-secondary: #666666;
+      --border: #e0e0e0;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text-primary);
+      background: var(--crème);
+      line-height: 1.6;
+    }
+    .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+    .progress-bar {
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--doré));
+      transition: width 0.5s ease;
+      width: 14%;
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, #6b2d5f 100%);
+      color: white;
+      padding: 3rem 2rem;
+      margin-bottom: 3rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: 36px; margin-bottom: 0.5rem; }
+    .hero p { font-size: 16px; opacity: 0.95; }
+    .step { display: none; animation: fadeIn 0.5s; }
+    .step.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    h2 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 24px; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--doré); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+    input, select, textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Montserrat', sans-serif;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(75, 26, 62, 0.1);
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .kpi-card {
+      background: white;
+      border: 2px solid var(--doré);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .kpi-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
+    .kpi-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .checkbox-item:hover { border-color: var(--doré); background: #fafaf8; }
+    .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+    .checkbox-item label { margin: 0; cursor: pointer; font-weight: 400; }
+    .radio-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .radio-item:hover { border-color: var(--doré); }
+    .radio-item input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+    .radio-item.selected { border-color: var(--primary); background: rgba(75, 26, 62, 0.05); }
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #6b2d5f); color: white; box-shadow: 0 4px 15px rgba(75, 26, 62, 0.2); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(75, 26, 62, 0.3); }
+    .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-secondary:hover { background: var(--primary); color: white; }
+    .btn-group { display: flex; gap: 1rem; margin-top: 2rem; }
+    .btn-group.center { justify-content: center; }
+    .button-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 1rem;
+    }
+    .status-badge.success { background: #e8f5e9; color: var(--success); }
+    .status-box { background: #e8f5e9; border-left: 4px solid var(--success); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
+    .tips { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #fff3e0; border: 1px solid var(--doré); }
+    .tips ul { margin: 0.5rem 0 0 1.5rem; }
+    .tips li { margin-bottom: 0.5rem; font-size: 13px; }
+    .summary-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row strong { color: var(--primary); }
+    .error-message { color: var(--error); font-size: 13px; margin-top: 0.25rem; }
+    .loader { display: none; text-align: center; padding: 2rem; }
+    .loader.active { display: block; }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    .alert.error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
+    .alert.success { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      .hero { padding: 2rem 1rem; }
+      .hero h1 { font-size: 24px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .btn-group { flex-direction: column; }
+      .checkbox-group { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="hero">
+    <h1>💰 Votre projet de financement</h1>
+    <p>En quelques minutes, trouvez le courtier qui vous accompagnera. À la bien, toujours.</p>
+  </div>
+
+  <!-- STEP 1: CONTACT -->
+  <div class="step active" id="step1">
+    <h2>1. Vos informations</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="nom">Nom *</label>
+        <input type="text" id="nom" name="nom" required>
+        <span class="error-message" id="nomError"></span>
+      </div>
+      <div class="form-group">
+        <label for="prenom">Prénom *</label>
+        <input type="text" id="prenom" name="prenom" required>
+        <span class="error-message" id="prenomError"></span>
+      </div>
+      <div class="form-group">
+        <label for="telephone">Téléphone *</label>
+        <input type="tel" id="telephone" name="telephone" required>
+        <span class="error-message" id="telephoneError"></span>
+      </div>
+      <div class="form-group">
+        <label for="codePostal">Code postal *</label>
+        <input type="text" id="codePostal" name="codePostal" placeholder="83000" required>
+        <span class="error-message" id="codePostalError"></span>
+      </div>
+    </div>
+    <div class="btn-group center">
+      <button class="btn btn-primary" onclick="nextStep(1, 2)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: SIMULATEUR -->
+  <div class="step" id="step2">
+    <h2>2. Votre situation financière</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="revenus">Revenus mensuels (€) *</label>
+        <input type="number" id="revenus" name="revenus" value="3500" min="0" step="100">
+      </div>
+      <div class="form-group">
+        <label for="charges">Charges mensuelles (€) *</label>
+        <input type="number" id="charges" name="charges" value="500" min="0" step="50">
+      </div>
+      <div class="form-group">
+        <label for="apport">Apport personnel (€) *</label>
+        <input type="number" id="apport" name="apport" value="30000" min="0" step="1000">
+      </div>
+      <div class="form-group">
+        <label for="duree">Durée emprunt (années) *</label>
+        <input type="number" id="duree" name="duree" value="25" min="5" max="40" step="1">
+      </div>
+      <div class="form-group">
+        <label for="taux">Taux intérêt (%) *</label>
+        <input type="number" id="taux" name="taux" value="3.60" min="0" max="10" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="assurance">Assurance mensuelle (€) *</label>
+        <input type="number" id="assurance" name="assurance" value="60" min="0" step="10">
+      </div>
+      <div class="form-group">
+        <label for="travaux">Budget travaux (€)</label>
+        <input type="number" id="travaux" name="travaux" value="0" min="0" step="1000">
+      </div>
+      <div class="form-group">
+        <label for="epargne">Épargne de secours (€) *</label>
+        <input type="number" id="epargne" name="epargne" value="5000" min="0" step="1000">
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Type de bien *</label>
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="typeBien" value="ancien" checked>
+            <span>Ancien</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="typeBien" value="neuf">
+            <span>Neuf</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Objectif *</label>
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="objectif" value="rp" checked>
+            <span>Résidence principale</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="objectif" value="secondaire">
+            <span>Résidence secondaire</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="objectif" value="locatif">
+            <span>Investissement locatif</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group center">
+      <button class="btn btn-secondary" onclick="prevStep(2, 1)">← Retour</button>
+      <button class="btn btn-primary" onclick="nextStep(2, 3)">Voir résultats →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: RÉSULTATS -->
+  <div class="step" id="step3">
+    <h2>3. Votre capacité financière</h2>
+    <div class="status-badge success">
+      ✓ Analyse complète
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Budget max</div>
+        <div class="kpi-value" id="budgetValue">250 000 €</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Endettement</div>
+        <div class="kpi-value" id="endettementValue">28%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mensualité</div>
+        <div class="kpi-value" id="mensualiteValue">850 €</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Montant emprunt</div>
+        <div class="kpi-value" id="empruntValue">220 000 €</div>
+      </div>
+    </div>
+
+    <div id="tipsContainer" class="tips"></div>
+
+    <div class="btn-group center">
+      <button class="btn btn-secondary" onclick="prevStep(3, 2)">← Retour</button>
+      <button class="btn btn-primary" onclick="nextStep(3, 4)">Choisir un courtier →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: CHOIX COURTIERS -->
+  <div class="step" id="step4">
+    <h2>4. Trouver votre courtier</h2>
+    
+    <div id="courtierModeSelector" style="margin-bottom: 2rem;">
+      <label style="font-weight: 600; margin-bottom: 1rem; display: block;">Comment préférez-vous ? *</label>
+      <div class="radio-group">
+        <label class="radio-item">
+          <input type="radio" name="courtierMode" value="auto" checked onchange="updateCourtierMode()">
+          <span><strong>Mode rapide :</strong><br>Le premier courtier disponible</span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="courtierMode" value="manual" onchange="updateCourtierMode()">
+          <span><strong>Mode choix :</strong><br>Je sélectionne mes courtiers</span>
+        </label>
+      </div>
+    </div>
+
+    <div id="courtierAutoMode">
+      <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+        Nous allons contacter tous les courtiers de votre département. Le premier à accepter vous accompagnera. 📞
+      </p>
+    </div>
+
+    <div id="courtierManualMode" style="display: none;">
+      <div class="form-group full">
+        <label for="courtiers">Sélectionnez vos courtiers (max 2) *</label>
+        <div id="courtiersContainer"></div>
+        <span class="error-message" id="courtiersError"></span>
+      </div>
+    </div>
+
+    <div class="btn-group center">
+      <button class="btn btn-secondary" onclick="prevStep(4, 3)">← Retour</button>
+      <button class="btn btn-primary" onclick="nextStep(4, 5)">Pièces justificatives →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: PIÈCES -->
+  <div class="step" id="step5">
+    <h2>5. Pièces justificatives</h2>
+    <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+      Cochez les pièces que vous pouvez fournir. Elles seront transmises à votre courtier.
+    </p>
+
+    <div class="checkbox-group">
+      <div class="checkbox-item">
+        <input type="checkbox" id="avis" name="pieces" value="avis_imposition">
+        <label for="avis">Avis imposition (dernier exercice)</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="contrat" name="pieces" value="contrat_travail">
+        <label for="contrat">Contrat de travail</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="fiches" name="pieces" value="fiches_paie">
+        <label for="fiches">3 dernières fiches de paie</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="cni" name="pieces" value="cni">
+        <label for="cni">Pièce d'identité</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="charges" name="pieces" value="charges">
+        <label for="charges">Relevé de charges</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="credits" name="pieces" value="credits">
+        <label for="credits">Amortissements crédits en cours</label>
+      </div>
+    </div>
+
+    <div class="btn-group center">
+      <button class="btn btn-secondary" onclick="prevStep(5, 4)">← Retour</button>
+      <button class="btn btn-primary" onclick="nextStep(5, 6)">Vérification →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: VÉRIFICATION -->
+  <div class="step" id="step6">
+    <h2>6. Vérifiez vos informations</h2>
+
+    <div class="summary-card">
+      <h3 style="margin-bottom: 1rem; color: var(--primary);">Vos données</h3>
+      <div class="summary-row">
+        <span>Nom & Prénom</span>
+        <strong id="summaryNom"></strong>
+      </div>
+      <div class="summary-row">
+        <span>Téléphone</span>
+        <strong id="summaryTel"></strong>
+      </div>
+      <div class="summary-row">
+        <span>Code postal</span>
+        <strong id="summaryCP"></strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3 style="margin-bottom: 1rem; color: var(--primary);">Votre capacité</h3>
+      <div class="summary-row">
+        <span>Budget maximum</span>
+        <strong id="summaryBudget"></strong>
+      </div>
+      <div class="summary-row">
+        <span>Mensualité</span>
+        <strong id="summaryMensualite"></strong>
+      </div>
+      <div class="summary-row">
+        <span>Endettement</span>
+        <strong id="summaryEndettement"></strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="checkbox-item">
+        <input type="checkbox" id="consentement" checked>
+        <label for="consentement">
+          J'autorise le courtier à consulter mes résultats de simulation financière
+        </label>
+      </div>
+    </div>
+
+    <div class="btn-group center">
+      <button class="btn btn-secondary" onclick="prevStep(6, 5)">← Retour</button>
+      <button class="btn btn-primary" onclick="nextStep(6, 7)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 7: ENVOI -->
+  <div class="step" id="step7">
+    <h2>7. Envoi de votre demande</h2>
+    <p style="margin-bottom: 1.5rem; color: var(--text-secondary); text-align: center;">
+      Un dernier coup d'œil avant d'envoyer votre demande aux courtiers.
+    </p>
+
+    <div class="alert success" style="display: none;" id="successAlert"></div>
+    <div class="alert error" style="display: none;" id="errorAlert"></div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Envoi de votre demande...</p>
+    </div>
+
+    <div id="submitContent">
+      <div class="summary-card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary);">Résumé final</h3>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Nous allons envoyer votre demande aux courtiers de votre région. Vous recevrez un email de confirmation, et serez contacté dans les plus brefs délais.
+        </p>
+      </div>
+
+      <div class="btn-group center">
+        <button class="btn btn-secondary" onclick="prevStep(7, 6)">← Retour</button>
+        <button class="btn btn-primary" onclick="submitForm()">Envoyer ma demande</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ===== CONFIG =====
+  const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE2Njk4MTI2NzYsImV4cCI6MTk4NTM4ODY3Nn0.rK2TLxEcPCaO8BJ5NKqF2Fd6EwMXPGSGJ0-UdKxBrEQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentStep = 1;
+  const totalSteps = 7;
+  let formData = {};
+  let courtiersList = [];
+
+  // ===== RADIO SELECTION STYLING =====
+  document.addEventListener('change', function(e) {
+    if (e.target.type === 'radio') {
+      const parent = e.target.closest('.radio-item');
+      if (parent) {
+        document.querySelectorAll('.radio-item').forEach(item => item.classList.remove('selected'));
+        parent.classList.add('selected');
+      }
+    }
+  });
+
+  // ===== ÉTAPES =====
+  function showStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + step).classList.add('active');
+    const progress = (step / totalSteps) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    currentStep = step;
+    window.scrollTo(0, 0);
+  }
+
+  function validateStep1() {
+    const nom = document.getElementById('nom').value.trim();
+    const prenom = document.getElementById('prenom').value.trim();
+    const tel = document.getElementById('telephone').value.trim();
+    const cp = document.getElementById('codePostal').value.trim();
+
+    let valid = true;
+    if (!nom) { document.getElementById('nomError').textContent = 'Requis'; valid = false; }
+    if (!prenom) { document.getElementById('prenomError').textContent = 'Requis'; valid = false; }
+    if (!tel || !/^[0-9\s\+\-\.]{9,}$/.test(tel)) { document.getElementById('telephoneError').textContent = 'Numéro invalide'; valid = false; }
+    if (!cp || !/^\d{5}$/.test(cp)) { document.getElementById('codePostalError').textContent = 'Code postal invalide'; valid = false; }
+
+    if (valid) {
+      formData.nom = nom;
+      formData.prenom = prenom;
+      formData.telephone = tel;
+      formData.codePostal = cp;
+      formData.department = parseInt(cp.substring(0, 2));
+    }
+    return valid;
+  }
+
+  function validateStep2() {
+    const revenus = parseFloat(document.getElementById('revenus').value);
+    const charges = parseFloat(document.getElementById('charges').value);
+    const apport = parseFloat(document.getElementById('apport').value);
+    const duree = parseInt(document.getElementById('duree').value);
+    const taux = parseFloat(document.getElementById('taux').value);
+    const assurance = parseFloat(document.getElementById('assurance').value);
+    const travaux = parseFloat(document.getElementById('travaux').value) || 0;
+    const epargne = parseFloat(document.getElementById('epargne').value);
+
+    formData.revenus_mensuels = revenus;
+    formData.charges_mensuelles = charges;
+    formData.apport = apport;
+    formData.duree_emprunt = duree;
+    formData.taux_interet = taux;
+    formData.assurance_mensuelle = assurance;
+    formData.budget_travaux = travaux;
+    formData.epargne_restante = epargne;
+    formData.type_bien = document.querySelector('input[name="typeBien"]:checked').value;
+    formData.objectif = document.querySelector('input[name="objectif"]:checked').value;
+
+    calculateResults();
+    return true;
+  }
+
+  function calculateResults() {
+    const revenus = formData.revenus_mensuels;
+    const charges = formData.charges_mensuelles;
+    const apport = formData.apport;
+    const duree = formData.duree_emprunt;
+    const taux = formData.taux_interet / 100 / 12;
+    const assurance = formData.assurance_mensuelle;
+    const travaux = formData.budget_travaux;
+    const epargne = formData.epargne_restante;
+
+    const capacite = Math.max(0, (revenus - charges) * 35 / 100 - assurance);
+    const montantEmprunt = capacite * (Math.pow(1 + taux, duree * 12) - 1) / (taux * Math.pow(1 + taux, duree * 12));
+    const budgetMax = montantEmprunt + apport - travaux;
+    const mensualite = (montantEmprunt * taux * Math.pow(1 + taux, duree * 12)) / (Math.pow(1 + taux, duree * 12) - 1) + assurance;
+    const endettement = (mensualite / (revenus - charges)) * 100;
+
+    formData.budget_max_declare = Math.round(budgetMax);
+    formData.endettement_ratio = Math.round(endettement * 10) / 10;
+    formData.mensualite_totale = Math.round(mensualite);
+    formData.montant_emprunt = Math.round(montantEmprunt);
+
+    const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+    document.getElementById('budgetValue').textContent = euro.format(formData.budget_max_declare);
+    document.getElementById('mensualiteValue').textContent = euro.format(formData.mensualite_totale);
+    document.getElementById('empruntValue').textContent = euro.format(formData.montant_emprunt);
+    document.getElementById('endettementValue').textContent = formData.endettement_ratio + '%';
+
+    const tips = [];
+    if (endettement > 35) tips.push('Endettement élevé. Réduire les crédits existants pourrait aider.');
+    if (apport < 20000) tips.push('Apport léger. Un apport plus élevé renforce votre dossier.');
+    if (epargne < 5000) tips.push('Garder une épargne de secours est important.');
+    if (travaux > 0) tips.push('Budget travaux intégré. À communiquer au courtier.');
+    if (tips.length === 0) tips.push('Bon profil financier ! Vos courtiers vont apprécier.');
+
+    document.getElementById('tipsContainer').innerHTML = '<ul>' + tips.map(t => '<li>' + t + '</li>').join('') + '</ul>';
+  }
+
+  async function validateStep4() {
+    const mode = document.querySelector('input[name="courtierMode"]:checked').value;
+
+    if (mode === 'auto') {
+      formData.courtierMode = 'auto';
+      formData.courtiers_selectionnes = [];
+    } else {
+      const selected = Array.from(document.querySelectorAll('input[name="courtierSelect"]:checked')).map(c => c.value);
+      if (selected.length === 0 || selected.length > 2) {
+        document.getElementById('courtiersError').textContent = 'Sélectionnez 1 ou 2 courtiers';
+        return false;
+      }
+      formData.courtierMode = 'manual';
+      formData.courtiers_selectionnes = selected;
+    }
+    return true;
+  }
+
+  function validateStep5() {
+    const pieces = Array.from(document.querySelectorAll('input[name="pieces"]:checked')).map(p => p.value);
+    formData.pieces_cochees = {};
+    ['avis_imposition', 'contrat_travail', 'fiches_paie', 'cni', 'charges', 'credits'].forEach(p => {
+      formData.pieces_cochees[p] = pieces.includes(p);
+    });
+    return true;
+  }
+
+  function validateStep6() {
+    formData.acheteur_accepte_partager_resultats = document.getElementById('consentement').checked;
+
+    document.getElementById('summaryNom').textContent = formData.prenom + ' ' + formData.nom;
+    document.getElementById('summaryTel').textContent = formData.telephone;
+    document.getElementById('summaryCP').textContent = formData.codePostal;
+    document.getElementById('summaryBudget').textContent = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(formData.budget_max_declare);
+    document.getElementById('summaryMensualite').textContent = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(formData.mensualite_totale);
+    document.getElementById('summaryEndettement').textContent = formData.endettement_ratio + '%';
+
+    return true;
+  }
+
+  function nextStep(current, next) {
+    const validators = {
+      1: validateStep1,
+      2: validateStep2,
+      4: validateStep4,
+      5: validateStep5,
+      6: validateStep6
+    };
+
+    if (validators[current] && !validators[current]()) return;
+
+    if (next === 4) {
+      loadCourtiers();
+    }
+
+    showStep(next);
+  }
+
+  function prevStep(current, prev) {
+    showStep(prev);
+  }
+
+  async function loadCourtiers() {
+    try {
+      const { data: courtiers, error } = await supabase
+        .from('profiles')
+        .select('id, nom, prenom, telephone, zone_activite, dispos_rdv')
+        .eq('role', 'courtier')
+        .eq('actif', true);
+
+      if (error) throw error;
+
+      courtiersList = courtiers.filter(c => {
+        const zones = c.zone_activite ? c.zone_activite.split(',').map(z => parseInt(z.trim())) : [];
+        return zones.includes(formData.department);
+      });
+
+      renderCourtiers();
+    } catch (err) {
+      console.error('Erreur loading courtiers:', err);
+    }
+  }
+
+  function renderCourtiers() {
+    const html = courtiersList.map(c => {
+      const dispos = c.dispos_rdv ? JSON.parse(JSON.stringify(c.dispos_rdv)) : { visio: false, bureau: false };
+      const dispoText = [];
+      if (dispos.visio) dispoText.push('Visio');
+      if (dispos.bureau) dispoText.push('Bureau');
+
+      return `
+        <div class="checkbox-item">
+          <input type="checkbox" name="courtierSelect" value="${c.id}">
+          <label>
+            <strong>${c.prenom} ${c.nom}</strong><br>
+            <small>${dispoText.join(' • ') || 'Disponibilités à confirmer'}</small>
+          </label>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('courtiersContainer').innerHTML = html || '<p style="color: var(--text-secondary);">Aucun courtier trouvé pour votre région.</p>';
+  }
+
+  function updateCourtierMode() {
+    const mode = document.querySelector('input[name="courtierMode"]:checked').value;
+    document.getElementById('courtierAutoMode').style.display = mode === 'auto' ? 'block' : 'none';
+    document.getElementById('courtierManualMode').style.display = mode === 'manual' ? 'block' : 'none';
+  }
+
+  async function submitForm() {
+    document.getElementById('loader').classList.add('active');
+    document.getElementById('submitContent').style.display = 'none';
+    document.getElementById('successAlert').style.display = 'none';
+    document.getElementById('errorAlert').style.display = 'none';
+
+    try {
+      // 1. Insérer dans demandes_financement
+      const { data: demande, error: insertError } = await supabase
+        .from('demandes_financement')
+        .insert([{
+          user_id: (await supabase.auth.getUser()).data.user?.id || null,
+          revenus_mensuels: formData.revenus_mensuels,
+          charges_mensuelles: formData.charges_mensuelles,
+          apport: formData.apport,
+          duree_emprunt: formData.duree_emprunt,
+          taux_interet: formData.taux_interet,
+          assurance_mensuelle: formData.assurance_mensuelle,
+          budget_travaux: formData.budget_travaux,
+          epargne_restante: formData.epargne_restante,
+          objectif: formData.objectif,
+          budget_max_declare: formData.budget_max_declare,
+          endettement_ratio: formData.endettement_ratio,
+          mensualite_totale: formData.mensualite_totale,
+          montant_emprunt: formData.montant_emprunt,
+          pieces_cochees: formData.pieces_cochees,
+          courtiers_selectionnes: formData.courtiers_selectionnes.map(id => ({ courtier_id: id, dispo: 'bureau' })),
+          telephone_contact: formData.telephone,
+          acheteur_accepte_partager_resultats: formData.acheteur_accepte_partager_resultats,
+          statut: 'en_attente'
+        }])
+        .select();
+
+      if (insertError) throw insertError;
+
+      // 2. Envoyer les mails via Edge Function
+      const response = await fetch('/api/envoyer-demande-financement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          demandeId: demande[0].id,
+          acheteur: {
+            nom: formData.nom,
+            prenom: formData.prenom,
+            email: formData.email,
+            telephone: formData.telephone
+          },
+          resultats: {
+            budget: formData.budget_max_declare,
+            mensualite: formData.mensualite_totale,
+            endettement: formData.endettement_ratio
+          },
+          courtiers: formData.courtiers_selectionnes,
+          courtierMode: formData.courtierMode
+        })
+      });
+
+      if (!response.ok) throw new Error('Erreur envoi emails');
+
+      document.getElementById('loader').classList.remove('active');
+      document.getElementById('successAlert').innerHTML = '✓ Demande envoyée ! Vous recevrez un email de confirmation. Un courtier vous contactera sous peu.';
+      document.getElementById('successAlert').style.display = 'block';
+
+      setTimeout(() => {
+        window.location.href = '/espace-perso.html';
+      }, 3000);
+
+    } catch (err) {
+      console.error('Erreur:', err);
+      document.getElementById('loader').classList.remove('active');
+      document.getElementById('submitContent').style.display = 'block';
+      document.getElementById('errorAlert').innerHTML = '✗ Erreur : ' + err.message;
+      document.getElementById('errorAlert').style.display = 'block';
+    }
+  }
+
+  // Init
+  showStep(1);
+</script>
+
+</body>
+</html>
+
