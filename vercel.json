@@ -1,4 +1,7 @@
 {
   "buildCommand": "",
-  "outputDirectory": "alb-final"
+  "outputDirectory": "alb-final",
+  "rewrites": [
+    { "source": "/(.*).html", "destination": "/alb-final/$1.html" }
+  ]
 }
