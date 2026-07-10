@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annonces - ALB Sud Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+    }
+    .header {
+      background: white;
+      border-bottom: 3px solid var(--dore);
+      padding: 15px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.3rem;
+      color: var(--pourpre);
+    }
+    .logo strong { color: var(--dore); }
+    .nav {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+    .nav a {
+      text-decoration: none;
+      color: #2b2b2b;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav a:hover { color: var(--pourpre); }
+    .btn-espace {
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn-espace:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .page-title {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      margin: 30px 0;
+      font-size: 2.5rem;
+      text-align: center;
+    }
+    
+    .buyer-view {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    .sidebar {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+    .filter-section { margin-bottom: 25px; }
+    .filter-section h3 {
+      color: var(--pourpre);
+      font-size: 1rem;
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--dore);
+      padding-bottom: 8px;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+    .filter-item input[type="checkbox"],
+    .filter-item input[type="number"] {
+      cursor: pointer;
+    }
+    .listings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .listing-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+    }
+    .listing-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .listing-image {
+      background: #e0e0e0;
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    .listing-content {
+      padding: 15px;
+    }
+    .listing-price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--pourpre);
+      margin-bottom: 8px;
+    }
+    .listing-type {
+      display: inline-block;
+      background: #f0f0f0;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+    }
+    .listing-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--pourpre);
+      margin-bottom: 6px;
+    }
+    .listing-location {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .listing-badges {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .badge {
+      background: #f5f3ee;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      color: var(--pourpre);
+      font-weight: 600;
+    }
+    .listing-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-view, .btn-visite {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-view {
+      background: var(--pourpre);
+      color: white;
+    }
+    .btn-view:hover {
+      background: #6b2d5f;
+    }
+    .btn-visite {
+      background: var(--dore);
+      color: white;
+    }
+    .btn-visite:hover {
+      background: #9a7530;
+    }
+    .no-listings {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .seller-view {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .seller-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--dore);
+    }
+    .seller-header h2 {
+      color: var(--pourpre);
+      font-size: 1.5rem;
+    }
+    .btn-create {
+      background: var(--pourpre);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+    .btn-create:hover {
+      background: #6b2d5f;
+    }
+    .listings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    .listings-table th {
+      background: #f5f3ee;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--pourpre);
+      border-bottom: 2px solid var(--dore);
+    }
+    .listings-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-attente {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-disponible {
+      background: #d4edda;
+      color: #155724;
+    }
+    .actions-cell {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border: 1px solid;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-edit {
+      border-color: #1976d2;
+      color: #1976d2;
+    }
+    .btn-edit:hover {
+      background: #e3f2fd;
+    }
+    .btn-delete {
+      border-color: #d32f2f;
+      color: #d32f2f;
+    }
+    .btn-delete:hover {
+      background: #ffebee;
+    }
+    .no-listings-seller {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-content">
+    <div class="logo"><strong>ALB</strong> Sud Immobilier</div>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="pros.html">Vitrine des pros</a>
+      <a href="projets-travaux.html">Projets travaux</a>
+      <a href="projets-financement.html">Projet Financement</a>
+      <a href="espace-perso.html" class="btn-espace">Espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title">🏠 Annonces immobilières</h1>
+
+  <div id="buyer-container" style="display: none;">
+    <div class="buyer-view">
+      <aside class="sidebar">
+        <div class="filter-section">
+          <h3>🏠 Type de bien</h3>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-maison" value="Maison">
+            <label for="filter-maison">Maison</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-appt" value="Appartement">
+            <label for="filter-appt">Appartement</label>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h3>📍 Zone</h3>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-toulon" value="Toulon">
+            <label for="filter-toulon">Toulon</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-centre" value="Centre Var">
+            <label for="filter-centre">Centre Var</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-est" value="Est Var">
+            <label for="filter-est">Est Var/Golfe</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-paca" value="Pays d'Aix">
+            <label for="filter-paca">Pays d'Aix</label>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h3>💰 Budget</h3>
+          <div class="filter-item">
+            <label>Min (€)</label>
+            <input type="number" id="filter-budget-min" placeholder="0" style="width: 70px;">
+          </div>
+          <div class="filter-item">
+            <label>Max (€)</label>
+            <input type="number" id="filter-budget-max" placeholder="999999" style="width: 70px;">
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h3>⚡ DPE</h3>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-dpe-a" value="A">
+            <label for="filter-dpe-a">A</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-dpe-b" value="B">
+            <label for="filter-dpe-b">B</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" id="filter-dpe-c" value="C">
+            <label for="filter-dpe-c">C</label>
+          </div>
+        </div>
+      </aside>
+
+      <div>
+        <div id="listings-container" class="listings-grid">
+          <div class="no-listings">Chargement des annonces...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="seller-container" style="display: none;">
+    <div class="seller-view">
+      <div class="seller-header">
+        <h2>📋 Mes annonces</h2>
+        <a href="creer-annonce.html" class="btn-create">+ Créer une annonce</a>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="listings-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Prix</th>
+              <th>Localisation</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="seller-listings">
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 40px; color: #666;">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+  async function loadPage() {
+    const userId = localStorage.getItem('alb_user');
+    
+    if (!userId) {
+      showBuyerView(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('est_vendeur, est_acheteur')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) {
+        showBuyerView(null);
+        return;
+      }
+
+      if (data.est_vendeur === true && data.est_acheteur === false) {
+        showSellerView(userId);
+      } else {
+        showBuyerView(userId);
+      }
+    } catch (err) {
+      console.error('Erreur chargement profil:', err);
+      showBuyerView(null);
+    }
+  }
+
+  function showBuyerView(userId) {
+    document.getElementById('buyer-container').style.display = 'block';
+    document.getElementById('seller-container').style.display = 'none';
+    
+    document.querySelectorAll('.filter-section input').forEach(input => {
+      input.addEventListener('change', loadListings);
+    });
+
+    loadListings();
+  }
+
+  async function loadListings() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('statut', 'disponible');
+
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        document.getElementById('listings-container').innerHTML = 
+          '<div class="no-listings">Erreur lors du chargement des annonces</div>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        document.getElementById('listings-container').innerHTML = 
+          '<div class="no-listings">Aucune annonce trouvée</div>';
+        return;
+      }
+
+      const filters = {
+        types: Array.from(document.querySelectorAll('.filter-section input[type="checkbox"]:checked'))
+          .map(el => el.value),
+        budgetMin: parseInt(document.getElementById('filter-budget-min').value) || 0,
+        budgetMax: parseInt(document.getElementById('filter-budget-max').value) || 999999,
+        dpes: Array.from(document.querySelectorAll('#filter-dpe-a, #filter-dpe-b, #filter-dpe-c'))
+          .filter(el => el.checked)
+          .map(el => el.value)
+      };
+
+      let filtered = data;
+
+      if (filters.types.length > 0) {
+        filtered = filtered.filter(ann => filters.types.includes(ann.type_bien));
+      }
+
+      filtered = filtered.filter(ann => 
+        ann.prix_vente >= filters.budgetMin && 
+        ann.prix_vente <= filters.budgetMax
+      );
+
+      if (filters.dpes.length > 0) {
+        filtered = filtered.filter(ann => filters.dpes.includes(ann.dpe));
+      }
+
+      const html = filtered.map(ann => `
+        <div class="listing-card">
+          <div class="listing-image">📷</div>
+          <div class="listing-content">
+            <div class="listing-price">${ann.prix_vente.toLocaleString()}€</div>
+            <span class="listing-type">${ann.type_bien}</span>
+            <div class="listing-title">${ann.titre || 'Sans titre'}</div>
+            <div class="listing-location">📍 ${ann.code_postal} ${ann.ville}</div>
+            <div class="listing-badges">
+              <span class="badge">DPE: ${ann.dpe || 'N/A'}</span>
+              <span class="badge">GES: ${ann.ges || 'N/A'}</span>
+            </div>
+            <div class="listing-actions">
+              <button class="btn-view" onclick="viewListing('${ann.id}')">Voir</button>
+              <button class="btn-visite" onclick="demandVisite('${ann.id}')">Visite</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('listings-container').innerHTML = html;
+    } catch (err) {
+      console.error('Erreur chargement annonces:', err);
+    }
+  }
+
+  function showSellerView(userId) {
+    document.getElementById('buyer-container').style.display = 'none';
+    document.getElementById('seller-container').style.display = 'block';
+    
+    loadSellerListings(userId);
+  }
+
+  async function loadSellerListings(userId) {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('agent_id', userId);
+
+      if (error || !data || data.length === 0) {
+        document.getElementById('seller-listings').innerHTML = 
+          '<tr><td colspan="5" class="no-listings-seller">Aucune annonce créée</td></tr>';
+        return;
+      }
+
+      const html = data.map(ann => `
+        <tr>
+          <td>${ann.titre}</td>
+          <td>${ann.prix_vente?.toLocaleString()}€</td>
+          <td>${ann.code_postal} ${ann.ville}</td>
+          <td>
+            <span class="status-badge status-${ann.statut === 'disponible' ? 'disponible' : 'attente'}">
+              ${ann.statut === 'disponible' ? '✅ Disponible' : '⏳ En attente'}
+            </span>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn-small btn-edit" onclick="editListing('${ann.id}')">✏️ Modifier</button>
+              <button class="btn-small btn-delete" onclick="deleteListing('${ann.id}')">🗑️ Supprimer</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('seller-listings').innerHTML = html;
+    } catch (err) {
+      console.error('Erreur chargement annonces vendeur:', err);
+    }
+  }
+
+  function viewListing(id) {
+    window.location.href = `detail-annonce.html?id=${id}`;
+  }
+
+  function demandVisite(id) {
+    window.location.href = `projets-financement.html?bien_id=${id}`;
+  }
+
+  function editListing(id) {
+    window.location.href = `creer-annonce.html?edit=${id}`;
+  }
+
+  async function deleteListing(id) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) {
+      return;
+    }
+
+    try {
+      const { error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert('Erreur lors de la suppression');
+        return;
+      }
+
+      alert('Annonce supprimée avec succès');
+      location.reload();
+    } catch (err) {
+      console.error('Erreur suppression:', err);
+    }
+  }
+
+  loadPage();
+</script>
+
+</body>
+</html>
