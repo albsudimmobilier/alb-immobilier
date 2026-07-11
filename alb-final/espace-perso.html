@@ -3,452 +3,906 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon Espace - ALB Immobilier</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <title>Espace ALB - Profil Personnel</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
   <style>
-    .dashboard {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 30px;
-      margin-top: 30px;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+      --light-bg: #f9f7f4;
     }
-
-    .sidebar {
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+    }
+    .header {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      height: fit-content;
+      border-bottom: 3px solid var(--dore);
+      padding: 15px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       position: sticky;
-      top: 100px;
-      border: 1px solid #e8e6e0;
-      border-left: 4px solid #B28E3D;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.3rem;
+      color: var(--pourpre);
+    }
+    .logo strong { color: var(--dore); }
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .btn-logout {
+      background: #d32f2f;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover {
+      background: #b71c1c;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+    .page-title {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      margin-bottom: 30px;
+      font-size: 2rem;
     }
 
-    .sidebar h3 {
-      margin-top: 0;
-      color: #4B1A3E;
-      border-bottom: 2px solid #B28E3D;
-      padding-bottom: 10px;
+    .user-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--dore);
     }
-
-    .sidebar-nav {
+    .user-card h3 {
+      color: var(--pourpre);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    .user-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .user-info-item {
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
-
-    .sidebar-nav button {
-      background: none;
-      border: none;
-      padding: 12px;
-      text-align: left;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.3s;
+    .user-info-label {
       color: #666;
-      font-weight: 500;
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .user-info-value {
+      color: var(--pourpre);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .user-info-input {
+      color: var(--pourpre);
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .user-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+    }
+    .btn-secondary {
+      background: var(--light-bg);
+      color: var(--pourpre);
+      border: 1px solid var(--dore);
+    }
+    .btn-secondary:hover {
+      background: #f0ebe3;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+    .btn-accept {
+      background: #4caf50;
+      color: white;
+    }
+    .btn-accept:hover {
+      background: #45a049;
+    }
+    .btn-refuse {
+      background: #d32f2f;
+      color: white;
+    }
+    .btn-refuse:hover {
+      background: #b71c1c;
     }
 
-    .sidebar-nav button:hover,
-    .sidebar-nav button.active {
-      background: #F5F3F0;
-      color: #4B1A3E;
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      flex-wrap: wrap;
+    }
+    .tab-button {
+      padding: 15px 25px;
+      background: transparent;
+      border: none;
+      color: #666;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-size: 0.95rem;
+    }
+    .tab-button:hover {
+      color: var(--pourpre);
+    }
+    .tab-button.active {
+      color: var(--pourpre);
+      border-bottom-color: var(--dore);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
 
-    .main-content {
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    .table th {
+      background: var(--light-bg);
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--pourpre);
+      border-bottom: 2px solid var(--dore);
+    }
+    .table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .table tr:hover {
+      background: #fafaf8;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-en-attente {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-disponible {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status-compromis {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status-pause {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .status-demande-envoyee {
+      background: #e2e3e5;
+      color: #383d41;
+    }
+    .status-vendeur-accepte {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .status-acheteur-confirme {
+      background: #d4edda;
+      color: #155724;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
       background: white;
       padding: 30px;
       border-radius: 8px;
-      border: 1px solid #e8e6e0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .section-content {
-      display: none;
-    }
-
-    .section-content.active {
-      display: block;
-    }
-
-    .onboarding-form {
+      width: 90%;
       max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
-
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #666;
+      border: none;
+      background: none;
+    }
+    .modal-close:hover {
+      color: var(--pourpre);
+    }
     .form-group {
       margin-bottom: 20px;
     }
-
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      color: var(--pourpre);
       font-weight: 600;
-      color: #4B1A3E;
+      margin-bottom: 8px;
     }
-
     .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-family: 'Montserrat', sans-serif;
+      font-size: 0.95rem;
     }
-
-    .checkbox-group {
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .form-actions {
       display: flex;
-      align-items: center;
       gap: 10px;
-      margin-bottom: 12px;
+      margin-top: 25px;
+    }
+    .form-actions .btn {
+      flex: 1;
     }
 
-    .checkbox-group input[type="checkbox"] {
-      width: auto;
-      cursor: pointer;
-    }
-
-    .checkbox-group label {
-      margin: 0;
-      cursor: pointer;
-      font-weight: 400;
-    }
-
-    .role-selection {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .role-option {
-      border: 2px solid #ddd;
-      padding: 20px;
+    .loading {
       text-align: center;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .role-option:hover {
-      border-color: #B28E3D;
-      background: #F5F3F0;
-    }
-
-    .role-option input[type="radio"] {
-      margin-bottom: 10px;
-    }
-
-    .zone-checkboxes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-    }
-
-    .zone-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .zone-checkbox input {
-      width: auto;
-    }
-
-    .success-message {
-      background: #D4EDDA;
-      border: 1px solid #C3E6CB;
-      color: #155724;
-      padding: 20px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-
-    .file-upload {
-      border: 2px dashed #B28E3D;
-      padding: 20px;
-      text-align: center;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .file-upload:hover {
-      background: #F5F3F0;
-    }
-
-    .file-upload input {
-      display: none;
-    }
-
-    .alert {
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-
-    .alert-warning {
-      background: #FFF3CD;
-      border: 1px solid #FFEEBA;
-      color: #856404;
+      padding: 40px;
+      color: #999;
     }
 
     @media (max-width: 768px) {
-      .dashboard {
-        grid-template-columns: 1fr;
+      .tabs {
+        flex-wrap: wrap;
       }
-
-      .sidebar {
-        position: static;
+      .tab-button {
+        padding: 12px 15px;
+        font-size: 0.85rem;
+      }
+      .table {
+        font-size: 0.8rem;
+      }
+      .table th, .table td {
+        padding: 8px;
+      }
+      .table-actions {
+        flex-direction: column;
+      }
+      .modal-content {
+        width: 95%;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <header>
-    <div class="container">
-      <div class="logo"><strong>ALB</strong> Immobilier</div>
-      <nav>
-        <a href="index.html">Accueil</a>
-        <a href="pros.html">Nos Pros</a>
-        <a href="annonces.html">Annonces</a>
-        <a href="espace-perso.html" class="active nav-btn">Mon Compte</a>
-      </nav>
-      <button class="menu-toggle">☰</button>
+
+<header class="header">
+  <div class="header-content">
+    <div class="logo"><strong>ALB</strong> Immobilier</div>
+    <div class="header-actions">
+      <span id="user-role-badge" style="color: var(--pourpre); font-weight: 600;"></span>
+      <button class="btn-logout" onclick="logout()">🔐 Déconnexion</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <!-- Main Content -->
-  <section class="section">
-    <div class="container">
-      <h1>Mon Espace ALB Immobilier</h1>
+<div class="container">
+  <h1 class="page-title">👤 Mon Espace ALB</h1>
 
-      <div class="dashboard">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-          <h3>Menu</h3>
-          <div class="sidebar-nav">
-            <button class="tab-btn active" data-tab="inscription">
-              📝 Inscription
-            </button>
-            <button class="tab-btn" data-tab="mon-profil">
-              👤 Mon Profil
-            </button>
-            <button class="tab-btn" data-tab="mes-services">
-              💼 Mes Services
-            </button>
-            <button class="tab-btn" data-tab="avis">
-              ⭐ Avis & Notation
-            </button>
-            <button class="tab-btn" data-tab="parametres">
-              ⚙️ Paramètres
-            </button>
-          </div>
-        </aside>
+  <!-- USER CARD -->
+  <div class="user-card">
+    <h3>Mes informations</h3>
+    <div class="user-info">
+      <div class="user-info-item">
+        <span class="user-info-label">Prénom</span>
+        <input type="text" id="prenom" class="user-info-input" placeholder="Votre prénom">
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Nom</span>
+        <input type="text" id="nom" class="user-info-input" placeholder="Votre nom">
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Téléphone</span>
+        <input type="tel" id="telephone" class="user-info-input" placeholder="06 12 34 56 78">
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Email</span>
+        <span class="user-info-value" id="email-display"></span>
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Disponibilités</span>
+        <textarea id="dispos_rdv" class="user-info-input" placeholder="Ex: Lun-Ven 9h-18h, Sam sur RDV"></textarea>
+      </div>
+    </div>
+    <div class="user-actions">
+      <button class="btn btn-primary" onclick="saveUserInfo()">💾 Sauvegarder mes infos</button>
+    </div>
+  </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-          
-          <!-- Inscription Tab -->
-          <div id="inscription" class="section-content active">
-            <h2>Créer mon profil ALB Immobilier</h2>
+  <!-- TABS -->
+  <div class="tabs" id="tabs-container">
+    <button class="tab-button active" onclick="switchTab('tab-mes-annonces')">📋 Mes annonces</button>
+    <button class="tab-button" onclick="switchTab('tab-demandes-visite')">📅 Demandes de visite</button>
+    <button class="tab-button" onclick="switchTab('tab-planning-visite')">📆 Planning visites</button>
+    <button class="tab-button" style="display:none;" id="tab-btn-demandes-acheteur" onclick="switchTab('tab-mes-demandes-acheteur')">📝 Mes demandes (acheteur)</button>
+    <button class="tab-button" style="display:none;" id="tab-btn-planning-acheteur" onclick="switchTab('tab-planning-acheteur')">📅 Planning (acheteur)</button>
+  </div>
 
-            <div class="alert alert-warning">
-              <strong>ℹ️ Plateforme en construction</strong><br>
-              Les inscriptions ouvertes complètes commenceront le 27 juillet 2026.
-              Pour l'instant, vous pouvez nous contacter pour rejoindre la communauté bêta.
+  <!-- TAB: MES ANNONCES (VENDEUR) -->
+  <div id="tab-mes-annonces" class="tab-content active">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Prix</th>
+            <th>Localisation</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="annonces-tbody">
+          <tr><td colspan="5" class="loading">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: DEMANDES DE VISITE REÇUES (VENDEUR) -->
+  <div id="tab-demandes-visite" class="tab-content">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Acheteur</th>
+            <th>Tél</th>
+            <th>Email</th>
+            <th>Date demandée</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="demandes-visite-tbody">
+          <tr><td colspan="7" class="loading">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: PLANNING VISITES ACCEPTÉES (VENDEUR) -->
+  <div id="tab-planning-visite" class="tab-content">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Acheteur</th>
+            <th>Tél</th>
+            <th>Email</th>
+            <th>Date/Heure</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="planning-visite-tbody">
+          <tr><td colspan="6" class="loading">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: MES DEMANDES (ACHETEUR) -->
+  <div id="tab-mes-demandes-acheteur" class="tab-content">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Localisation</th>
+            <th>Prix</th>
+            <th>Date demandée</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="mes-demandes-acheteur-tbody">
+          <tr><td colspan="5" class="loading">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: PLANNING VISITES (ACHETEUR) -->
+  <div id="tab-planning-acheteur" class="tab-content">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bien</th>
+            <th>Adresse</th>
+            <th>Vendeur</th>
+            <th>Tél Vendeur</th>
+            <th>Date/Heure</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="planning-acheteur-tbody">
+          <tr><td colspan="6" class="loading">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL EDIT ANNONCE -->
+<div id="modal-edit-annonce" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('modal-edit-annonce')">&times;</button>
+    <h2 style="color: var(--pourpre); margin-bottom: 20px;">Modifier l'annonce</h2>
+    
+    <div class="form-group">
+      <label>Titre</label>
+      <input type="text" id="edit-titre">
+    </div>
+    <div class="form-group">
+      <label>Prix (€)</label>
+      <input type="number" id="edit-prix">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="edit-description"></textarea>
+    </div>
+    
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveAnnonce()">💾 Sauvegarder</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-annonce')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+
+<script>
+  let currentUserId = null;
+  let userRole = { est_vendeur: false, est_acheteur: false };
+  let currentAnnonce = null;
+
+  async function initPage() {
+    const userId = localStorage.getItem('alb_user');
+    if (!userId) {
+      window.location.href = 'espace-perso.html';
+      return;
+    }
+
+    currentUserId = userId;
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('email, nom, prenom, telephone, est_vendeur, est_acheteur, dispos_rdv')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) {
+        console.error('Erreur chargement profil:', error);
+        alert('Erreur: impossible de charger le profil');
+        return;
+      }
+
+      userRole = { est_vendeur: data.est_vendeur, est_acheteur: data.est_acheteur };
+      
+      document.getElementById('prenom').value = data.prenom || '';
+      document.getElementById('nom').value = data.nom || '';
+      document.getElementById('telephone').value = data.telephone || '';
+      document.getElementById('email-display').textContent = data.email;
+      document.getElementById('dispos_rdv').value = data.dispos_rdv || '';
+
+      const roleText = [];
+      if (data.est_vendeur) roleText.push('Vendeur');
+      if (data.est_acheteur) roleText.push('Acheteur');
+      document.getElementById('user-role-badge').textContent = roleText.join(' + ');
+
+      if (!data.est_vendeur) {
+        document.getElementById('tab-mes-annonces').style.display = 'none';
+        document.getElementById('tab-demandes-visite').style.display = 'none';
+        document.getElementById('tab-planning-visite').style.display = 'none';
+      }
+
+      if (data.est_acheteur) {
+        document.getElementById('tab-btn-demandes-acheteur').style.display = 'block';
+        document.getElementById('tab-btn-planning-acheteur').style.display = 'block';
+      }
+
+      if (data.est_vendeur) {
+        loadAnnonces();
+        loadDemandesVisiteRecues();
+        loadPlanningVisites();
+      }
+
+      if (data.est_acheteur) {
+        loadMesDemandesAcheteur();
+        loadPlanningAcheteur();
+      }
+
+    } catch (error) {
+      console.error('Erreur init:', error);
+    }
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  async function saveUserInfo() {
+    try {
+      const { error } = await window.supabaseClient
+        .from('profiles')
+        .update({
+          prenom: document.getElementById('prenom').value,
+          nom: document.getElementById('nom').value,
+          telephone: document.getElementById('telephone').value,
+          dispos_rdv: document.getElementById('dispos_rdv').value
+        })
+        .eq('id', currentUserId);
+
+      if (error) throw error;
+      alert('✅ Informations mises à jour !');
+    } catch (error) {
+      console.error('Erreur save:', error);
+      alert('❌ Erreur lors de la sauvegarde');
+    }
+  }
+
+  async function loadAnnonces() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('id, titre, prix_vente, ville, code_postal, statut, description')
+        .eq('vendeur_id', currentUserId);
+
+      if (error) throw error;
+
+      const tbody = document.getElementById('annonces-tbody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune annonce</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(ann => `
+        <tr>
+          <td>${ann.titre || 'Sans titre'}</td>
+          <td>${ann.prix_vente?.toLocaleString()}€</td>
+          <td>${ann.code_postal} ${ann.ville}</td>
+          <td><span class="status-badge status-${ann.statut}">${ann.statut}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-small btn-primary" onclick="editAnnonce('${ann.id}', '${ann.titre}', ${ann.prix_vente}, '${ann.description}')">✏️</button>
+              <button class="btn btn-small" style="background: #ff9800; color: white;" onclick="pauseAnnonce('${ann.id}')">⏸️</button>
+              <button class="btn btn-small" style="background: #9c27b0; color: white;" onclick="compromiAnnonce('${ann.id}')">📋</button>
             </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error('Erreur chargement annonces:', error);
+    }
+  }
 
-            <form id="onboarding-form" class="onboarding-form" style="opacity: 0.6; pointer-events: none;">
-              <!-- Email -->
-              <div class="form-group">
-                <label>Email *</label>
-                <input type="email" name="email" required disabled>
-              </div>
+  function editAnnonce(id, titre, prix, description) {
+    currentAnnonce = { id, titre, prix, description };
+    document.getElementById('edit-titre').value = titre;
+    document.getElementById('edit-prix').value = prix;
+    document.getElementById('edit-description').value = description;
+    document.getElementById('modal-edit-annonce').classList.add('active');
+  }
 
-              <!-- Role Selection -->
-              <div class="form-group">
-                <label>Je suis *</label>
-                <div class="role-selection">
-                  <div class="role-option">
-                    <input type="radio" name="role" value="particulier" disabled>
-                    <label>👤 Particulier</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="artisan" disabled>
-                    <label>🔧 Artisan</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="courtier" disabled>
-                    <label>💼 Courtier</label>
-                  </div>
-                  <div class="role-option">
-                    <input type="radio" name="role" value="agent_immobilier" disabled>
-                    <label>🏠 Agent immo</label>
-                  </div>
-                </div>
-              </div>
+  async function saveAnnonce() {
+    try {
+      const { error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .update({
+          titre: document.getElementById('edit-titre').value,
+          prix_vente: parseInt(document.getElementById('edit-prix').value),
+          description: document.getElementById('edit-description').value
+        })
+        .eq('id', currentAnnonce.id);
 
-              <!-- Name -->
-              <div class="form-group">
-                <label>Nom & Prénom *</label>
-                <input type="text" name="nom_prenom" placeholder="Votre nom complet" required disabled>
-              </div>
+      if (error) throw error;
+      alert('✅ Annonce mise à jour !');
+      closeModal('modal-edit-annonce');
+      loadAnnonces();
+    } catch (error) {
+      console.error('Erreur save annonce:', error);
+      alert('❌ Erreur lors de la sauvegarde');
+    }
+  }
 
-              <!-- Phone -->
-              <div class="form-group">
-                <label>Téléphone *</label>
-                <input type="tel" name="phone" required disabled>
-              </div>
+  async function pauseAnnonce(id) {
+    try {
+      await window.supabaseClient
+        .from('biens_immobiliers')
+        .update({ statut: 'pause' })
+        .eq('id', id);
+      alert('⏸️ Annonce mise en pause');
+      loadAnnonces();
+    } catch (error) {
+      console.error('Erreur pause:', error);
+    }
+  }
 
-              <!-- Location -->
-              <div class="form-group">
-                <label>Ville *</label>
-                <input type="text" name="ville" required disabled>
-              </div>
+  async function compromiAnnonce(id) {
+    try {
+      await window.supabaseClient
+        .from('biens_immobiliers')
+        .update({ statut: 'compromis' })
+        .eq('id', id);
+      alert('📋 Annonce mise sous compromis');
+      loadAnnonces();
+    } catch (error) {
+      console.error('Erreur compromis:', error);
+    }
+  }
 
-              <!-- Zones (for pros) -->
-              <div class="form-group" id="zones-group" style="display: none;">
-                <label>Zones d'intervention</label>
-                <div class="zone-checkboxes">
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Toulon et environs" disabled>
-                    <label>Toulon</label>
-                  </div>
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Centre Var" disabled>
-                    <label>Centre Var</label>
-                  </div>
-                  <div class="zone-checkbox">
-                    <input type="checkbox" name="zones" value="Est Var/Golfe" disabled>
-                    <label>Est Var/Golfe</label>
-                  </div>
-                </div>
-              </div>
+  async function loadDemandesVisiteRecues() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, acheteur_id, nom_acheteur, telephone_acheteur, email_acheteur, date_visite_demandee, statut, biens_immobiliers(titre)')
+        .eq('vendeur_id', currentUserId);
 
-              <!-- Description -->
-              <div class="form-group">
-                <label>Votre présentation</label>
-                <textarea name="description" placeholder="Parlez-nous de vous..." disabled></textarea>
-              </div>
+      if (error) throw error;
 
-              <!-- CGU -->
-              <div class="checkbox-group">
-                <input type="checkbox" name="cgu" id="cgu" disabled>
-                <label for="cgu">
-                  J'accepte les <a href="cgu.html" target="_blank">Conditions Générales d'Utilisation</a> *
-                </label>
-              </div>
+      const tbody = document.getElementById('demandes-visite-tbody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">Aucune demande de visite</td></tr>';
+        return;
+      }
 
-              <div class="checkbox-group">
-                <input type="checkbox" name="rgpd" id="rgpd" disabled>
-                <label for="rgpd">
-                  J'accepte la <a href="confidentialite.html" target="_blank">Politique de Confidentialité</a> *
-                </label>
-              </div>
-
-              <button type="submit" class="btn btn-primary" disabled>
-                Rejoindre ALB Immobilier
-              </button>
-            </form>
-
-            <div style="margin-top: 30px; padding: 20px; background: #F5F3F0; border-radius: 8px;">
-              <h3 style="margin-top: 0;">Vous êtes courtier ou professionnel immobilier ?</h3>
-              <p>Nous avons un programme partenariat spécial. <strong>Contactez Joce directement :</strong></p>
-              <p><strong>📧 contact@albimmobilier.fr</strong></p>
+      tbody.innerHTML = data.map(visite => `
+        <tr>
+          <td>${visite.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${visite.nom_acheteur}</td>
+          <td>${visite.telephone_acheteur}</td>
+          <td>${visite.email_acheteur}</td>
+          <td>${new Date(visite.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
+          <td><span class="status-badge status-${visite.statut}">${visite.statut}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-small btn-accept" onclick="acceptVisite('${visite.id}')">✅</button>
+              <button class="btn btn-small btn-refuse" onclick="refuseVisite('${visite.id}')">❌</button>
             </div>
-          </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error('Erreur chargement demandes:', error);
+    }
+  }
 
-          <!-- Mon Profil Tab -->
-          <div id="mon-profil" class="section-content">
-            <h2>Mon Profil</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
-          </div>
+  async function acceptVisite(id) {
+    try {
+      await window.supabaseClient
+        .from('visites')
+        .update({ statut: 'vendeur_accepte' })
+        .eq('id', id);
+      alert('✅ Visite acceptée !');
+      loadDemandesVisiteRecues();
+      loadPlanningVisites();
+    } catch (error) {
+      console.error('Erreur accept:', error);
+    }
+  }
 
-          <!-- Mes Services Tab -->
-          <div id="mes-services" class="section-content">
-            <h2>Mes Services</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
-          </div>
+  async function refuseVisite(id) {
+    try {
+      await window.supabaseClient
+        .from('visites')
+        .update({ statut: 'refusee' })
+        .eq('id', id);
+      alert('❌ Visite refusée');
+      loadDemandesVisiteRecues();
+    } catch (error) {
+      console.error('Erreur refuse:', error);
+    }
+  }
 
-          <!-- Avis Tab -->
-          <div id="avis" class="section-content">
-            <h2>Avis & Notation</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
-          </div>
+  async function loadPlanningVisites() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, acheteur_id, nom_acheteur, telephone_acheteur, date_visite_demandee, statut, biens_immobiliers(titre)')
+        .eq('vendeur_id', currentUserId)
+        .eq('statut', 'vendeur_accepte');
 
-          <!-- Paramètres Tab -->
-          <div id="parametres" class="section-content">
-            <h2>Paramètres</h2>
-            <p>Vous n'êtes pas encore inscrit. Veuillez d'abord compléter votre inscription.</p>
-          </div>
+      if (error) throw error;
 
-        </div>
-      </div>
-    </div>
-  </section>
+      const tbody = document.getElementById('planning-visite-tbody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite confirmée</td></tr>';
+        return;
+      }
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-brand"><strong>ALB</strong> Immobilier</div>
-      <div class="footer-center">
-        <p>contact@albimmobilier.fr</p>
-      </div>
-      <div class="footer-legal">
-        <a href="cgu.html">CGU</a>
-        <a href="confidentialite.html">Confidentialité</a>
-      </div>
-    </div>
-  </footer>
+      tbody.innerHTML = data.map(visite => `
+        <tr>
+          <td>${visite.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${visite.nom_acheteur}</td>
+          <td>${visite.telephone_acheteur}</td>
+          <td>${visite.email_acheteur}</td>
+          <td>${new Date(visite.date_visite_demandee).toLocaleString('fr-FR')}</td>
+          <td><span class="status-badge status-${visite.statut}">${visite.statut}</span></td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error('Erreur chargement planning:', error);
+    }
+  }
 
-  <script>
-    // Mobile menu
-    document.querySelector('.menu-toggle').addEventListener('click', function() {
-      document.querySelector('nav').classList.toggle('active');
-    });
+  async function loadMesDemandesAcheteur() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, date_visite_demandee, statut, biens_immobiliers(titre, prix_vente, ville, code_postal)')
+        .eq('acheteur_id', currentUserId);
 
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const tabName = this.dataset.tab;
-        
-        // Hide all sections
-        document.querySelectorAll('.section-content').forEach(section => {
-          section.classList.remove('active');
-        });
+      if (error) throw error;
 
-        // Show selected section
-        document.getElementById(tabName).classList.add('active');
+      const tbody = document.getElementById('mes-demandes-acheteur-tbody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune demande de visite</td></tr>';
+        return;
+      }
 
-        // Update active button
-        document.querySelectorAll('.tab-btn').forEach(b => {
-          b.classList.remove('active');
-        });
-        this.classList.add('active');
-      });
-    });
+      tbody.innerHTML = data.map(visite => `
+        <tr>
+          <td>${visite.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${visite.biens_immobiliers?.code_postal} ${visite.biens_immobiliers?.ville}</td>
+          <td>${visite.biens_immobiliers?.prix_vente?.toLocaleString()}€</td>
+          <td>${new Date(visite.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
+          <td><span class="status-badge status-${visite.statut}">${visite.statut}</span></td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error('Erreur chargement mes demandes acheteur:', error);
+    }
+  }
 
-    // Show/hide zones when role is selected
-    document.querySelectorAll('input[name="role"]').forEach(radio => {
-      radio.addEventListener('change', function() {
-        const zonesGroup = document.getElementById('zones-group');
-        if (['artisan', 'courtier', 'agent_immobilier'].includes(this.value)) {
-          zonesGroup.style.display = 'block';
-        } else {
-          zonesGroup.style.display = 'none';
-        }
-      });
-    });
-  </script>
+  async function loadPlanningAcheteur() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, vendeur_id, nom_acheteur, telephone_acheteur, date_visite_demandee, statut, profiles(nom, prenom, telephone), biens_immobiliers(titre, ville, code_postal, adresse_complete)')
+        .eq('acheteur_id', currentUserId)
+        .eq('statut', 'acheteur_confirme');
+
+      if (error) throw error;
+
+      const tbody = document.getElementById('planning-acheteur-tbody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite validée</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(visite => `
+        <tr>
+          <td>${visite.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${visite.biens_immobiliers?.code_postal} ${visite.biens_immobiliers?.ville}</td>
+          <td>${visite.profiles?.nom} ${visite.profiles?.prenom}</td>
+          <td>${visite.profiles?.telephone}</td>
+          <td>${new Date(visite.date_visite_demandee).toLocaleString('fr-FR')}</td>
+          <td><span class="status-badge status-${visite.statut}">${visite.statut}</span></td>
+        </tr>
+      `).join('');
+    } catch (error) {
+      console.error('Erreur chargement planning acheteur:', error);
+    }
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  function logout() {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      localStorage.removeItem('alb_user');
+      window.location.href = 'index.html';
+    }
+  }
+
+  initPage();
+</script>
+
 </body>
 </html>
