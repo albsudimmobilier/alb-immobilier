@@ -195,14 +195,21 @@
       // Vérifier si le user existe et le PIN est correct
       const { data, error } = await window.supabaseClient
         .from('profiles')
-        .select('id, pin, est_vendeur, est_acheteur')
+        .select('id, pin, est_vendeur, est_acheteur, statut_verifie')
         .eq('email', email)
         .eq('pin', pin)
         .single();
 
       if (error || !data) {
         throw new Error('Email ou code PIN incorrect');
-      }
+      }} // Ligne 205
+    
+    // Vérifier si le user est validé  ← NOUVEAU
+    if (data && !data.statut_verifie) {  ← NOUVEAU
+      throw new Error('Votre compte est en attente de validation. Nous vous confirmerons par email.');  ← NOUVEAU
+    }  ← NOUVEAU
+    
+    localStorage.setItem('alb_user', data.id); // Ligne 208
 
       // Connexion réussie
       localStorage.setItem('alb_user', data.id);
