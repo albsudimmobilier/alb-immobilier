@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - ALB Sud Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--dore);
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.5rem;
+      color: var(--pourpre);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .logo strong { color: var(--dore); }
+    h1 {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+    }
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      color: #4caf50;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e8f5e9;
+      border-radius: 4px;
+      display: none;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      color: #666;
+    }
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .back-link a {
+      color: var(--dore);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link a:hover {
+      color: var(--pourpre);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo"><strong>ALB</strong> Immobilier</div>
+  
+  <h1>Connexion</h1>
+  <p class="subtitle">Entrez votre email et votre code PIN 4 chiffres</p>
+
+  <form id="login-form" onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input 
+        type="email" 
+        id="email" 
+        placeholder="vous@example.fr"
+        required
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="pin">Code PIN (4 chiffres)</label>
+      <input 
+        type="text" 
+        id="pin" 
+        placeholder="0000"
+        maxlength="4"
+        pattern="[0-9]{4}"
+        required
+      >
+    </div>
+
+    <button type="submit" class="btn-login" id="btn-submit">Se connecter</button>
+  </form>
+
+  <div class="loading" id="loading">Vérification en cours...</div>
+  <div class="error" id="error"></div>
+  <div class="success" id="success">Connexion réussie, redirection...</div>
+
+  <div class="back-link">
+    <a href="index.html">← Retour à l'accueil</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+
+<script>
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const pin = document.getElementById('pin').value;
+
+    const errorEl = document.getElementById('error');
+    const successEl = document.getElementById('success');
+    const loadingEl = document.getElementById('loading');
+    const btnSubmit = document.getElementById('btn-submit');
+
+    // Reset messages
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+    btnSubmit.disabled = true;
+
+    try {
+      // Vérifier si le user existe et le PIN est correct
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('id, pin, est_vendeur, est_acheteur')
+        .eq('email', email)
+        .eq('pin', pin)
+        .single();
+
+      if (error || !data) {
+        throw new Error('Email ou code PIN incorrect');
+      }
+
+      // Connexion réussie
+      localStorage.setItem('alb_user', data.id);
+      
+      successEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+
+      // Redirection après 1 sec
+      setTimeout(() => {
+        window.location.href = 'espace-perso.html';
+      }, 1000);
+
+    } catch (error) {
+      errorEl.textContent = error.message;
+      errorEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      btnSubmit.disabled = false;
+    }
+  }
+
+  // Si déjà connecté, redirect
+  if (localStorage.getItem('alb_user')) {
+    window.location.href = 'espace-perso.html';
+  }
+</script>
+
+</body>
+</html>
