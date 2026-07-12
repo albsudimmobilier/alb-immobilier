@@ -403,16 +403,17 @@
     loadAnnonces();
   }
 
-  function showSellerView() {
-    if (!userId) {
-      alert('Veuillez vous connecter d\'abord');
-      return;
-    }
-    document.getElementById('choice-page').classList.add('hidden');
-    document.getElementById('buyer-view').classList.add('hidden');
-    document.getElementById('seller-view').classList.remove('hidden');
-    currentView = 'seller';
+ function showSellerView() {
+  if (!userId) {
+    // Redirection vers le login
+    window.location.href = 'login.html';
+    return;
   }
+  document.getElementById('choice-page').classList.add('hidden');
+  document.getElementById('buyer-view').classList.add('hidden');
+  document.getElementById('seller-view').classList.remove('hidden');
+  currentView = 'seller';
+}
 
   function backToChoice() {
     showChoicePage();
