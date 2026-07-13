@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIN oublié - ALB Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #FBF8F3;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--dore);
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.5rem;
+      color: var(--pourpre);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .logo strong { color: var(--dore); }
+    
+    h1 {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .error {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      color: #4caf50;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e8f5e9;
+      border-radius: 4px;
+      display: none;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      color: #666;
+    }
+    
+    .help-text {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .back-link a {
+      color: var(--dore);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link a:hover {
+      color: var(--pourpre);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo"><strong>ALB</strong> Immobilier</div>
+  
+  <h1>PIN oublié</h1>
+  <p class="subtitle">Entrez votre email pour recevoir un nouveau code PIN</p>
+  
+  <form id="forgot-pin-form" onsubmit="handleForgotPin(event)">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input 
+        type="email" 
+        id="email" 
+        placeholder="vous@example.fr"
+        required
+      >
+    </div>
+    
+    <button type="submit" class="btn-primary" id="btn-submit">Envoyer un nouveau PIN</button>
+  </form>
+  
+  <div class="loading" id="loading">Envoi en cours...</div>
+  <div class="error" id="error"></div>
+  <div class="success" id="success">Nouveau PIN envoyé par email! Vous allez être redirigé...</div>
+  
+  <p class="help-text">
+    Nous vous enverrons un nouveau code PIN à cette adresse email.
+  </p>
+  
+  <div class="back-link">
+    <a href="connexion.html">← Retour à la connexion</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+
+<script>
+  async function handleForgotPin(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const errorEl = document.getElementById('error');
+    const successEl = document.getElementById('success');
+    const loadingEl = document.getElementById('loading');
+    const btnSubmit = document.getElementById('btn-submit');
+    
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+    btnSubmit.disabled = true;
+    
+    try {
+      // Appeler send-auth-code.js pour générer et envoyer un nouveau PIN
+      const response = await fetch('/.netlify/functions/send-auth-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+      
+      successEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      
+      // Rediriger vers connexion après 3 sec
+      setTimeout(() => {
+        window.location.href = 'connexion.html';
+      }, 3000);
+      
+    } catch (error) {
+      errorEl.textContent = '❌ ' + error.message;
+      errorEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      btnSubmit.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
