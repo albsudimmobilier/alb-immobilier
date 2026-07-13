@@ -8,60 +8,69 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --primary: #4B1A3E;
-      --doré: #B28E3D;
-      --crème: #F5F1EB;
       --success: #2E7D32;
       --error: #D32F2F;
-      --warning: #F57C00;
+      --warning: #B28E3D;
+      --surface-1: #f5f5f5;
+      --surface-2: #ffffff;
       --text-primary: #2b2b2b;
       --text-secondary: #666666;
       --border: #e0e0e0;
     }
     html { scroll-behavior: smooth; }
     body {
-      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       color: var(--text-primary);
-      background: var(--crème);
+      background: var(--surface-1);
       line-height: 1.6;
     }
-    .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
     .progress-bar {
-      height: 6px;
-      background: #e0e0e0;
-      border-radius: 3px;
+      height: 4px;
+      background: var(--surface-1);
+      border-radius: 2px;
       margin-bottom: 2rem;
       overflow: hidden;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--primary), var(--doré));
+      background: linear-gradient(90deg, var(--primary), var(--success));
       transition: width 0.5s ease;
-      width: 14%;
+      width: 0%;
     }
     .hero {
       background: linear-gradient(135deg, var(--primary) 0%, #6b2d5f 100%);
       color: white;
-      padding: 3rem 2rem;
+      padding: 4rem 2rem;
       margin-bottom: 3rem;
       border-radius: 12px;
-      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-    .hero h1 { font-family: 'Playfair Display', serif; font-size: 36px; margin-bottom: 0.5rem; }
-    .hero p { font-size: 16px; opacity: 0.95; }
-    .step { display: none; animation: fadeIn 0.5s; }
-    .step.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    h2 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 24px; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--doré); }
+    .hero h1 { font-size: 40px; font-weight: 700; margin-bottom: 0.5rem; }
+    .hero p { font-size: 18px; opacity: 0.95; max-width: 600px; }
+    section { margin-bottom: 3rem; scroll-margin-top: 100px; animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    h2 { color: var(--primary); font-size: 24px; font-weight: 700; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--surface-1); }
+    .screen {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+    }
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
-    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .form-group.full { grid-column: 1 / -1; }
-    label { font-weight: 600; font-size: 13px; color: var(--text-primary); }
-    input, select, textarea {
+    .field { display: flex; flex-direction: column; gap: 0.5rem; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    input, select {
       width: 100%;
       min-height: 44px;
       padding: 10px 12px;
@@ -70,88 +79,32 @@
       background: white;
       font-size: 14px;
       color: var(--text-primary);
-      font-family: 'Montserrat', sans-serif;
+      transition: all 0.2s;
     }
-    input:focus, select:focus, textarea:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(75, 26, 62, 0.1);
     }
-    textarea { resize: vertical; min-height: 100px; }
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 1.5rem;
-      margin: 2rem 0;
+      margin-bottom: 2rem;
     }
     .kpi-card {
-      background: white;
-      border: 2px solid var(--doré);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-    }
-    .kpi-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
-    .kpi-value { font-size: 28px; font-weight: 700; color: var(--primary); }
-    .checkbox-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .checkbox-item:hover { border-color: var(--doré); background: #fafaf8; }
-    .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-    .checkbox-item label { margin: 0; cursor: pointer; font-weight: 400; }
-    .radio-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .radio-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem;
-      background: white;
+      background: linear-gradient(135deg, white 0%, var(--surface-1) 100%);
       border: 2px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
+      border-radius: 12px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .radio-item:hover { border-color: var(--doré); }
-    .radio-item input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
-    .radio-item.selected { border-color: var(--primary); background: rgba(75, 26, 62, 0.05); }
-    .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 15px;
-      text-decoration: none;
-      cursor: pointer;
-      border: none;
-      transition: all 0.3s;
-      font-family: 'Montserrat', sans-serif;
-    }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), #6b2d5f); color: white; box-shadow: 0 4px 15px rgba(75, 26, 62, 0.2); }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(75, 26, 62, 0.3); }
-    .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
-    .btn-secondary:hover { background: var(--primary); color: white; }
-    .btn-group { display: flex; gap: 1rem; margin-top: 2rem; }
-    .btn-group.center { justify-content: center; }
-    .button-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .kpi-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .kpi-value { font-size: 32px; font-weight: 700; color: var(--primary); }
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -162,49 +115,66 @@
       font-size: 13px;
       margin-bottom: 1rem;
     }
-    .status-badge.success { background: #e8f5e9; color: var(--success); }
-    .status-box { background: #e8f5e9; border-left: 4px solid var(--success); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
-    .tips { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #fff3e0; border: 1px solid var(--doré); }
-    .tips ul { margin: 0.5rem 0 0 1.5rem; }
-    .tips li { margin-bottom: 0.5rem; font-size: 13px; }
-    .summary-card {
-      background: white;
-      border: 1px solid var(--border);
+    .status-badge.ready { background: #e8f5e9; color: var(--success); }
+    .status-badge.optimize { background: #fff3e0; color: #e65100; }
+    .status-badge.too-early { background: #fce4ec; color: var(--error); }
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
       border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
     }
-    .summary-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
-    .summary-row:last-child { border-bottom: none; }
-    .summary-row strong { color: var(--primary); }
-    .error-message { color: var(--error); font-size: 13px; margin-top: 0.25rem; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #6b2d5f); color: white; box-shadow: 0 4px 15px rgba(75, 26, 62, 0.2); width: 100%; }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(75, 26, 62, 0.3); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    th { background: var(--primary); color: white; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; }
+    td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tr:nth-child(even) { background: var(--surface-1); }
+    .dispo-checkboxes { display: flex; gap: 8px; justify-content: center; }
+    .checkbox-label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .checkbox-label input { width: 18px; height: 18px; cursor: pointer; }
+    .radio-label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .radio-label input { width: 18px; height: 18px; cursor: pointer; }
+    .error-message { color: var(--error); font-size: 12px; margin-top: 0.5rem; display: none; }
+    .error-message.show { display: block; }
     .loader { display: none; text-align: center; padding: 2rem; }
     .loader.active { display: block; }
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--primary);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
-    }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: none; }
+    .alert.show { display: block; }
     .alert.error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
     .alert.success { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+    .summary-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .summary-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row strong { color: var(--primary); }
+    .tips-box { background: #fff3e0; border: 1px solid #B28E3D; border-radius: 8px; padding: 1.5rem; margin-top: 1.5rem; }
+    .tips-box strong { display: block; margin-bottom: 0.75rem; color: var(--primary); }
+    .tips-box ul { margin-left: 1.5rem; }
+    .tips-box li { margin-bottom: 0.5rem; font-size: 13px; color: var(--text-secondary); }
+    .tab-btn { transition: all 0.3s ease; }
+    .tab-btn:hover { opacity: 0.8; }
+    @media (max-width: 920px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 640px) {
       .container { padding: 1rem; }
       .hero { padding: 2rem 1rem; }
       .hero h1 { font-size: 24px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .btn-group { flex-direction: column; }
-      .checkbox-group { grid-template-columns: 1fr; }
+      table { font-size: 12px; }
+      th, td { padding: 8px; }
     }
   </style>
 </head>
 <body>
+<script src="header.js"></script>
 
 <div class="container">
   <div class="progress-bar">
@@ -216,614 +186,706 @@
     <p>En quelques minutes, trouvez le courtier qui vous accompagnera. À la bien, toujours.</p>
   </div>
 
-  <!-- STEP 1: CONTACT -->
-  <div class="step active" id="step1">
+  <!-- SECTION 1: CONTACT -->
+  <section class="screen" id="section1">
     <h2>1. Vos informations</h2>
     <div class="form-grid">
-      <div class="form-group">
+      <div class="field">
         <label for="nom">Nom *</label>
-        <input type="text" id="nom" name="nom" required>
-        <span class="error-message" id="nomError"></span>
+        <input type="text" id="nom" name="nom">
       </div>
-      <div class="form-group">
+      <div class="field">
         <label for="prenom">Prénom *</label>
-        <input type="text" id="prenom" name="prenom" required>
-        <span class="error-message" id="prenomError"></span>
+        <input type="text" id="prenom" name="prenom">
       </div>
-      <div class="form-group">
+      <div class="field">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email">
+      </div>
+      <div class="field">
         <label for="telephone">Téléphone *</label>
-        <input type="tel" id="telephone" name="telephone" required>
-        <span class="error-message" id="telephoneError"></span>
+        <input type="tel" id="telephone" name="telephone">
       </div>
-      <div class="form-group">
+      <div class="field">
         <label for="codePostal">Code postal *</label>
-        <input type="text" id="codePostal" name="codePostal" placeholder="83000" required>
-        <span class="error-message" id="codePostalError"></span>
+        <input type="text" id="codePostal" name="codePostal" placeholder="83000">
       </div>
     </div>
-    <div class="btn-group center">
-      <button class="btn btn-primary" onclick="nextStep(1, 2)">Continuer →</button>
-    </div>
-  </div>
+  </section>
 
-  <!-- STEP 2: SIMULATEUR -->
-  <div class="step" id="step2">
+  <!-- SECTION 2: SIMULATEUR -->
+  <section class="screen" id="section2">
     <h2>2. Votre situation financière</h2>
     <div class="form-grid">
-      <div class="form-group">
-        <label for="revenus">Revenus mensuels (€) *</label>
-        <input type="number" id="revenus" name="revenus" value="3500" min="0" step="100">
+      <div class="field">
+        <label for="revenus">Revenus nets mensuels (€)</label>
+        <input type="number" id="revenus" name="revenus" value="3500" min="0" step="50">
       </div>
-      <div class="form-group">
-        <label for="charges">Charges mensuelles (€) *</label>
-        <input type="number" id="charges" name="charges" value="500" min="0" step="50">
+      <div class="field">
+        <label for="charges">Charges mensuelles (€)</label>
+        <input type="number" id="charges" name="charges" value="250" min="0" step="50">
       </div>
-      <div class="form-group">
-        <label for="apport">Apport personnel (€) *</label>
-        <input type="number" id="apport" name="apport" value="30000" min="0" step="1000">
+      <div class="field">
+        <label for="apport">Apport disponible (€)</label>
+        <input type="number" id="apport" name="apport" value="20000" min="0" step="1000">
       </div>
-      <div class="form-group">
-        <label for="duree">Durée emprunt (années) *</label>
-        <input type="number" id="duree" name="duree" value="25" min="5" max="40" step="1">
+      <div class="field">
+        <label for="duree">Durée souhaitée (années)</label>
+        <select id="duree" name="duree">
+          <option value="15">15 ans</option>
+          <option value="20">20 ans</option>
+          <option value="25" selected>25 ans</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label for="taux">Taux intérêt (%) *</label>
-        <input type="number" id="taux" name="taux" value="3.60" min="0" max="10" step="0.01">
+      <div class="field">
+        <label for="taux">Taux estimatif (%)</label>
+        <input type="number" id="taux" name="taux" value="3.60" min="0.1" max="10" step="0.01">
       </div>
-      <div class="form-group">
-        <label for="assurance">Assurance mensuelle (€) *</label>
-        <input type="number" id="assurance" name="assurance" value="60" min="0" step="10">
+      <div class="field">
+        <label for="assurance">Assurance mensuelle (€)</label>
+        <input type="number" id="assurance" name="assurance" value="60" min="0" step="5">
       </div>
-      <div class="form-group">
-        <label for="travaux">Budget travaux (€)</label>
+      <div class="field">
+        <label for="bienType">Type de bien</label>
+        <select id="bienType" name="bienType">
+          <option value="ancien" selected>Ancien</option>
+          <option value="neuf">Neuf</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="agencePct">Frais d'agence (%)</label>
+        <input type="number" id="agencePct" name="agencePct" value="5" min="0" max="12" step="0.1">
+      </div>
+      <div class="field">
+        <label for="travaux">Travaux prévus (€)</label>
         <input type="number" id="travaux" name="travaux" value="0" min="0" step="1000">
       </div>
-      <div class="form-group">
-        <label for="epargne">Épargne de secours (€) *</label>
-        <input type="number" id="epargne" name="epargne" value="5000" min="0" step="1000">
+      <div class="field">
+        <label for="epargneRestante">Épargne restante après achat (€)</label>
+        <input type="number" id="epargneRestante" name="epargneRestante" value="5000" min="0" step="500">
+      </div>
+      <div class="field full">
+        <label for="objectif">Objectif du projet</label>
+        <select id="objectif" name="objectif">
+          <option value="rp" selected>Résidence principale</option>
+          <option value="invest">Investissement locatif</option>
+          <option value="secondaire">Résidence secondaire</option>
+        </select>
       </div>
     </div>
-
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Type de bien *</label>
-        <div class="radio-group">
-          <label class="radio-item">
-            <input type="radio" name="typeBien" value="ancien" checked>
-            <span>Ancien</span>
-          </label>
-          <label class="radio-item">
-            <input type="radio" name="typeBien" value="neuf">
-            <span>Neuf</span>
-          </label>
-        </div>
-      </div>
-      <div class="form-group full">
-        <label>Objectif *</label>
-        <div class="radio-group">
-          <label class="radio-item">
-            <input type="radio" name="objectif" value="rp" checked>
-            <span>Résidence principale</span>
-          </label>
-          <label class="radio-item">
-            <input type="radio" name="objectif" value="secondaire">
-            <span>Résidence secondaire</span>
-          </label>
-          <label class="radio-item">
-            <input type="radio" name="objectif" value="locatif">
-            <span>Investissement locatif</span>
-          </label>
-        </div>
-      </div>
+    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+      <button class="btn btn-primary" type="button" id="calculateBtn" onclick="calculateResults()" style="width: auto; padding: 12px 24px;">📊 Calculer mon budget</button>
+      <button class="btn btn-secondary" type="button" id="resetBtn" style="width: auto; padding: 12px 24px; background: white; border: 2px solid var(--primary); color: var(--primary);">↻ Réinitialiser</button>
     </div>
+  </section>
 
-    <div class="btn-group center">
-      <button class="btn btn-secondary" onclick="prevStep(2, 1)">← Retour</button>
-      <button class="btn btn-primary" onclick="nextStep(2, 3)">Voir résultats →</button>
-    </div>
-  </div>
-
-  <!-- STEP 3: RÉSULTATS -->
-  <div class="step" id="step3">
+  <!-- SECTION 3: RÉSULTATS -->
+  <section class="screen" id="section3">
     <h2>3. Votre capacité financière</h2>
-    <div class="status-badge success">
-      ✓ Analyse complète
-    </div>
-
+    <div class="status-badge optimize" id="statusBadge">Analyse en temps réel</div>
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Budget max</div>
-        <div class="kpi-value" id="budgetValue">250 000 €</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Endettement</div>
-        <div class="kpi-value" id="endettementValue">28%</div>
+        <div class="kpi-label">Budget bien</div>
+        <div class="kpi-value" id="budgetValue">—</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Mensualité</div>
-        <div class="kpi-value" id="mensualiteValue">850 €</div>
+        <div class="kpi-value" id="mensualiteValue">—</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Montant emprunt</div>
-        <div class="kpi-value" id="empruntValue">220 000 €</div>
+        <div class="kpi-value" id="empruntValue">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Endettement</div>
+        <div class="kpi-value" id="endettementValue">—</div>
       </div>
     </div>
 
-    <div id="tipsContainer" class="tips"></div>
+    <div id="statusBox" style="background: #fff3e0; border: 1px solid #B28E3D; border-radius: 8px; padding: 1.5rem; margin-top: 1.5rem;">
+      <div style="display: inline-block; padding: 6px 12px; border-radius: 20px; background: #fff3e0; color: #F57C00; font-weight: 600; font-size: 13px; margin-bottom: 1rem;">À optimiser</div>
+      <h3 style="color: var(--primary); font-size: 16px; margin-bottom: 0.75rem;">Lecture du projet</h3>
+      <p id="statusSummary" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem;">Complète le formulaire pour obtenir une première lecture du projet.</p>
 
-    <div class="btn-group center">
-      <button class="btn btn-secondary" onclick="prevStep(3, 2)">← Retour</button>
-      <button class="btn btn-primary" onclick="nextStep(3, 4)">Choisir un courtier →</button>
+      <div class="tips-box">
+        <strong>Recommandations automatiques</strong>
+        <ul id="tipsList">
+          <li>Les conseils apparaîtront ici après le calcul.</li>
+        </ul>
+      </div>
+
+      <div class="tips-box" style="background: #e8f5e9; border-color: #2E7D32; margin-top: 1rem;">
+        <strong style="color: var(--success);">Quand proposer le courtier</strong>
+        <ul id="courtierAdviceList">
+          <li>Le signal apparaît quand le projet semble cohérent.</li>
+        </ul>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- STEP 4: CHOIX COURTIERS -->
-  <div class="step" id="step4">
-    <h2>4. Trouver votre courtier</h2>
+  <!-- SECTION 4: COURTIERS -->
+  <section class="screen" id="section4">
+    <h2>4. Choisir votre courtier</h2>
+    <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Sélectionnez 1 ou 2 courtiers, ou laissez-nous vous mettre en relation. 📞</p>
     
-    <div id="courtierModeSelector" style="margin-bottom: 2rem;">
-      <label style="font-weight: 600; margin-bottom: 1rem; display: block;">Comment préférez-vous ? *</label>
-      <div class="radio-group">
-        <label class="radio-item">
-          <input type="radio" name="courtierMode" value="auto" checked onchange="updateCourtierMode()">
-          <span><strong>Mode rapide :</strong><br>Le premier courtier disponible</span>
-        </label>
-        <label class="radio-item">
-          <input type="radio" name="courtierMode" value="manual" onchange="updateCourtierMode()">
-          <span><strong>Mode choix :</strong><br>Je sélectionne mes courtiers</span>
-        </label>
+    <!-- Tabs pour choisir mode -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border);">
+      <button type="button" id="modeDirectTab" class="tab-btn" onclick="switchCourtierMode('direct')" style="padding: 1rem; font-weight: 600; color: var(--primary); border-bottom: 3px solid var(--primary); cursor: pointer; background: none; border: none; border-bottom: 3px solid var(--primary);">Je sélectionne</button>
+      <button type="button" id="modeAideTab" class="tab-btn" onclick="switchCourtierMode('aide')" style="padding: 1rem; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; cursor: pointer; background: none; border: none;">Je ne sais pas, aidez-moi</button>
+    </div>
+
+    <!-- MODE DIRECT: Sélectionner courtiers -->
+    <div id="modeDirect">
+      <p style="margin-bottom: 1.5rem; font-size: 13px; color: var(--text-secondary);">Sélectionnez 1 ou 2 courtiers (max).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Courtier</th>
+            <th>Localisation</th>
+            <th>Avis</th>
+            <th>Réponse</th>
+            <th style="text-align: center;">Disponibilités RDV</th>
+            <th style="text-align: center;">Sélection</th>
+          </tr>
+        </thead>
+        <tbody id="courtiersTableBody">
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Chargement des courtiers...</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.75rem; background: #e8f5e9; border-radius: 6px; font-size: 12px; color: var(--success);">
+        <span id="courtierCount">0</span> / 2 courtier(s) sélectionné(s)
       </div>
     </div>
 
-    <div id="courtierAutoMode">
-      <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-        Nous allons contacter tous les courtiers de votre département. Le premier à accepter vous accompagnera. 📞
-      </p>
-    </div>
-
-    <div id="courtierManualMode" style="display: none;">
-      <div class="form-group full">
-        <label for="courtiers">Sélectionnez vos courtiers (max 2) *</label>
-        <div id="courtiersContainer"></div>
-        <span class="error-message" id="courtiersError"></span>
+    <!-- MODE AIDE: Alerte courtiers -->
+    <div id="modeAide" style="display: none;">
+      <p style="margin-bottom: 1.5rem; font-size: 13px; color: var(--text-secondary);">Nous enverrons votre demande aux courtiers disponibles de votre région. Le(s) 1 ou 2 premier(s) à accepter vous contactera.</p>
+      <div style="background: #fff3e0; border: 1px solid #B28E3D; border-radius: 8px; padding: 1.5rem; text-align: center;">
+        <p style="color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">📢 Alerte courtiers</p>
+        <p style="font-size: 13px; color: var(--text-secondary);">Votre demande sera diffusée à tous les courtiers de votre zone.</p>
       </div>
     </div>
 
-    <div class="btn-group center">
-      <button class="btn btn-secondary" onclick="prevStep(4, 3)">← Retour</button>
-      <button class="btn btn-primary" onclick="nextStep(4, 5)">Pièces justificatives →</button>
-    </div>
-  </div>
+    <span class="error-message" id="courtiersError"></span>
+  </section>
 
-  <!-- STEP 5: PIÈCES -->
-  <div class="step" id="step5">
+  <!-- SECTION 5: PIÈCES -->
+  <section class="screen" id="section5">
     <h2>5. Pièces justificatives</h2>
-    <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
-      Cochez les pièces que vous pouvez fournir. Elles seront transmises à votre courtier.
-    </p>
-
-    <div class="checkbox-group">
-      <div class="checkbox-item">
-        <input type="checkbox" id="avis" name="pieces" value="avis_imposition">
-        <label for="avis">Avis imposition (dernier exercice)</label>
+    <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Cochez les pièces que vous pouvez fournir.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="avis_imposition">
+          <span>Avis imposition</span>
+        </label>
       </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="contrat" name="pieces" value="contrat_travail">
-        <label for="contrat">Contrat de travail</label>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="contrat_travail">
+          <span>Contrat de travail</span>
+        </label>
       </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="fiches" name="pieces" value="fiches_paie">
-        <label for="fiches">3 dernières fiches de paie</label>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="fiches_paie">
+          <span>3 dernières fiches</span>
+        </label>
       </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="cni" name="pieces" value="cni">
-        <label for="cni">Pièce d'identité</label>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="cni">
+          <span>Pièce d'identité</span>
+        </label>
       </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="charges" name="pieces" value="charges">
-        <label for="charges">Relevé de charges</label>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="charges">
+          <span>Relevé charges</span>
+        </label>
       </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="credits" name="pieces" value="credits">
-        <label for="credits">Amortissements crédits en cours</label>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" name="pieces" value="credits">
+          <span>Crédits en cours</span>
+        </label>
       </div>
     </div>
 
-    <div class="btn-group center">
-      <button class="btn btn-secondary" onclick="prevStep(5, 4)">← Retour</button>
-      <button class="btn btn-primary" onclick="nextStep(5, 6)">Vérification →</button>
+    <!-- CASE CONSENTEMENT DÉCRET 11 AOÛT 2026 -->
+    <div class="summary-card" style="background: #e8f5e9; border: 1px solid #2E7D32; margin-top: 1.5rem;">
+      <label class="checkbox-label" style="align-items: flex-start; gap: 1rem; cursor: pointer;">
+        <input type="checkbox" id="consentementRecontact" name="consentementRecontact" style="width: 20px; height: 20px; margin-top: 2px; cursor: pointer;" required>
+        <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+          <strong>J'accepte d'être recontacté(e)</strong><br>
+          En application du décret n°2025-594 du 11 août 2026, j'accepte que les courtiers immobiliers sélectionnés me contactent dans le cadre de ma demande de financement. Je peux retirer ce consentement à tout moment en me désabonnant via les emails reçus.
+        </span>
+      </label>
     </div>
-  </div>
+  </section>
 
-  <!-- STEP 6: VÉRIFICATION -->
-  <div class="step" id="step6">
-    <h2>6. Vérifiez vos informations</h2>
-
+  <!-- SECTION 6: RÉCAP -->
+  <section class="screen" id="section6">
+    <h2>6. Récapitulatif</h2>
     <div class="summary-card">
-      <h3 style="margin-bottom: 1rem; color: var(--primary);">Vos données</h3>
+      <h3 style="color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 1rem;">Vos données</h3>
       <div class="summary-row">
         <span>Nom & Prénom</span>
-        <strong id="summaryNom"></strong>
+        <strong id="summaryNom">-</strong>
+      </div>
+      <div class="summary-row">
+        <span>Email</span>
+        <strong id="summaryEmail">-</strong>
       </div>
       <div class="summary-row">
         <span>Téléphone</span>
-        <strong id="summaryTel"></strong>
+        <strong id="summaryTel">-</strong>
       </div>
       <div class="summary-row">
-        <span>Code postal</span>
-        <strong id="summaryCP"></strong>
+        <span>Courtier(s) choisi(s)</span>
+        <strong id="summaryCourtier">-</strong>
+      </div>
+      <div class="summary-row">
+        <span>Mode</span>
+        <strong id="summaryMode">-</strong>
       </div>
     </div>
-
     <div class="summary-card">
-      <h3 style="margin-bottom: 1rem; color: var(--primary);">Votre capacité</h3>
+      <h3 style="color: var(--primary); font-size: 16px; font-weight: 600; margin-bottom: 1rem;">Votre capacité</h3>
       <div class="summary-row">
-        <span>Budget maximum</span>
-        <strong id="summaryBudget"></strong>
+        <span>Budget max</span>
+        <strong id="summaryBudget">-</strong>
       </div>
       <div class="summary-row">
         <span>Mensualité</span>
-        <strong id="summaryMensualite"></strong>
+        <strong id="summaryMensualite">-</strong>
       </div>
       <div class="summary-row">
         <span>Endettement</span>
-        <strong id="summaryEndettement"></strong>
+        <strong id="summaryEndettement">-</strong>
       </div>
     </div>
+  </section>
 
-    <div class="summary-card">
-      <div class="checkbox-item">
-        <input type="checkbox" id="consentement" checked>
-        <label for="consentement">
-          J'autorise le courtier à consulter mes résultats de simulation financière
-        </label>
-      </div>
-    </div>
-
-    <div class="btn-group center">
-      <button class="btn btn-secondary" onclick="prevStep(6, 5)">← Retour</button>
-      <button class="btn btn-primary" onclick="nextStep(6, 7)">Continuer →</button>
-    </div>
-  </div>
-
-  <!-- STEP 7: ENVOI -->
-  <div class="step" id="step7">
-    <h2>7. Envoi de votre demande</h2>
-    <p style="margin-bottom: 1.5rem; color: var(--text-secondary); text-align: center;">
-      Un dernier coup d'œil avant d'envoyer votre demande aux courtiers.
-    </p>
-
-    <div class="alert success" style="display: none;" id="successAlert"></div>
-    <div class="alert error" style="display: none;" id="errorAlert"></div>
-
+  <!-- SECTION 7: ENVOI -->
+  <section class="screen" id="section7">
+    <h2>7. Envoyer la demande</h2>
+    <div class="alert error" id="errorAlert"></div>
     <div class="loader" id="loader">
       <div class="spinner"></div>
-      <p>Envoi de votre demande...</p>
+      <p>Envoi en cours...</p>
     </div>
-
     <div id="submitContent">
-      <div class="summary-card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary);">Résumé final</h3>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-          Nous allons envoyer votre demande aux courtiers de votre région. Vous recevrez un email de confirmation, et serez contacté dans les plus brefs délais.
-        </p>
-      </div>
-
-      <div class="btn-group center">
-        <button class="btn btn-secondary" onclick="prevStep(7, 6)">← Retour</button>
-        <button class="btn btn-primary" onclick="submitForm()">Envoyer ma demande</button>
-      </div>
+      <button class="btn btn-primary" onclick="validateAndSubmit()">✓ Envoyer ma demande au courtier</button>
     </div>
-  </div>
-
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ===== CONFIG =====
   const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE2Njk4MTI2NzYsImV4cCI6MTk4NTM4ODY3Nn0.rK2TLxEcPCaO8BJ5NKqF2Fd6EwMXPGSGJ0-UdKxBrEQ';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let currentStep = 1;
-  const totalSteps = 7;
+  const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  const pct = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+
   let formData = {};
+  let selectedCourtier = null;
+  let courtiersMode = 'direct'; // 'direct' ou 'aide'
+  let selectedCourtiers = []; // Array pour 1-2 courtiers
   let courtiersList = [];
 
-  // ===== RADIO SELECTION STYLING =====
-  document.addEventListener('change', function(e) {
-    if (e.target.type === 'radio') {
-      const parent = e.target.closest('.radio-item');
-      if (parent) {
-        document.querySelectorAll('.radio-item').forEach(item => item.classList.remove('selected'));
-        parent.classList.add('selected');
+  // FONCTION DU SIMULATEUR: monthlyPaymentFactor
+  function monthlyPaymentFactor(rateAnnual, months) {
+    const r = rateAnnual / 12;
+    if (r === 0) return 1 / months;
+    return (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+  }
+
+  // Fonction pour changer le mode courtiers
+  function switchCourtierMode(mode) {
+    courtiersMode = mode;
+    selectedCourtiers = [];
+    
+    document.getElementById('modeDirect').style.display = mode === 'direct' ? 'block' : 'none';
+    document.getElementById('modeAide').style.display = mode === 'aide' ? 'block' : 'none';
+    
+    document.getElementById('modeDirectTab').style.borderBottomColor = mode === 'direct' ? 'var(--primary)' : 'transparent';
+    document.getElementById('modeDirectTab').style.color = mode === 'direct' ? 'var(--primary)' : 'var(--text-secondary)';
+    
+    document.getElementById('modeAideTab').style.borderBottomColor = mode === 'aide' ? 'var(--primary)' : 'transparent';
+    document.getElementById('modeAideTab').style.color = mode === 'aide' ? 'var(--primary)' : 'var(--text-secondary)';
+    
+    updateCourtierCount();
+    updateSummaryCourtiers();
+  }
+
+  function updateCourtierCount() {
+    document.getElementById('courtierCount').textContent = selectedCourtiers.length;
+  }
+
+  function toggleCourtier(id, name, event) {
+    event.preventDefault();
+    if (selectedCourtiers.find(c => c.id === id)) {
+      selectedCourtiers = selectedCourtiers.filter(c => c.id !== id);
+    } else {
+      if (selectedCourtiers.length < 2) {
+        selectedCourtiers.push({ id, name });
+      } else {
+        alert('Maximum 2 courtiers sélectionnés');
+        return;
       }
     }
+    
+    // Update checkbox states
+    document.querySelectorAll('input[name="courtier-checkbox"]').forEach(cb => {
+      if (selectedCourtiers.find(c => c.id === cb.value)) {
+        cb.checked = true;
+      } else {
+        cb.checked = false;
+      }
+    });
+    
+    updateCourtierCount();
+    updateSummaryCourtiers();
+  }
+
+  // Update summary when courtiers change
+  function updateSummaryCourtiers() {
+    if (courtiersMode === 'direct') {
+      const names = selectedCourtiers.map(c => c.name).join(', ');
+      document.getElementById('summaryCourtier').textContent = names || '-';
+      document.getElementById('summaryMode').textContent = 'Sélection directe';
+    } else {
+      document.getElementById('summaryCourtier').textContent = '(Alerte courtiers)';
+      document.getElementById('summaryMode').textContent = 'Mise en relation';
+    }
+  }
+
+  // Boutons
+  document.getElementById('calculateBtn').addEventListener('click', calculateResults);
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    document.getElementById('revenus').value = 3500;
+    document.getElementById('charges').value = 250;
+    document.getElementById('apport').value = 20000;
+    document.getElementById('duree').value = 25;
+    document.getElementById('taux').value = 3.60;
+    document.getElementById('assurance').value = 60;
+    document.getElementById('bienType').value = 'ancien';
+    document.getElementById('agencePct').value = 5;
+    document.getElementById('travaux').value = 0;
+    document.getElementById('epargneRestante').value = 5000;
+    document.getElementById('objectif').value = 'rp';
+    calculateResults();
   });
 
-  // ===== ÉTAPES =====
-  function showStep(step) {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step' + step).classList.add('active');
-    const progress = (step / totalSteps) * 100;
-    document.getElementById('progressFill').style.width = progress + '%';
-    currentStep = step;
-    window.scrollTo(0, 0);
-  }
+  document.getElementById('nom').addEventListener('input', () => {
+    document.getElementById('summaryNom').textContent = document.getElementById('prenom').value + ' ' + document.getElementById('nom').value;
+    updateProgress();
+  });
 
-  function validateStep1() {
-    const nom = document.getElementById('nom').value.trim();
-    const prenom = document.getElementById('prenom').value.trim();
-    const tel = document.getElementById('telephone').value.trim();
-    const cp = document.getElementById('codePostal').value.trim();
+  document.getElementById('email').addEventListener('input', () => {
+    document.getElementById('summaryEmail').textContent = document.getElementById('email').value;
+    updateProgress();
+  });
 
-    let valid = true;
-    if (!nom) { document.getElementById('nomError').textContent = 'Requis'; valid = false; }
-    if (!prenom) { document.getElementById('prenomError').textContent = 'Requis'; valid = false; }
-    if (!tel || !/^[0-9\s\+\-\.]{9,}$/.test(tel)) { document.getElementById('telephoneError').textContent = 'Numéro invalide'; valid = false; }
-    if (!cp || !/^\d{5}$/.test(cp)) { document.getElementById('codePostalError').textContent = 'Code postal invalide'; valid = false; }
+  document.getElementById('telephone').addEventListener('input', () => {
+    document.getElementById('summaryTel').textContent = document.getElementById('telephone').value;
+  });
 
-    if (valid) {
-      formData.nom = nom;
-      formData.prenom = prenom;
-      formData.telephone = tel;
-      formData.codePostal = cp;
-      formData.department = parseInt(cp.substring(0, 2));
-    }
-    return valid;
-  }
+  document.getElementById('codePostal').addEventListener('change', loadCourtiers);
 
-  function validateStep2() {
-    const revenus = parseFloat(document.getElementById('revenus').value);
-    const charges = parseFloat(document.getElementById('charges').value);
-    const apport = parseFloat(document.getElementById('apport').value);
-    const duree = parseInt(document.getElementById('duree').value);
-    const taux = parseFloat(document.getElementById('taux').value);
-    const assurance = parseFloat(document.getElementById('assurance').value);
-    const travaux = parseFloat(document.getElementById('travaux').value) || 0;
-    const epargne = parseFloat(document.getElementById('epargne').value);
-
-    formData.revenus_mensuels = revenus;
-    formData.charges_mensuelles = charges;
-    formData.apport = apport;
-    formData.duree_emprunt = duree;
-    formData.taux_interet = taux;
-    formData.assurance_mensuelle = assurance;
-    formData.budget_travaux = travaux;
-    formData.epargne_restante = epargne;
-    formData.type_bien = document.querySelector('input[name="typeBien"]:checked').value;
-    formData.objectif = document.querySelector('input[name="objectif"]:checked').value;
-
-    calculateResults();
-    return true;
-  }
-
+  // LOGIQUE COMPLÈTE DU SIMULATEUR
   function calculateResults() {
-    const revenus = formData.revenus_mensuels;
-    const charges = formData.charges_mensuelles;
-    const apport = formData.apport;
-    const duree = formData.duree_emprunt;
-    const taux = formData.taux_interet / 100 / 12;
-    const assurance = formData.assurance_mensuelle;
-    const travaux = formData.budget_travaux;
-    const epargne = formData.epargne_restante;
+    const revenus = Number(document.getElementById('revenus').value) || 0;
+    const charges = Number(document.getElementById('charges').value) || 0;
+    const apport = Number(document.getElementById('apport').value) || 0;
+    const duree = Number(document.getElementById('duree').value) || 25;
+    const taux = (Number(document.getElementById('taux').value) || 0) / 100;
+    const assurance = Number(document.getElementById('assurance').value) || 0;
+    const bienType = document.getElementById('bienType').value;
+    const agencePct = (Number(document.getElementById('agencePct').value) || 0) / 100;
+    const travaux = Number(document.getElementById('travaux').value) || 0;
+    const epargneRestante = Number(document.getElementById('epargneRestante').value) || 0;
+    const objectif = document.getElementById('objectif').value;
 
-    const capacite = Math.max(0, (revenus - charges) * 35 / 100 - assurance);
-    const montantEmprunt = capacite * (Math.pow(1 + taux, duree * 12) - 1) / (taux * Math.pow(1 + taux, duree * 12));
-    const budgetMax = montantEmprunt + apport - travaux;
-    const mensualite = (montantEmprunt * taux * Math.pow(1 + taux, duree * 12)) / (Math.pow(1 + taux, duree * 12) - 1) + assurance;
-    const endettement = (mensualite / (revenus - charges)) * 100;
+    const tauxEndettementCible = 0.35;
+    const mensualiteMaxTotale = Math.max((revenus * tauxEndettementCible) - charges, 0);
+    const mensualiteHorsAssurance = Math.max(mensualiteMaxTotale - assurance, 0);
+    const months = duree * 12;
+    const factor = monthlyPaymentFactor(taux, months);
+    const montantEmprunt = factor > 0 ? mensualiteHorsAssurance / factor : 0;
+    const fraisNotairePct = bienType === 'neuf' ? 0.025 : 0.075;
+    const reserveSecurite = Math.max(epargneRestante, 0);
+    const cashMobilisable = Math.max(apport - reserveSecurite, 0);
+    const totalFinancement = montantEmprunt + cashMobilisable;
+    const annexesPct = fraisNotairePct + agencePct;
+    const budgetBien = totalFinancement > travaux ? (totalFinancement - travaux) / (1 + annexesPct) : 0;
+    const notaire = budgetBien * fraisNotairePct;
+    const agence = budgetBien * agencePct;
+    const mensualiteTotale = mensualiteHorsAssurance + assurance;
+    const endettement = revenus > 0 ? ((charges + mensualiteTotale) / revenus) * 100 : 0;
+    const apportRatio = budgetBien > 0 ? (apport / budgetBien) * 100 : 0;
+    const resteAVivre = revenus - charges - mensualiteTotale;
 
-    formData.budget_max_declare = Math.round(budgetMax);
-    formData.endettement_ratio = Math.round(endettement * 10) / 10;
-    formData.mensualite_totale = Math.round(mensualite);
-    formData.montant_emprunt = Math.round(montantEmprunt);
+    // SCORE (logique complète du simulateur)
+    let score = 100;
+    if (endettement > 35) score -= 35; else if (endettement > 33) score -= 18;
+    if (apportRatio < 10) score -= 20; else if (apportRatio < 5) score -= 28;
+    if (epargneRestante < 3000) score -= 15;
+    if (resteAVivre < 1200) score -= 20;
+    if (objectif === 'invest') score -= 5;
+    score = Math.max(5, Math.min(100, score));
 
-    const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
-    document.getElementById('budgetValue').textContent = euro.format(formData.budget_max_declare);
-    document.getElementById('mensualiteValue').textContent = euro.format(formData.mensualite_totale);
-    document.getElementById('empruntValue').textContent = euro.format(formData.montant_emprunt);
-    document.getElementById('endettementValue').textContent = formData.endettement_ratio + '%';
-
-    const tips = [];
-    if (endettement > 35) tips.push('Endettement élevé. Réduire les crédits existants pourrait aider.');
-    if (apport < 20000) tips.push('Apport léger. Un apport plus élevé renforce votre dossier.');
-    if (epargne < 5000) tips.push('Garder une épargne de secours est important.');
-    if (travaux > 0) tips.push('Budget travaux intégré. À communiquer au courtier.');
-    if (tips.length === 0) tips.push('Bon profil financier ! Vos courtiers vont apprécier.');
-
-    document.getElementById('tipsContainer').innerHTML = '<ul>' + tips.map(t => '<li>' + t + '</li>').join('') + '</ul>';
-  }
-
-  async function validateStep4() {
-    const mode = document.querySelector('input[name="courtierMode"]:checked').value;
-
-    if (mode === 'auto') {
-      formData.courtierMode = 'auto';
-      formData.courtiers_selectionnes = [];
-    } else {
-      const selected = Array.from(document.querySelectorAll('input[name="courtierSelect"]:checked')).map(c => c.value);
-      if (selected.length === 0 || selected.length > 2) {
-        document.getElementById('courtiersError').textContent = 'Sélectionnez 1 ou 2 courtiers';
-        return false;
-      }
-      formData.courtierMode = 'manual';
-      formData.courtiers_selectionnes = selected;
+    // STATUS
+    let statusText = 'À optimiser';
+    let statusClass = 'optimize';
+    let summary = 'Le projet semble possible, mais il mérite quelques ajustements avant une mise en relation.';
+    if (score >= 75 && endettement <= 35 && resteAVivre > 1400) {
+      statusText = 'Prêt pour un courtier';
+      statusClass = 'ready';
+      summary = 'Le projet paraît cohérent. Un courtier peut chercher une solution adaptée à vos conditions.';
+    } else if (score < 50 || endettement > 35 || mensualiteMaxTotale <= 0) {
+      statusText = 'Trop tôt';
+      statusClass = 'too-early';
+      summary = 'Le projet semble fragile. Il vaut mieux corriger quelques points avant de solliciter le courtier.';
     }
-    return true;
-  }
 
-  function validateStep5() {
-    const pieces = Array.from(document.querySelectorAll('input[name="pieces"]:checked')).map(p => p.value);
-    formData.pieces_cochees = {};
-    ['avis_imposition', 'contrat_travail', 'fiches_paie', 'cni', 'charges', 'credits'].forEach(p => {
-      formData.pieces_cochees[p] = pieces.includes(p);
-    });
-    return true;
-  }
+    // TIPS
+    const tips = [];
+    if (endettement > 35) tips.push('Le taux d\'endettement dépasse la limite. Réduire un crédit en cours peut l\'améliorer.');
+    if (apportRatio < 10) tips.push('L\'apport paraît léger. Un apport plus élevé renforcerait votre dossier.');
+    if (epargneRestante < 3000) tips.push('Garder davantage d\'épargne après achat renforcerait votre sécurité.');
+    if (travaux > 0) tips.push('Le budget travaux réduit le prix du bien finançable. Intégrez-le dès le départ.');
+    if (duree < 25) tips.push('Allonger la durée peut améliorer la mensualité.');
+    if (tips.length === 0) tips.push('Le profil est équilibré. Le courtier optimisera la stratégie de financement.');
 
-  function validateStep6() {
-    formData.acheteur_accepte_partager_resultats = document.getElementById('consentement').checked;
+    // COURTIER ADVICE
+    const courtierAdvice = [];
+    if (statusClass === 'ready') {
+      courtierAdvice.push('Proposez un rendez-vous pour affiner le taux et la stratégie bancaire.');
+      courtierAdvice.push('Préparez les justificatifs de revenus et vos crédits actuels.');
+    } else if (statusClass === 'optimize') {
+      courtierAdvice.push('Le courtier peut aider si vous acceptez d\'ajuster rapidement un ou deux paramètres.');
+      courtierAdvice.push('Priorisez : hausse d\'apport, baisse des charges, ou durée plus longue.');
+    } else {
+      courtierAdvice.push('Mieux vaut d\'abord améliorer vos charges ou votre épargne.');
+      courtierAdvice.push('Recalculez après amélioration avant de contacter le courtier.');
+    }
 
-    document.getElementById('summaryNom').textContent = formData.prenom + ' ' + formData.nom;
-    document.getElementById('summaryTel').textContent = formData.telephone;
-    document.getElementById('summaryCP').textContent = formData.codePostal;
-    document.getElementById('summaryBudget').textContent = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(formData.budget_max_declare);
-    document.getElementById('summaryMensualite').textContent = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(formData.mensualite_totale);
-    document.getElementById('summaryEndettement').textContent = formData.endettement_ratio + '%';
-
-    return true;
-  }
-
-  function nextStep(current, next) {
-    const validators = {
-      1: validateStep1,
-      2: validateStep2,
-      4: validateStep4,
-      5: validateStep5,
-      6: validateStep6
+    // UPDATE UI
+    formData = {
+      budget_max: Math.round(budgetBien),
+      endettement_ratio: Math.round(endettement * 10) / 10,
+      mensualite: Math.round(mensualiteTotale),
+      montant_emprunt: Math.round(montantEmprunt)
     };
 
-    if (validators[current] && !validators[current]()) return;
+    document.getElementById('budgetValue').textContent = euro.format(formData.budget_max);
+    document.getElementById('mensualiteValue').textContent = euro.format(formData.mensualite);
+    document.getElementById('empruntValue').textContent = euro.format(formData.montant_emprunt);
+    document.getElementById('endettementValue').textContent = pct.format(formData.endettement_ratio) + ' %';
+    document.getElementById('summaryBudget').textContent = euro.format(formData.budget_max);
+    document.getElementById('summaryMensualite').textContent = euro.format(formData.mensualite);
+    document.getElementById('summaryEndettement').textContent = pct.format(formData.endettement_ratio) + ' %';
 
-    if (next === 4) {
-      loadCourtiers();
-    }
+    // Status badge
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = statusText;
+    badge.className = 'status-badge ' + statusClass;
+    document.getElementById('statusSummary').textContent = summary + ' Budget estimatif : ' + euro.format(formData.budget_max) + ', frais inclus.';
 
-    showStep(next);
-  }
+    // Tips
+    const tipsHtml = tips.map(t => `<li>${t}</li>`).join('');
+    document.getElementById('tipsList').innerHTML = tipsHtml;
 
-  function prevStep(current, prev) {
-    showStep(prev);
+    const courtierHtml = courtierAdvice.map(c => `<li>${c}</li>`).join('');
+    document.getElementById('courtierAdviceList').innerHTML = courtierHtml;
+
+    updateProgress();
   }
 
   async function loadCourtiers() {
     try {
-      const { data: courtiers, error } = await supabase
+      const cp = document.getElementById('codePostal').value;
+      if (!cp || cp.length < 2) return;
+
+      const department = parseInt(cp.substring(0, 2));
+      const { data: courtiers } = await supabase
         .from('profiles')
-        .select('id, nom, prenom, telephone, zone_activite, dispos_rdv')
+        .select('id, prenom, nom, telephone, zones_intervention, disponibilites_rdv, avis_rating, temps_reponse')
         .eq('role', 'courtier')
-        .eq('actif', true);
+        .eq('statut_verifie', true);
 
-      if (error) throw error;
-
-      courtiersList = courtiers.filter(c => {
-        const zones = c.zone_activite ? c.zone_activite.split(',').map(z => parseInt(z.trim())) : [];
-        return zones.includes(formData.department);
-      });
+      courtiersList = courtiers?.filter(c => {
+        const zones = c.zones_intervention ? c.zones_intervention.split(',').map(z => parseInt(z.trim())) : [];
+        return zones.includes(department);
+      }) || [];
 
       renderCourtiers();
     } catch (err) {
-      console.error('Erreur loading courtiers:', err);
+      console.error('Erreur:', err);
     }
   }
 
   function renderCourtiers() {
     const html = courtiersList.map(c => {
-      const dispos = c.dispos_rdv ? JSON.parse(JSON.stringify(c.dispos_rdv)) : { visio: false, bureau: false };
-      const dispoText = [];
-      if (dispos.visio) dispoText.push('Visio');
-      if (dispos.bureau) dispoText.push('Bureau');
+      const dispos = c.disponibilites_rdv || {};
+      const avis = c.avis_rating ? `⭐ ${c.avis_rating}/5` : 'À venir';
+      const reponse = c.temps_reponse || 'À définir';
+      const isSelected = selectedCourtiers.find(sc => sc.id === c.id) ? true : false;
 
       return `
-        <div class="checkbox-item">
-          <input type="checkbox" name="courtierSelect" value="${c.id}">
-          <label>
-            <strong>${c.prenom} ${c.nom}</strong><br>
-            <small>${dispoText.join(' • ') || 'Disponibilités à confirmer'}</small>
-          </label>
-        </div>
+        <tr style="cursor: pointer; ${isSelected ? 'background: #f0f0f0 !important;' : ''}">
+          <td style="font-weight: 600; color: var(--primary);">${c.prenom} ${c.nom}</td>
+          <td>${c.telephone}</td>
+          <td>${avis}</td>
+          <td>${reponse}</td>
+          <td>
+            <div class="dispo-checkboxes">
+              <label class="checkbox-label">
+                <input type="checkbox" ${dispos.visio ? 'checked' : ''} disabled>
+                <span style="font-size: 12px;">Visio</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" ${dispos.bureau ? 'checked' : ''} disabled>
+                <span style="font-size: 12px;">Bureau</span>
+              </label>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <label class="checkbox-label">
+              <input type="checkbox" name="courtier-checkbox" value="${c.id}" ${isSelected ? 'checked' : ''} onchange="toggleCourtier('${c.id}', '${c.prenom} ${c.nom}', event)">
+            </label>
+          </td>
+        </tr>
       `;
     }).join('');
 
-    document.getElementById('courtiersContainer').innerHTML = html || '<p style="color: var(--text-secondary);">Aucun courtier trouvé pour votre région.</p>';
+    document.getElementById('courtiersTableBody').innerHTML = html || '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Aucun courtier trouvé pour votre région.</td></tr>';
   }
 
-  function updateCourtierMode() {
-    const mode = document.querySelector('input[name="courtierMode"]:checked').value;
-    document.getElementById('courtierAutoMode').style.display = mode === 'auto' ? 'block' : 'none';
-    document.getElementById('courtierManualMode').style.display = mode === 'manual' ? 'block' : 'none';
+  function selectCourtier(id, name) {
+    selectedCourtier = { id, name };
+    document.getElementById('summaryCourtier').textContent = name;
+    updateProgress();
   }
 
-  async function submitForm() {
+  function updateProgress() {
+    const nom = document.getElementById('nom').value;
+    const email = document.getElementById('email').value;
+    const courtierSelected = courtiersMode === 'direct' ? (selectedCourtiers.length > 0 ? 1 : 0) : 1;
+    const parts = (nom ? 1 : 0) + (email ? 1 : 0) + (formData.budget_max ? 1 : 0) + courtierSelected;
+    document.getElementById('progressFill').style.width = (parts / 4) * 100 + '%';
+  }
+
+  async function validateAndSubmit() {
+    const errors = [];
+    const nom = document.getElementById('nom').value.trim();
+    const prenom = document.getElementById('prenom').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const tel = document.getElementById('telephone').value.trim();
+    const cp = document.getElementById('codePostal').value.trim();
+    const consentement = document.getElementById('consentementRecontact').checked;
+
+    if (!nom) errors.push('Nom requis');
+    if (!prenom) errors.push('Prénom requis');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email invalide');
+    if (!tel || !/^[0-9\s\+\-\.]{9,}$/.test(tel)) errors.push('Téléphone invalide');
+    if (!cp || !/^\d{5}$/.test(cp)) errors.push('Code postal invalide');
+    if (!consentement) errors.push('Consentement requis (décret 11 août 2026)');
+    
+    if (courtiersMode === 'direct' && selectedCourtiers.length === 0) {
+      errors.push('Sélectionnez 1 ou 2 courtiers');
+    }
+
+    if (errors.length > 0) {
+      document.getElementById('errorAlert').textContent = '✗ ' + errors.join(', ');
+      document.getElementById('errorAlert').classList.add('show');
+      return;
+    }
+
     document.getElementById('loader').classList.add('active');
     document.getElementById('submitContent').style.display = 'none';
-    document.getElementById('successAlert').style.display = 'none';
-    document.getElementById('errorAlert').style.display = 'none';
+    document.getElementById('errorAlert').classList.remove('show');
 
     try {
-      // 1. Insérer dans demandes_financement
-      const { data: demande, error: insertError } = await supabase
-        .from('demandes_financement')
-        .insert([{
-          user_id: (await supabase.auth.getUser()).data.user?.id || null,
-          revenus_mensuels: formData.revenus_mensuels,
-          charges_mensuelles: formData.charges_mensuelles,
-          apport: formData.apport,
-          duree_emprunt: formData.duree_emprunt,
-          taux_interet: formData.taux_interet,
-          assurance_mensuelle: formData.assurance_mensuelle,
-          budget_travaux: formData.budget_travaux,
-          epargne_restante: formData.epargne_restante,
-          objectif: formData.objectif,
-          budget_max_declare: formData.budget_max_declare,
-          endettement_ratio: formData.endettement_ratio,
-          mensualite_totale: formData.mensualite_totale,
-          montant_emprunt: formData.montant_emprunt,
-          pieces_cochees: formData.pieces_cochees,
-          courtiers_selectionnes: formData.courtiers_selectionnes.map(id => ({ courtier_id: id, dispo: 'bureau' })),
-          telephone_contact: formData.telephone,
-          acheteur_accepte_partager_resultats: formData.acheteur_accepte_partager_resultats,
-          statut: 'en_attente'
-        }])
-        .select();
+      const pieces = Array.from(document.querySelectorAll('input[name="pieces"]:checked')).map(p => p.value);
 
-      if (insertError) throw insertError;
+      if (courtiersMode === 'direct') {
+        // FLUX DIRECT: Envoyer à 1-2 courtiers sélectionnés
+        const courtierIds = selectedCourtiers.map(c => c.id);
+        
+        const { error } = await supabase
+          .from('demandes_financement')
+          .insert([{
+            nom, prenom, email, telephone: tel, code_postal: cp,
+            budget_max: formData.budget_max, endettement_ratio: formData.endettement_ratio,
+            mensualite: formData.mensualite, montant_emprunt: formData.montant_emprunt,
+            courtier_id: courtierIds[0], // Premier courtier (ou gérer 2 courtiers en table pivot)
+            pieces_fournies: pieces, statut: 'en_attente', mode: 'direct',
+            consentement_recontact: true
+          }]);
 
-      // 2. Envoyer les mails via Edge Function
-      const response = await fetch('/api/envoyer-demande-financement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          demandeId: demande[0].id,
-          acheteur: {
-            nom: formData.nom,
-            prenom: formData.prenom,
-            email: formData.email,
-            telephone: formData.telephone
-          },
-          resultats: {
-            budget: formData.budget_max_declare,
-            mensualite: formData.mensualite_totale,
-            endettement: formData.endettement_ratio
-          },
-          courtiers: formData.courtiers_selectionnes,
-          courtierMode: formData.courtierMode
-        })
-      });
+        if (error) throw error;
+        
+        // Email aux courtiers sélectionnés
+        for (const courtier of selectedCourtiers) {
+          await fetch('/.netlify/functions/notify-courtier-direct', {
+            method: 'POST',
+            body: JSON.stringify({
+              courtier_id: courtier.id,
+              demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max }
+            })
+          });
+        }
 
-      if (!response.ok) throw new Error('Erreur envoi emails');
+      } else {
+        // FLUX ALERTE: Envoyer alerte à TOUS les courtiers du département
+        const department = parseInt(cp.substring(0, 2));
+        
+        const { data: response } = await supabase
+          .from('demandes_financement')
+          .insert([{
+            nom, prenom, email, telephone: tel, code_postal: cp,
+            budget_max: formData.budget_max, endettement_ratio: formData.endettement_ratio,
+            mensualite: formData.mensualite, montant_emprunt: formData.montant_emprunt,
+            courtier_id: null, // Pas de courtier assigné
+            pieces_fournies: pieces, statut: 'alerte_courtiers', mode: 'alerte',
+            consentement_recontact: true
+          }])
+          .select();
 
-      document.getElementById('loader').classList.remove('active');
-      document.getElementById('successAlert').innerHTML = '✓ Demande envoyée ! Vous recevrez un email de confirmation. Un courtier vous contactera sous peu.';
-      document.getElementById('successAlert').style.display = 'block';
+        if (response && response.length > 0) {
+          const demandeId = response[0].id;
+          
+          // Envoyer alerte à tous les courtiers du département
+          await fetch('/.netlify/functions/alert-courtiers', {
+            method: 'POST',
+            body: JSON.stringify({
+              demande_id: demandeId,
+              department: department,
+              demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max }
+            })
+          });
+        }
+      }
 
-      setTimeout(() => {
-        window.location.href = '/espace-perso.html';
-      }, 3000);
-
+      alert('✓ Demande envoyée ! ' + (courtiersMode === 'direct' ? 
+        'Les courtiers vous contactera sous peu.' : 
+        'Les courtiers reçoivent votre alerte. Les premiers à accepter vous contacteront.'));
+      window.location.href = '/index.html';
+      
     } catch (err) {
-      console.error('Erreur:', err);
       document.getElementById('loader').classList.remove('active');
       document.getElementById('submitContent').style.display = 'block';
-      document.getElementById('errorAlert').innerHTML = '✗ Erreur : ' + err.message;
-      document.getElementById('errorAlert').style.display = 'block';
+      document.getElementById('errorAlert').textContent = '✗ Erreur: ' + err.message;
+      document.getElementById('errorAlert').classList.add('show');
     }
   }
-
-  // Init
-  showStep(1);
 </script>
-
 </body>
 </html>
