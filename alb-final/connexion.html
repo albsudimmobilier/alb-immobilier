@@ -26,7 +26,7 @@
       background: white;
       border-radius: 12px;
       padding: 40px;
-      max-width: 450px;
+      max-width: 500px;
       width: 100%;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       border-left: 4px solid var(--dore);
@@ -97,7 +97,8 @@
       font-weight: 600;
       margin-bottom: 8px;
     }
-    .form-group input {
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 12px;
       border: 1px solid #ddd;
@@ -105,10 +106,39 @@
       font-family: 'Montserrat', sans-serif;
       font-size: 1rem;
     }
-    .form-group input:focus {
+    .form-group input:focus,
+    .form-group select:focus {
       outline: none;
       border-color: var(--dore);
       box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .form-row .form-group {
+      margin-bottom: 0;
+    }
+    
+    .checkbox-group {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .checkbox-group input {
+      margin-top: 5px;
+      cursor: pointer;
+      width: auto;
+    }
+    .checkbox-group label {
+      margin-bottom: 0;
+      font-weight: 400;
+      font-size: 0.9rem;
+      color: #666;
+      cursor: pointer;
     }
     
     .btn-primary {
@@ -130,23 +160,6 @@
     .btn-primary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-    }
-    
-    .btn-secondary {
-      width: 100%;
-      background: white;
-      color: var(--dore);
-      padding: 12px;
-      border: 2px solid var(--dore);
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
-      margin-top: 10px;
-    }
-    .btn-secondary:hover {
-      background: var(--creme);
     }
     
     .error {
@@ -171,6 +184,23 @@
       display: none;
       text-align: center;
       color: #666;
+    }
+    
+    .forgot-pin {
+      text-align: center;
+      margin-top: 15px;
+    }
+    .forgot-pin a {
+      color: var(--dore);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .forgot-pin a:hover {
+      color: var(--pourpre);
+    }
+    
+    .hidden {
+      display: none;
     }
     
     .back-link {
@@ -201,9 +231,9 @@
   <!-- TAB 1: CONNEXION -->
   <div id="connexion" class="tab-content active">
     <h2>Connexion</h2>
-    <p class="subtitle">Entrez votre email, nous vous enverrons un code PIN</p>
+    <p class="subtitle">Entrez votre email et votre code PIN</p>
     
-    <form id="connexion-form" onsubmit="handleSendCode(event)">
+    <form id="connexion-form" onsubmit="handleLogin(event)">
       <div class="form-group">
         <label for="email-connexion">Email</label>
         <input 
@@ -214,28 +244,128 @@
         >
       </div>
       
-      <button type="submit" class="btn-primary" id="btn-send-code">Envoyer le code PIN</button>
+      <div class="form-group">
+        <label for="pin-connexion">Code PIN (4 chiffres)</label>
+        <input 
+          type="text" 
+          id="pin-connexion" 
+          placeholder="0000"
+          maxlength="4"
+          pattern="[0-9]{4}"
+          required
+        >
+      </div>
+      
+      <button type="submit" class="btn-primary" id="btn-login">Se connecter</button>
     </form>
     
-    <div class="loading" id="loading-connexion">Envoi du code en cours...</div>
+    <div class="loading" id="loading-connexion">Vérification en cours...</div>
     <div class="error" id="error-connexion"></div>
-    <div class="success" id="success-connexion">Code PIN envoyé par email! Rendez-vous sur la page de vérification.</div>
+    <div class="success" id="success-connexion">Connexion réussie, redirection...</div>
+    
+    <div class="forgot-pin">
+      <a href="pin-oublie.html">PIN oublié?</a>
+    </div>
   </div>
   
   <!-- TAB 2: INSCRIPTION -->
   <div id="inscription" class="tab-content">
     <h2>S'inscrire</h2>
-    <p class="subtitle">Commencez votre aventure avec ALB Immobilier</p>
+    <p class="subtitle">Créez votre compte ALB Immobilier</p>
     
-    <p style="color: #666; margin-bottom: 20px; font-size: 0.95rem;">
-      Dites-nous qui vous êtes pour continuer.
-    </p>
+    <form id="inscription-form" onsubmit="handleSignup(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="prenom">Prénom *</label>
+          <input 
+            type="text" 
+            id="prenom" 
+            placeholder="Jean"
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="nom">Nom *</label>
+          <input 
+            type="text" 
+            id="nom" 
+            placeholder="Dupont"
+            required
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email-inscription">Email *</label>
+        <input 
+          type="email" 
+          id="email-inscription" 
+          placeholder="vous@example.fr"
+          required
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="telephone">Téléphone *</label>
+        <input 
+          type="tel" 
+          id="telephone" 
+          placeholder="06 12 34 56 78"
+          required
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="profession">Profil *</label>
+        <select id="profession" required onchange="updateProFields()">
+          <option value="">-- Choisissez --</option>
+          <option value="particulier_acheteur">Particulier Acheteur</option>
+          <option value="particulier_vendeur">Particulier Vendeur</option>
+          <option value="agent">Agent immobilier</option>
+          <option value="courtier">Courtier</option>
+          <option value="artisan">Artisan</option>
+        </select>
+      </div>
+      
+      <!-- Champs PRO seulement -->
+      <div id="pro-fields" class="hidden">
+        <div class="form-group">
+          <label for="siret">SIRET *</label>
+          <input 
+            type="text" 
+            id="siret" 
+            placeholder="12345678901234"
+            maxlength="14"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="zones">Zones d'intervention (ex: Var, Draguignan)</label>
+          <input 
+            type="text" 
+            id="zones" 
+            placeholder="Draguignan, Var"
+          >
+        </div>
+      </div>
+      
+      <div class="checkbox-group">
+        <input 
+          type="checkbox" 
+          id="cgu" 
+          required
+        >
+        <label for="cgu">
+          J'accepte les <a href="cgu.html" target="_blank" style="color: var(--dore); text-decoration: none;">conditions générales</a> et la <a href="confidentialite.html" target="_blank" style="color: var(--dore); text-decoration: none;">politique de confidentialité</a>
+        </label>
+      </div>
+      
+      <button type="submit" class="btn-primary" id="btn-signup">Créer mon compte</button>
+    </form>
     
-    <div style="display: flex; flex-direction: column; gap: 15px;">
-      <a href="questionnaire-inscription.html" class="btn-primary" style="text-align: center; text-decoration: none; display: block;">
-        Créer un compte
-      </a>
-    </div>
+    <div class="loading" id="loading-inscription">Création du compte en cours...</div>
+    <div class="error" id="error-inscription"></div>
+    <div class="success" id="success-inscription">Compte créé! Redirection...</div>
   </div>
   
   <div class="back-link">
@@ -252,30 +382,47 @@
     btn.addEventListener('click', () => {
       const tabName = btn.dataset.tab;
       
-      // Désactiver tous les tabs
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       
-      // Activer le tab cliqué
       btn.classList.add('active');
       document.getElementById(tabName).classList.add('active');
       
-      // Réinitialiser les messages
       document.getElementById('error-connexion').style.display = 'none';
       document.getElementById('success-connexion').style.display = 'none';
       document.getElementById('loading-connexion').style.display = 'none';
+      document.getElementById('error-inscription').style.display = 'none';
+      document.getElementById('success-inscription').style.display = 'none';
+      document.getElementById('loading-inscription').style.display = 'none';
     });
   });
   
-  // SEND CODE (send-auth-code.js)
-  async function handleSendCode(event) {
+  // AFFICHER/MASQUER CHAMPS PRO
+  function updateProFields() {
+    const profession = document.getElementById('profession').value;
+    const proFields = document.getElementById('pro-fields');
+    const siretField = document.getElementById('siret');
+    
+    if (profession === 'agent' || profession === 'courtier' || profession === 'artisan') {
+      proFields.classList.remove('hidden');
+      siretField.required = true;
+    } else {
+      proFields.classList.add('hidden');
+      siretField.required = false;
+    }
+  }
+  
+  // LOGIN (email + PIN, pas d'email envoyé)
+  async function handleLogin(event) {
     event.preventDefault();
     
     const email = document.getElementById('email-connexion').value;
+    const pin = document.getElementById('pin-connexion').value;
+    
     const errorEl = document.getElementById('error-connexion');
     const successEl = document.getElementById('success-connexion');
     const loadingEl = document.getElementById('loading-connexion');
-    const btnSubmit = document.getElementById('btn-send-code');
+    const btnSubmit = document.getElementById('btn-login');
     
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
@@ -283,25 +430,87 @@
     btnSubmit.disabled = true;
     
     try {
-      // Appeler Edge Function send-auth-code
-      const response = await fetch('/.netlify/functions/send-auth-code', {
+      const response = await fetch('/.netlify/functions/verify-auth-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, pin }),
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'envoi du code');
+        throw new Error(data.error || 'Identifiants invalides');
       }
       
-      // Succès : afficher message et rediriger vers verify
+      localStorage.setItem('alb_user', data.userId);
+      
       successEl.style.display = 'block';
       loadingEl.style.display = 'none';
       
       setTimeout(() => {
-        window.location.href = `verify-code.html?email=${encodeURIComponent(email)}`;
+        window.location.href = 'espace-perso.html';
+      }, 1000);
+      
+    } catch (error) {
+      errorEl.textContent = '❌ ' + error.message;
+      errorEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      btnSubmit.disabled = false;
+    }
+  }
+  
+  // SIGNUP (création de compte)
+  async function handleSignup(event) {
+    event.preventDefault();
+    
+    const prenom = document.getElementById('prenom').value;
+    const nom = document.getElementById('nom').value;
+    const email = document.getElementById('email-inscription').value;
+    const telephone = document.getElementById('telephone').value;
+    const profession = document.getElementById('profession').value;
+    const siret = document.getElementById('siret').value || null;
+    const zones = document.getElementById('zones').value || null;
+    
+    const errorEl = document.getElementById('error-inscription');
+    const successEl = document.getElementById('success-inscription');
+    const loadingEl = document.getElementById('loading-inscription');
+    const btnSubmit = document.getElementById('btn-signup');
+    
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+    btnSubmit.disabled = true;
+    
+    try {
+      const response = await fetch('/.netlify/functions/create-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prenom,
+          nom,
+          email,
+          telephone,
+          siret,
+          zones,
+          profil: profession,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la création du compte');
+      }
+      
+      successEl.style.display = 'block';
+      loadingEl.style.display = 'none';
+      
+      setTimeout(() => {
+        if (profession === 'agent' || profession === 'courtier' || profession === 'artisan') {
+          window.location.href = 'connexion.html';
+        } else {
+          window.location.href = `verify-code.html?email=${encodeURIComponent(email)}`;
+        }
       }, 2000);
       
     } catch (error) {
@@ -312,7 +521,7 @@
     }
   }
   
-  // Si déjà connecté, redirect vers espace-perso
+  // Redirection si déjà connecté
   if (localStorage.getItem('alb_user')) {
     window.location.href = 'espace-perso.html';
   }
