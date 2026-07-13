@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quel profil êtes-vous? - ALB Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #FBF8F3;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--dore);
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.5rem;
+      color: var(--pourpre);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .logo strong { color: var(--dore); }
+    
+    h1 {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 35px;
+      text-align: center;
+    }
+    
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .option-card {
+      padding: 25px;
+      border: 2px solid #e8e6e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .option-card:hover {
+      border-color: var(--dore);
+      box-shadow: 0 4px 12px rgba(178, 142, 61, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .option-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .option-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--pourpre);
+      margin-bottom: 8px;
+    }
+    .option-desc {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.5;
+    }
+    
+    .back-link {
+      text-align: center;
+    }
+    .back-link a {
+      color: var(--dore);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link a:hover {
+      color: var(--pourpre);
+    }
+    
+    @media (min-width: 768px) {
+      .options {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .option-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo"><strong>ALB</strong> Immobilier</div>
+  
+  <h1>Quel profil êtes-vous?</h1>
+  <p class="subtitle">Choisissez le profil qui vous correspond pour continuer</p>
+  
+  <div class="options">
+    <!-- PARTICULIER ACHETEUR -->
+    <a href="inscription-particulier-acheteur.html" class="option-card">
+      <div class="option-icon">🔍</div>
+      <div class="option-title">Particulier Acheteur</div>
+      <div class="option-desc">Je cherche à acheter une maison ou un appartement</div>
+    </a>
+    
+    <!-- PARTICULIER VENDEUR -->
+    <a href="inscription-particulier-vendeur.html" class="option-card">
+      <div class="option-icon">🏠</div>
+      <div class="option-title">Particulier Vendeur</div>
+      <div class="option-desc">Je veux vendre mon bien immobilier</div>
+    </a>
+    
+    <!-- PRO -->
+    <a href="inscription-pro.html" class="option-card">
+      <div class="option-icon">💼</div>
+      <div class="option-title">Professionnel</div>
+      <div class="option-desc">Je suis agent, courtier ou artisan</div>
+    </a>
+  </div>
+  
+  <div class="back-link">
+    <a href="connexion.html">← Retour</a>
+  </div>
+</div>
+
+<script>
+  // Si déjà connecté, redirect vers espace-perso
+  if (localStorage.getItem('alb_user')) {
+    window.location.href = 'espace-perso.html';
+  }
+</script>
+
+</body>
+</html>
