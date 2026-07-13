@@ -1,0 +1,7 @@
+[build]
+  command = "npm run build"
+  publish = "alb-final"
+
+[functions]
+  directory = "api"
+  node_bundler = "esbuild"
