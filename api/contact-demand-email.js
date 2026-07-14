@@ -39,7 +39,7 @@ export default async (req, context) => {
     // Préparer les données pour Brevo
     const brevoData = {
       to: [{ email: proData.email, name: `${proData.prenom} ${proData.nom}` }],
-      templateId: 123, // À REMPLACER PAR LE NUMÉRO RÉEL DU TEMPLATE BREVO
+      templateId: 12, // À REMPLACER PAR LE NUMÉRO RÉEL DU TEMPLATE BREVO
       params: {
         CONTACT_NOM: nom,
         CONTACT_EMAIL: email,
