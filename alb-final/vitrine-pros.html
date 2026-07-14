@@ -22,9 +22,12 @@
     .filter-group:last-child { margin-bottom: 0; }
     .filter-label { font-weight: 500; font-size: 14px; margin-bottom: 0.8rem; display: block; }
     input[type="text"] { width: 100%; padding: 10px 12px; border: 0.5px solid #d3d1c7; border-radius: 8px; font-size: 14px; font-family: Montserrat; }
-    .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+    .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .filter-btn { padding: 8px 14px; border: 0.5px solid #d3d1c7; background: white; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
     .filter-btn.active { background: #4B1A3E; color: white; border-color: #4B1A3E; }
+    
+    .search-btn { padding: 10px 24px; background: #4B1A3E; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+    .search-btn:hover { opacity: 0.9; }
     
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
     .card { background: white; border: 0.5px solid #e5e4e1; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; }
@@ -73,7 +76,7 @@
     .modal h2 { font-family: Playfair Display, serif; font-size: 24px; margin-bottom: 1rem; color: #4B1A3E; }
     .form-group { margin-bottom: 1rem; }
     .form-group label { display: block; font-weight: 500; font-size: 13px; margin-bottom: 0.5rem; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 0.5px solid #d3d1c7; border-radius: 8px; font-family: Montserrat; font-size: 13px; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 0.5px solid #d3d1c7; border-radius: 8px; font-family: Montserrat; font-size: 13px; }
     .form-group textarea { resize: vertical; min-height: 100px; }
   </style>
 </head>
@@ -97,6 +100,7 @@
         <button class="filter-btn" data-type="agent">Agent/Mandataire</button>
       </div>
     </div>
+    <button class="search-btn" onclick="filterPros()">Rechercher</button>
   </div>
 
   <div id="prosContainer" class="grid"></div>
@@ -145,7 +149,7 @@
     <form id="avisForm" onsubmit="submitAvis(event)">
       <div class="form-group">
         <label>Note</label>
-        <select id="avisNote" required style="width: 100%; padding: 10px 12px; border: 0.5px solid #d3d1c7; border-radius: 8px; font-family: Montserrat;">
+        <select id="avisNote" required>
           <option value="">Sélectionnez une note</option>
           <option value="5">5 ⭐ Excellent</option>
           <option value="4">4 ⭐ Très bien</option>
@@ -209,7 +213,6 @@ async function loadPros() {
   
   allPros = data;
   
-  // Charger les avis pour chaque pro
   for (let pro of allPros) {
     const { data: avis } = await supabase
       .from('avis')
@@ -229,173 +232,4 @@ async function loadPros() {
     }
   }
   
-  document.getElementById('loadingState').style.display = 'none';
-  renderPros(allPros);
-}
-
-function setupFilters() {
-  document.getElementById('zoneFilter').addEventListener('input', filterPros);
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      filterPros();
-    });
-  });
-}
-
-function filterPros() {
-  const zone = document.getElementById('zoneFilter').value.toLowerCase();
-  const type = document.querySelector('.filter-btn.active').dataset.type;
-  
-  let filtered = allPros.filter(pro => {
-    const matchZone = !zone || pro.code_postal?.includes(zone) || pro.ville?.toLowerCase().includes(zone);
-    const matchType = type === 'tous' || (Array.isArray(typeMapping[type]) ? typeMapping[type].includes(pro.role) : pro.role === typeMapping[type]);
-    return matchZone && matchType;
-  });
-  
-  renderPros(filtered);
-}
-
-function renderPros(pros) {
-  const container = document.getElementById('prosContainer');
-  const emptyState = document.getElementById('emptyState');
-  
-  if (pros.length === 0) {
-    container.innerHTML = '';
-    emptyState.style.display = 'block';
-    return;
-  }
-  
-  emptyState.style.display = 'none';
-  container.innerHTML = pros.map(pro => `
-    <div class="card">
-      <div class="card-header">
-        <div class="avatar">${pro.prenom?.[0]?.toUpperCase()}${pro.nom?.[0]?.toUpperCase()}</div>
-        <div class="card-title">
-          <h3>${pro.prenom} ${pro.nom}</h3>
-          <p>${pro.nom_entreprise || 'Professionnel'}</p>
-        </div>
-      </div>
-      
-      <div class="badges">
-        ${pro.badge_type ? `<span class="badge">${pro.badge_type}</span>` : ''}
-        <span class="badge ${pro.role.includes('courtier') ? 'courtier' : pro.role.includes('artisan') ? 'artisan' : 'agent'}">${pro.role === 'courtier' ? 'Courtier' : pro.role === 'artisan' ? 'Artisan' : 'Agent/Mandataire'}</span>
-      </div>
-      
-      <p class="description">${pro.a_propos || 'Professionnel vérifiéé'}</p>
-      
-      <div class="info-box">
-        <div class="info-line">
-          📍 ${pro.code_postal || ''}, ${pro.ville || 'Zone à définir'}
-        </div>
-        <div class="info-line">
-          <span class="status-dot ${pro.statut === 'joignable' ? 'status-online' : pro.statut === 'en_reunion' ? 'status-busy' : 'status-offline'}"></span>
-          ${pro.statut === 'joignable' ? 'Joignable' : pro.statut === 'en_reunion' ? 'En réunion' : 'Indisponible'}
-        </div>
-        <div class="info-line">
-          <strong>Prénom :</strong> ${pro.prenom || '-'}
-        </div>
-        <div class="info-line">
-          <strong>Horaires :</strong> ${pro.disponibilites_rdv?.horaires || 'À définir'}
-        </div>
-        <div class="info-line">
-          <strong>Disponibilités :</strong> ${pro.disponibilites_rdv?.types?.filter(t => t !== 'Chantier').join(', ') || 'Visio, Bureau'}
-        </div>
-      </div>
-      
-      <div class="rating">
-        <span class="stars">${'★'.repeat(Math.round(pro.note_moyenne))}${'☆'.repeat(5 - Math.round(pro.note_moyenne))} (${pro.nombre_avis})</span>
-        <button class="review-link" onclick="showReviews(${pro.id}, '${pro.prenom} ${pro.nom}')">Voir avis</button>
-      </div>
-      
-      <div class="actions">
-        <button class="btn btn-primary" onclick="openContact(${pro.id}, '${pro.prenom} ${pro.nom}')">${currentUser ? 'Contacter' : 'Contacter'}</button>
-        <button class="btn btn-secondary" onclick="openAvis(${pro.id})">${currentUser ? 'Laisser votre avis' : 'Laisser votre avis'}</button>
-      </div>
-      <p class="login-hint">${!currentUser ? 'Connectez-vous pour contacter ou laisser un avis' : ''}</p>
-    </div>
-  `).join('');
-}
-
-function showReviews(proId, proName) {
-  const pro = allPros.find(p => p.id === proId);
-  const content = pro.avis_list.length > 0 
-    ? pro.avis_list.map(a => `<div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 0.5px solid #e5e4e1;">
-      <div style="font-weight: 500; margin-bottom: 0.5rem;">★ ${a.note}/5</div>
-      <p>${a.texte}</p>
-    </div>`).join('')
-    : '<p>Aucun avis pour le moment.</p>';
-  
-  document.getElementById('reviewsContent').innerHTML = content;
-  document.getElementById('reviewsModal').classList.add('active');
-}
-
-function openContact(proId, proName) {
-  if (!currentUser) {
-    window.location.href = 'connexion.html';
-    return;
-  }
-  selectedProId = proId;
-  document.getElementById('contactModal').classList.add('active');
-  document.getElementById('contactForm').onsubmit = (e) => submitContact(e, proId);
-}
-
-function openAvis(proId) {
-  if (!currentUser) {
-    window.location.href = 'connexion.html';
-    return;
-  }
-  selectedProId = proId;
-  document.getElementById('avisModal').classList.add('active');
-  document.getElementById('avisForm').onsubmit = (e) => submitAvis(e, proId);
-}
-
-async function submitContact(e, proId) {
-  e.preventDefault();
-  
-  const { error } = await supabase.from('demandes_contact').insert({
-    courtier_id: proId,
-    particulier_id: currentUser.id,
-    nom: document.getElementById('contactName').value,
-    email: document.getElementById('contactEmail').value,
-    telephone: document.getElementById('contactPhone').value,
-    message: document.getElementById('contactMessage').value
-  });
-  
-  if (error) {
-    alert('Erreur: ' + error.message);
-  } else {
-    alert('Demande envoyée avec succès!');
-    closeModal('contactModal');
-  }
-}
-
-async function submitAvis(e, proId) {
-  e.preventDefault();
-  
-  const { error } = await supabase.from('avis').insert({
-    pro_id: proId,
-    particulier_id: currentUser.id,
-    note: parseInt(document.getElementById('avisNote').value),
-    texte: document.getElementById('avisTexte').value,
-    verifiee: false
-  });
-  
-  if (error) {
-    alert('Erreur: ' + error.message);
-  } else {
-    alert('Avis envoyé! Il sera modéré avant publication.');
-    closeModal('avisModal');
-  }
-}
-
-function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('active');
-}
-
-init();
-</script>
-
-</body>
-</html>
+  document.getElementById('loa
