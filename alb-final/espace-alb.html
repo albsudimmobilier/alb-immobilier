@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace ALB - Hub Central</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+      --light-bg: #f9f7f4;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--creme);
+      color: #2b2b2b;
+    }
+    .header {
+      background: white;
+      border-bottom: 3px solid var(--dore);
+      padding: 15px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.3rem;
+      color: var(--pourpre);
+    }
+    .logo strong { color: var(--dore); }
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .btn-logout {
+      background: #d32f2f;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover {
+      background: #b71c1c;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+    .page-title {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+
+    .main-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      flex-wrap: wrap;
+      background: white;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .main-tab-button {
+      padding: 15px 25px;
+      background: transparent;
+      border: none;
+      color: #666;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      font-size: 0.95rem;
+    }
+    .main-tab-button:hover {
+      color: var(--pourpre);
+    }
+    .main-tab-button.active {
+      color: var(--pourpre);
+      border-bottom-color: var(--dore);
+    }
+    .main-tab-content {
+      display: none;
+    }
+    .main-tab-content.active {
+      display: block;
+    }
+
+    .sub-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-wrap: wrap;
+    }
+    .sub-tab-button {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: #999;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+    .sub-tab-button:hover {
+      color: var(--pourpre);
+    }
+    .sub-tab-button.active {
+      color: var(--pourpre);
+      border-bottom-color: var(--dore);
+    }
+    .sub-tab-content {
+      display: none;
+    }
+    .sub-tab-content.active {
+      display: block;
+    }
+
+    .user-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--dore);
+    }
+    .user-card h3 {
+      color: var(--pourpre);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    .user-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .user-info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-info-label {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .user-info-value {
+      color: var(--pourpre);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+    }
+    .btn-secondary {
+      background: var(--light-bg);
+      color: var(--pourpre);
+      border: 1px solid var(--dore);
+    }
+    .btn-secondary:hover {
+      background: #f0ebe3;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    .table th {
+      background: var(--light-bg);
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--pourpre);
+      border-bottom: 2px solid var(--dore);
+    }
+    .table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .table tr:hover {
+      background: #fafaf8;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-en-attente { background: #fff3cd; color: #856404; }
+    .status-disponible { background: #d4edda; color: #155724; }
+    .status-acceptee { background: #d1ecf1; color: #0c5460; }
+    .status-confirmee { background: #d4edda; color: #155724; }
+    .status-refusee { background: #f8d7da; color: #721c24; }
+    .status-completee { background: #d4edda; color: #155724; }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state {
+      background: white;
+      border-radius: 8px;
+      padding: 60px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .empty-state h3 {
+      color: var(--pourpre);
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
+    .empty-state p {
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .main-tabs, .sub-tabs {
+        flex-wrap: wrap;
+      }
+      .main-tab-button, .sub-tab-button {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+      }
+      .table {
+        font-size: 0.8rem;
+      }
+      .table th, .table td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-content">
+    <div class="logo"><strong>ALB</strong> Immobilier</div>
+    <div class="header-actions">
+      <span id="user-role-badge" style="color: var(--pourpre); font-weight: 600;"></span>
+      <button class="btn-logout" onclick="logout()">🔐 Déconnexion</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title">👤 Mon Espace ALB</h1>
+
+  <div class="user-card">
+    <h3>Mes informations</h3>
+    <div class="user-info">
+      <div class="user-info-item">
+        <span class="user-info-label">Prénom</span>
+        <span class="user-info-value" id="prenom-display">-</span>
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Nom</span>
+        <span class="user-info-value" id="nom-display">-</span>
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Email</span>
+        <span class="user-info-value" id="email-display">-</span>
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Téléphone</span>
+        <span class="user-info-value" id="telephone-display">-</span>
+      </div>
+      <div class="user-info-item">
+        <span class="user-info-label">Rôle</span>
+        <span class="user-info-value" id="role-display">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab-button active" onclick="switchMainTab('tab-particuliers-acheteurs')">👤 Acheteur</button>
+    <button class="main-tab-button" onclick="switchMainTab('tab-particuliers-vendeurs')">🏠 Vendeur</button>
+    <button class="main-tab-button" onclick="switchMainTab('tab-courtiers')">💼 Courtier</button>
+    <button class="main-tab-button" onclick="switchMainTab('tab-artisans')">🔨 Artisan</button>
+    <button class="main-tab-button" onclick="switchMainTab('tab-agents')">🏢 Agent/Mandataire</button>
+  </div>
+
+  <div id="tab-particuliers-acheteurs" class="main-tab-content active">
+    <div class="sub-tabs">
+      <button class="sub-tab-button active" onclick="switchSubTab('acheteur', 'financement')">📊 Projets Financement</button>
+      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'travaux')">🏗️ Projets Travaux</button>
+      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'visites')">📅 Organisation Visites</button>
+      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'contacts')">👥 Contacts Agents</button>
+    </div>
+
+    <div id="acheteur-financement" class="sub-tab-content active">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Statut</th>
+              <th>Budget</th>
+              <th>Prêt</th>
+              <th>Endettement</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="acheteur-financement-tbody">
+            <tr><td colspan="6" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="acheteur-travaux" class="sub-tab-content">
+      <div class="empty-state">
+        <h3>🏗️ Projets Travaux</h3>
+        <p>Aucun projet travaux pour le moment</p>
+        <button class="btn btn-primary" onclick="alert('À développer post-launch')">+ Créer un projet</button>
+      </div>
+    </div>
+
+    <div id="acheteur-visites" class="sub-tab-content">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Bien</th>
+              <th>Localisation</th>
+              <th>Prix</th>
+              <th>Date demandée</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="acheteur-visites-tbody">
+            <tr><td colspan="6" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="acheteur-contacts" class="sub-tab-content">
+      <div class="empty-state">
+        <h3>👥 Contacts Agents/Mandataires</h3>
+        <p>Aucun contact pour le moment</p>
+        <p style="font-size: 0.9rem; color: #999;">Les contacts apparaîtront après avoir pris un RDV avec un agent</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-particuliers-vendeurs" class="main-tab-content">
+    <div class="sub-tabs">
+      <button class="sub-tab-button active" onclick="switchSubTab('vendeur', 'annonces')">📋 Mes Annonces</button>
+      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'financement')">📊 Projets Financement</button>
+      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'travaux')">🏗️ Projets Travaux</button>
+      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'visites')">📅 Organisation Visites</button>
+      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'contacts')">👥 Contacts Agents</button>
+    </div>
+
+    <div id="vendeur-annonces" class="sub-tab-content active">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Prix</th>
+              <th>Localisation</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vendeur-annonces-tbody">
+            <tr><td colspan="5" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="vendeur-financement" class="sub-tab-content">
+      <div class="empty-state">
+        <h3>📊 Projets Financement</h3>
+        <p>Aucun projet financement pour le moment</p>
+      </div>
+    </div>
+
+    <div id="vendeur-travaux" class="sub-tab-content">
+      <div class="empty-state">
+        <h3>🏗️ Projets Travaux</h3>
+        <p>Aucun projet travaux pour le moment</p>
+      </div>
+    </div>
+
+    <div id="vendeur-visites" class="sub-tab-content">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Bien</th>
+              <th>Acheteur</th>
+              <th>Email</th>
+              <th>Date demandée</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vendeur-visites-tbody">
+            <tr><td colspan="6" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="vendeur-contacts" class="sub-tab-content">
+      <div class="empty-state">
+        <h3>👥 Contacts Agents/Mandataires</h3>
+        <p>Aucun contact pour le moment</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-courtiers" class="main-tab-content">
+    <div class="empty-state">
+      <h3>💼 Tableau de bord Courtier</h3>
+      <p>Accédez au dashboard courtier complet avec leads, profil et horaires</p>
+      <button class="btn btn-primary" onclick="window.location.href='dashboard-courtier.html'">📊 Ouvrir le Dashboard</button>
+    </div>
+  </div>
+
+  <div id="tab-artisans" class="main-tab-content">
+    <div class="empty-state">
+      <h3>🔨 Espace Artisan</h3>
+      <p>Tableau de bord dédié aux artisans - À développer post-launch</p>
+      <button class="btn btn-secondary" disabled>À développer</button>
+    </div>
+  </div>
+
+  <div id="tab-agents" class="main-tab-content">
+    <div class="empty-state">
+      <h3>🏢 Tableau de bord Agent/Mandataire</h3>
+      <p>Tableau de bord dédié aux agents et mandataires - À développer post-launch</p>
+      <button class="btn btn-secondary" disabled>À développer</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+
+<script>
+  let currentUserId = null;
+  let userRole = null;
+
+  async function initPage() {
+    const userId = localStorage.getItem('alb_user');
+    if (!userId) {
+      window.location.href = 'connexion.html';
+      return;
+    }
+
+    currentUserId = userId;
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('email, nom, prenom, telephone, role')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) {
+        console.error('Erreur chargement profil:', error);
+        alert('Erreur: impossible de charger le profil');
+        return;
+      }
+
+      userRole = data.role;
+      
+      document.getElementById('prenom-display').textContent = data.prenom || '-';
+      document.getElementById('nom-display').textContent = data.nom || '-';
+      document.getElementById('email-display').textContent = data.email || '-';
+      document.getElementById('telephone-display').textContent = data.telephone || '-';
+      document.getElementById('role-display').textContent = data.role || '-';
+      document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
+
+      if (data.role === 'acheteur' || data.role === 'particulier_acheteur') {
+        loadAcheteurData();
+      }
+
+      if (data.role === 'vendeur' || data.role === 'particulier_vendeur') {
+        loadVendeurData();
+      }
+
+    } catch (error) {
+      console.error('Erreur init:', error);
+    }
+  }
+
+  function switchMainTab(tabId) {
+    document.querySelectorAll('.main-tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.main-tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function switchSubTab(type, subTabId) {
+    const selector = type === 'acheteur' ? `#acheteur-${subTabId}` : `#vendeur-${subTabId}`;
+    const buttonSelector = `.sub-tab-button`;
+    
+    document.querySelectorAll(`[id^="${type}-"]`).forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll(buttonSelector).forEach(btn => btn.classList.remove('active'));
+    
+    document.querySelector(selector).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  async function loadAcheteurData() {
+    try {
+      const { data: demandes } = await window.supabaseClient
+        .from('demandes_financement')
+        .select('id, statut, budget_max, montant_emprunt, endettement_ratio, created_at')
+        .eq('acheteur_id', currentUserId);
+
+      const tbody = document.getElementById('acheteur-financement-tbody');
+      if (demandes && demandes.length > 0) {
+        tbody.innerHTML = demandes.map(d => `
+          <tr>
+            <td><span class="status-badge status-${d.statut}">${d.statut}</span></td>
+            <td>${d.budget_max?.toLocaleString()}€</td>
+            <td>${d.montant_emprunt?.toLocaleString()}€</td>
+            <td>${d.endettement_ratio}%</td>
+            <td>${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
+            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button></td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de financement</td></tr>';
+      }
+
+      const { data: visites } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, date_visite_demandee, statut, biens_immobiliers(titre, prix_vente, ville, code_postal)')
+        .eq('acheteur_id', currentUserId);
+
+      const visitesBody = document.getElementById('acheteur-visites-tbody');
+      if (visites && visites.length > 0) {
+        visitesBody.innerHTML = visites.map(v => `
+          <tr>
+            <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
+            <td>${v.biens_immobiliers?.code_postal} ${v.biens_immobiliers?.ville}</td>
+            <td>${v.biens_immobiliers?.prix_vente?.toLocaleString()}€</td>
+            <td>${new Date(v.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
+            <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
+            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Détails</button></td>
+          </tr>
+        `).join('');
+      } else {
+        visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite demandée</td></tr>';
+      }
+
+    } catch (error) {
+      console.error('Erreur chargement acheteur:', error);
+    }
+  }
+
+  async function loadVendeurData() {
+    try {
+      const { data: annonces } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('id, titre, prix_vente, ville, code_postal, statut')
+        .eq('vendeur_id', currentUserId);
+
+      const annoncesBody = document.getElementById('vendeur-annonces-tbody');
+      if (annonces && annonces.length > 0) {
+        annoncesBody.innerHTML = annonces.map(a => `
+          <tr>
+            <td>${a.titre || 'Sans titre'}</td>
+            <td>${a.prix_vente?.toLocaleString()}€</td>
+            <td>${a.code_postal} ${a.ville}</td>
+            <td><span class="status-badge status-${a.statut}">${a.statut}</span></td>
+            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Gérer</button></td>
+          </tr>
+        `).join('');
+      } else {
+        annoncesBody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune annonce</td></tr>';
+      }
+
+      const { data: visites } = await window.supabaseClient
+        .from('visites')
+        .select('id, bien_id, nom_acheteur, email_acheteur, date_visite_demandee, statut, biens_immobiliers(titre)')
+        .eq('vendeur_id', currentUserId);
+
+      const visitesBody = document.getElementById('vendeur-visites-tbody');
+      if (visites && visites.length > 0) {
+        visitesBody.innerHTML = visites.map(v => `
+          <tr>
+            <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
+            <td>${v.nom_acheteur}</td>
+            <td>${v.email_acheteur}</td>
+            <td>${new Date(v.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
+            <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
+            <td>
+              ${v.statut === 'demande_envoyee' ? `
+                <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #4caf50; color: white;">✅</button>
+                <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #d32f2f; color: white;">❌</button>
+              ` : `<button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button>`}
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de visite</td></tr>';
+      }
+
+    } catch (error) {
+      console.error('Erreur chargement vendeur:', error);
+    }
+  }
+
+  function logout() {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      localStorage.removeItem('alb_user');
+      window.location.href = 'index.html';
+    }
+  }
+
+  initPage();
+</script>
+
+</body>
+</html>
