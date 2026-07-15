@@ -65,7 +65,6 @@
       margin-bottom: 30px;
       font-size: 2rem;
     }
-
     .main-tabs {
       display: flex;
       gap: 0;
@@ -100,7 +99,6 @@
     .main-tab-content.active {
       display: block;
     }
-
     .sub-tabs {
       display: flex;
       gap: 0;
@@ -132,7 +130,6 @@
     .sub-tab-content.active {
       display: block;
     }
-
     .user-card {
       background: white;
       border: 1px solid #e0e0e0;
@@ -192,7 +189,6 @@
     .btn-secondary:hover {
       background: #f0ebe3;
     }
-
     .table-container {
       background: white;
       border-radius: 8px;
@@ -232,7 +228,6 @@
     .status-confirmee { background: #d4edda; color: #155724; }
     .status-refusee { background: #f8d7da; color: #721c24; }
     .status-completee { background: #d4edda; color: #155724; }
-
     .no-data {
       text-align: center;
       padding: 40px;
@@ -243,7 +238,6 @@
       padding: 40px;
       color: #999;
     }
-
     .empty-state {
       background: white;
       border-radius: 8px;
@@ -261,6 +255,216 @@
       margin-bottom: 20px;
     }
 
+    /* ===== MESSAGERIE STYLES ===== */
+    .messaging-wrapper {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 0;
+      height: 600px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .messaging-sidebar {
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      background: var(--light-bg);
+    }
+    .messaging-header {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .messaging-header h3 {
+      margin: 0 0 10px 0;
+      color: var(--pourpre);
+      font-size: 1.1rem;
+    }
+    .search-conv {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .search-conv input {
+      border: 0;
+      outline: 0;
+      background: transparent;
+      width: 100%;
+      font-family: 'Montserrat', sans-serif;
+      color: #2b2b2b;
+    }
+    .search-conv input::placeholder {
+      color: #999;
+    }
+    .conversations-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .conversation-btn {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      align-items: flex-start;
+      text-align: left;
+      color: #2b2b2b;
+      border-bottom: 1px solid #e0e0e0;
+      transition: background 0.3s;
+      width: 100%;
+    }
+    .conversation-btn:hover {
+      background: #f0ebe3;
+    }
+    .conversation-btn.active {
+      background: white;
+      border-left: 3px solid var(--dore);
+    }
+    .conv-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--dore);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex: none;
+    }
+    .conv-content {
+      min-width: 0;
+      flex: 1;
+    }
+    .conv-name {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #2b2b2b;
+      margin: 0 0 3px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .conv-preview {
+      font-size: 0.8rem;
+      color: #999;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .messaging-main {
+      display: flex;
+      flex-direction: column;
+    }
+    .messaging-chat-header {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
+    }
+    .messaging-chat-header h3 {
+      margin: 0;
+      color: var(--pourpre);
+      font-size: 1rem;
+    }
+    .messages-box {
+      overflow-y: auto;
+      flex: 1;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      display: flex;
+      gap: 8px;
+      max-width: 70%;
+    }
+    .message.sent {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message.received {
+      align-self: flex-start;
+    }
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--dore);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      flex: none;
+    }
+    .message.sent .message-avatar {
+      display: none;
+    }
+    .message-bubble {
+      padding: 10px 15px;
+      border-radius: 12px;
+      word-wrap: break-word;
+      line-height: 1.4;
+      font-size: 0.9rem;
+    }
+    .message.received .message-bubble {
+      background: #f0ebe3;
+      color: #2b2b2b;
+    }
+    .message.sent .message-bubble {
+      background: var(--pourpre);
+      color: white;
+    }
+    .messaging-input-area {
+      padding: 15px;
+      border-top: 1px solid #e0e0e0;
+      background: white;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .message-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+      resize: none;
+      max-height: 100px;
+    }
+    .message-input:focus {
+      outline: 0;
+      border-color: var(--dore);
+    }
+    .message-input::placeholder {
+      color: #999;
+    }
+    .send-btn {
+      background: var(--pourpre);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .send-btn:hover {
+      background: #6b2d5f;
+    }
+
     @media (max-width: 768px) {
       .main-tabs, .sub-tabs {
         flex-wrap: wrap;
@@ -275,11 +479,20 @@
       .table th, .table td {
         padding: 8px;
       }
+      .messaging-wrapper {
+        grid-template-columns: 1fr;
+        height: 500px;
+      }
+      .messaging-sidebar {
+        display: none;
+      }
+      .message {
+        max-width: 85%;
+      }
     }
   </style>
 </head>
 <body>
-
 <header class="header">
   <div class="header-content">
     <div class="logo"><strong>ALB</strong> Immobilier</div>
@@ -289,10 +502,8 @@
     </div>
   </div>
 </header>
-
 <div class="container">
   <h1 class="page-title">👤 Mon Espace ALB</h1>
-
   <div class="user-card">
     <h3>Mes informations</h3>
     <div class="user-info">
@@ -318,13 +529,13 @@
       </div>
     </div>
   </div>
-
   <div class="main-tabs">
     <button class="main-tab-button active" onclick="switchMainTab('tab-particuliers-acheteurs')">👤 Acheteur</button>
     <button class="main-tab-button" onclick="switchMainTab('tab-particuliers-vendeurs')">🏠 Vendeur</button>
     <button class="main-tab-button" onclick="switchMainTab('tab-courtiers')">💼 Courtier</button>
     <button class="main-tab-button" onclick="switchMainTab('tab-artisans')">🔨 Artisan</button>
     <button class="main-tab-button" onclick="switchMainTab('tab-agents')">🏢 Agent/Mandataire</button>
+    <button class="main-tab-button" onclick="switchMainTab('tab-messagerie')">💬 Messagerie</button>
   </div>
 
   <div id="tab-particuliers-acheteurs" class="main-tab-content active">
@@ -334,7 +545,6 @@
       <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'visites')">📅 Organisation Visites</button>
       <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'contacts')">👥 Contacts Agents</button>
     </div>
-
     <div id="acheteur-financement" class="sub-tab-content active">
       <div class="table-container">
         <table class="table">
@@ -354,7 +564,6 @@
         </table>
       </div>
     </div>
-
     <div id="acheteur-travaux" class="sub-tab-content">
       <div class="empty-state">
         <h3>🏗️ Projets Travaux</h3>
@@ -362,7 +571,6 @@
         <button class="btn btn-primary" onclick="alert('À développer post-launch')">+ Créer un projet</button>
       </div>
     </div>
-
     <div id="acheteur-visites" class="sub-tab-content">
       <div class="table-container">
         <table class="table">
@@ -382,7 +590,6 @@
         </table>
       </div>
     </div>
-
     <div id="acheteur-contacts" class="sub-tab-content">
       <div class="empty-state">
         <h3>👥 Contacts Agents/Mandataires</h3>
@@ -400,7 +607,6 @@
       <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'visites')">📅 Organisation Visites</button>
       <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'contacts')">👥 Contacts Agents</button>
     </div>
-
     <div id="vendeur-annonces" class="sub-tab-content active">
       <div class="table-container">
         <table class="table">
@@ -419,21 +625,18 @@
         </table>
       </div>
     </div>
-
     <div id="vendeur-financement" class="sub-tab-content">
       <div class="empty-state">
         <h3>📊 Projets Financement</h3>
         <p>Aucun projet financement pour le moment</p>
       </div>
     </div>
-
     <div id="vendeur-travaux" class="sub-tab-content">
       <div class="empty-state">
         <h3>🏗️ Projets Travaux</h3>
         <p>Aucun projet travaux pour le moment</p>
       </div>
     </div>
-
     <div id="vendeur-visites" class="sub-tab-content">
       <div class="table-container">
         <table class="table">
@@ -453,7 +656,6 @@
         </table>
       </div>
     </div>
-
     <div id="vendeur-contacts" class="sub-tab-content">
       <div class="empty-state">
         <h3>👥 Contacts Agents/Mandataires</h3>
@@ -483,6 +685,77 @@
       <h3>🏢 Tableau de bord Agent/Mandataire</h3>
       <p>Tableau de bord dédié aux agents et mandataires - À développer post-launch</p>
       <button class="btn btn-secondary" disabled>À développer</button>
+    </div>
+  </div>
+
+  <div id="tab-messagerie" class="main-tab-content">
+    <div class="messaging-wrapper">
+      <!-- SIDEBAR CONVERSATIONS -->
+      <div class="messaging-sidebar">
+        <div class="messaging-header">
+          <h3>Conversations</h3>
+          <div class="search-conv">
+            <span>🔍</span>
+            <input type="text" id="conv-search" placeholder="Chercher..." />
+          </div>
+        </div>
+        <div class="conversations-list" id="conversations-list">
+          <button class="conversation-btn active" onclick="selectConversation(this, 'MD', 'Marie Dupont')">
+            <div class="conv-avatar">MD</div>
+            <div class="conv-content">
+              <p class="conv-name">Marie Dupont</p>
+              <p class="conv-preview">Oui, ça me convient parfait!</p>
+            </div>
+          </button>
+          <button class="conversation-btn" onclick="selectConversation(this, 'JM', 'Jean Martin')">
+            <div class="conv-avatar">JM</div>
+            <div class="conv-content">
+              <p class="conv-name">Jean Martin</p>
+              <p class="conv-preview">Merci pour votre aide!</p>
+            </div>
+          </button>
+          <button class="conversation-btn" onclick="selectConversation(this, 'SL', 'Sophie Laurent')">
+            <div class="conv-avatar">SL</div>
+            <div class="conv-content">
+              <p class="conv-name">Sophie Laurent</p>
+              <p class="conv-preview">À bientôt pour la visite...</p>
+            </div>
+          </button>
+          <button class="conversation-btn" onclick="selectConversation(this, 'PC', 'Pierre Caron')">
+            <div class="conv-avatar">PC</div>
+            <div class="conv-content">
+              <p class="conv-name">Pierre Caron</p>
+              <p class="conv-preview">Les documents sont prêts</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- MESSAGES AREA -->
+      <div class="messaging-main">
+        <div class="messaging-chat-header">
+          <h3 id="chat-name">Marie Dupont</h3>
+        </div>
+
+        <div class="messages-box" id="messages-box">
+          <div class="message received">
+            <div class="message-avatar">MD</div>
+            <div class="message-bubble">Bonjour! J'ai bien reçu ta demande.</div>
+          </div>
+          <div class="message sent">
+            <div class="message-bubble">Merci pour la rapidité!</div>
+          </div>
+          <div class="message received">
+            <div class="message-avatar">MD</div>
+            <div class="message-bubble">Oui, ça me convient parfait pour demain! 😊</div>
+          </div>
+        </div>
+
+        <div class="messaging-input-area">
+          <textarea class="message-input" id="message-input" placeholder="Écris un message..." rows="1"></textarea>
+          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -556,6 +829,59 @@
     document.querySelector(selector).classList.add('active');
     event.target.classList.add('active');
   }
+
+  // MESSAGERIE FUNCTIONS
+  function selectConversation(btn, initials, name) {
+    document.querySelectorAll('.conversation-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('chat-name').textContent = name;
+    document.getElementById('messages-box').innerHTML = `
+      <div class="message received">
+        <div class="message-avatar">${initials}</div>
+        <div class="message-bubble">Bonjour! Comment puis-je t'aider?</div>
+      </div>
+    `;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+    
+    if (message) {
+      const messagesBox = document.getElementById('messages-box');
+      const newMessage = document.createElement('div');
+      newMessage.className = 'message sent';
+      newMessage.innerHTML = `<div class="message-bubble">${message}</div>`;
+      messagesBox.appendChild(newMessage);
+      
+      input.value = '';
+      input.style.height = 'auto';
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+  }
+
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && document.getElementById('message-input') === document.activeElement) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Search conversations
+  document.getElementById('conv-search')?.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.conversation-btn').forEach(btn => {
+      const name = btn.querySelector('.conv-name').textContent.toLowerCase();
+      btn.style.display = name.includes(query) || query === '' ? 'flex' : 'none';
+    });
+  });
+
+  // Textarea auto-resize
+  const textarea = document.getElementById('message-input');
+  textarea?.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
 
   async function loadAcheteurData() {
     try {
