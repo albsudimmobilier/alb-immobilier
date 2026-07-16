@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projets Travaux - ALB Immobilier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f3ee;
+            color: #333;
+        }
+
+        header {
+            background-color: #fff;
+            padding: 1rem 2rem;
+            border-bottom: 3px solid #B28E3D;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-text h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: #4B1A3E;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            font-size: 0.7rem;
+            color: #B28E3D;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #333;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: #4B1A3E;
+            border-bottom-color: #B28E3D;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background-color: #C23030;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background-color: #a01f1f;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #4B1A3E;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .coming-soon {
+            background-color: #fff;
+            padding: 3rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .coming-soon h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #4B1A3E;
+            margin-bottom: 1rem;
+        }
+
+        .coming-soon p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .icon-emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="logo-text">
+                <h1><span style="color: #B28E3D;">ALB</span> Immobilier</h1>
+                <p>ALB SUD IMMOBILIER</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="index.html">Accueil</a>
+            <a href="annonces.html">Annonces</a>
+            <a href="vitrine-pros.html">Vitrine des pros</a>
+            <a href="projets-travaux.html" class="active">Projets travaux</a>
+            <a href="projets-financement.html">Projets financement</a>
+            <a href="espace-alb.html">Espace ALB</a>
+        </nav>
+
+        <div class="header-right">
+            <button class="logout-btn" onclick="window.location.href='login.html'">🚪 Déconnexion</button>
+        </div>
+    </header>
+
+    <main>
+        <h2>Projets Travaux</h2>
+        <p>Trouvez et gérez vos projets de rénovation avec nos artisans partenaires.</p>
+
+        <div class="coming-soon">
+            <div class="icon-emoji">🔨</div>
+            <h3>Bientôt disponible</h3>
+            <p>Cette section sera opérationnelle très prochainement. Elle vous permettra de créer, suivre et financer vos projets de travaux dans le Var et la région PACA.</p>
+        </div>
+    </main>
+</body>
+</html>
