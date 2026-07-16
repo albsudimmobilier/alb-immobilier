@@ -33,7 +33,7 @@ export default async (req, context) => {
     });
 
     // Envoyer email alerte à chaque courtier avec lien d'acceptation
-    const templateId = 124; // Template "Alerte demande financement - Boutons voir/accepter/refuser"
+    const templateId = 8; // Template "Alerte demande financement - Boutons voir/accepter/refuser"
     
     const emailPromises = filteredCourtiers.map(courtier => {
     // Créer les 3 liens/boutons
