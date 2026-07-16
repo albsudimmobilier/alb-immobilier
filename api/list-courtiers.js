@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function json(body, status = 200) {
@@ -22,8 +26,7 @@ export default async (req) => {
       .from('profiles')
       .select('id, nom, prenom, email, telephone, departement, code_poste, role, actif, statut_verifie, dispo_rdv, temps_reponse_moyen')
       .eq('role', 'courtier')
-      .eq('actif', true)
-      .order('date_creation', { ascending: false });
+      .eq('actif', true);
 
     if (error) {
       return json({ error: error.message }, 500);
