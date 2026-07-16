@@ -419,29 +419,6 @@ async function validateAndSubmit() {
     const pieces = Array.from(document.querySelectorAll('input[name="pieces"]:checked')).map(p => p.value);
     const department = parseInt(cp.substring(0, 2));
     
-    const supabase = window.supabase.createClient(
-      'https://kutbxyinpogebjdemlnq.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE2Njk4MTI2NzYsImV4cCI6MTk4NTM4ODY3Nn0.rK2TLxEcPCaO8BJ5NKqF2Fd6EwMXPGSGJ0-UdKxBrEQ'
-    );
-
-    const { data: demandeData } = await supabase
-      .from('demandes_financement')
-      .insert([{
-        nom, prenom, email, telephone: tel, code_postal: cp,
-        budget_max: formData.budget_max, 
-        endettement_ratio: formData.endettement,
-        mensualite: formData.mensualite, 
-        montant_emprunt: formData.emprunt,
-        courtier_id: selectedCourtiers[0]?.id || null,
-        pieces_fournies: pieces, 
-        statut: 'en_attente', 
-        mode: courtiersMode,
-        consentement_recontact: true
-      }])
-      .select();
-
-    const demandeId = demandeData?.[0]?.id;
-
     if (courtiersMode === 'direct') {
       for (const courtier of selectedCourtiers) {
         fetch('/.netlify/functions/notify-courtier-direct', {
@@ -449,18 +426,21 @@ async function validateAndSubmit() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             courtier_id: courtier.id,
-            demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0 }
+            demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0, endettement: formData.endettement || 0, mensualite: formData.mensualite || 0, emprunt: formData.emprunt || 0 },
+            pieces: pieces,
+            mode: courtiersMode
           })
         }).catch(() => {});
       }
-    } else if (demandeId) {
+    } else {
       fetch('/.netlify/functions/alert-courtiers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          demande_id: demandeId,
           department: department,
-          demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0 }
+          demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0, endettement: formData.endettement || 0, mensualite: formData.mensualite || 0, emprunt: formData.emprunt || 0 },
+          pieces: pieces,
+          mode: courtiersMode
         })
       }).catch(() => {});
     }
@@ -470,6 +450,7 @@ async function validateAndSubmit() {
 
   alert('✓ Demande envoyée avec succès!');
   window.location.href = '/index.html';
+}
 }
 </script>
 
