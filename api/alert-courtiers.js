@@ -17,7 +17,14 @@ function normalizePieces(pieces) {
   return Array.isArray(pieces) ? pieces.filter(Boolean) : [];
 }
 
-export default async (req, context) => {
+function buildDepartmentFilter(department) {
+  if (!department && department !== 0) return null;
+  const dept = String(department).trim();
+  if (!dept) return null;
+  return dept.length === 1 ? `0${dept}` : dept;
+}
+
+export default async (req) => {
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405);
   }
@@ -48,8 +55,9 @@ export default async (req, context) => {
     const acheteurAcceptePartagerResultats = Boolean(demande.acheteur_accepte_partager_resultats ?? true);
 
     const piecesNettoyees = normalizePieces(pieces);
+    const dept = buildDepartmentFilter(department);
 
-    const { data: insertedRows, error: insertError } = await supabase
+    const { data: demandeRows, error: insertError } = await supabase
       .from('demandes_financement')
       .insert([{
         user_id: demande.user_id || null,
@@ -86,26 +94,33 @@ export default async (req, context) => {
       return json({ error: insertError.message }, 500);
     }
 
-    const demandeCreated = insertedRows?.[0];
+    const demandeCreated = demandeRows?.[0];
     if (!demandeCreated) {
       return json({ error: 'Insert succeeded but no row returned' }, 500);
     }
 
-    const { data: courtiers, error: courtiersError } = await supabase
+    let courtiersQuery = supabase
       .from('profiles')
-      .select('id, email, prenom, nom')
+      .select('id,email,nom,prenom,departement,code_poste,role,dispo_rdv,temps_reponse_moyen,statut,actif')
       .eq('role', 'courtier')
-      .or(department ? `code_postal.ilike.${String(department).padStart(2, '0')}%` : 'id.not.is.null');
+      .eq('actif', true);
+
+    if (dept) {
+      courtiersQuery = courtiersQuery.or(
+        `departement.eq.${dept},code_poste.ilike.${dept}%`
+      );
+    }
+
+    const { data: courtiers, error: courtiersError } = await courtiersQuery.order('date_creation', { ascending: false });
 
     if (courtiersError) {
       console.error('Courtiers fetch error:', courtiersError);
     }
 
+    const eligibleCourtiers = (courtiers || []).filter(c => c.email && c.statut !== 'suspendu');
     const templateId = 8;
 
-    for (const courtier of courtiers || []) {
-      if (!courtier?.email) continue;
-
+    for (const courtier of eligibleCourtiers) {
       await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -117,6 +132,7 @@ export default async (req, context) => {
           templateId,
           params: {
             COURTIER_PRENOM: courtier.prenom || '',
+            COURTIER_NOM: courtier.nom || '',
             CLIENT_NOM: nom,
             CLIENT_PRENOM: prenom,
             CLIENT_EMAIL: email,
@@ -135,7 +151,7 @@ export default async (req, context) => {
     return json({
       success: true,
       demand: demandeCreated,
-      courtiers_notifies: (courtiers || []).length
+      courtiers_notifies: eligibleCourtiers.length
     }, 200);
   } catch (err) {
     console.error('alert-courtiers error:', err);
