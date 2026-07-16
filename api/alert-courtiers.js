@@ -17,11 +17,26 @@ function normalizePieces(pieces) {
   return Array.isArray(pieces) ? pieces.filter(Boolean) : [];
 }
 
-function buildDepartmentFilter(department) {
-  if (!department && department !== 0) return null;
-  const dept = String(department).trim();
-  if (!dept) return null;
-  return dept.length === 1 ? `0${dept}` : dept;
+function normalizeDept(department) {
+  if (department === null || department === undefined) return null;
+  const d = String(department).trim();
+  if (!d) return null;
+  return d.length === 1 ? `0${d}` : d;
+}
+
+async function fetchCourtiers(dept) {
+  let query = supabase
+    .from('profiles')
+    .select('id,email,nom,prenom,departement,code_poste,role,dispo_rdv,temps_reponse_moyen,statut,actif')
+    .eq('role', 'courtier')
+    .eq('actif', true);
+
+  if (dept) {
+    query = query.or(`departement.eq.${dept},code_poste.ilike.${dept}%`);
+  }
+
+  const { data, error } = await query.order('date_creation', { ascending: false });
+  return { data, error };
 }
 
 export default async (req) => {
@@ -55,7 +70,7 @@ export default async (req) => {
     const acheteurAcceptePartagerResultats = Boolean(demande.acheteur_accepte_partager_resultats ?? true);
 
     const piecesNettoyees = normalizePieces(pieces);
-    const dept = buildDepartmentFilter(department);
+    const dept = normalizeDept(department);
 
     const { data: demandeRows, error: insertError } = await supabase
       .from('demandes_financement')
@@ -90,7 +105,6 @@ export default async (req) => {
       .select('*');
 
     if (insertError) {
-      console.error('Supabase insert error:', insertError);
       return json({ error: insertError.message }, 500);
     }
 
@@ -99,20 +113,7 @@ export default async (req) => {
       return json({ error: 'Insert succeeded but no row returned' }, 500);
     }
 
-    let courtiersQuery = supabase
-      .from('profiles')
-      .select('id,email,nom,prenom,departement,code_poste,role,dispo_rdv,temps_reponse_moyen,statut,actif')
-      .eq('role', 'courtier')
-      .eq('actif', true);
-
-    if (dept) {
-      courtiersQuery = courtiersQuery.or(
-        `departement.eq.${dept},code_poste.ilike.${dept}%`
-      );
-    }
-
-    const { data: courtiers, error: courtiersError } = await courtiersQuery.order('date_creation', { ascending: false });
-
+    const { data: courtiers, error: courtiersError } = await fetchCourtiers(dept);
     if (courtiersError) {
       console.error('Courtiers fetch error:', courtiersError);
     }
@@ -151,10 +152,10 @@ export default async (req) => {
     return json({
       success: true,
       demand: demandeCreated,
-      courtiers_notifies: eligibleCourtiers.length
-    }, 200);
+      courtiers_notifies: eligibleCourtiers.length,
+      department_used: dept
+    });
   } catch (err) {
-    console.error('alert-courtiers error:', err);
     return json({ error: err.message || 'Internal server error' }, 500);
   }
 };
