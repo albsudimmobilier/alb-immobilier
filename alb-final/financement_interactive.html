@@ -420,14 +420,15 @@ async function validateAndSubmit() {
   if (courtiersMode === 'direct' && selectedCourtiers.length === 0) errors.push('Sélectionnez 1 ou 2 courtiers');
   if (!formData.budget_max_declare) errors.push('Cliquez d’abord sur Calculer mon budget');
 
+  const alert = document.getElementById('errorAlert');
   if (errors.length) {
-    const alert = document.getElementById('errorAlert');
     alert.textContent = errors.join(' • ');
     alert.classList.add('show');
     return;
   }
 
-  document.getElementById('errorAlert').classList.remove('show');
+  alert.classList.remove('show');
+  alert.textContent = '';
   document.getElementById('loader').classList.add('active');
   document.getElementById('submitContent').style.display = 'none';
 
@@ -456,17 +457,25 @@ async function validateAndSubmit() {
       body: JSON.stringify(payload)
     });
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur serveur');
+    const raw = await res.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      throw new Error(raw.slice(0, 200) || 'Réponse serveur invalide');
+    }
 
-    if (json.demand) {
-      formData = { ...formData, ...json.demand };
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `Erreur serveur (${res.status})`);
+    }
+
+    if (data.demand) {
+      formData = { ...formData, ...data.demand };
       setSummary();
     }
 
     window.location.href = 'index.html';
   } catch (err) {
-    const alert = document.getElementById('errorAlert');
     alert.textContent = err.message || 'Erreur lors de l’envoi';
     alert.classList.add('show');
   } finally {
@@ -476,7 +485,10 @@ async function validateAndSubmit() {
 }
 
 document.addEventListener('input', setSummary);
-document.addEventListener('change', () => { setSummary(); if (document.getElementById('statusBadge').textContent !== 'En attente du calcul') calculerBudget(); });
+document.addEventListener('change', () => {
+  setSummary();
+  if (document.getElementById('statusBadge').textContent !== 'En attente du calcul') calculerBudget();
+});
 
 loadCourtiers();
 setSummary();
