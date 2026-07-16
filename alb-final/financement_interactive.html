@@ -461,7 +461,7 @@ async function validateAndSubmit() {
     let data = {};
     try {
       data = raw ? JSON.parse(raw) : {};
-    } catch (e) {
+    } catch {
       throw new Error(raw.slice(0, 200) || 'Réponse serveur invalide');
     }
 
