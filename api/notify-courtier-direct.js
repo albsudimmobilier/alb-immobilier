@@ -27,7 +27,7 @@ export default async (req, context) => {
     }
 
     // Envoyer email Brevo au courtier
-    const templateId = 123; // Template "Demande financement directe"
+    const templateId = 8; // Template "Demande financement directe"
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
