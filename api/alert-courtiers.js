@@ -24,19 +24,8 @@ function normalizeDept(department) {
   return d.length === 1 ? `0${d}` : d;
 }
 
-async function fetchCourtiers(dept) {
-  let query = supabase
-    .from('profiles')
-    .select('id,email,nom,prenom,departement,code_poste,role,dispo_rdv,temps_reponse_moyen,statut,actif')
-    .eq('role', 'courtier')
-    .eq('actif', true);
-
-  if (dept) {
-    query = query.or(`departement.eq.${dept},code_poste.ilike.${dept}%`);
-  }
-
-  const { data, error } = await query.order('date_creation', { ascending: false });
-  return { data, error };
+function toCurrency(v) {
+  return Number(v || 0).toLocaleString('fr-FR');
 }
 
 export default async (req) => {
@@ -113,48 +102,70 @@ export default async (req) => {
       return json({ error: 'Insert succeeded but no row returned' }, 500);
     }
 
-    const { data: courtiers, error: courtiersError } = await fetchCourtiers(dept);
-    if (courtiersError) {
-      console.error('Courtiers fetch error:', courtiersError);
+    let courtiersQuery = supabase
+      .from('profiles')
+      .select('id, email, prenom, nom, departement, code_poste, role, actif, statut_verifie')
+      .eq('role', 'courtier')
+      .eq('actif', true);
+
+    if (dept) {
+      courtiersQuery = courtiersQuery.or(
+        `departement.eq.${dept},code_poste.ilike.${dept}%`
+      );
     }
 
-    const eligibleCourtiers = (courtiers || []).filter(c => c.email && c.statut !== 'suspendu');
+    const { data: courtiers, error: courtiersError } = await courtiersQuery.order('date_creation', { ascending: false });
+
+    if (courtiersError) {
+      return json({ error: courtiersError.message }, 500);
+    }
+
+    const eligibleCourtiers = (courtiers || []).filter(c => c.email && c.statut_verifie !== false);
+
+    if (eligibleCourtiers.length === 0) {
+      return json({
+        success: true,
+        demand: demandeCreated,
+        courtiers_notifies: 0,
+        message: 'Aucun courtier trouvé pour cette zone'
+      }, 200);
+    }
+
     const templateId = 8;
 
-    for (const courtier of eligibleCourtiers) {
-      await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'api-key': BREVO_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          to: [{ email: courtier.email, name: `${courtier.prenom || ''} ${courtier.nom || ''}`.trim() }],
-          templateId,
-          params: {
-            COURTIER_PRENOM: courtier.prenom || '',
-            COURTIER_NOM: courtier.nom || '',
-            CLIENT_NOM: nom,
-            CLIENT_PRENOM: prenom,
-            CLIENT_EMAIL: email,
-            CLIENT_TEL: telephone,
-            CLIENT_CP: codePostal,
-            BUDGET_MAX: Number(budgetMaxDeclare).toLocaleString('fr-FR'),
-            ENDDETTEMENT: Number(endettementRatio).toFixed(1),
-            MENSUALITE: Number(mensualiteTotale).toLocaleString('fr-FR'),
-            MODE: mode,
-            SENDER: 'ALB Sud Immobilier'
-          }
-        })
-      });
-    }
+    const notifyPromises = eligibleCourtiers.map(courtier => fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: [{ email: courtier.email, name: `${courtier.prenom || ''} ${courtier.nom || ''}`.trim() }],
+        templateId,
+        params: {
+          COURTIER_PRENOM: courtier.prenom || '',
+          COURTIER_NOM: courtier.nom || '',
+          CLIENT_NOM: nom,
+          CLIENT_PRENOM: prenom,
+          CLIENT_EMAIL: email,
+          CLIENT_TEL: telephone,
+          CLIENT_CP: codePostal,
+          BUDGET_MAX: toCurrency(budgetMaxDeclare),
+          ENDDETTEMENT: Number(endettementRatio).toFixed(1),
+          MENSUALITE: toCurrency(mensualiteTotale),
+          MODE: mode,
+          SENDER: 'ALB Sud Immobilier'
+        }
+      })
+    }));
+
+    await Promise.allSettled(notifyPromises);
 
     return json({
       success: true,
       demand: demandeCreated,
-      courtiers_notifies: eligibleCourtiers.length,
-      department_used: dept
-    });
+      courtiers_notifies: eligibleCourtiers.length
+    }, 200);
   } catch (err) {
     return json({ error: err.message || 'Internal server error' }, 500);
   }
