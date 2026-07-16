@@ -279,6 +279,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 let selectedCourtiers = [];
@@ -389,12 +390,13 @@ function toggleCourtier(id, name, event) {
   updateCourtierCount();
 }
 
-function validateAndSubmit() {
+async function validateAndSubmit() {
   const errors = [];
   const nom = document.getElementById('nom').value.trim();
   const prenom = document.getElementById('prenom').value.trim();
   const email = document.getElementById('email').value.trim();
   const tel = document.getElementById('telephone').value.trim();
+  const cp = document.getElementById('codePostal').value.trim();
   const consentement = document.getElementById('consentementRecontact').checked;
 
   if (!nom) errors.push('Nom requis');
@@ -411,6 +413,59 @@ function validateAndSubmit() {
     document.getElementById('errorAlert').textContent = '✗ ' + errors.join(', ');
     document.getElementById('errorAlert').classList.add('show');
     return;
+  }
+
+  try {
+    const pieces = Array.from(document.querySelectorAll('input[name="pieces"]:checked')).map(p => p.value);
+    const department = parseInt(cp.substring(0, 2));
+    
+    const supabase = window.supabase.createClient(
+      'https://kutbxyinpogebjdemlnq.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE2Njk4MTI2NzYsImV4cCI6MTk4NTM4ODY3Nn0.rK2TLxEcPCaO8BJ5NKqF2Fd6EwMXPGSGJ0-UdKxBrEQ'
+    );
+
+    const { data: demandeData } = await supabase
+      .from('demandes_financement')
+      .insert([{
+        nom, prenom, email, telephone: tel, code_postal: cp,
+        budget_max: formData.budget_max, 
+        endettement_ratio: formData.endettement,
+        mensualite: formData.mensualite, 
+        montant_emprunt: formData.emprunt,
+        courtier_id: selectedCourtiers[0]?.id || null,
+        pieces_fournies: pieces, 
+        statut: 'en_attente', 
+        mode: courtiersMode,
+        consentement_recontact: true
+      }])
+      .select();
+
+    const demandeId = demandeData?.[0]?.id;
+
+    if (courtiersMode === 'direct') {
+      for (const courtier of selectedCourtiers) {
+        fetch('/.netlify/functions/notify-courtier-direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courtier_id: courtier.id,
+            demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0 }
+          })
+        }).catch(() => {});
+      }
+    } else if (demandeId) {
+      fetch('/.netlify/functions/alert-courtiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          demande_id: demandeId,
+          department: department,
+          demande: { nom, prenom, email, tel, cp, budget_max: formData.budget_max || 0 }
+        })
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error(err);
   }
 
   alert('✓ Demande envoyée avec succès!');
