@@ -1,39 +1,58 @@
 import { createClient } from '@supabase/supabase-js';
-
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default async (req, context) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
-
   try {
-    const { courtier_id, demande } = await req.json();
-
-    // Récupérer l'email du courtier
-    const { data: courtier, error: courtierError } = await supabase
+    const { courtier_id, demande, pieces, mode } = await req.json();
+    
+    // 1️⃣ INSERT DANS SUPABASE
+    const { data: demandeData, error: insertError } = await supabase
+      .from('demandes_financement')
+      .insert([{
+        nom: demande.nom,
+        prenom: demande.prenom,
+        email: demande.email,
+        telephone: demande.tel,
+        code_postal: demande.cp,
+        budget_max: demande.budget_max,
+        endettement_ratio: demande.endettement,
+        mensualite: demande.mensualite,
+        montant_emprunt: demande.emprunt,
+        courtier_id: courtier_id,
+        pieces_fournies: pieces,
+        statut: 'en_attente',
+        mode: mode,
+        consentement_recontact: true
+      }])
+      .select();
+    
+    if (insertError || !demandeData || !demandeData[0]) {
+      console.error('Insert error:', insertError);
+      return new Response(JSON.stringify({ error: 'Insert failed' }), { status: 500 });
+    }
+    
+    // 2️⃣ RÉCUPÉRER COURTIER
+    const { data: courtier } = await supabase
       .from('profiles')
       .select('email, prenom, nom')
       .eq('id', courtier_id)
       .single();
-
-    if (courtierError || !courtier || !courtier.email) {
-      console.error('Courtier not found:', courtierError);
-      return new Response('Courtier not found', { status: 404 });
+    
+    if (!courtier || !courtier.email) {
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
     }
-
-    // Envoyer email Brevo au courtier
-    const templateId = 8; // Template "Demande financement directe"
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    
+    // 3️⃣ ENVOYER MAIL
+    const templateId = 8;
+    await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: {
-        'api-key': BREVO_API_KEY,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         to: [{ email: courtier.email, name: courtier.prenom + ' ' + courtier.nom }],
         templateId: templateId,
@@ -49,13 +68,7 @@ export default async (req, context) => {
         }
       })
     });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Brevo error:', error);
-      return new Response('Email send failed', { status: 500 });
-    }
-
+    
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {
     console.error('Error:', err);
