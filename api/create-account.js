@@ -111,7 +111,6 @@ export default async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
-
     const { prenom, nom, email, telephone, siret, zones, profil } = body;
 
     if (!prenom || !nom || !email || !telephone || !profil) {
@@ -159,21 +158,28 @@ export default async (req) => {
 
     const userId = authData.user.id;
 
+    // Construire l'objet profileData en fonction du type de profil
+    const profileData = {
+      prenom,
+      nom,
+      email,
+      telephone: telephone || null,
+      pin,
+      siret: isPro ? siret : null,
+      role: profil,
+      statut_verifie,
+      zone_activite: zones || null,
+    };
+
+    // Ajouter est_acheteur et est_vendeur UNIQUEMENT pour les particuliers
+    if (!isPro) {
+      profileData.est_acheteur = profil === 'particulier_acheteur';
+      profileData.est_vendeur = profil === 'particulier_vendeur';
+    }
+
     const { error: profileUpdateError } = await supabase
       .from('profiles')
-      .update({
-        prenom,
-        nom,
-        email,
-        telephone: telephone || null,
-        pin,
-        siret: isPro ? siret : null,
-        role: profil,
-        statut_verifie,
-        zone_activite: zones || null,
-        est_acheteur: profil === 'particulier_acheteur',
-        est_vendeur: profil === 'particulier_vendeur'
-      })
+      .update(profileData)
       .eq('id', userId);
 
     if (profileUpdateError) {
