@@ -168,12 +168,12 @@ export default async (req) => {
       siret: isPro ? siret : null,
       role: profil,
       statut_verifie,
-      zone_activite: zones || null,
+      zone_intervention: zones ? [zones] : null,
     };
 
-    // Ajouter est_acheteur et est_vendeur UNIQUEMENT pour les particuliers
+    // Ajouter est_acquereur et est_vendeur UNIQUEMENT pour les particuliers
     if (!isPro) {
-      profileData.est_acheteur = profil === 'particulier_acheteur';
+      profileData.est_acquereur = profil === 'particulier_acquereur';
       profileData.est_vendeur = profil === 'particulier_vendeur';
     }
 
