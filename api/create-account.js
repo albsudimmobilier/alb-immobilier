@@ -147,10 +147,7 @@ export default async (req) => {
           statut_verifie,
           siret: profil === 'pro' ? siret : null,
           role: profil === 'pro' ? role : null,
-          zones: profil === 'pro' ? zones : null,
-          est_vendeur: profil === 'particulier_vendeur',
-          est_acheteur: profil === 'particulier_acheteur',
-          est_pro: profil === 'pro',
+          zones: profil === 'pro' ? zones : null
         },
       ])
       .select('id')
