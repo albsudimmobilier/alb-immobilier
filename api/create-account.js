@@ -15,7 +15,22 @@ function isProProfile(profil) {
   return ['agent', 'courtier', 'artisan'].includes(profil);
 }
 
-async function sendWelcomeEmail(email, pin, prenom, brevoApiKey) {
+function getProEmail(profil) {
+  switch(profil) {
+    case 'courtier': return 'courtier@albimmobilier.fr';
+    case 'artisan': return 'artisan@albimmobilier.fr';
+    case 'agent': return 'agent-immobilier@albimmobilier.fr';
+    default: return 'contact@albimmobilier.fr';
+  }
+}
+
+function getParticularEmail(profil) {
+  if (profil === 'particulier_vendeur') return 'particulier-vendeur@albimmobilier.fr';
+  if (profil === 'particulier_acquereur') return 'particulier-acquereur@albimmobilier.fr';
+  return 'contact@albimmobilier.fr';
+}
+
+async function sendWelcomeTemplate(email, pin, prenom, templateId, fromEmail, brevoApiKey) {
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -24,27 +39,12 @@ async function sendWelcomeEmail(email, pin, prenom, brevoApiKey) {
     },
     body: JSON.stringify({
       to: [{ email, name: prenom }],
-      from: { email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' },
-      subject: 'Bienvenue sur ALB Immobilier !',
-      htmlContent: `
-        <html>
-          <body style="font-family: Montserrat, Arial; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #4B1A3E; font-size: 28px;">ALB Immobilier</h1>
-            </div>
-            <div style="background-color: #F5F0EB; padding: 30px; border-radius: 8px;">
-              <h2 style="color: #4B1A3E; margin-top: 0;">Bienvenue ${prenom} !</h2>
-              <p style="color: #666; margin: 20px 0;">Votre compte ALB Immobilier a été créé avec succès.</p>
-              <p style="color: #666; margin: 20px 0;">Voici votre code de connexion personnel :</p>
-              <div style="background-color: #4B1A3E; color: #B28E3D; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                <p style="font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 5px;">${pin}</p>
-              </div>
-              <p style="color: #999; font-size: 12px; margin-top: 20px;">⚠️ Ce code est personnel. Ne le partagez avec personne.</p>
-              <p style="color: #999; font-size: 12px;">Vous pourrez le modifier dans votre espace personnel après connexion.</p>
-            </div>
-          </body>
-        </html>
-      `,
+      from: { email: fromEmail, name: 'ALB Immobilier' },
+      templateId: templateId,
+      params: {
+        PRENOM: prenom,
+        PIN: pin,
+      },
     }),
   });
 
@@ -56,7 +56,7 @@ async function sendWelcomeEmail(email, pin, prenom, brevoApiKey) {
   return response.json();
 }
 
-async function sendProValidationEmail(prenom, nom, email, siret, role, zones, brevoApiKey) {
+async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones, brevoApiKey) {
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -66,20 +66,15 @@ async function sendProValidationEmail(prenom, nom, email, siret, role, zones, br
     body: JSON.stringify({
       to: [{ email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' }],
       from: { email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' },
-      subject: `Nouveau pro à valider : ${prenom} ${nom}`,
-      htmlContent: `
-        <html>
-          <body style="font-family: Montserrat, Arial; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2>Nouveau professionnel en attente de validation</h2>
-            <p><strong>Prénom :</strong> ${prenom}</p>
-            <p><strong>Nom :</strong> ${nom}</p>
-            <p><strong>Email :</strong> ${email}</p>
-            <p><strong>SIRET :</strong> ${siret || 'Non renseigné'}</p>
-            <p><strong>Rôle :</strong> ${role}</p>
-            <p><strong>Zones :</strong> ${zones || 'Non spécifiée'}</p>
-          </body>
-        </html>
-      `,
+      templateId: 2,
+      params: {
+        PRENOM: prenom,
+        NOM: nom,
+        EMAIL: email,
+        SIRET: siret || 'Non renseigné',
+        ROLE: role,
+        ZONES: zones || 'Non spécifiée',
+      },
     }),
   });
 
@@ -138,7 +133,7 @@ export default async (req) => {
     }
 
     const pin = generatePin();
-    const statut_verifie = isPro ? false : true;
+    const statut_verifie = profil === 'particulier_acquereur' ? true : false;
     const tempPassword = crypto.randomUUID();
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -186,10 +181,23 @@ export default async (req) => {
       return json({ error: profileUpdateError.message || 'Failed to update profile' }, 500);
     }
 
-    await sendWelcomeEmail(email, pin, prenom, brevoApiKey);
-
-    if (isPro) {
-      await sendProValidationEmail(prenom, nom, email, siret, profil, zones, brevoApiKey);
+    // ENVOYER LES EMAILS SELON LE PROFIL
+    try {
+      if (isPro) {
+        // PRO : Envoyer template #1 (Questionnaire_PRO) + notifier Joce
+        const proEmail = getProEmail(profil);
+        await sendWelcomeTemplate(email, pin, prenom, 1, proEmail, brevoApiKey);
+        await sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey);
+      } else if (profil === 'particulier_acquereur') {
+        // ACHETEUR : Envoyer template #14 (Bienvenue_Acheteur)
+        await sendWelcomeTemplate(email, pin, prenom, 14, 'particulier-acquereur@albimmobilier.fr', brevoApiKey);
+      } else if (profil === 'particulier_vendeur') {
+        // VENDEUR : Envoyer template #15 (Inscription_Vendeur)
+        await sendWelcomeTemplate(email, pin, prenom, 15, 'particulier-vendeur@albimmobilier.fr', brevoApiKey);
+      }
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Continue même si l'email échoue - le compte est créé
     }
 
     return json({
