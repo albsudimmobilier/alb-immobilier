@@ -145,8 +145,7 @@ export default async (req) => {
           pin,
           statut_verifie,
           siret: profil === 'pro' ? siret : null,
-          role: profil === 'pro' ? role : null,
-          zones: profil === 'pro' ? zones : null
+          role: profil === 'pro' ? role : null
         },
       ])
       .select('id')
