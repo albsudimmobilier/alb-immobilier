@@ -12,7 +12,7 @@ function generatePin() {
 }
 
 function isProProfile(profil) {
-  return ['agent', 'courtier', 'artisan'].includes(profil);
+  return ['agent', 'courtier', 'artisan', 'mandataire'].includes(profil);
 }
 
 function getProEmail(profil) {
@@ -20,6 +20,7 @@ function getProEmail(profil) {
     case 'courtier': return 'courtier@albimmobilier.fr';
     case 'artisan': return 'artisan@albimmobilier.fr';
     case 'agent': return 'agent-immobilier@albimmobilier.fr';
+    case 'mandataire': return 'agent-immobilier@albimmobilier.fr';
     default: return 'contact@albimmobilier.fr';
   }
 }
