@@ -71,7 +71,8 @@ async function sendProValidationEmail(prenom, nom, email, siret, role, zones, br
         <html>
           <body style="font-family: Montserrat, Arial; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>Nouveau professionnel en attente de validation</h2>
-            <p><strong>Nom :</strong> ${prenom} ${nom}</p>
+            <p><strong>Prénom :</strong> ${prenom}</p>
+            <p><strong>Nom :</strong> ${nom}</p>
             <p><strong>Email :</strong> ${email}</p>
             <p><strong>SIRET :</strong> ${siret}</p>
             <p><strong>Rôle :</strong> ${role}</p>
@@ -140,8 +141,6 @@ export default async (req) => {
       .insert([
         {
           email,
-          prenom,
-          nom,
           telephone: telephone || null,
           pin,
           statut_verifie,
