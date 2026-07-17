@@ -1,18 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const brevoApiKey = process.env.BREVO_API_KEY;
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// Générer PIN aléatoire
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// Envoyer email de bienvenue
-async function sendWelcomeEmail(email, pin, prenom) {
+async function sendWelcomeEmail(email, pin, prenom, brevoApiKey) {
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -29,21 +28,16 @@ async function sendWelcomeEmail(email, pin, prenom) {
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="color: #4B1A3E; font-size: 28px;">ALB Immobilier</h1>
             </div>
-            
             <div style="background-color: #F5F0EB; padding: 30px; border-radius: 8px;">
               <h2 style="color: #4B1A3E; margin-top: 0;">Bienvenue ${prenom}!</h2>
               <p style="color: #666; margin: 20px 0;">Votre compte ALB Immobilier a été créé avec succès.</p>
-              
               <p style="color: #666; margin: 20px 0;">Voici votre code de connexion personnel :</p>
-              
               <div style="background-color: #4B1A3E; color: #B28E3D; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
                 <p style="font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 5px;">${pin}</p>
               </div>
-              
               <p style="color: #999; font-size: 12px; margin-top: 20px;">⚠️ Ce code est personnel. Ne le partagez avec personne.</p>
               <p style="color: #999; font-size: 12px;">Vous pourrez le modifier dans votre espace personnel après connexion.</p>
             </div>
-            
             <div style="margin-top: 30px; text-align: center; color: #999; font-size: 12px;">
               <p>&copy; 2026 ALB Immobilier. Tous droits réservés.</p>
               <p>À la bien, toujours ✨</p>
@@ -55,15 +49,14 @@ async function sendWelcomeEmail(email, pin, prenom) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Brevo error: ${error.message}`);
+    const raw = await response.text();
+    throw new Error(`Brevo error: ${raw}`);
   }
 
   return response.json();
 }
 
-// Envoyer email de validation pour les pros
-async function sendProValidationEmail(prenom, nom, email, siret, role, zones) {
+async function sendProValidationEmail(prenom, nom, email, siret, role, zones, brevoApiKey) {
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -91,47 +84,57 @@ async function sendProValidationEmail(prenom, nom, email, siret, role, zones) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Brevo error: ${error.message}`);
+    const raw = await response.text();
+    throw new Error(`Brevo error: ${raw}`);
   }
 
   return response.json();
 }
 
-export default async function handler(req, res) {
+export default async (req) => {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return json({ error: 'Method not allowed' }, 405);
   }
 
   try {
-    const { prenom, nom, email, telephone, siret, role, zones, profil } = req.body;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const brevoApiKey = process.env.BREVO_API_KEY;
 
-    // Validation basique
-    if (!prenom || !nom || !email || !profil) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return json({ error: 'Missing Supabase environment variables' }, 500);
     }
 
-    // Vérifier que l'email n'existe pas déjà
-    const { data: existingProfile } = await supabase
+    if (!brevoApiKey) {
+      return json({ error: 'Missing BREVO_API_KEY' }, 500);
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const body = await req.json();
+
+    const { prenom, nom, email, telephone, siret, role, zones, profil } = body;
+
+    if (!prenom || !nom || !email || !profil) {
+      return json({ error: 'Missing required fields' }, 400);
+    }
+
+    const { data: existingProfile, error: existingError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
+
+    if (existingError) {
+      return json({ error: existingError.message }, 500);
+    }
 
     if (existingProfile) {
-      return res.status(409).json({ error: 'Cet email est déjà utilisé' });
+      return json({ error: 'Cet email est déjà utilisé' }, 409);
     }
 
-    // Générer PIN
     const pin = generatePin();
+    const statut_verifie = profil === 'pro' ? false : true;
 
-    // Déterminer statut_verifie
-    let statut_verifie = true; // true par défaut pour particuliers
-    if (profil === 'pro') {
-      statut_verifie = false; // false pour pros (en attente de validation)
-    }
-
-    // INSERT dans profiles
     const { data: newProfile, error: insertError } = await supabase
       .from('profiles')
       .insert([
@@ -154,29 +157,22 @@ export default async function handler(req, res) {
       .single();
 
     if (insertError) {
-      console.error('Supabase insert error:', insertError);
-      return res.status(500).json({ error: 'Failed to create profile' });
+      return json({ error: insertError.message || 'Failed to create profile' }, 500);
     }
 
-    // Envoyer email de bienvenue
-    await sendWelcomeEmail(email, pin, prenom);
+    await sendWelcomeEmail(email, pin, prenom, brevoApiKey);
 
-    // Si pro : envoyer email de validation à Joce
     if (profil === 'pro') {
-      await sendProValidationEmail(prenom, nom, email, siret, role, zones);
+      await sendProValidationEmail(prenom, nom, email, siret, role, zones, brevoApiKey);
     }
 
-    return res.status(200).json({
+    return json({
       success: true,
       message: 'Account created successfully',
       userId: newProfile.id,
       email,
-    });
-
+    }, 200);
   } catch (error) {
-    console.error('Error in create-account:', error);
-    return res.status(500).json({
-      error: error.message || 'Failed to create account',
-    });
+    return json({ error: error.message || 'Failed to create account' }, 500);
   }
-}
+};
