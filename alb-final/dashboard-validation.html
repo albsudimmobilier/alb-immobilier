@@ -92,12 +92,10 @@
 <script>
 const SUPABASE_URL = 'https://kutbxyinpogebjdemlnq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9nZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0Mjc1NzIsImV4cCI6MjAzNTAwMzU3Mn0.3KhpJgVZSPR2SmRV3TaYm-ZoMPlrcNv0YZfWGy51A74';
-
 let supabase;
 
 window.addEventListener('load', () => {
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  
   if(localStorage.getItem('logged') === '1') {
     document.getElementById('login').style.display = 'none';
     document.getElementById('dash').classList.add('active');
@@ -109,7 +107,6 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
   const pin = document.getElementById('pin').value;
-  
   if(email === 'contact@albimmobilier.fr' && pin === '2707') {
     localStorage.setItem('logged', '1');
     document.getElementById('login').style.display = 'none';
@@ -133,30 +130,17 @@ async function load() {
 
 async function loadAvis() {
   const {data: avis} = await supabase.from('avis').select('*').eq('verifiee', false);
-  
   if(!avis || avis.length === 0) {
     document.getElementById('loadAvis').style.display = 'none';
     document.getElementById('emptyAvis').style.display = 'block';
     return;
   }
-  
   let html = '';
   for(const a of avis) {
     const {data: pro} = await supabase.from('profiles').select('prenom,nom').eq('id', a.pro_id).single();
     const {data: auteur} = a.particulier_id ? await supabase.from('profiles').select('prenom,nom,email').eq('id', a.particulier_id).single() : {data: null};
-    
-    html += `<tr>
-      <td>⭐${a.note}</td>
-      <td>${a.texte}</td>
-      <td>${pro?.prenom} ${pro?.nom}</td>
-      <td>${auteur ? auteur.prenom + ' ' + auteur.nom : 'Anonyme'}</td>
-      <td>
-        <button class="btn-valider" onclick="valider('${a.id}','avis')">✅</button>
-        <button class="btn-refuser" onclick="refuser('${a.id}','avis')">❌</button>
-      </td>
-    </tr>`;
+    html += `<tr><td>⭐${a.note}</td><td>${a.texte}</td><td>${pro?.prenom} ${pro?.nom}</td><td>${auteur ? auteur.prenom + ' ' + auteur.nom : 'Anonyme'}</td><td><button class="btn-valider" onclick="valider('${a.id}','avis')">✅</button><button class="btn-refuser" onclick="refuser('${a.id}','avis')">❌</button></td></tr>`;
   }
-  
   document.getElementById('loadAvis').style.display = 'none';
   document.getElementById('tAvis').style.display = 'table';
   document.getElementById('bAvis').innerHTML = html;
@@ -164,25 +148,15 @@ async function loadAvis() {
 
 async function loadVendeurs() {
   const {data: v} = await supabase.from('profiles').select('*').eq('est_vendeur', true).eq('statut_verfie', false);
-  
   if(!v || v.length === 0) {
     document.getElementById('loadV').style.display = 'none';
     document.getElementById('emptyV').style.display = 'block';
     return;
   }
-  
   let html = '';
   for(const x of v) {
-    html += `<tr>
-      <td>${x.prenom} ${x.nom}</td>
-      <td>${x.email}</td>
-      <td>
-        <button class="btn-valider" onclick="valider('${x.id}','vendeur')">✅</button>
-        <button class="btn-refuser" onclick="refuser('${x.id}','vendeur')">❌</button>
-      </td>
-    </tr>`;
+    html += `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td><button class="btn-valider" onclick="valider('${x.id}','vendeur')">✅</button><button class="btn-refuser" onclick="refuser('${x.id}','vendeur')">❌</button></td></tr>`;
   }
-  
   document.getElementById('loadV').style.display = 'none';
   document.getElementById('tV').style.display = 'table';
   document.getElementById('bV').innerHTML = html;
@@ -190,26 +164,15 @@ async function loadVendeurs() {
 
 async function loadPros() {
   const {data: p} = await supabase.from('profiles').select('*').in('role', ['courtier','agent','artisan','mandataire']).eq('statut_verfie', false);
-  
   if(!p || p.length === 0) {
     document.getElementById('loadP').style.display = 'none';
     document.getElementById('emptyP').style.display = 'block';
     return;
   }
-  
   let html = '';
   for(const x of p) {
-    html += `<tr>
-      <td>${x.prenom} ${x.nom}</td>
-      <td>${x.email}</td>
-      <td>${x.role}</td>
-      <td>
-        <button class="btn-valider" onclick="valider('${x.id}','pro')">✅</button>
-        <button class="btn-refuser" onclick="refuser('${x.id}','pro')">❌</button>
-      </td>
-    </tr>`;
+    html += `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td>${x.role}</td><td><button class="btn-valider" onclick="valider('${x.id}','pro')">✅</button><button class="btn-refuser" onclick="refuser('${x.id}','pro')">❌</button></td></tr>`;
   }
-  
   document.getElementById('loadP').style.display = 'none';
   document.getElementById('tP').style.display = 'table';
   document.getElementById('bP').innerHTML = html;
