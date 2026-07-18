@@ -7,227 +7,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background: #FBF8F3;
-      color: #2b2b2b;
-    }
-    
-    .login-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #FBF8F3 0%, #f5f2ed 100%);
-    }
-    
-    .login-box {
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-      border-left: 4px solid #B28E3D;
-    }
-    
-    .login-box h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      color: #4B1A3E;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    label {
-      display: block;
-      font-weight: 600;
-      color: #4B1A3E;
-      margin-bottom: 8px;
-    }
-    
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #B28E3D;
-      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
-    }
-    
-    .login-btn {
-      width: 100%;
-      padding: 12px;
-      background: #4B1A3E;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s;
-    }
-    
-    .login-btn:hover {
-      background: #6b2d5f;
-      transform: translateY(-2px);
-    }
-    
-    .error {
-      color: #d32f2f;
-      font-size: 0.9rem;
-      margin-top: 10px;
-      text-align: center;
-    }
-    
-    .dashboard {
-      display: none;
-      padding: 30px;
-    }
-    
+    body { font-family: 'Montserrat', sans-serif; background: #FBF8F3; color: #2b2b2b; }
+    .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #FBF8F3 0%, #f5f2ed 100%); }
+    .login-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; border-left: 4px solid #B28E3D; }
+    .login-box h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #4B1A3E; margin-bottom: 30px; text-align: center; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; color: #4B1A3E; margin-bottom: 8px; }
+    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+    input:focus { outline: none; border-color: #B28E3D; box-shadow: 0 0 0 3px rgba(178,142,61,0.1); }
+    .login-btn { width: 100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+    .login-btn:hover { background: #6b2d5f; transform: translateY(-2px); }
+    .error { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; text-align: center; }
+    .dashboard { display: none; padding: 30px; }
     .dashboard.active { display: block; }
-    
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      border-bottom: 2px solid #B28E3D;
-      padding-bottom: 20px;
-    }
-    
-    .dashboard-header h1 {
-      font-family: 'Playfair Display', serif;
-      color: #4B1A3E;
-      font-size: 1.8rem;
-    }
-    
-    .logout-btn {
-      background: #d32f2f;
-      padding: 8px 16px;
-      width: auto;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-    
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #B28E3D; padding-bottom: 20px; }
+    .dashboard-header h1 { font-family: 'Playfair Display', serif; color: #4B1A3E; font-size: 1.8rem; }
+    .logout-btn { background: #d32f2f; padding: 8px 16px; width: auto; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
     .logout-btn:hover { background: #b71c1c; }
-    
-    .section {
-      margin-bottom: 50px;
-    }
-    
-    .section h2 {
-      font-family: 'Playfair Display', serif;
-      color: #4B1A3E;
-      font-size: 1.4rem;
-      margin-bottom: 20px;
-      border-left: 4px solid #B28E3D;
-      padding-left: 12px;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    th {
-      background: #f5f5f5;
-      padding: 15px;
-      text-align: left;
-      font-weight: 700;
-      color: #4B1A3E;
-      border-bottom: 2px solid #B28E3D;
-    }
-    
-    td {
-      padding: 15px;
-      border-bottom: 1px solid #e8e6e0;
-    }
-    
+    .section { margin-bottom: 50px; }
+    .section h2 { font-family: 'Playfair Display', serif; color: #4B1A3E; font-size: 1.4rem; margin-bottom: 20px; border-left: 4px solid #B28E3D; padding-left: 12px; }
+    .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f5f5f5; padding: 15px; text-align: left; font-weight: 700; color: #4B1A3E; border-bottom: 2px solid #B28E3D; }
+    td { padding: 15px; border-bottom: 1px solid #e8e6e0; }
     tr:hover { background: #fafaf8; }
-    
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    
-    .btn-valider {
-      background: #2e7d32;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-valider { background: #2e7d32; padding: 8px 12px; font-size: 0.85rem; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; }
     .btn-valider:hover { background: #1b5e20; }
-    
-    .btn-refuser {
-      background: #d32f2f;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
+    .btn-refuser { background: #d32f2f; padding: 8px 12px; font-size: 0.85rem; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; }
     .btn-refuser:hover { background: #b71c1c; }
-    
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-    }
-    
-    .note-preview {
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 0.9rem;
-      color: #666;
-    }
-    
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: #B28E3D;
-      color: white;
-      border-radius: 3px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+    .empty { text-align: center; padding: 40px; color: #999; }
+    .loading { text-align: center; padding: 20px; color: #666; }
+    .note-preview { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; color: #666; }
+    .badge { display: inline-block; padding: 4px 8px; background: #B28E3D; color: white; border-radius: 3px; font-size: 0.75rem; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -258,22 +70,11 @@
   </div>
   
   <div class="section">
-    <h2>⭐ Avis en attente de validation</h2>
+    <h2>⭐ Avis en attente</h2>
     <div class="table-container">
       <div id="loadingAvis" class="loading">Chargement...</div>
       <table id="tableAvis" style="display: none;">
-        <thead>
-          <tr>
-            <th>Note</th>
-            <th>Texte</th>
-            <th>Pro</th>
-            <th>Auteur</th>
-            <th>Email auteur</th>
-            <th>Téléphone</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Note</th><th>Texte</th><th>Pro</th><th>Auteur</th><th>Email</th><th>Tél</th><th>Date</th><th>Actions</th></tr></thead>
         <tbody id="avisBody"></tbody>
       </table>
       <div id="emptyAvis" class="empty" style="display: none;">✅ Aucun avis en attente</div>
@@ -281,63 +82,35 @@
   </div>
   
   <div class="section">
-    <h2>👤 Vendeurs en attente d'appel</h2>
+    <h2>👤 Vendeurs en attente</h2>
     <div class="table-container">
       <div id="loadingVendeurs" class="loading">Chargement...</div>
       <table id="tableVendeurs" style="display: none;">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Date inscription</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Nom</th><th>Email</th><th>Tél</th><th>Date</th><th>Actions</th></tr></thead>
         <tbody id="vendeursBody"></tbody>
       </table>
-      <div id="emptyVendeurs" class="empty" style="display: none;">✅ Aucun vendeur en attente</div>
+      <div id="emptyVendeurs" class="empty" style="display: none;">✅ Aucun vendeur</div>
     </div>
   </div>
   
   <div class="section">
-    <h2>💼 Professionnels en attente d'appel</h2>
+    <h2>💼 Pros en attente</h2>
     <div class="table-container">
       <div id="loadingPros" class="loading">Chargement...</div>
       <table id="tablePros" style="display: none;">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Profil</th>
-            <th>Entreprise</th>
-            <th>Téléphone</th>
-            <th>Date inscription</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Nom</th><th>Email</th><th>Profil</th><th>Entreprise</th><th>Tél</th><th>Date</th><th>Actions</th></tr></thead>
         <tbody id="prosBody"></tbody>
       </table>
-      <div id="emptyPros" class="empty" style="display: none;">✅ Aucun professionnel en attente</div>
+      <div id="emptyPros" class="empty" style="display: none;">✅ Aucun pro</div>
     </div>
   </div>
   
   <div class="section">
-    <h2>🔍 Suivi Acheteurs</h2>
+    <h2>🔍 Acheteurs</h2>
     <div class="table-container">
       <div id="loadingAcheteurs" class="loading">Chargement...</div>
       <table id="tableAcheteurs" style="display: none;">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Téléphone</th>
-            <th>Région intérêt</th>
-            <th>Date inscription</th>
-            <th>Annonces vues</th>
-            <th>Demandes financement</th>
-            <th>Projets travaux</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Nom</th><th>Tél</th><th>Région</th><th>Date</th></tr></thead>
         <tbody id="acheteursBody"></tbody>
       </table>
       <div id="emptyAcheteurs" class="empty" style="display: none;">✅ Aucun acheteur</div>
@@ -360,27 +133,23 @@
     }
   });
 
-  document.getElementById('loginForm').addEventListener('submit', function(e) {
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const pin = document.getElementById('pin').value;
-    const errorDiv = document.getElementById('loginError');
-    
     if (email === 'contact@albimmobilier.fr' && pin === '2707') {
       localStorage.setItem('isLoggedIn', 'true');
       document.getElementById('loginContainer').style.display = 'none';
       document.getElementById('dashboard').classList.add('active');
       loadData();
     } else {
-      errorDiv.textContent = 'Email ou PIN incorrect';
+      document.getElementById('loginError').textContent = 'Email ou PIN incorrect';
     }
   });
 
   function logout() {
     localStorage.removeItem('isLoggedIn');
-    document.getElementById('loginContainer').style.display = 'flex';
-    document.getElementById('dashboard').classList.remove('active');
-    document.getElementById('loginForm').reset();
+    location.reload();
   }
 
   async function loadData() {
@@ -392,308 +161,96 @@
 
   async function loadAvis() {
     try {
-      const { data: avis, error } = await supabase
-        .from('avis')
-        .select(`id, note, texte, verifiee, created_at, pro_id, particulier_id`)
-        .eq('verifiee', false)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const avisAvecProfils = await Promise.all(
-        avis.map(async (a) => {
-          const proData = await supabase
-            .from('profiles')
-            .select('prenom, nom, nom_entreprise')
-            .eq('id', a.pro_id)
-            .single();
-
-          let auteurData = null;
-          if (a.particulier_id) {
-            auteurData = await supabase
-              .from('profiles')
-              .select('prenom, nom, email, telephone')
-              .eq('id', a.particulier_id)
-              .single();
-          }
-
-          return {
-            ...a,
-            pro: proData.data,
-            auteur: auteurData?.data
-          };
-        })
-      );
-
-      afficherAvis(avisAvecProfils);
-    } catch (error) {
-      console.error('Erreur chargement avis:', error);
-    }
-  }
-
-  function afficherAvis(avis) {
-    const tbody = document.getElementById('avisBody');
-    const table = document.getElementById('tableAvis');
-    const empty = document.getElementById('emptyAvis');
-    const loading = document.getElementById('loadingAvis');
-    
-    loading.style.display = 'none';
-    
-    if (avis.length === 0) {
-      table.style.display = 'none';
-      empty.style.display = 'block';
-      return;
-    }
-    
-    table.style.display = 'table';
-    tbody.innerHTML = avis.map(a => `
-      <tr>
-        <td>⭐ ${a.note || 0}</td>
-        <td><span class="note-preview">${a.texte || '-'}</span></td>
-        <td>${a.pro?.prenom} ${a.pro?.nom}<br><small>${a.pro?.nom_entreprise || ''}</small></td>
-        <td>${a.auteur ? `${a.auteur.prenom} ${a.auteur.nom}` : 'Anonyme'}</td>
-        <td>${a.auteur?.email || '-'}</td>
-        <td>${a.auteur?.telephone || '-'}</td>
-        <td>${new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
-        <td>
-          <div class="actions">
-            <button class="btn-valider" onclick="validerAvis('${a.id}')">✅ Valider</button>
-            <button class="btn-refuser" onclick="refuserAvis('${a.id}')">❌ Refuser</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+      const { data: avis } = await supabase.from('avis').select('*').eq('verifiee', false).order('created_at', { ascending: false });
+      const avisComplete = await Promise.all(avis.map(async (a) => {
+        const { data: pro } = await supabase.from('profiles').select('prenom, nom, nom_entreprise').eq('id', a.pro_id).single();
+        const { data: auteur } = a.particulier_id ? await supabase.from('profiles').select('prenom, nom, email, telephone').eq('id', a.particulier_id).single() : { data: null };
+        return { ...a, pro, auteur };
+      }));
+      const tbody = document.getElementById('avisBody');
+      if (avis.length === 0) {
+        document.getElementById('tableAvis').style.display = 'none';
+        document.getElementById('emptyAvis').style.display = 'block';
+      } else {
+        document.getElementById('loadingAvis').style.display = 'none';
+        document.getElementById('tableAvis').style.display = 'table';
+        tbody.innerHTML = avisComplete.map(a => `<tr><td>⭐${a.note||0}</td><td><span class="note-preview">${a.texte||'-'}</span></td><td>${a.pro?.prenom} ${a.pro?.nom}</td><td>${a.auteur?`${a.auteur.prenom} ${a.auteur.nom}`:'Anonyme'}</td><td>${a.auteur?.email||'-'}</td><td>${a.auteur?.telephone||'-'}</td><td>${new Date(a.created_at).toLocaleDateString('fr-FR')}</td><td><button class="btn-valider" onclick="validerAvis('${a.id}')">✅</button><button class="btn-refuser" onclick="refuserAvis('${a.id}')">❌</button></td></tr>`).join('');
+      }
+    } catch (e) { console.error(e); }
   }
 
   async function loadVendeurs() {
     try {
-      const { data: vendeurs, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('est_vendeur', true)
-        .eq('statut_verfie', false)
-        .order('date_creation', { ascending: false });
-
-      if (error) throw error;
-      afficherVendeurs(vendeurs);
-    } catch (error) {
-      console.error('Erreur chargement vendeurs:', error);
-    }
-  }
-
-  function afficherVendeurs(vendeurs) {
-    const tbody = document.getElementById('vendeursBody');
-    const table = document.getElementById('tableVendeurs');
-    const empty = document.getElementById('emptyVendeurs');
-    const loading = document.getElementById('loadingVendeurs');
-    
-    loading.style.display = 'none';
-    
-    if (vendeurs.length === 0) {
-      table.style.display = 'none';
-      empty.style.display = 'block';
-      return;
-    }
-    
-    table.style.display = 'table';
-    tbody.innerHTML = vendeurs.map(v => `
-      <tr>
-        <td>${v.prenom} ${v.nom}</td>
-        <td>${v.email}</td>
-        <td>${v.telephone || '-'}</td>
-        <td>${new Date(v.date_creation).toLocaleDateString('fr-FR')}</td>
-        <td>
-          <div class="actions">
-            <button class="btn-valider" onclick="validerProfil('${v.id}', 'vendeur')">✅ Valider</button>
-            <button class="btn-refuser" onclick="refuserProfil('${v.id}', 'vendeur')">❌ Refuser</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+      const { data: v } = await supabase.from('profiles').select('*').eq('est_vendeur', true).eq('statut_verfie', false).order('date_creation', { ascending: false });
+      document.getElementById('loadingVendeurs').style.display = 'none';
+      if (v.length === 0) {
+        document.getElementById('tableVendeurs').style.display = 'none';
+        document.getElementById('emptyVendeurs').style.display = 'block';
+      } else {
+        document.getElementById('tableVendeurs').style.display = 'table';
+        document.getElementById('vendeursBody').innerHTML = v.map(x => `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td>${x.telephone||'-'}</td><td>${new Date(x.date_creation).toLocaleDateString('fr-FR')}</td><td><button class="btn-valider" onclick="validerProfil('${x.id}','vendeur')">✅</button><button class="btn-refuser" onclick="refuserProfil('${x.id}','vendeur')">❌</button></td></tr>`).join('');
+      }
+    } catch (e) { console.error(e); }
   }
 
   async function loadPros() {
     try {
-      const { data: pros, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('role', ['courtier', 'agent', 'artisan', 'mandataire'])
-        .eq('statut_verfie', false)
-        .order('date_creation', { ascending: false });
-
-      if (error) throw error;
-      afficherPros(pros);
-    } catch (error) {
-      console.error('Erreur chargement pros:', error);
-    }
-  }
-
-  function afficherPros(pros) {
-    const tbody = document.getElementById('prosBody');
-    const table = document.getElementById('tablePros');
-    const empty = document.getElementById('emptyPros');
-    const loading = document.getElementById('loadingPros');
-    
-    loading.style.display = 'none';
-    
-    if (pros.length === 0) {
-      table.style.display = 'none';
-      empty.style.display = 'block';
-      return;
-    }
-    
-    table.style.display = 'table';
-    tbody.innerHTML = pros.map(p => `
-      <tr>
-        <td>${p.prenom} ${p.nom}</td>
-        <td>${p.email}</td>
-        <td><span class="badge">${p.role}</span></td>
-        <td>${p.nom_entreprise || '-'}</td>
-        <td>${p.telephone || '-'}</td>
-        <td>${new Date(p.date_creation).toLocaleDateString('fr-FR')}</td>
-        <td>
-          <div class="actions">
-            <button class="btn-valider" onclick="validerProfil('${p.id}', 'pro')">✅ Valider</button>
-            <button class="btn-refuser" onclick="refuserProfil('${p.id}', 'pro')">❌ Refuser</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+      const { data: p } = await supabase.from('profiles').select('*').in('role', ['courtier','agent','artisan','mandataire']).eq('statut_verfie', false).order('date_creation', { ascending: false });
+      document.getElementById('loadingPros').style.display = 'none';
+      if (p.length === 0) {
+        document.getElementById('tablePros').style.display = 'none';
+        document.getElementById('emptyPros').style.display = 'block';
+      } else {
+        document.getElementById('tablePros').style.display = 'table';
+        document.getElementById('prosBody').innerHTML = p.map(x => `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td><span class="badge">${x.role}</span></td><td>${x.nom_entreprise||'-'}</td><td>${x.telephone||'-'}</td><td>${new Date(x.date_creation).toLocaleDateString('fr-FR')}</td><td><button class="btn-valider" onclick="validerProfil('${x.id}','pro')">✅</button><button class="btn-refuser" onclick="refuserProfil('${x.id}','pro')">❌</button></td></tr>`).join('');
+      }
+    } catch (e) { console.error(e); }
   }
 
   async function loadAcheteurs() {
     try {
-      const { data: acheteurs, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('est_acquereur', true)
-        .order('date_creation', { ascending: false });
-
-      if (error) throw error;
-      afficherAcheteurs(acheteurs);
-    } catch (error) {
-      console.error('Erreur chargement acheteurs:', error);
-    }
-  }
-
-  function afficherAcheteurs(acheteurs) {
-    const tbody = document.getElementById('acheteursBody');
-    const table = document.getElementById('tableAcheteurs');
-    const empty = document.getElementById('emptyAcheteurs');
-    const loading = document.getElementById('loadingAcheteurs');
-    
-    loading.style.display = 'none';
-    
-    if (acheteurs.length === 0) {
-      table.style.display = 'none';
-      empty.style.display = 'block';
-      return;
-    }
-    
-    table.style.display = 'table';
-    tbody.innerHTML = acheteurs.map(a => `
-      <tr>
-        <td>${a.prenom} ${a.nom}</td>
-        <td>${a.telephone || '-'}</td>
-        <td>${a.region_interet || '-'}</td>
-        <td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td>
-        <td><em>À ajouter</em></td>
-        <td><em>À ajouter</em></td>
-        <td><em>À ajouter</em></td>
-      </tr>
-    `).join('');
-  }
-
-  async function validerAvis(avisId) {
-    if (!confirm('Valider cet avis ?')) return;
-    
-    try {
-      const response = await fetch('/.netlify/functions/validate-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: avisId, type: 'avis', action: 'valider' })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('✅ Avis validé');
-        loadAvis();
+      const { data: a } = await supabase.from('profiles').select('*').eq('est_acquereur', true).order('date_creation', { ascending: false });
+      document.getElementById('loadingAcheteurs').style.display = 'none';
+      if (a.length === 0) {
+        document.getElementById('tableAcheteurs').style.display = 'none';
+        document.getElementById('emptyAcheteurs').style.display = 'block';
       } else {
-        alert('❌ Erreur: ' + data.error);
+        document.getElementById('tableAcheteurs').style.display = 'table';
+        document.getElementById('acheteursBody').innerHTML = a.map(x => `<tr><td>${x.prenom} ${x.nom}</td><td>${x.telephone||'-'}</td><td>${x.region_interet||'-'}</td><td>${new Date(x.date_creation).toLocaleDateString('fr-FR')}</td></tr>`).join('');
       }
-    } catch (error) {
-      alert('❌ Erreur: ' + error.message);
-    }
+    } catch (e) { console.error(e); }
   }
 
-  async function refuserAvis(avisId) {
-    if (!confirm('Refuser cet avis ?')) return;
-    
-    try {
-      const response = await fetch('/.netlify/functions/validate-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: avisId, type: 'avis', action: 'refuser' })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('❌ Avis refusé');
-        loadAvis();
-      } else {
-        alert('❌ Erreur: ' + data.error);
-      }
-    } catch (error) {
-      alert('❌ Erreur: ' + error.message);
-    }
+  async function validerAvis(id) {
+    if (!confirm('Valider?')) return;
+    const res = await fetch('/.netlify/functions/validate-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type: 'avis', action: 'valider' }) });
+    const data = await res.json();
+    alert(data.success ? '✅ Avis validé' : '❌ Erreur: ' + data.error);
+    loadAvis();
   }
 
-  async function validerProfil(profilId, type) {
-    if (!confirm(`Valider ce ${type} ?`)) return;
-    
-    try {
-      const response = await fetch('/.netlify/functions/validate-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: profilId, type: type, action: 'valider' })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('✅ Profil validé et email envoyé');
-        loadData();
-      } else {
-        alert('❌ Erreur: ' + data.error);
-      }
-    } catch (error) {
-      alert('❌ Erreur: ' + error.message);
-    }
+  async function refuserAvis(id) {
+    if (!confirm('Refuser?')) return;
+    const res = await fetch('/.netlify/functions/validate-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type: 'avis', action: 'refuser' }) });
+    const data = await res.json();
+    alert(data.success ? '✅ Avis refusé' : '❌ Erreur: ' + data.error);
+    loadAvis();
   }
 
-  async function refuserProfil(profilId, type) {
-    if (!confirm(`Refuser ce ${type} ?`)) return;
-    
-    try {
-      const response = await fetch('/.netlify/functions/validate-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: profilId, type: type, action: 'refuser' })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('❌ Profil refusé');
-        loadData();
-      } else {
-        alert('❌ Erreur: ' + data.error);
-      }
-    } catch (error) {
-      alert('❌ Erreur: ' + error.message);
-    }
+  async function validerProfil(id, type) {
+    if (!confirm('Valider?')) return;
+    const res = await fetch('/.netlify/functions/validate-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, action: 'valider' }) });
+    const data = await res.json();
+    alert(data.success ? '✅ Validé + email' : '❌ Erreur: ' + data.error);
+    loadData();
+  }
+
+  async function refuserProfil(id, type) {
+    if (!confirm('Refuser?')) return;
+    const res = await fetch('/.netlify/functions/validate-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, action: 'refuser' }) });
+    const data = await res.json();
+    alert(data.success ? '✅ Refusé' : '❌ Erreur: ' + data.error);
+    loadData();
   }
 </script>
 
