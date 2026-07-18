@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Validation - ALB Immobilier</title>
+  <script src="./supabase_client.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -88,21 +89,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://kutbxyinpogebjdemlnq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9nZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0Mjc1NzIsImV4cCI6MjAzNTAwMzU3Mn0.3KhpJgVZSPR2SmRV3TaYm-ZoMPlrcNv0YZfWGy51A74';
-let supabase;
-
-window.addEventListener('load', () => {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  if(localStorage.getItem('logged') === '1') {
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('dash').classList.add('active');
-    load();
-  }
-});
-
 document.getElementById('loginForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
@@ -122,6 +109,14 @@ function logout() {
   location.reload();
 }
 
+window.addEventListener('load', () => {
+  if(localStorage.getItem('logged') === '1') {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('dash').classList.add('active');
+    load();
+  }
+});
+
 async function load() {
   loadAvis();
   loadVendeurs();
@@ -129,7 +124,7 @@ async function load() {
 }
 
 async function loadAvis() {
-  const {data: avis} = await supabase.from('avis').select('*').eq('verifiee', false);
+  const {data: avis} = await supabaseClient.from('avis').select('*').eq('verifiee', false);
   if(!avis || avis.length === 0) {
     document.getElementById('loadAvis').style.display = 'none';
     document.getElementById('emptyAvis').style.display = 'block';
@@ -137,8 +132,8 @@ async function loadAvis() {
   }
   let html = '';
   for(const a of avis) {
-    const {data: pro} = await supabase.from('profiles').select('prenom,nom').eq('id', a.pro_id).single();
-    const {data: auteur} = a.particulier_id ? await supabase.from('profiles').select('prenom,nom,email').eq('id', a.particulier_id).single() : {data: null};
+    const {data: pro} = await supabaseClient.from('profiles').select('prenom,nom').eq('id', a.pro_id).single();
+    const {data: auteur} = a.particulier_id ? await supabaseClient.from('profiles').select('prenom,nom,email').eq('id', a.particulier_id).single() : {data: null};
     html += `<tr><td>⭐${a.note}</td><td>${a.texte}</td><td>${pro?.prenom} ${pro?.nom}</td><td>${auteur ? auteur.prenom + ' ' + auteur.nom : 'Anonyme'}</td><td><button class="btn-valider" onclick="valider('${a.id}','avis')">✅</button><button class="btn-refuser" onclick="refuser('${a.id}','avis')">❌</button></td></tr>`;
   }
   document.getElementById('loadAvis').style.display = 'none';
@@ -147,7 +142,7 @@ async function loadAvis() {
 }
 
 async function loadVendeurs() {
-  const {data: v} = await supabase.from('profiles').select('*').eq('est_vendeur', true).eq('statut_verfie', false);
+  const {data: v} = await supabaseClient.from('profiles').select('*').eq('est_vendeur', true).eq('statut_verfie', false);
   if(!v || v.length === 0) {
     document.getElementById('loadV').style.display = 'none';
     document.getElementById('emptyV').style.display = 'block';
@@ -163,7 +158,7 @@ async function loadVendeurs() {
 }
 
 async function loadPros() {
-  const {data: p} = await supabase.from('profiles').select('*').in('role', ['courtier','agent','artisan','mandataire']).eq('statut_verfie', false);
+  const {data: p} = await supabaseClient.from('profiles').select('*').in('role', ['courtier','agent','artisan','mandataire']).eq('statut_verfie', false);
   if(!p || p.length === 0) {
     document.getElementById('loadP').style.display = 'none';
     document.getElementById('emptyP').style.display = 'block';
