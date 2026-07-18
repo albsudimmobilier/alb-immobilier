@@ -89,7 +89,6 @@
       text-align: center;
     }
     
-    /* DASHBOARD */
     .dashboard {
       display: none;
       padding: 30px;
@@ -233,7 +232,6 @@
 </head>
 <body>
 
-<!-- LOGIN FORM -->
 <div class="login-container" id="loginContainer">
   <div class="login-box">
     <h1>ALB Immobilier</h1>
@@ -253,14 +251,12 @@
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
   <div class="dashboard-header">
     <h1>✨ Dashboard Validation</h1>
     <button class="logout-btn" onclick="logout()">Déconnexion</button>
   </div>
   
-  <!-- AVIS EN ATTENTE -->
   <div class="section">
     <h2>⭐ Avis en attente de validation</h2>
     <div class="table-container">
@@ -284,7 +280,6 @@
     </div>
   </div>
   
-  <!-- VENDEURS EN ATTENTE -->
   <div class="section">
     <h2>👤 Vendeurs en attente d'appel</h2>
     <div class="table-container">
@@ -305,7 +300,6 @@
     </div>
   </div>
   
-  <!-- PROS EN ATTENTE -->
   <div class="section">
     <h2>💼 Professionnels en attente d'appel</h2>
     <div class="table-container">
@@ -328,7 +322,6 @@
     </div>
   </div>
   
-  <!-- ACHETEURS -->
   <div class="section">
     <h2>🔍 Suivi Acheteurs</h2>
     <div class="table-container">
@@ -356,9 +349,17 @@
 <script>
   const SUPABASE_URL = 'https://kutbxyinpogebjdemlnq.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9nZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0Mjc1NzIsImV4cCI6MjAzNTAwMzU3Mn0.3KhpJgVZSPR2SmRV3TaYm-ZoMPlrcNv0YZfWGy51A74';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let supabase;
 
-  // LOGIN
+  window.addEventListener('load', () => {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+      document.getElementById('loginContainer').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      loadData();
+    }
+  });
+
   document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
@@ -375,7 +376,6 @@
     }
   });
 
-  // LOGOUT
   function logout() {
     localStorage.removeItem('isLoggedIn');
     document.getElementById('loginContainer').style.display = 'flex';
@@ -383,16 +383,6 @@
     document.getElementById('loginForm').reset();
   }
 
-  // CHECK LOGIN ON LOAD
-  window.addEventListener('load', function() {
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-      document.getElementById('loginContainer').style.display = 'none';
-      document.getElementById('dashboard').classList.add('active');
-      loadData();
-    }
-  });
-
-  // LOAD ALL DATA
   async function loadData() {
     loadAvis();
     loadVendeurs();
@@ -400,7 +390,6 @@
     loadAcheteurs();
   }
 
-  // LOAD AVIS
   async function loadAvis() {
     try {
       const { data: avis, error } = await supabase
@@ -442,7 +431,6 @@
     }
   }
 
-  // AFFICHER AVIS
   function afficherAvis(avis) {
     const tbody = document.getElementById('avisBody');
     const table = document.getElementById('tableAvis');
@@ -477,7 +465,6 @@
     `).join('');
   }
 
-  // LOAD VENDEURS
   async function loadVendeurs() {
     try {
       const { data: vendeurs, error } = await supabase
@@ -494,7 +481,6 @@
     }
   }
 
-  // AFFICHER VENDEURS
   function afficherVendeurs(vendeurs) {
     const tbody = document.getElementById('vendeursBody');
     const table = document.getElementById('tableVendeurs');
@@ -526,7 +512,6 @@
     `).join('');
   }
 
-  // LOAD PROS
   async function loadPros() {
     try {
       const { data: pros, error } = await supabase
@@ -543,7 +528,6 @@
     }
   }
 
-  // AFFICHER PROS
   function afficherPros(pros) {
     const tbody = document.getElementById('prosBody');
     const table = document.getElementById('tablePros');
@@ -577,7 +561,6 @@
     `).join('');
   }
 
-  // LOAD ACHETEURS
   async function loadAcheteurs() {
     try {
       const { data: acheteurs, error } = await supabase
@@ -593,7 +576,6 @@
     }
   }
 
-  // AFFICHER ACHETEURS
   function afficherAcheteurs(acheteurs) {
     const tbody = document.getElementById('acheteursBody');
     const table = document.getElementById('tableAcheteurs');
@@ -622,7 +604,6 @@
     `).join('');
   }
 
-  // VALIDER AVIS
   async function validerAvis(avisId) {
     if (!confirm('Valider cet avis ?')) return;
     
@@ -646,7 +627,6 @@
     }
   }
 
-  // REFUSER AVIS
   async function refuserAvis(avisId) {
     if (!confirm('Refuser cet avis ?')) return;
     
@@ -670,7 +650,6 @@
     }
   }
 
-  // VALIDER/REFUSER PROFIL
   async function validerProfil(profilId, type) {
     if (!confirm(`Valider ce ${type} ?`)) return;
     
