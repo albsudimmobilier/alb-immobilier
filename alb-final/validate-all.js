@@ -7,7 +7,9 @@ const supabase = createClient(
 
 const brevoKey = process.env.BREVO_API_KEY;
 
-// Fonction pour envoyer email Brevo
+/**
+ * Helper: Send email via Brevo template
+ */
 async function sendBrevoEmail(email, templateId, profileData) {
   const payload = {
     to: [{ email }],
@@ -31,23 +33,42 @@ async function sendBrevoEmail(email, templateId, profileData) {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Brevo error: ${error}`);
+    const errorText = await response.text();
+    throw new Error(`Brevo error: ${errorText}`);
   }
 
   return response.json();
 }
 
-// Fonction pour déterminer le template selon le type de profil
+/**
+ * Helper: Determine welcome template ID based on profile type
+ * - Particulier vendeur: #15
+ * - Particulier acheteur: #14
+ * - Professionnels (courtier, artisan, agent, mandataire): #17
+ */
 function getTemplateIdByType(profile) {
-  if (profile.est_vendeur === true) return 15; // Vendeur particulier
-  if (profile.est_acquereur === true) return 14; // Acheteur particulier
-  if (['courtier', 'agent', 'artisan', 'mandataire'].includes(profile.role)) return 1; // Pro
-  return null;
+  if (profile.est_vendeur === true) {
+    return 15; // Vendeur particulier
+  }
+
+  if (profile.est_acquereur === true) {
+    return 14; // Acheteur particulier
+  }
+
+  if (
+    ['courtier', 'agent', 'artisan', 'mandataire'].includes(profile.role)
+  ) {
+    return 17; // Pro bienvenue
+  }
+
+  return null; // Unknown type
 }
 
+/**
+ * Main handler: Validate or refuse profiles and reviews
+ */
 exports.handler = async (event) => {
-  // Seulement POST accepté
+  // Only POST allowed
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -56,8 +77,10 @@ exports.handler = async (event) => {
   }
 
   try {
+    // Parse request
     const { id, type, action } = JSON.parse(event.body);
 
+    // Validate required fields
     if (!id || !type || !action) {
       return {
         statusCode: 400,
@@ -65,21 +88,25 @@ exports.handler = async (event) => {
       };
     }
 
+    // Validate action values
     if (!['valider', 'refuser'].includes(action)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'action doit être "valider" ou "refuser"' })
+        body: JSON.stringify({
+          error: 'action doit être "valider" ou "refuser"'
+        })
       };
     }
 
-    // ===== VALIDATION DES AVIS =====
+    // ============================================================
+    // VALIDATION DES AVIS (reviews)
+    // ============================================================
     if (type === 'avis') {
       if (action === 'valider') {
+        // Set review as verified (visible on pro profile)
         const { error: updateError } = await supabase
           .from('avis')
-          .update({
-            verifiee: true
-          })
+          .update({ verifiee: true })
           .eq('id', id);
 
         if (updateError) {
@@ -93,13 +120,11 @@ exports.handler = async (event) => {
             message: 'Avis validé et visible sur la vitrine du pro'
           })
         };
-
       } else if (action === 'refuser') {
+        // Set review as unverified (hidden)
         const { error: updateError } = await supabase
           .from('avis')
-          .update({
-            verifiee: false
-          })
+          .update({ verifiee: false })
           .eq('id', id);
 
         if (updateError) {
@@ -116,9 +141,11 @@ exports.handler = async (event) => {
       }
     }
 
-    // ===== VALIDATION DES PROFILS (vendeur/pro) =====
+    // ============================================================
+    // VALIDATION DES PROFILS (sellers and professionals)
+    // ============================================================
     if (['vendeur', 'pro'].includes(type)) {
-      // Récupérer le profil
+      // Step 1: Fetch profile
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -132,13 +159,15 @@ exports.handler = async (event) => {
         };
       }
 
+      // ============================================================
+      // VALIDER (approve)
+      // ============================================================
       if (action === 'valider') {
-        // UPDATE : statut_verfie = true
+        // Step 2a: Update profile status to verified
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
-            statut_verfie: true,
-            status_updated_at: new Date().toISOString()
+            statut_verifie: true
           })
           .eq('id', id);
 
@@ -146,8 +175,9 @@ exports.handler = async (event) => {
           throw new Error(`Supabase update error: ${updateError.message}`);
         }
 
-        // Déterminer le template et envoyer l'email
+        // Step 3a: Determine welcome template and send email
         const templateId = getTemplateIdByType(profile);
+
         if (!templateId) {
           return {
             statusCode: 400,
@@ -164,14 +194,17 @@ exports.handler = async (event) => {
             message: `Profil validé et email de bienvenue envoyé (template ${templateId})`
           })
         };
+      }
 
-      } else if (action === 'refuser') {
-        // UPDATE : statut_verfie = false
+      // ============================================================
+      // REFUSER (refuse)
+      // ============================================================
+      else if (action === 'refuser') {
+        // Step 2b: Update profile status to not verified
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
-            statut_verfie: false,
-            status_updated_at: new Date().toISOString()
+            statut_verifie: false
           })
           .eq('id', id);
 
@@ -183,12 +216,11 @@ exports.handler = async (event) => {
           statusCode: 200,
           body: JSON.stringify({
             success: true,
-            message: 'Profil refusé (reste en mémoire)'
+            message: 'Profil refusé (reste en mémoire pour appel ultérieur)'
           })
         };
       }
     }
-
   } catch (error) {
     console.error('Error:', error);
     return {
