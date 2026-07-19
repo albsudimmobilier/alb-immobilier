@@ -4,200 +4,629 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Validation - ALB Immobilier</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-client.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Montserrat', sans-serif; background: #FBF8F3; }
-    .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #FBF8F3 0%, #f5f2ed 100%); }
-    .login-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; border-left: 4px solid #B28E3D; }
-    .login-box h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #4B1A3E; margin-bottom: 30px; text-align: center; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; color: #4B1A3E; margin-bottom: 8px; }
-    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
-    .login-btn { width: 100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
-    .error { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; text-align: center; }
-    .dashboard { display: none; padding: 30px; }
-    .dashboard.active { display: block; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #B28E3D; padding-bottom: 20px; }
-    .dashboard-header h1 { font-family: 'Playfair Display', serif; color: #4B1A3E; font-size: 1.8rem; }
-    .logout-btn { background: #d32f2f; padding: 8px 16px; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .section { margin-bottom: 50px; }
-    .section h2 { font-family: 'Playfair Display', serif; color: #4B1A3E; font-size: 1.4rem; margin-bottom: 20px; border-left: 4px solid #B28E3D; padding-left: 12px; }
-    .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #f5f5f5; padding: 15px; text-align: left; font-weight: 700; color: #4B1A3E; border-bottom: 2px solid #B28E3D; }
-    td { padding: 15px; border-bottom: 1px solid #e8e6e0; }
-    .btn-valider { background: #2e7d32; padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-    .btn-refuser { background: #d32f2f; padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .empty { text-align: center; padding: 40px; color: #999; }
-    .loading { text-align: center; padding: 20px; color: #666; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+      --blanc: #ffffff;
+      --gris: #f0f0f0;
+      --rouge: #dc3545;
+      --vert: #28a745;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--creme);
+      color: var(--pourpre);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--pourpre);
+      color: var(--blanc);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+    }
+
+    .logout-btn {
+      background-color: var(--dore);
+      color: var(--pourpre);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .logout-btn:hover {
+      background-color: #a67c2c;
+    }
+
+    /* LOGIN SECTION */
+    .login-section {
+      max-width: 400px;
+      margin: 50px auto;
+      background-color: var(--blanc);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-section h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--pourpre);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--pourpre);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--dore);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--pourpre);
+      box-shadow: 0 0 5px rgba(75, 26, 62, 0.3);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--dore);
+      color: var(--blanc);
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .login-btn:hover {
+      background-color: #a67c2c;
+    }
+
+    .error-message {
+      color: var(--rouge);
+      background-color: #ffe6e6;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    /* DASHBOARD SECTION */
+    .dashboard-section {
+      display: none;
+    }
+
+    .dashboard-section.active {
+      display: block;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--dore);
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background-color: transparent;
+      border: none;
+      color: var(--pourpre);
+      cursor: pointer;
+      font-weight: bold;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+      border-bottom-color: var(--dore);
+    }
+
+    .tab-btn.active {
+      color: var(--dore);
+      border-bottom-color: var(--dore);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* TABLE SECTION */
+    .table-container {
+      background-color: var(--blanc);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background-color: var(--pourpre);
+      color: var(--blanc);
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--gris);
+    }
+
+    tbody tr:hover {
+      background-color: #fafafa;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-validate {
+      background-color: var(--vert);
+      color: var(--blanc);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .btn-validate:hover {
+      background-color: #218838;
+    }
+
+    .btn-refuse {
+      background-color: var(--rouge);
+      color: var(--blanc);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .btn-refuse:hover {
+      background-color: #c82333;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--dore);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .status-pending {
+      background-color: #ffeaa7;
+      color: #d63031;
+    }
+
+    .success-message {
+      color: var(--vert);
+      background-color: #e6ffe6;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <!-- LOGIN SECTION -->
+    <div id="loginSection" class="login-section">
+      <h2>🔐 Dashboard Validation</h2>
+      <div id="errorMessage" class="error-message" style="display: none;"></div>
+      <div id="successMessage" class="success-message" style="display: none;"></div>
 
-<div class="login-container" id="login">
-  <div class="login-box">
-    <h1>ALB Immobilier</h1>
-    <p style="text-align:center; color:#666; margin-bottom:30px;">Dashboard de Validation</p>
-    <form id="loginForm">
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email" required placeholder="contact@albimmobilier.fr">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="contact@albimmobilier.fr"
+          value="contact@albimmobilier.fr"
+        />
       </div>
+
       <div class="form-group">
-        <label>PIN</label>
-        <input type="password" id="pin" maxlength="4" required placeholder="••••">
+        <label for="pin">PIN</label>
+        <input type="password" id="pin" placeholder="2707" />
       </div>
-      <button type="submit" class="login-btn">Se connecter</button>
-      <div class="error" id="error"></div>
-    </form>
-  </div>
-</div>
 
-<div class="dashboard" id="dash">
-  <div class="dashboard-header">
-    <h1>✨ Validation</h1>
-    <button class="logout-btn" onclick="logout()">Déconnexion</button>
-  </div>
-  
-  <div class="section">
-    <h2>⭐ Avis</h2>
-    <div class="table-container">
-      <div id="loadAvis" class="loading">Chargement...</div>
-      <table id="tAvis" style="display:none"><thead><tr><th>Note</th><th>Texte</th><th>Pro</th><th>Auteur</th><th>Actions</th></tr></thead><tbody id="bAvis"></tbody></table>
-      <div id="emptyAvis" class="empty" style="display:none">✅ Aucun</div>
+      <button class="login-btn" onclick="handleLogin()">Se connecter</button>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboardSection" class="dashboard-section">
+      <header>
+        <h1>✨ Dashboard Validation ALB Immobilier</h1>
+        <button class="logout-btn" onclick="handleLogout()">Déconnexion</button>
+      </header>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('vendeurs')">
+          👤 Vendeurs
+        </button>
+        <button class="tab-btn" onclick="switchTab('pros')">
+          💼 Professionnels
+        </button>
+      </div>
+
+      <!-- VENDEURS TAB -->
+      <div id="vendeurs" class="tab-content active">
+        <div class="table-container">
+          <div id="vendeursLoading" class="loading">Chargement...</div>
+          <div id="vendeursEmpty" class="empty-state" style="display: none;">
+            ✅ Aucun vendeur en attente
+          </div>
+          <table id="vendeursTable" style="display: none;">
+            <thead>
+              <tr>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Code Postal</th>
+                <th>Inscription</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vendeursList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROS TAB -->
+      <div id="pros" class="tab-content">
+        <div class="table-container">
+          <div id="prosLoading" class="loading">Chargement...</div>
+          <div id="prosEmpty" class="empty-state" style="display: none;">
+            ✅ Aucun professionnel en attente
+          </div>
+          <table id="prosTable" style="display: none;">
+            <thead>
+              <tr>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Entreprise</th>
+                <th>SIRET</th>
+                <th>Rôle</th>
+                <th>Inscription</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prosList"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
-  
-  <div class="section">
-    <h2>👤 Vendeurs</h2>
-    <div class="table-container">
-      <div id="loadV" class="loading">Chargement...</div>
-      <table id="tV" style="display:none"><thead><tr><th>Nom</th><th>Email</th><th>Actions</th></tr></thead><tbody id="bV"></tbody></table>
-      <div id="emptyV" class="empty" style="display:none">✅ Aucun</div>
-    </div>
-  </div>
-  
-  <div class="section">
-    <h2>💼 Pros</h2>
-    <div class="table-container">
-      <div id="loadP" class="loading">Chargement...</div>
-      <table id="tP" style="display:none"><thead><tr><th>Nom</th><th>Email</th><th>Profil</th><th>Actions</th></tr></thead><tbody id="bP"></tbody></table>
-      <div id="emptyP" class="empty" style="display:none">✅ Aucun</div>
-    </div>
-  </div>
-</div>
 
-<script>
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const email = document.getElementById('email').value;
-  const pin = document.getElementById('pin').value;
-  if(email === 'contact@albimmobilier.fr' && pin === '2707') {
-    localStorage.setItem('logged', '1');
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('dash').classList.add('active');
-    load();
-  } else {
-    document.getElementById('error').textContent = 'Email ou PIN incorrect';
-  }
-});
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
-function logout() {
-  localStorage.removeItem('logged');
-  location.reload();
-}
+    const supabaseUrl = 'https://kutbxyinpogebjdemlnq.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkzMzc5MzAsImV4cCI6MjAzNDkxMzkzMH0.CvJe7tW-a5SqMN4pKr1lXL9gBvSz4T5H4j8v9k0X9dA';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-window.addEventListener('load', () => {
-  if(localStorage.getItem('logged') === '1') {
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('dash').classList.add('active');
-    load();
-  }
-});
+    // STATE
+    let isLoggedIn = false;
+    let currentUser = null;
 
-async function load() {
-  loadAvis();
-  loadVendeurs();
-  loadPros();
-}
+    // LOGIN
+    window.handleLogin = async () => {
+      const email = document.getElementById('email').value.trim();
+      const pin = document.getElementById('pin').value.trim();
 
-async function loadAvis() {
-  const {data: avis} = await supabaseClient.from('avis').select('*').eq('verifiee', false);
-  if(!avis || avis.length === 0) {
-    document.getElementById('loadAvis').style.display = 'none';
-    document.getElementById('emptyAvis').style.display = 'block';
-    return;
-  }
-  let html = '';
-  for(const a of avis) {
-    const {data: pro} = await supabaseClient.from('profiles').select('prenom,nom').eq('id', a.pro_id).single();
-    const {data: auteur} = a.particulier_id ? await supabaseClient.from('profiles').select('prenom,nom,email').eq('id', a.particulier_id).single() : {data: null};
-    html += `<tr><td>⭐${a.note}</td><td>${a.texte}</td><td>${pro?.prenom} ${pro?.nom}</td><td>${auteur ? auteur.prenom + ' ' + auteur.nom : 'Anonyme'}</td><td><button class="btn-valider" onclick="valider('${a.id}','avis')">✅</button><button class="btn-refuser" onclick="refuser('${a.id}','avis')">❌</button></td></tr>`;
-  }
-  document.getElementById('loadAvis').style.display = 'none';
-  document.getElementById('tAvis').style.display = 'table';
-  document.getElementById('bAvis').innerHTML = html;
-}
+      if (!email || !pin) {
+        showError('Email et PIN requis');
+        return;
+      }
 
-async function loadVendeurs() {
-  const {data: v} = await supabaseClient.from('profiles').select('*').eq('est_vendeur', true).eq('statut_verfie', false);
-  if(!v || v.length === 0) {
-    document.getElementById('loadV').style.display = 'none';
-    document.getElementById('emptyV').style.display = 'block';
-    return;
-  }
-  let html = '';
-  for(const x of v) {
-    html += `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td><button class="btn-valider" onclick="valider('${x.id}','vendeur')">✅</button><button class="btn-refuser" onclick="refuser('${x.id}','vendeur')">❌</button></td></tr>`;
-  }
-  document.getElementById('loadV').style.display = 'none';
-  document.getElementById('tV').style.display = 'table';
-  document.getElementById('bV').innerHTML = html;
-}
+      if (email !== 'contact@albimmobilier.fr' || pin !== '2707') {
+        showError('Email ou PIN incorrect');
+        return;
+      }
 
-async function loadPros() {
-  const {data: p} = await supabaseClient.from('profiles').select('*').in('role', ['courtier','agent','artisan','mandataire']).eq('statut_verfie', false);
-  if(!p || p.length === 0) {
-    document.getElementById('loadP').style.display = 'none';
-    document.getElementById('emptyP').style.display = 'block';
-    return;
-  }
-  let html = '';
-  for(const x of p) {
-    html += `<tr><td>${x.prenom} ${x.nom}</td><td>${x.email}</td><td>${x.role}</td><td><button class="btn-valider" onclick="valider('${x.id}','pro')">✅</button><button class="btn-refuser" onclick="refuser('${x.id}','pro')">❌</button></td></tr>`;
-  }
-  document.getElementById('loadP').style.display = 'none';
-  document.getElementById('tP').style.display = 'table';
-  document.getElementById('bP').innerHTML = html;
-}
+      isLoggedIn = true;
+      currentUser = { email, pin };
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').classList.add('active');
+      loadVendeurs();
+    };
 
-async function valider(id, type) {
-  if(!confirm('Valider?')) return;
-  const res = await fetch('/.netlify/functions/validate-all', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({id, type, action: 'valider'})
-  });
-  const data = await res.json();
-  alert(data.success ? '✅ Validé' : '❌ Erreur');
-  load();
-}
+    // LOGOUT
+    window.handleLogout = () => {
+      isLoggedIn = false;
+      currentUser = null;
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('dashboardSection').classList.remove('active');
+      document.getElementById('pin').value = '';
+    };
 
-async function refuser(id, type) {
-  if(!confirm('Refuser?')) return;
-  const res = await fetch('/.netlify/functions/validate-all', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({id, type, action: 'refuser'})
-  });
-  const data = await res.json();
-  alert(data.success ? '✅ Refusé' : '❌ Erreur');
-  load();
-}
-</script>
+    // SWITCH TAB
+    window.switchTab = (tabName) => {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach((tab) => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.classList.remove('active');
+      });
 
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabName === 'vendeurs') {
+        loadVendeurs();
+      } else if (tabName === 'pros') {
+        loadPros();
+      }
+    };
+
+    // LOAD VENDEURS
+    async function loadVendeurs() {
+      document.getElementById('vendeursLoading').style.display = 'block';
+      document.getElementById('vendeursTable').style.display = 'none';
+      document.getElementById('vendeursEmpty').style.display = 'none';
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, prenom, nom, email, telephone, code_postal, date_creation, statut_verifie')
+          .eq('est_vendeur', true)
+          .eq('statut_verifie', false)
+          .order('date_creation', { ascending: false });
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+          document.getElementById('vendeursLoading').style.display = 'none';
+          document.getElementById('vendeursEmpty').style.display = 'block';
+          return;
+        }
+
+        renderVendeurs(data);
+      } catch (err) {
+        showError('Erreur chargement vendeurs: ' + err.message);
+      }
+    }
+
+    // RENDER VENDEURS
+    function renderVendeurs(vendeurs) {
+      const tbody = document.getElementById('vendeursList');
+      tbody.innerHTML = vendeurs
+        .map(
+          (v) => `
+        <tr>
+          <td>${v.prenom || '-'}</td>
+          <td>${v.nom || '-'}</td>
+          <td>${v.email}</td>
+          <td>${v.telephone || '-'}</td>
+          <td>${v.code_postal || '-'}</td>
+          <td>${new Date(v.date_creation).toLocaleDateString('fr-FR')}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-validate" onclick="validateProfile('${v.id}', 'vendeur')">✓ Valider</button>
+              <button class="btn-refuse" onclick="refuseProfile('${v.id}', 'vendeur')">✗ Refuser</button>
+            </div>
+          </td>
+        </tr>
+      `
+        )
+        .join('');
+
+      document.getElementById('vendeursLoading').style.display = 'none';
+      document.getElementById('vendeursTable').style.display = 'table';
+    }
+
+    // LOAD PROS
+    async function loadPros() {
+      document.getElementById('prosLoading').style.display = 'block';
+      document.getElementById('prosTable').style.display = 'none';
+      document.getElementById('prosEmpty').style.display = 'none';
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(
+            'id, prenom, nom, email, nom_entreprise, siret, role, date_creation, statut_verifie'
+          )
+          .in('role', ['courtier', 'artisan', 'agent', 'mandataire'])
+          .eq('statut_verifie', false)
+          .order('date_creation', { ascending: false });
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+          document.getElementById('prosLoading').style.display = 'none';
+          document.getElementById('prosEmpty').style.display = 'block';
+          return;
+        }
+
+        renderPros(data);
+      } catch (err) {
+        showError('Erreur chargement pros: ' + err.message);
+      }
+    }
+
+    // RENDER PROS
+    function renderPros(pros) {
+      const tbody = document.getElementById('prosList');
+      tbody.innerHTML = pros
+        .map(
+          (p) => `
+        <tr>
+          <td>${p.prenom || '-'}</td>
+          <td>${p.nom || '-'}</td>
+          <td>${p.email}</td>
+          <td>${p.nom_entreprise || '-'}</td>
+          <td>${p.siret || '-'}</td>
+          <td><span class="status-badge">${p.role}</span></td>
+          <td>${new Date(p.date_creation).toLocaleDateString('fr-FR')}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-validate" onclick="validateProfile('${p.id}', 'pro')">✓ Valider</button>
+              <button class="btn-refuse" onclick="refuseProfile('${p.id}', 'pro')">✗ Refuser</button>
+            </div>
+          </td>
+        </tr>
+      `
+        )
+        .join('');
+
+      document.getElementById('prosLoading').style.display = 'none';
+      document.getElementById('prosTable').style.display = 'table';
+    }
+
+    // VALIDATE PROFILE
+    window.validateProfile = async (id, type) => {
+      try {
+        const response = await fetch(
+          '/.netlify/functions/validate-all',
+          {
+            method: 'POST',
+            body: JSON.stringify({ id, type, action: 'valider' })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error);
+        }
+
+        showSuccess('Profil validé et email envoyé');
+        setTimeout(() => {
+          if (type === 'vendeur') loadVendeurs();
+          else loadPros();
+        }, 1000);
+      } catch (err) {
+        showError('Erreur validation: ' + err.message);
+      }
+    };
+
+    // REFUSE PROFILE
+    window.refuseProfile = async (id, type) => {
+      if (!confirm('Êtes-vous sûr de vouloir refuser ce profil ?')) return;
+
+      try {
+        const response = await fetch(
+          '/.netlify/functions/validate-all',
+          {
+            method: 'POST',
+            body: JSON.stringify({ id, type, action: 'refuser' })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error);
+        }
+
+        showSuccess('Profil refusé');
+        setTimeout(() => {
+          if (type === 'vendeur') loadVendeurs();
+          else loadPros();
+        }, 1000);
+      } catch (err) {
+        showError('Erreur refus: ' + err.message);
+      }
+    };
+
+    // HELPERS
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => {
+        errorDiv.style.display = 'none';
+      }, 4000);
+    }
+
+    function showSuccess(message) {
+      const successDiv = document.getElementById('successMessage');
+      successDiv.textContent = message;
+      successDiv.style.display = 'block';
+      setTimeout(() => {
+        successDiv.style.display = 'none';
+      }, 3000);
+    }
+  </script>
 </body>
 </html>
