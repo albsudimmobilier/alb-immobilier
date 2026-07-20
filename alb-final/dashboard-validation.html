@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Validation - ALB Immobilier</title>
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
     :root {
       --pourpre: #4B1A3E;
@@ -30,7 +30,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -132,6 +132,15 @@
       text-align: center;
     }
 
+    .success-message {
+      color: var(--vert);
+      background-color: #e6ffe6;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
     .dashboard-section {
       display: none;
     }
@@ -175,12 +184,30 @@
       display: block;
     }
 
+    .subsection {
+      margin-bottom: 40px;
+      background-color: var(--blanc);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .subsection-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--dore);
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--dore);
+    }
+
     .table-container {
       background-color: var(--blanc);
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       overflow-x: auto;
+      margin-bottom: 20px;
     }
 
     table {
@@ -197,11 +224,13 @@
       padding: 12px;
       text-align: left;
       font-weight: bold;
+      font-size: 0.9rem;
     }
 
     td {
       padding: 12px;
       border-bottom: 1px solid var(--gris);
+      font-size: 0.9rem;
     }
 
     tbody tr:hover {
@@ -217,10 +246,11 @@
       background-color: var(--vert);
       color: var(--blanc);
       border: none;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 0.85rem;
       transition: background-color 0.3s;
     }
 
@@ -232,15 +262,32 @@
       background-color: var(--rouge);
       color: var(--blanc);
       border: none;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 0.85rem;
       transition: background-color 0.3s;
     }
 
     .btn-refuse:hover {
       background-color: #c82333;
+    }
+
+    .btn-edit {
+      background-color: var(--dore);
+      color: var(--blanc);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      transition: background-color 0.3s;
+    }
+
+    .btn-edit:hover {
+      background-color: #9a7a32;
     }
 
     .loading {
@@ -265,18 +312,176 @@
       color: #d63031;
     }
 
-    .success-message {
-      color: var(--vert);
-      background-color: #e6ffe6;
-      padding: 10px;
-      border-radius: 6px;
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: var(--blanc);
+      padding: 40px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .modal-close:hover {
+      color: var(--pourpre);
+    }
+
+    .modal h2 {
+      color: var(--pourpre);
+      margin-bottom: 30px;
+    }
+
+    .form-section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      color: var(--pourpre);
+      font-weight: 600;
+      font-size: 1rem;
       margin-bottom: 15px;
-      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--dore);
+    }
+
+    .form-group-modal {
+      margin-bottom: 15px;
+    }
+
+    .form-group-modal label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .form-group-modal input,
+    .form-group-modal select,
+    .form-group-modal textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+    }
+
+    .form-group-modal input:focus,
+    .form-group-modal select:focus,
+    .form-group-modal textarea:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+
+    .form-group-modal textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--dore);
+      background: var(--blanc);
+      color: var(--pourpre);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gris);
+    }
+
+    .btn-publish {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--vert), #20c997);
+      color: var(--blanc);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-publish:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .form-row,
+      .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+      .actions {
+        flex-direction: column;
+      }
+      .actions button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- LOGIN SECTION -->
     <div id="loginSection" class="login-section">
       <h2>🔐 Dashboard Validation</h2>
       <div id="errorMessage" class="error-message" style="display: none;"></div>
@@ -295,6 +500,7 @@
       <button class="login-btn" onclick="handleLogin()">Se connecter</button>
     </div>
 
+    <!-- DASHBOARD SECTION -->
     <div id="dashboardSection" class="dashboard-section">
       <header>
         <h1>✨ Dashboard Validation ALB Immobilier</h1>
@@ -307,27 +513,55 @@
         <button class="tab-btn" onclick="switchTab('avis')">⭐ Avis</button>
       </div>
 
+      <!-- TAB: VENDEURS -->
       <div id="vendeurs" class="tab-content active">
-        <div class="table-container">
-          <div id="vendeursLoading" class="loading">Chargement...</div>
-          <div id="vendeursEmpty" class="empty-state" style="display: none;">✅ Aucun vendeur en attente</div>
-          <table id="vendeursTable" style="display: none;">
-            <thead>
-              <tr>
-                <th>Prénom</th>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Téléphone</th>
-                <th>Code Postal</th>
-                <th>Inscription</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="vendeursList"></tbody>
-          </table>
+        <!-- SUBSECTION: VENDEURS À VÉRIFIER -->
+        <div class="subsection">
+          <div class="subsection-title">👤 Vendeurs à vérifier</div>
+          <div class="table-container">
+            <div id="vendeursLoading" class="loading">Chargement...</div>
+            <div id="vendeursEmpty" class="empty-state" style="display: none;">✅ Aucun vendeur en attente</div>
+            <table id="vendeursTable" style="display: none;">
+              <thead>
+                <tr>
+                  <th>Prénom</th>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Téléphone</th>
+                  <th>Inscription</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="vendeursList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBSECTION: ANNONCES À VALIDER -->
+        <div class="subsection">
+          <div class="subsection-title">📋 Annonces à valider</div>
+          <div class="table-container">
+            <div id="annoncesLoading" class="loading">Chargement...</div>
+            <div id="annoncesEmpty" class="empty-state" style="display: none;">✅ Aucune annonce en attente</div>
+            <table id="annoncesTable" style="display: none;">
+              <thead>
+                <tr>
+                  <th>Titre</th>
+                  <th>Vendeur</th>
+                  <th>Prix</th>
+                  <th>Ville</th>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="annonces-list"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
+      <!-- TAB: PROFESSIONNELS -->
       <div id="pros" class="tab-content">
         <div class="table-container">
           <div id="prosLoading" class="loading">Chargement...</div>
@@ -350,6 +584,7 @@
         </div>
       </div>
 
+      <!-- TAB: AVIS -->
       <div id="avis" class="tab-content">
         <div class="table-container">
           <div id="avisLoading" class="loading">Chargement...</div>
@@ -372,28 +607,120 @@
     </div>
   </div>
 
+  <!-- MODAL ÉDITION ANNONCE -->
+  <div id="modal-annonce" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAnnonceModal()">&times;</button>
+      <h2>✏️ Valider & Éditer Annonce</h2>
+
+      <form id="annonce-form">
+        <!-- SECTION 1 -->
+        <div class="form-section">
+          <h3 class="section-title">📝 Informations principales</h3>
+
+          <div class="form-group-modal">
+            <label for="titre">Titre</label>
+            <input type="text" id="titre" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group-modal">
+              <label for="prix">Prix (€)</label>
+              <input type="number" id="prix" min="0" step="1000" required>
+            </div>
+            <div class="form-group-modal">
+              <label for="type">Type</label>
+              <select id="type" required>
+                <option value="maison">Maison</option>
+                <option value="appartement">Appartement</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="description">Description</label>
+            <textarea id="description" required></textarea>
+          </div>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="form-section">
+          <h3 class="section-title">📍 Localisation</h3>
+
+          <div class="form-group-modal">
+            <label for="adresse">Adresse</label>
+            <input type="text" id="adresse" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group-modal">
+              <label for="code-postal">Code postal</label>
+              <input type="text" id="code-postal" required>
+            </div>
+            <div class="form-group-modal">
+              <label for="ville">Ville</label>
+              <input type="text" id="ville" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <div class="form-section">
+          <h3 class="section-title">🏘️ Caractéristiques</h3>
+
+          <div class="form-row-3">
+            <div class="form-group-modal">
+              <label for="surface">Surface (m²)</label>
+              <input type="number" id="surface" min="0" step="1" required>
+            </div>
+            <div class="form-group-modal">
+              <label for="pieces">Pièces</label>
+              <input type="number" id="pieces" min="1" step="1" required>
+            </div>
+            <div class="form-group-modal">
+              <label for="terrain">Terrain (m²)</label>
+              <input type="number" id="terrain" min="0" step="1">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group-modal">
+              <label for="dpe">DPE</label>
+              <select id="dpe" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="ges">GES</label>
+              <select id="ges" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeAnnonceModal()">Annuler</button>
+          <button type="submit" class="btn-publish">✅ Valider & Publier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+
   <script>
-    function waitForSupabase() {
-      return new Promise((resolve) => {
-        if (window.supabase) {
-          resolve();
-        } else {
-          setTimeout(waitForSupabase, 100);
-        }
-      });
-    }
-
-    waitForSupabase().then(initDashboard);
-
-    async function initDashboard() {
-      const supabaseUrl = 'https://kutbxyinpogebjdemlnq.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkzMzc5MzAsImV4cCI6MjAzNDkxMzkzMH0.CvJe7tW-a5SqMN4pKr1lXL9gBvSz4T5H4j8v9k0X9dA';
-      window.supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-    }
-
     let isLoggedIn = false;
-    let currentUser = null;
+    let currentEditId = null;
 
     async function handleLogin() {
       const email = document.getElementById('email').value.trim();
@@ -410,15 +737,14 @@
       }
 
       isLoggedIn = true;
-      currentUser = { email, pin };
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('dashboardSection').classList.add('active');
       await loadVendeurs();
+      await loadAnnonces();
     }
 
     function handleLogout() {
       isLoggedIn = false;
-      currentUser = null;
       document.getElementById('loginSection').style.display = 'block';
       document.getElementById('dashboardSection').classList.remove('active');
       document.getElementById('pin').value = '';
@@ -437,6 +763,7 @@
 
       if (tabName === 'vendeurs') {
         loadVendeurs();
+        loadAnnonces();
       } else if (tabName === 'pros') {
         loadPros();
       } else if (tabName === 'avis') {
@@ -444,22 +771,23 @@
       }
     }
 
+    // ===== VENDEURS =====
     async function loadVendeurs() {
       document.getElementById('vendeursLoading').style.display = 'block';
       document.getElementById('vendeursTable').style.display = 'none';
       document.getElementById('vendeursEmpty').style.display = 'none';
 
       try {
-        const { data, error } = await window.supabase
+        const { data, error } = await window.supabaseClient
           .from('profiles')
-          .select('id, prenom, nom, email, telephone, code_postal, date_creation, statut_verifie')
+          .select('id, prenom, nom, email, telephone, date_creation, statut_verifie')
           .eq('est_vendeur', true)
           .eq('statut_verifie', false)
           .order('date_creation', { ascending: false });
 
         if (error) throw error;
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
           document.getElementById('vendeursLoading').style.display = 'none';
           document.getElementById('vendeursEmpty').style.display = 'block';
           return;
@@ -467,6 +795,7 @@
 
         renderVendeurs(data);
       } catch (err) {
+        console.error('Erreur:', err);
         showError('Erreur chargement vendeurs: ' + err.message);
       }
     }
@@ -481,7 +810,6 @@
           <td>${v.nom || '-'}</td>
           <td>${v.email}</td>
           <td>${v.telephone || '-'}</td>
-          <td>${v.code_postal || '-'}</td>
           <td>${new Date(v.date_creation).toLocaleDateString('fr-FR')}</td>
           <td>
             <div class="actions">
@@ -498,13 +826,151 @@
       document.getElementById('vendeursTable').style.display = 'table';
     }
 
+    // ===== ANNONCES =====
+    async function loadAnnonces() {
+      document.getElementById('annoncesLoading').style.display = 'block';
+      document.getElementById('annoncesTable').style.display = 'none';
+      document.getElementById('annoncesEmpty').style.display = 'none';
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('biens_immobiliers')
+          .select(`
+            id,
+            titre,
+            prix_vente,
+            ville,
+            type_bien,
+            statut,
+            created_at,
+            profiles:vendeur_id(prenom, nom)
+          `)
+          .eq('statut', 'en_attente')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          document.getElementById('annoncesLoading').style.display = 'none';
+          document.getElementById('annoncesEmpty').style.display = 'block';
+          return;
+        }
+
+        renderAnnonces(data);
+      } catch (err) {
+        console.error('Erreur:', err);
+        showError('Erreur chargement annonces: ' + err.message);
+      }
+    }
+
+    function renderAnnonces(annonces) {
+      const tbody = document.getElementById('annonces-list');
+      tbody.innerHTML = annonces
+        .map(
+          (a) => `
+        <tr>
+          <td>${a.titre}</td>
+          <td>${a.profiles?.prenom} ${a.profiles?.nom}</td>
+          <td>${a.prix_vente?.toLocaleString('fr-FR')}€</td>
+          <td>${a.ville}</td>
+          <td>${a.type_bien}</td>
+          <td>${new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-edit" onclick="editAnnonce('${a.id}')">✏️ Valider</button>
+            </div>
+          </td>
+        </tr>
+      `
+        )
+        .join('');
+
+      document.getElementById('annoncesLoading').style.display = 'none';
+      document.getElementById('annoncesTable').style.display = 'table';
+    }
+
+    async function editAnnonce(annonceId) {
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('biens_immobiliers')
+          .select('*')
+          .eq('id', annonceId)
+          .single();
+
+        if (error) throw error;
+
+        currentEditId = annonceId;
+
+        document.getElementById('titre').value = data.titre;
+        document.getElementById('prix').value = data.prix_vente;
+        document.getElementById('type').value = data.type_bien;
+        document.getElementById('description').value = data.description;
+        document.getElementById('adresse').value = data.adresse_complete || '';
+        document.getElementById('code-postal').value = data.code_postal || '';
+        document.getElementById('ville').value = data.ville || '';
+        document.getElementById('surface').value = data.surface || '';
+        document.getElementById('pieces').value = data.nb_pieces || '';
+        document.getElementById('terrain').value = data.surface_terrain || '';
+        document.getElementById('dpe').value = data.dpe || 'C';
+        document.getElementById('ges').value = data.ges || 'C';
+
+        document.getElementById('modal-annonce').classList.add('active');
+      } catch (err) {
+        console.error('Erreur:', err);
+        showError('Erreur chargement annonce: ' + err.message);
+      }
+    }
+
+    document.getElementById('annonce-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await publishAnnonce();
+    });
+
+    async function publishAnnonce() {
+      try {
+        const { error } = await window.supabaseClient
+          .from('biens_immobiliers')
+          .update({
+            titre: document.getElementById('titre').value,
+            prix_vente: parseFloat(document.getElementById('prix').value),
+            type_bien: document.getElementById('type').value,
+            description: document.getElementById('description').value,
+            adresse_complete: document.getElementById('adresse').value,
+            code_postal: document.getElementById('code-postal').value,
+            ville: document.getElementById('ville').value,
+            surface: parseFloat(document.getElementById('surface').value),
+            nb_pieces: parseInt(document.getElementById('pieces').value),
+            surface_terrain: document.getElementById('terrain').value ? parseFloat(document.getElementById('terrain').value) : null,
+            dpe: document.getElementById('dpe').value,
+            ges: document.getElementById('ges').value,
+            statut: 'disponible'
+          })
+          .eq('id', currentEditId);
+
+        if (error) throw error;
+
+        showSuccess('✅ Annonce validée et publiée !');
+        closeAnnonceModal();
+        await loadAnnonces();
+      } catch (err) {
+        console.error('Erreur:', err);
+        showError('Erreur validation: ' + err.message);
+      }
+    }
+
+    function closeAnnonceModal() {
+      document.getElementById('modal-annonce').classList.remove('active');
+      currentEditId = null;
+    }
+
+    // ===== PROFESSIONNELS =====
     async function loadPros() {
       document.getElementById('prosLoading').style.display = 'block';
       document.getElementById('prosTable').style.display = 'none';
       document.getElementById('prosEmpty').style.display = 'none';
 
       try {
-        const { data, error } = await window.supabase
+        const { data, error } = await window.supabaseClient
           .from('profiles')
           .select('id, prenom, nom, email, nom_entreprise, siret, role, date_creation, statut_verifie')
           .in('role', ['courtier', 'artisan', 'agent', 'mandataire'])
@@ -513,7 +979,7 @@
 
         if (error) throw error;
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
           document.getElementById('prosLoading').style.display = 'none';
           document.getElementById('prosEmpty').style.display = 'block';
           return;
@@ -521,6 +987,7 @@
 
         renderPros(data);
       } catch (err) {
+        console.error('Erreur:', err);
         showError('Erreur chargement pros: ' + err.message);
       }
     }
@@ -553,13 +1020,14 @@
       document.getElementById('prosTable').style.display = 'table';
     }
 
+    // ===== AVIS =====
     async function loadAvis() {
       document.getElementById('avisLoading').style.display = 'block';
       document.getElementById('avisTable').style.display = 'none';
       document.getElementById('avisEmpty').style.display = 'none';
 
       try {
-        const { data, error } = await window.supabase
+        const { data, error } = await window.supabaseClient
           .from('avis')
           .select('id, profiles(nom_entreprise), note, commentaire, auteur_nom, date_creation, verifiee')
           .eq('verifiee', false)
@@ -567,7 +1035,7 @@
 
         if (error) throw error;
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
           document.getElementById('avisLoading').style.display = 'none';
           document.getElementById('avisEmpty').style.display = 'block';
           return;
@@ -575,6 +1043,7 @@
 
         renderAvis(data);
       } catch (err) {
+        console.error('Erreur:', err);
         showError('Erreur chargement avis: ' + err.message);
       }
     }
@@ -605,6 +1074,7 @@
       document.getElementById('avisTable').style.display = 'table';
     }
 
+    // ===== ACTIONS =====
     async function validateProfile(id, type) {
       try {
         const response = await fetch('/.netlify/functions/validate-all', {
@@ -618,13 +1088,14 @@
           throw new Error(result.error);
         }
 
-        showSuccess('Profil validé et email envoyé');
+        showSuccess('Profil validé !');
         setTimeout(() => {
           if (type === 'vendeur') loadVendeurs();
           else if (type === 'pro') loadPros();
           else if (type === 'avis') loadAvis();
         }, 1000);
       } catch (err) {
+        console.error('Erreur:', err);
         showError('Erreur validation: ' + err.message);
       }
     }
@@ -651,6 +1122,7 @@
           else if (type === 'avis') loadAvis();
         }, 1000);
       } catch (err) {
+        console.error('Erreur:', err);
         showError('Erreur refus: ' + err.message);
       }
     }
