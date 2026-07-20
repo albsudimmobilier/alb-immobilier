@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Créer une Annonce - ALB Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --pourpre: #4B1A3E;
+      --dore: #B28E3D;
+      --creme: #f5f3ee;
+      --light-bg: #f9f7f4;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #f5f3ee 0%, #fafaf8 100%);
+      color: #2b2b2b;
+      min-height: 100vh;
+    }
+    .header {
+      background: white;
+      border-bottom: 3px solid var(--dore);
+      padding: 15px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .header-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: 'Playfair Display';
+      font-size: 1.3rem;
+      color: var(--pourpre);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .logo strong { color: var(--dore); }
+    .btn-back {
+      background: var(--light-bg);
+      color: var(--pourpre);
+      padding: 8px 16px;
+      border: 1px solid var(--dore);
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-back:hover {
+      background: #f0ebe3;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 100px 20px 40px;
+    }
+    .form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(75, 26, 62, 0.1);
+      border: 1px solid #e0e0e0;
+    }
+    .page-title {
+      font-family: 'Playfair Display';
+      color: var(--pourpre);
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    .page-subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+    .form-section {
+      margin-bottom: 40px;
+    }
+    .section-title {
+      color: var(--pourpre);
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--dore);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .form-help-text {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 5px;
+    }
+    .dispo-slots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .dispo-slot {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 0 0 calc(50% - 8px);
+    }
+    .dispo-slot input[type="date"],
+    .dispo-slot input[type="time"] {
+      width: 100%;
+    }
+    .btn-add-dispo {
+      background: var(--light-bg);
+      color: var(--pourpre);
+      padding: 10px 16px;
+      border: 1px solid var(--dore);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    .btn-add-dispo:hover {
+      background: #f0ebe3;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(75, 26, 62, 0.3);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .error-message.active {
+      display: block;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      .form-row,
+      .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+      .dispo-slot {
+        flex: 0 0 100%;
+      }
+      .page-title {
+        font-size: 1.5rem;
+      }
+      .form-card {
+        padding: 25px;
+      }
+      .container {
+        padding: 80px 15px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-content">
+    <a href="index.html" class="logo"><strong>ALB</strong> Immobilier</a>
+    <a href="annonces.html" class="btn-back">← Annonces</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="form-card">
+    <h1 class="page-title">🏠 Créer une Annonce</h1>
+    <p class="page-subtitle">Remplissez les détails de votre bien à vendre</p>
+
+    <div id="error-message" class="error-message"></div>
+
+    <form id="annonce-form">
+      <!-- SECTION TITRE & PRIX -->
+      <div class="form-section">
+        <h2 class="section-title">📝 Informations principales</h2>
+
+        <div class="form-group">
+          <label for="titre">Titre de l'annonce *</label>
+          <input type="text" id="titre" placeholder="Ex: Maison 4 pièces - Brignoles" required>
+          <div class="form-help-text">Un titre clair et attrayant (50 caractères max)</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prix">Prix de vente (€) *</label>
+            <input type="number" id="prix" placeholder="350000" min="0" step="1000" required>
+          </div>
+          <div class="form-group">
+            <label for="type">Type de bien *</label>
+            <select id="type" required>
+              <option value="">Sélectionner...</option>
+              <option value="maison">Maison</option>
+              <option value="appartement">Appartement</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" placeholder="Décrivez votre bien en détail..." required></textarea>
+          <div class="form-help-text">Soyez précis et attrayant (min 50 caractères)</div>
+        </div>
+      </div>
+
+      <!-- SECTION LOCALISATION -->
+      <div class="form-section">
+        <h2 class="section-title">📍 Localisation</h2>
+
+        <div class="form-group">
+          <label for="adresse">Adresse complète *</label>
+          <input type="text" id="adresse" placeholder="123 Rue de la Paix" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="code-postal">Code postal *</label>
+            <input type="text" id="code-postal" placeholder="83170" required>
+          </div>
+          <div class="form-group">
+            <label for="ville">Ville *</label>
+            <input type="text" id="ville" placeholder="Brignoles" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION CARACTÉRISTIQUES -->
+      <div class="form-section">
+        <h2 class="section-title">🏘️ Caractéristiques du bien</h2>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="surface">Surface (m²) *</label>
+            <input type="number" id="surface" placeholder="120" min="0" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="pieces">Nombre de pièces *</label>
+            <input type="number" id="pieces" placeholder="4" min="1" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="terrain">Terrain (m²)</label>
+            <input type="number" id="terrain" placeholder="500" min="0" step="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dpe">DPE (Diagnostic) *</label>
+            <select id="dpe" required>
+              <option value="">Sélectionner...</option>
+              <option value="A">A (Très efficace)</option>
+              <option value="B">B (Efficace)</option>
+              <option value="C">C (Moyen)</option>
+              <option value="D">D (Mauvais)</option>
+              <option value="E">E (Très mauvais)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ges">GES (Émissions) *</label>
+            <select id="ges" required>
+              <option value="">Sélectionner...</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION DISPONIBILITÉS -->
+      <div class="form-section">
+        <h2 class="section-title">📅 Disponibilités pour les visites</h2>
+        <p class="form-help-text" style="margin-bottom: 20px;">Indiquez 1-2 créneaux disponibles pour les visites</p>
+
+        <div id="dispos-container" class="dispo-slots">
+          <div class="dispo-slot">
+            <label>Créneau 1</label>
+            <div>
+              <input type="date" class="dispo-date" required>
+              <input type="time" class="dispo-time" placeholder="14:00" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-add-dispo" onclick="addDispoSlot()">+ Ajouter un créneau</button>
+      </div>
+
+      <!-- SECTION MÉDIAS -->
+      <div class="form-section">
+        <h2 class="section-title">📸 Médias (optionnel)</h2>
+
+        <div class="form-group">
+          <label for="video-url">URL de vidéo (YouTube, Vimeo, etc.)</label>
+          <input type="url" id="video-url" placeholder="https://youtube.com/...">
+          <div class="form-help-text">Lien vers une vidéo de présentation</div>
+        </div>
+
+        <div class="form-group">
+          <label>Photos de présentation</label>
+          <p class="form-help-text" style="margin-bottom: 10px;">Les photos sont téléchargées via votre espace personnel après création</p>
+        </div>
+      </div>
+
+      <!-- BOUTON SUBMIT -->
+      <button type="submit" id="submit-btn" class="btn-submit">
+        ✅ Créer l'annonce
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+
+<script>
+  const form = document.getElementById('annonce-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const errorMessage = document.getElementById('error-message');
+
+  let currentUser = null;
+
+  async function init() {
+    const session = await window.supabaseClient.auth.getSession();
+    if (session?.data?.session) {
+      currentUser = session.data.session.user;
+    } else {
+      // Redirect to login if not authenticated
+      window.location.href = '/login.html';
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await handleSubmit();
+  });
+
+  async function handleSubmit() {
+    errorMessage.classList.remove('active');
+    errorMessage.textContent = '';
+
+    // Récupère tous les champs
+    const titre = document.getElementById('titre').value.trim();
+    const prix = parseFloat(document.getElementById('prix').value);
+    const type = document.getElementById('type').value;
+    const description = document.getElementById('description').value.trim();
+    const adresse = document.getElementById('adresse').value.trim();
+    const codePostal = document.getElementById('code-postal').value.trim();
+    const ville = document.getElementById('ville').value.trim();
+    const surface = parseFloat(document.getElementById('surface').value);
+    const pieces = parseInt(document.getElementById('pieces').value);
+    const terrain = document.getElementById('terrain').value ? parseFloat(document.getElementById('terrain').value) : null;
+    const dpe = document.getElementById('dpe').value;
+    const ges = document.getElementById('ges').value;
+    const videoUrl = document.getElementById('video-url').value.trim();
+
+    // Validation
+    if (!titre || !prix || !type || !description || !adresse || !codePostal || !ville || !surface || !pieces || !dpe || !ges) {
+      showError('⚠️ Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (description.length < 50) {
+      showError('⚠️ La description doit contenir au moins 50 caractères');
+      return;
+    }
+
+    // Récupère les créneaux
+    const dispos = [];
+    document.querySelectorAll('.dispo-slot').forEach((slot) => {
+      const date = slot.querySelector('.dispo-date').value;
+      const time = slot.querySelector('.dispo-time').value;
+      if (date && time) {
+        const dateTime = new Date(`${date}T${time}`).toISOString();
+        dispos.push(dateTime);
+      }
+    });
+
+    if (dispos.length === 0) {
+      showError('⚠️ Veuillez indiquer au moins un créneau de visite');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading-spinner"></span>Création en cours...';
+
+    try {
+      // INSERT biens_immobiliers
+      const { data: bien, error: bienError } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .insert({
+          titre,
+          prix_vente: prix,
+          type_bien: type,
+          description,
+          adresse_complete: adresse,
+          code_postal: codePostal,
+          ville,
+          surface,
+          nb_pieces: pieces,
+          surface_terrain: terrain,
+          dpe,
+          ges,
+          video_bien_url: videoUrl || null,
+          statut: 'en_attente',
+          vendeur_id: currentUser.id
+        })
+        .select();
+
+      if (bienError) throw bienError;
+
+      // UPDATE profiles - ajoute disponibilites_rdv
+      const { error: profileError } = await window.supabaseClient
+        .from('profiles')
+        .update({ disponibilites_rdv: dispos })
+        .eq('id', currentUser.id);
+
+      if (profileError) throw profileError;
+
+      // Send email template #15 (Inscription Vendeur) à Joce
+      await fetch('/.netlify/functions/send-brevo-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: 15,
+          well_id: bien[0]?.id,
+          vendor_email: currentUser.email
+        })
+      });
+
+      alert('✅ Annonce créée avec succès ! Elle est en attente de validation.');
+      setTimeout(() => {
+        window.location.href = '/espace-perso.html';
+      }, 1000);
+
+    } catch (err) {
+      console.error('Erreur:', err);
+      showError('❌ ' + (err.message || 'Erreur lors de la création'));
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '✅ Créer l\'annonce';
+    }
+  }
+
+  function addDispoSlot() {
+    const container = document.getElementById('dispos-container');
+    const count = container.querySelectorAll('.dispo-slot').length + 1;
+
+    if (count > 2) {
+      alert('⚠️ Maximum 2 créneaux');
+      return;
+    }
+
+    const slot = document.createElement('div');
+    slot.className = 'dispo-slot';
+    slot.innerHTML = `
+      <label>Créneau ${count}</label>
+      <div>
+        <input type="date" class="dispo-date" required>
+        <input type="time" class="dispo-time" placeholder="14:00" required>
+      </div>
+    `;
+    container.appendChild(slot);
+  }
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  init();
+</script>
+
+</body>
+</html>
