@@ -304,6 +304,7 @@
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('vendeurs')">👤 Vendeurs</button>
         <button class="tab-btn" onclick="switchTab('pros')">💼 Professionnels</button>
+        <button class="tab-btn" onclick="switchTab('avis')">⭐ Avis</button>
       </div>
 
       <div id="vendeurs" class="tab-content active">
@@ -345,6 +346,26 @@
               </tr>
             </thead>
             <tbody id="prosList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="avis" class="tab-content">
+        <div class="table-container">
+          <div id="avisLoading" class="loading">Chargement...</div>
+          <div id="avisEmpty" class="empty-state" style="display: none;">✅ Aucun avis en attente</div>
+          <table id="avisTable" style="display: none;">
+            <thead>
+              <tr>
+                <th>Pro</th>
+                <th>Évaluation</th>
+                <th>Commentaire</th>
+                <th>Auteur</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="avisList"></tbody>
           </table>
         </div>
       </div>
@@ -418,6 +439,8 @@
         loadVendeurs();
       } else if (tabName === 'pros') {
         loadPros();
+      } else if (tabName === 'avis') {
+        loadAvis();
       }
     }
 
@@ -530,6 +553,58 @@
       document.getElementById('prosTable').style.display = 'table';
     }
 
+    async function loadAvis() {
+      document.getElementById('avisLoading').style.display = 'block';
+      document.getElementById('avisTable').style.display = 'none';
+      document.getElementById('avisEmpty').style.display = 'none';
+
+      try {
+        const { data, error } = await window.supabase
+          .from('avis')
+          .select('id, profiles(nom_entreprise), note, commentaire, auteur_nom, date_creation, verifiee')
+          .eq('verifiee', false)
+          .order('date_creation', { ascending: false });
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+          document.getElementById('avisLoading').style.display = 'none';
+          document.getElementById('avisEmpty').style.display = 'block';
+          return;
+        }
+
+        renderAvis(data);
+      } catch (err) {
+        showError('Erreur chargement avis: ' + err.message);
+      }
+    }
+
+    function renderAvis(avis) {
+      const tbody = document.getElementById('avisList');
+      tbody.innerHTML = avis
+        .map(
+          (a) => `
+        <tr>
+          <td>${a.profiles?.nom_entreprise || '-'}</td>
+          <td>${a.note || '-'} ⭐</td>
+          <td>${(a.commentaire || '').substring(0, 50)}...</td>
+          <td>${a.auteur_nom || '-'}</td>
+          <td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-validate" onclick="validateProfile('${a.id}', 'avis')">✓ Valider</button>
+              <button class="btn-refuse" onclick="refuseProfile('${a.id}', 'avis')">✗ Refuser</button>
+            </div>
+          </td>
+        </tr>
+      `
+        )
+        .join('');
+
+      document.getElementById('avisLoading').style.display = 'none';
+      document.getElementById('avisTable').style.display = 'table';
+    }
+
     async function validateProfile(id, type) {
       try {
         const response = await fetch('/.netlify/functions/validate-all', {
@@ -546,7 +621,8 @@
         showSuccess('Profil validé et email envoyé');
         setTimeout(() => {
           if (type === 'vendeur') loadVendeurs();
-          else loadPros();
+          else if (type === 'pro') loadPros();
+          else if (type === 'avis') loadAvis();
         }, 1000);
       } catch (err) {
         showError('Erreur validation: ' + err.message);
@@ -571,7 +647,8 @@
         showSuccess('Profil refusé');
         setTimeout(() => {
           if (type === 'vendeur') loadVendeurs();
-          else loadPros();
+          else if (type === 'pro') loadPros();
+          else if (type === 'avis') loadAvis();
         }, 1000);
       } catch (err) {
         showError('Erreur refus: ' + err.message);
