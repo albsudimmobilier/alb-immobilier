@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Annonces - ALB Sud Immobilier</title>
+  <title>Annonces Immobilières - ALB Immobilier</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -39,78 +38,158 @@
       font-family: 'Playfair Display';
       font-size: 1.3rem;
       color: var(--pourpre);
+      cursor: pointer;
     }
     .logo strong { color: var(--dore); }
-    .nav { display: flex; gap: 25px; }
-    .nav a { text-decoration: none; color: #666; font-weight: 500; transition: color 0.3s; }
-    .nav a:hover { color: var(--pourpre); }
-    .nav a.active { color: var(--pourpre); border-bottom: 2px solid var(--dore); padding-bottom: 5px; }
-    .btn-logout { background: #d32f2f; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    .btn-logout:hover { background: #b71c1c; }
-    .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .btn-auth {
+      background: var(--pourpre);
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-auth:hover {
+      background: #6b2d5f;
+    }
+    .btn-dashboard {
+      background: var(--dore);
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-dashboard:hover {
+      background: #9a7a32;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
     .page-title {
       font-family: 'Playfair Display';
       color: var(--pourpre);
-      margin-bottom: 30px;
-      font-size: 2rem;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
     }
-    .choice-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      max-width: 900px;
-      margin: 60px auto;
-    }
-    .choice-card {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      border: 2px solid #e0e0e0;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .choice-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(75, 26, 62, 0.15);
-      border-color: var(--dore);
-    }
-    .choice-card h3 {
-      font-size: 1.5rem;
-      color: var(--pourpre);
-      margin: 15px 0;
-      font-family: 'Playfair Display';
-    }
-    .choice-card p {
+    .page-subtitle {
       color: #666;
-      line-height: 1.6;
+      font-size: 1.1rem;
+    }
+    .content-wrapper {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 40px;
+    }
+    /* SECTION ACHETEUR - GAUCHE */
+    .section-acheteur {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .filter-sidebar {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .filter-title {
+      color: var(--pourpre);
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--dore);
+    }
+    .filter-group {
       margin-bottom: 20px;
     }
-    .choice-card .icon {
-      font-size: 3rem;
-      color: var(--dore);
-      margin-bottom: 15px;
+    .filter-label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
     }
-    .choice-card .btn {
-      background: var(--pourpre);
-      color: white;
-      padding: 12px 25px;
-      border: none;
+    .filter-input,
+    .filter-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+    }
+    .filter-input:focus,
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .filter-checkbox input {
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--dore);
+    }
+    .filter-checkbox label {
+      cursor: pointer;
+      flex: 1;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    .btn-reset {
+      width: 100%;
+      padding: 10px;
+      background: #f0ebe3;
+      color: var(--pourpre);
+      border: 1px solid var(--dore);
       border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
+      margin-top: 10px;
       transition: all 0.3s;
     }
-    .choice-card .btn:hover {
-      background: #6b2d5f;
-      transform: scale(1.05);
+    .btn-reset:hover {
+      background: #e0dcc8;
+    }
+    .annonces-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .results-count {
+      color: #666;
+      font-size: 0.95rem;
     }
     .annonces-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
-      margin-top: 30px;
     }
     .annonce-card {
       background: white;
@@ -118,147 +197,204 @@
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       transition: all 0.3s;
+      cursor: pointer;
+      border: 1px solid #e0e0e0;
     }
     .annonce-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(75, 26, 62, 0.15);
+      border-color: var(--dore);
     }
-    .annonce-img {
+    .annonce-image {
       width: 100%;
-      height: 200px;
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      height: 180px;
+      background: linear-gradient(135deg, #f5f3ee 0%, #fafaf8 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
+      color: #999;
       font-size: 3rem;
     }
     .annonce-content {
-      padding: 20px;
+      padding: 18px;
     }
-    .annonce-title {
-      font-size: 1.1rem;
-      font-weight: 600;
+    .annonce-titre {
       color: var(--pourpre);
+      font-size: 1rem;
+      font-weight: 600;
       margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .annonce-location {
-      color: #999;
-      font-size: 0.9rem;
+    .annonce-prix {
+      font-family: 'Playfair Display';
+      font-size: 1.4rem;
+      color: var(--dore);
+      font-weight: bold;
       margin-bottom: 10px;
     }
-    .annonce-price {
-      font-size: 1.3rem;
-      color: var(--dore);
-      font-weight: 700;
-      margin-bottom: 15px;
+    .annonce-localisation {
+      color: #999;
+      font-size: 0.8rem;
+      margin-bottom: 12px;
     }
-    .annonce-actions {
+    .annonce-meta {
       display: flex;
-      gap: 10px;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
-    .btn-small {
-      flex: 1;
-      padding: 10px;
-      border: none;
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #f0ebe3;
+      color: var(--pourpre);
       border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge.dpe {
+      background: #d4edda;
+      color: #155724;
+    }
+    .annonce-button {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.9rem;
       transition: all 0.3s;
     }
-    .btn-demande {
-      background: var(--pourpre);
-      color: white;
+    .annonce-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.3);
     }
-    .btn-demande:hover {
-      background: #6b2d5f;
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
     }
-    .form-container {
+    .no-results h3 {
+      color: var(--pourpre);
+      margin-bottom: 10px;
+    }
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    /* SECTION VENDEUR - DROITE */
+    .section-vendeur {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .vendeur-card {
       background: white;
       border-radius: 8px;
       padding: 30px;
-      max-width: 600px;
-      margin: 30px auto;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-top: 4px solid var(--dore);
+      text-align: center;
     }
-    .form-group {
-      margin-bottom: 20px;
+    .vendeur-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
     }
-    .form-group label {
-      display: block;
+    .vendeur-title {
+      font-family: 'Playfair Display';
       color: var(--pourpre);
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
     }
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: 'Montserrat', sans-serif;
+    .vendeur-subtitle {
+      color: #666;
       font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
-    .form-group textarea {
-      resize: vertical;
-      min-height: 100px;
+    .vendeur-features {
+      background: #f9f7f4;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: left;
     }
-    .btn-submit {
-      width: 100%;
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .feature:last-child {
+      margin-bottom: 0;
+    }
+    .feature-icon {
+      color: var(--dore);
+      font-weight: bold;
+    }
+    .btn-vendre {
+      background: linear-gradient(135deg, #4caf50, #45a049);
       color: white;
-      padding: 12px;
+      padding: 14px 28px;
       border: none;
       border-radius: 6px;
-      font-weight: 600;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
       transition: all 0.3s;
+      width: 100%;
     }
-    .btn-submit:hover {
+    .btn-vendre:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
     }
-    .filters {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .filter-group label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #666;
-    }
-    .filter-group input,
-    .filter-group select {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .loading { text-align: center; padding: 40px; color: #999; }
-    .no-data { text-align: center; padding: 40px; color: #999; }
-    .hidden { display: none; }
-    .btn-back {
-      background: #999;
+    .stats-card {
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
       color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
       margin-bottom: 20px;
     }
-    .btn-back:hover {
-      background: #777;
+    .stat-number {
+      font-family: 'Playfair Display';
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .info-box {
+      background: #f0ebe3;
+      border-left: 3px solid var(--dore);
+      padding: 15px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 20px;
+    }
+    @media (max-width: 1024px) {
+      .content-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+    @media (max-width: 768px) {
+      .annonces-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -266,110 +402,146 @@
 
 <header class="header">
   <div class="header-content">
-    <div class="logo"><strong>ALB</strong> Immobilier</div>
-    <nav class="nav">
-      <a href="index.html">Accueil</a>
-      <a href="annonces.html" class="active">Annonces</a>
-      <a href="vitrine-pros.html">Vitrine des pros</a>
-      <a href="espace-perso.html">Espace ALB</a>
-    </nav>
-    <button class="btn-logout" onclick="logout()">🔐 Déconnexion</button>
+    <div class="logo" onclick="window.location.href='index.html'"><strong>ALB</strong> Immobilier</div>
+    <div class="header-actions">
+      <a href="login.html" class="btn-auth" id="btn-login">🔐 Connexion</a>
+      <a href="espace-perso.html" class="btn-dashboard" id="btn-dashboard" style="display: none;">📊 Mon Dashboard</a>
+    </div>
   </div>
 </header>
 
 <div class="container">
-  <div id="choice-page" class="hidden">
-    <h1 class="page-title">Annonces immobilières</h1>
-    <p style="text-align: center; color: #666; margin-bottom: 40px;">Vous êtes acheteur ou vendeur ? Choisissez votre parcours.</p>
-    
-    <div class="choice-container">
-      <div class="choice-card" onclick="showBuyerView()">
-        <div class="icon">🏠</div>
-        <h3>Rechercher un bien</h3>
-        <p>Parcourez les annonces immobilières disponibles et trouvez le bien de vos rêves dans le Var et la région PACA.</p>
-        <button class="btn">Parcourir →</button>
-      </div>
-
-      <div class="choice-card" onclick="showSellerView()">
-        <div class="icon">📝</div>
-        <h3>Vendre votre bien</h3>
-        <p>Vous êtes propriétaire ? Créez une annonce pour vendre votre bien ancien en quelques minutes.</p>
-        <button class="btn">Vendre →</button>
-      </div>
-    </div>
+  <div class="page-header">
+    <h1 class="page-title">🏠 Annonces Immobilières</h1>
+    <p class="page-subtitle">Trouvez votre bien ou diffusez le vôtre</p>
   </div>
 
-  <div id="buyer-view" class="hidden">
-    <h1 class="page-title">Annonces disponibles</h1>
-    
-    <div class="filters">
-      <div class="filter-group">
-        <label>Type</label>
-        <select id="filter-type">
-          <option value="">Tous</option>
-          <option value="maison">Maison</option>
-          <option value="appartement">Appartement</option>
-        </select>
+  <div class="content-wrapper">
+    <!-- SECTION ACHETEUR - GAUCHE -->
+    <div class="section-acheteur">
+      <!-- FILTRES -->
+      <div class="filter-sidebar">
+        <div class="filter-title">🔎 Filtrer les annonces</div>
+
+        <div class="filter-group">
+          <label class="filter-label">Prix max (€)</label>
+          <input type="number" id="filter-prix-max" class="filter-input" placeholder="Ex: 500000" min="0" step="10000">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Code postal / Ville</label>
+          <input type="text" id="filter-localisation" class="filter-input" placeholder="Ex: 83000">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Type de bien</label>
+          <div class="filter-checkbox">
+            <input type="checkbox" id="filter-maison" value="maison">
+            <label for="filter-maison">Maison</label>
+          </div>
+          <div class="filter-checkbox">
+            <input type="checkbox" id="filter-appartement" value="appartement">
+            <label for="filter-appartement">Appartement</label>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">DPE (Diagnostic)</label>
+          <div class="filter-checkbox">
+            <input type="checkbox" id="filter-dpe-a" value="A">
+            <label for="filter-dpe-a">A (Très efficace)</label>
+          </div>
+          <div class="filter-checkbox">
+            <input type="checkbox" id="filter-dpe-b" value="B">
+            <label for="filter-dpe-b">B (Efficace)</label>
+          </div>
+          <div class="filter-checkbox">
+            <input type="checkbox" id="filter-dpe-c" value="C">
+            <label for="filter-dpe-c">C (Moyen)</label>
+          </div>
+        </div>
+
+        <button class="btn-reset" onclick="resetFilters()">🔄 Réinitialiser</button>
       </div>
-      <div class="filter-group">
-        <label>Localisation</label>
-        <select id="filter-location">
-          <option value="">Tous</option>
-          <option value="Toulon">Toulon</option>
-          <option value="Hyères">Hyères</option>
-          <option value="Draguignan">Draguignan</option>
-        </select>
+
+      <!-- ANNONCES -->
+      <div class="annonces-container">
+        <div class="results-count" id="results-count">Chargement...</div>
+        <div class="annonces-grid" id="annonces-grid">
+          <div class="loading">⏳ Chargement des annonces...</div>
+        </div>
       </div>
-      <div class="filter-group">
-        <label>Prix min</label>
-        <input type="number" id="filter-price-min" placeholder="0">
-      </div>
-      <div class="filter-group">
-        <label>Prix max</label>
-        <input type="number" id="filter-price-max" placeholder="1000000">
-      </div>
-      <button class="btn-submit" style="width: auto; margin-top: 22px;" onclick="loadAnnonces()">Filtrer</button>
-      <button class="btn-back" onclick="backToChoice()">← Retour</button>
     </div>
 
-    <div id="annonces-list" class="annonces-grid">
-      <div class="loading">Chargement des annonces...</div>
-    </div>
-  </div>
+    <!-- SECTION VENDEUR - DROITE -->
+    <aside class="section-vendeur">
+      <!-- STATS -->
+      <div class="stats-card">
+        <div class="stat-number" id="stat-annonces">0</div>
+        <div class="stat-label">Annonces actives</div>
+      </div>
 
-  <div id="seller-view" class="hidden">
-    <h1 class="page-title">Créer une annonce de vente</h1>
-    <button class="btn-back" onclick="backToChoice()">← Retour</button>
+      <!-- CTA VENDEUR -->
+      <div class="vendeur-card">
+        <div class="vendeur-icon">📤</div>
+        <h2 class="vendeur-title">Vendre votre bien</h2>
+        <p class="vendeur-subtitle">
+          Diffusez votre annonce rapidement et gratuitement. Connectez-vous avec des acheteurs qualifiés et sérieux.
+        </p>
 
-    <div class="form-container">
-      <form id="annonce-form" onsubmit="createAnnonce(event)">
-        <div class="form-group">
-          <label>Titre *</label>
-          <input type="text" id="titre" required placeholder="Ex: Maison 4 pièces à Toulon">
+        <div class="vendeur-features">
+          <div class="feature">
+            <span class="feature-icon">✅</span>
+            <span>Annonce gratuite et illimitée</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✅</span>
+            <span>Gestion des visites simplifiée</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✅</span>
+            <span>Messagerie avec acheteurs</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✅</span>
+            <span>Courtiers et pros disponibles</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Type de bien *</label>
-          <select id="type" required>
-            <option value="">Sélectionner</option>
-            <option value="maison">Maison</option>
-            <option value="appartement">Appartement</option>
-          </select>
+
+        <button class="btn-vendre" onclick="allerVendre()">➕ Créer une annonce</button>
+
+        <div class="info-box">
+          ℹ️ Vous êtes déjà vendeur ? Connectez-vous pour voir vos annonces.
         </div>
-        <div class="form-group">
-          <label>Localisation (Code postal + Ville) *</label>
-          <input type="text" id="ville" required placeholder="Ex: 83000 Toulon">
+      </div>
+
+      <!-- AVANTAGES -->
+      <div class="vendeur-card" style="border-top-color: #4caf50;">
+        <div class="vendeur-icon">🎯</div>
+        <h3 class="vendeur-title" style="font-size: 1.2rem;">Pourquoi ALB ?</h3>
+        <p class="vendeur-subtitle" style="margin-bottom: 15px;">
+          Notre plateforme met en relation directe les vendeurs avec les acheteurs sérieux.
+        </p>
+        <div class="vendeur-features">
+          <div class="feature">
+            <span class="feature-icon">🚀</span>
+            <span>Temps de vente réduit</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">💰</span>
+            <span>Économisez les frais d'agence</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">👥</span>
+            <span>Acheteurs vérifiés et approuvés</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">📊</span>
+            <span>Suivi en temps réel</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Prix de vente (€) *</label>
-          <input type="number" id="prix" required placeholder="250000">
-        </div>
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="description" placeholder="Décrivez votre bien... (surface, pièces, état, etc.)"></textarea>
-        </div>
-        <button type="submit" class="btn-submit">📝 Créer l'annonce</button>
-      </form>
-    </div>
+      </div>
+    </aside>
   </div>
 </div>
 
@@ -377,142 +549,167 @@
 <script src="supabase-client.js"></script>
 
 <script>
-  let currentView = 'choice';
-  const userId = localStorage.getItem('alb_user');
+  let allAnnonces = [];
+  let currentUser = null;
 
-  async function initPage() {
-    if (!userId) {
-      showChoicePage();
-    } else {
-      showBuyerView();
+  const filters = {
+    prixMax: null,
+    localisation: null,
+    types: [],
+    dpes: []
+  };
+
+  async function init() {
+    // Check if user is logged in
+    const session = await window.supabaseClient.auth.getSession();
+    if (session?.data?.session) {
+      currentUser = session.data.session.user;
+      document.getElementById('btn-login').style.display = 'none';
+      document.getElementById('btn-dashboard').style.display = 'inline-block';
     }
-  }
 
-  function showChoicePage() {
-    document.getElementById('choice-page').classList.remove('hidden');
-    document.getElementById('buyer-view').classList.add('hidden');
-    document.getElementById('seller-view').classList.add('hidden');
-    currentView = 'choice';
-  }
-
-  function showBuyerView() {
-    document.getElementById('choice-page').classList.add('hidden');
-    document.getElementById('buyer-view').classList.remove('hidden');
-    document.getElementById('seller-view').classList.add('hidden');
-    currentView = 'buyer';
+    // Load annonces
     loadAnnonces();
-  }
 
- function showSellerView() {
-  if (!userId) {
-    // Redirection vers le login
-    window.location.href = 'login.html';
-    return;
-  }
-  document.getElementById('choice-page').classList.add('hidden');
-  document.getElementById('buyer-view').classList.add('hidden');
-  document.getElementById('seller-view').classList.remove('hidden');
-  currentView = 'seller';
-}
+    // Setup filter listeners
+    document.getElementById('filter-prix-max').addEventListener('change', applyFilters);
+    document.getElementById('filter-localisation').addEventListener('input', applyFilters);
+    document.getElementById('filter-maison').addEventListener('change', applyFilters);
+    document.getElementById('filter-appartement').addEventListener('change', applyFilters);
+    document.getElementById('filter-dpe-a').addEventListener('change', applyFilters);
+    document.getElementById('filter-dpe-b').addEventListener('change', applyFilters);
+    document.getElementById('filter-dpe-c').addEventListener('change', applyFilters);
 
-  function backToChoice() {
-    showChoicePage();
+    // Load stats
+    loadStats();
   }
 
   async function loadAnnonces() {
     try {
-      let query = window.supabaseClient
+      const { data, error } = await window.supabaseClient
         .from('biens_immobiliers')
-        .select('*')
+        .select('id, titre, prix_vente, code_postal, ville, type_bien, dpe, ges, description')
+        .eq('statut', 'disponible')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      allAnnonces = data || [];
+      applyFilters();
+
+    } catch (err) {
+      console.error('Erreur:', err);
+      document.getElementById('annonces-grid').innerHTML = '<div class="no-results"><h3>⚠️ Erreur</h3><p>Impossible de charger les annonces</p></div>';
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const { count, error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*', { count: 'exact', head: true })
         .eq('statut', 'disponible');
 
-      const type = document.getElementById('filter-type')?.value;
-      const location = document.getElementById('filter-location')?.value;
-      const priceMin = document.getElementById('filter-price-min')?.value;
-      const priceMax = document.getElementById('filter-price-max')?.value;
+      if (!error) {
+        document.getElementById('stat-annonces').textContent = count || '0';
+      }
+    } catch (err) {
+      console.error('Erreur stats:', err);
+    }
+  }
 
-      if (type) query = query.eq('type_bien', type);
-      if (location) query = query.ilike('ville', `%${location}%`);
-      if (priceMin) query = query.gte('prix_vente', parseInt(priceMin));
-      if (priceMax) query = query.lte('prix_vente', parseInt(priceMax));
+  function applyFilters() {
+    filters.prixMax = parseInt(document.getElementById('filter-prix-max').value) || null;
+    filters.localisation = document.getElementById('filter-localisation').value.toLowerCase().trim();
+    
+    filters.types = [];
+    if (document.getElementById('filter-maison').checked) filters.types.push('maison');
+    if (document.getElementById('filter-appartement').checked) filters.types.push('appartement');
 
-      const { data, error } = await query;
+    filters.dpes = [];
+    if (document.getElementById('filter-dpe-a').checked) filters.dpes.push('A');
+    if (document.getElementById('filter-dpe-b').checked) filters.dpes.push('B');
+    if (document.getElementById('filter-dpe-c').checked) filters.dpes.push('C');
 
-      if (error) throw error;
+    let filtered = allAnnonces.filter(bien => {
+      if (filters.prixMax && bien.prix_vente > filters.prixMax) return false;
 
-      const list = document.getElementById('annonces-list');
-      if (!data || data.length === 0) {
-        list.innerHTML = '<div class="no-data">Aucune annonce disponible</div>';
-        return;
+      if (filters.localisation) {
+        const searchText = `${bien.code_postal} ${bien.ville}`.toLowerCase();
+        if (!searchText.includes(filters.localisation)) return false;
       }
 
-      list.innerHTML = data.map(annonce => `
-        <div class="annonce-card">
-          <div class="annonce-img">🏠</div>
-          <div class="annonce-content">
-            <div class="annonce-title">${annonce.titre || 'Sans titre'}</div>
-            <div class="annonce-location">${annonce.code_postal} ${annonce.ville}</div>
-            <div class="annonce-price">${annonce.prix_vente?.toLocaleString()}€</div>
-            <div class="annonce-actions">
-              <button class="btn-small btn-demande" onclick="demandVisite('${annonce.id}', '${annonce.titre}')">
-                📅 Demander visite
-              </button>
-            </div>
+      if (filters.types.length > 0) {
+        if (!filters.types.includes(bien.type_bien?.toLowerCase())) return false;
+      }
+
+      if (filters.dpes.length > 0) {
+        if (!filters.dpes.includes(bien.dpe)) return false;
+      }
+
+      return true;
+    });
+
+    displayAnnonces(filtered);
+  }
+
+  function displayAnnonces(annonces) {
+    const grid = document.getElementById('annonces-grid');
+    const countEl = document.getElementById('results-count');
+
+    if (annonces.length === 0) {
+      grid.innerHTML = '<div class="no-results"><h3>😔 Aucun résultat</h3><p>Essayez d\'ajuster vos filtres</p></div>';
+      countEl.textContent = '0 annonce trouvée';
+      return;
+    }
+
+    countEl.textContent = `${annonces.length} annonce${annonces.length > 1 ? 's' : ''} trouvée${annonces.length > 1 ? 's' : ''}`;
+
+    grid.innerHTML = annonces.map(bien => `
+      <div class="annonce-card" onclick="goToAnnonce('${bien.id}')">
+        <div class="annonce-image">🏠</div>
+        <div class="annonce-content">
+          <div class="annonce-titre">${bien.titre || 'Sans titre'}</div>
+          <div class="annonce-prix">${bien.prix_vente?.toLocaleString('fr-FR')}€</div>
+          <div class="annonce-localisation">📍 ${bien.code_postal} ${bien.ville}</div>
+          <div class="annonce-meta">
+            <span class="badge">${bien.type_bien || 'Bien'}</span>
+            ${bien.dpe ? `<span class="badge dpe">DPE ${bien.dpe}</span>` : ''}
           </div>
+          <button class="annonce-button">
+            💰 Voir les détails
+          </button>
         </div>
-      `).join('');
-    } catch (error) {
-      console.error('Erreur chargement annonces:', error);
-      document.getElementById('annonces-list').innerHTML = '<div class="no-data">Erreur lors du chargement</div>';
-    }
+      </div>
+    `).join('');
   }
 
-  async function createAnnonce(e) {
-    e.preventDefault();
-    if (!userId) {
-      alert('Veuillez vous connecter d\'abord');
+  function goToAnnonce(bienId) {
+    window.location.href = `/annonce-detail.html?bien_id=${bienId}`;
+  }
+
+  function allerVendre() {
+    if (!currentUser) {
+      window.location.href = '/login.html';
       return;
     }
-
-    try {
-      const { error } = await window.supabaseClient
-        .from('biens_immobiliers')
-        .insert([{
-          titre: document.getElementById('titre').value,
-          type_bien: document.getElementById('type').value,
-          ville: document.getElementById('ville').value,
-          prix_vente: parseInt(document.getElementById('prix').value),
-          description: document.getElementById('description').value,
-          vendeur_id: userId,
-          statut: 'en_attente'
-        }]);
-
-      if (error) throw error;
-      alert('✅ Annonce créée ! Elle sera validée par ALB.');
-      document.getElementById('annonce-form').reset();
-      showChoicePage();
-    } catch (error) {
-      console.error('Erreur création annonce:', error);
-      alert('❌ Erreur lors de la création');
-    }
+    
+    // Redirection vers formulaire-annonce.html
+    window.location.href = '/formulaire-annonce.html';
   }
 
-  function demandVisite(bienId, titre) {
-    if (!userId) {
-      alert('Veuillez vous connecter d\'abord');
-      return;
-    }
-    alert(`✅ Demande de visite pour "${titre}" enregistrée !`);
+  function resetFilters() {
+    document.getElementById('filter-prix-max').value = '';
+    document.getElementById('filter-localisation').value = '';
+    document.getElementById('filter-maison').checked = false;
+    document.getElementById('filter-appartement').checked = false;
+    document.getElementById('filter-dpe-a').checked = false;
+    document.getElementById('filter-dpe-b').checked = false;
+    document.getElementById('filter-dpe-c').checked = false;
+    applyFilters();
   }
 
-  function logout() {
-    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      localStorage.removeItem('alb_user');
-      window.location.href = 'index.html';
-    }
-  }
-
-  initPage();
+  init();
 </script>
 
 </body>
