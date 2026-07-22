@@ -3,176 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PIN oublié - ALB Immobilier</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <title>PIN Oublié - ALB Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --pourpre: #4B1A3E;
-      --dore: #B28E3D;
-      --creme: #FBF8F3;
-    }
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background: var(--creme);
-      color: #2b2b2b;
+    body { 
+      font-family: Montserrat, sans-serif; 
+      background: linear-gradient(135deg, #f5f3ee 0%, #fbf8f3 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 1rem;
     }
+    
     .container {
       background: white;
       border-radius: 12px;
-      padding: 40px;
-      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(75, 26, 62, 0.1);
+      max-width: 500px;
       width: 100%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      border-left: 4px solid var(--dore);
-    }
-    .logo {
-      font-family: 'Playfair Display';
-      font-size: 1.5rem;
-      color: var(--pourpre);
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    .logo strong { color: var(--dore); }
-    
-    h1 {
-      font-family: 'Playfair Display';
-      color: var(--pourpre);
-      font-size: 1.8rem;
-      margin-bottom: 10px;
-    }
-    .subtitle {
-      color: #666;
-      font-size: 0.9rem;
-      margin-bottom: 25px;
+      padding: 3rem 2rem;
+      border-left: 6px solid #B28E3D;
     }
     
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .form-group label {
-      display: block;
-      color: var(--pourpre);
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1rem;
-    }
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--dore);
-      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
-    }
+    .logo { text-align: center; margin-bottom: 2rem; }
+    .logo h1 { font-family: Playfair Display, serif; font-size: 28px; color: #4B1A3E; }
+    .logo .tagline { color: #B28E3D; font-weight: 600; font-size: 12px; letter-spacing: 2px; margin-top: 0.5rem; }
     
-    .btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
-    }
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .error {
-      color: #d32f2f;
-      font-size: 0.9rem;
-      margin-top: 10px;
-      padding: 10px;
-      background: #ffebee;
-      border-radius: 4px;
-      display: none;
-    }
-    .success {
-      color: #4caf50;
-      font-size: 0.9rem;
-      margin-top: 10px;
-      padding: 10px;
-      background: #e8f5e9;
-      border-radius: 4px;
-      display: none;
-    }
-    .loading {
-      display: none;
-      text-align: center;
-      color: #666;
-    }
-    
-    .help-text {
-      font-size: 0.85rem;
-      color: #999;
-      margin-top: 15px;
+    .page-title {
+      font-family: Playfair Display, serif;
+      font-size: 24px;
+      color: #4B1A3E;
+      margin-bottom: 0.5rem;
       text-align: center;
     }
     
-    .back-link {
+    .page-subtitle {
+      font-size: 14px;
+      color: #888780;
       text-align: center;
-      margin-top: 20px;
+      margin-bottom: 2rem;
+      line-height: 1.5;
     }
-    .back-link a {
-      color: var(--dore);
-      text-decoration: none;
-      font-weight: 600;
+    
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 0.5rem; color: #2c2c2a; }
+    .form-group input { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 1px solid #d3d1c7; 
+      border-radius: 8px; 
+      font-family: Montserrat, sans-serif;
+      font-size: 14px;
+      transition: all 0.2s;
     }
-    .back-link a:hover {
-      color: var(--pourpre);
+    .form-group input:focus { 
+      outline: none; 
+      border-color: #4B1A3E; 
+      box-shadow: 0 0 0 3px rgba(75, 26, 62, 0.1);
+    }
+    
+    .btn-send { 
+      width: 100%; 
+      padding: 12px; 
+      background: #4B1A3E; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+    .btn-send:hover { background: #35132b; opacity: 0.9; }
+    .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .loading, .error, .success { 
+      display: none; 
+      padding: 1rem; 
+      margin: 1.5rem 0; 
+      border-radius: 8px; 
+      text-align: center; 
+      font-size: 14px;
+    }
+    .loading { background: #e3f2fd; color: #1565c0; }
+    .error { background: #ffebee; color: #c62828; }
+    .success { background: #e8f5e9; color: #2e7d32; }
+    
+    .link-group { text-align: center; margin-top: 2rem; }
+    .link-group a { color: #B28E3D; text-decoration: none; font-weight: 600; font-size: 13px; }
+    .link-group a:hover { text-decoration: underline; }
+    
+    .separator { text-align: center; margin: 2rem 0; font-size: 12px; color: #999; }
+    
+    .back-link { text-align: center; margin-top: 2rem; }
+    .back-link a { color: #B28E3D; text-decoration: none; font-size: 12px; font-weight: 600; }
+    .back-link a:hover { text-decoration: underline; }
+    
+    @media (max-width: 600px) {
+      .container { padding: 2rem 1.5rem; }
+      .page-title { font-size: 20px; }
     }
   </style>
 </head>
 <body>
-
 <div class="container">
-  <div class="logo"><strong>ALB</strong> Immobilier</div>
+  <div class="logo">
+    <h1>ALB <span style="color: #2c2c2a;">Immobilier</span></h1>
+    <div class="tagline">À la bien, toujours ✨</div>
+  </div>
   
-  <h1>PIN oublié</h1>
-  <p class="subtitle">Entrez votre email pour recevoir un nouveau code PIN</p>
+  <h2 class="page-title">🔐 PIN Oublié</h2>
+  <p class="page-subtitle">
+    Entrez l'adresse email associée à votre compte.<br>
+    Nous vous enverrons un nouveau code PIN par email.
+  </p>
   
-  <form id="forgot-pin-form" onsubmit="handleForgotPin(event)">
+  <form id="reset-pin-form" onsubmit="handleResetPin(event)">
     <div class="form-group">
-      <label for="email">Email</label>
+      <label for="email-reset">Email *</label>
       <input 
         type="email" 
-        id="email" 
+        id="email-reset" 
         placeholder="vous@example.fr"
         required
       >
     </div>
     
-    <button type="submit" class="btn-primary" id="btn-submit">Envoyer un nouveau PIN</button>
+    <button type="submit" class="btn-send" id="btn-send">Renvoyer mon PIN</button>
   </form>
   
   <div class="loading" id="loading">Envoi en cours...</div>
   <div class="error" id="error"></div>
-  <div class="success" id="success">Nouveau PIN envoyé par email! Vous allez être redirigé...</div>
+  <div class="success" id="success">
+    ✅ Nouveau PIN généré et envoyé!<br>
+    Vérifiez votre email (vérifiez aussi les spams).
+  </div>
   
-  <p class="help-text">
-    Nous vous enverrons un nouveau code PIN à cette adresse email.
-  </p>
+  <div class="separator">ou</div>
+  
+  <div class="link-group">
+    <a href="login.html">← Retour à la connexion</a>
+  </div>
   
   <div class="back-link">
-    <a href="connexion.html">← Retour à la connexion</a>
+    <a href="index.html">Retour à l'accueil</a>
   </div>
 </div>
 
@@ -180,14 +157,13 @@
 <script src="supabase-client.js"></script>
 
 <script>
-  async function handleForgotPin(event) {
+  async function handleResetPin(event) {
     event.preventDefault();
-    
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email-reset').value;
     const errorEl = document.getElementById('error');
     const successEl = document.getElementById('success');
     const loadingEl = document.getElementById('loading');
-    const btnSubmit = document.getElementById('btn-submit');
+    const btnSubmit = document.getElementById('btn-send');
     
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
@@ -195,29 +171,35 @@
     btnSubmit.disabled = true;
     
     try {
-      // Appeler send-auth-code.js pour générer et envoyer un nouveau PIN
+      // Appeler send-auth-code.js
+      // La function va:
+      // 1. Vérifier que l'email existe
+      // 2. Générer un NOUVEAU PIN
+      // 3. UPDATE Supabase avec le nouveau PIN
+      // 4. Envoyer l'email via Brevo
       const response = await fetch('/.netlify/functions/send-auth-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email })
       });
       
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'envoi');
+        throw new Error('Erreur lors de l\'envoi de l\'email');
       }
       
-      successEl.style.display = 'block';
-      loadingEl.style.display = 'none';
+      const result = await response.json();
       
-      // Rediriger vers connexion après 3 sec
+      // Afficher le message de succès
+      loadingEl.style.display = 'none';
+      successEl.style.display = 'block';
+      
+      // Redirection après 3 secondes
       setTimeout(() => {
-        window.location.href = 'connexion.html';
+        window.location.href = 'login.html';
       }, 3000);
       
     } catch (error) {
-      errorEl.textContent = '❌ ' + error.message;
+      errorEl.textContent = error.message || 'Erreur lors de l\'envoi de l\'email. Vérifiez votre email.';
       errorEl.style.display = 'block';
       loadingEl.style.display = 'none';
       btnSubmit.disabled = false;
