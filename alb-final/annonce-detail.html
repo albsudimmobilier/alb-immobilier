@@ -597,6 +597,7 @@
     
     if (userError) {
       alert('❌ Erreur chargement profil');
+      console.error('Erreur userData:', userError);
       return;
     }
     
@@ -617,6 +618,7 @@
     
     if (error) {
       alert('❌ Erreur: ' + error.message);
+      console.error('Erreur visite:', error);
       return;
     }
     
