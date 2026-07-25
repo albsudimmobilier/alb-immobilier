@@ -577,7 +577,7 @@
     document.getElementById(`dispo-${idx}`).style.borderColor = '#4B1A3E';
   }
 
-  async function validerVisite() {
+async function validerVisite() {
     if (!selectedDispo) {
       alert('⚠️ Sélectionner un créneau');
       return;
@@ -589,17 +589,31 @@
       return;
     }
     
-  const date = new Date(selectedDispo);
-const { error } = await window.supabaseClient
-  .from('visites')
-  .insert({
-    annonce_id: window.currentBienData.id,
-    vendeur_id: window.currentBienData.vendeur_id,
-    acheteur_id: userId,
-    date_visite: date.toISOString().split('T')[0],
-    heure_visite: date.toTimeString().slice(0, 5),
-    statut: 'en_attente'
-  });
+    const { data: userData, error: userError } = await window.supabaseClient
+      .from('profiles')
+      .select('prenom, nom, telephone, email')
+      .eq('id', userId)
+      .single();
+    
+    if (userError) {
+      alert('❌ Erreur chargement profil');
+      return;
+    }
+    
+    const date = new Date(selectedDispo);
+    const { error } = await window.supabaseClient
+      .from('visites')
+      .insert({
+        annonce_id: window.currentBienData.id,
+        vendeur_id: window.currentBienData.vendeur_id,
+        acheteur_id: userId,
+        nom_acheteur: userData.prenom + ' ' + userData.nom,
+        telephone_acheteur: userData.telephone,
+        email_acheteur: userData.email,
+        date_visite: date.toISOString().split('T')[0],
+        heure_visite: date.toTimeString().slice(0, 5),
+        statut: 'en_attente'
+      });
     
     if (error) {
       alert('❌ Erreur: ' + error.message);
