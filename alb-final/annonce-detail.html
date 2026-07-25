@@ -589,17 +589,17 @@
       return;
     }
     
-    const { error } = await window.supabaseClient
-      .from('visites')
-      .insert({
-        bien_id: window.currentBienData.id,
-        vendeur_id: window.currentBienData.vendeur_id,
-        acheteur_id: userId,
-        date_visite_demandee: selectedDispo,
-        statut: 'en_attente',
-        resultat_simulateur_partage: document.getElementById('share-results').checked,
-        resultat_simulateur: document.getElementById('share-results').checked ? calculatedBudget : null
-      });
+  const date = new Date(selectedDispo);
+const { error } = await window.supabaseClient
+  .from('visites')
+  .insert({
+    annonce_id: window.currentBienData.id,
+    vendeur_id: window.currentBienData.vendeur_id,
+    acheteur_id: userId,
+    date_visite: date.toISOString().split('T')[0],
+    heure_visite: date.toTimeString().slice(0, 5),
+    statut: 'en_attente'
+  });
     
     if (error) {
       alert('❌ Erreur: ' + error.message);
