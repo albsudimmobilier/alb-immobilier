@@ -358,7 +358,7 @@
       </div>
 
       <!-- CTA SECONDAIRE -->
-      <button class="btn-visite" onclick="ouvrirSimulateur()">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="showVisiteStep1(window.currentBienData)">💰 Demander une visite</button>
     </div>
   </div>
 </div>
@@ -410,11 +410,15 @@
     }
   }
 
-  function displayBien(bien) {
-    // Titre et prix
-    document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
-    document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
-    document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
+ function displayBien(bien) {
+  window.bienId = bien.id;
+  window.bienTitre = bien.titre;
+  window.currentBienData = bien;
+  
+  // Titre et prix
+  document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
+  document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
+  document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
     
     // Description
     document.getElementById('annonce-description').innerHTML = `
