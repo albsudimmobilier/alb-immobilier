@@ -254,7 +254,6 @@
       color: #999;
       margin-bottom: 20px;
     }
-
     /* ===== MESSAGERIE STYLES ===== */
     .messaging-wrapper {
       display: grid;
@@ -464,7 +463,6 @@
     .send-btn:hover {
       background: #6b2d5f;
     }
-
     @media (max-width: 768px) {
       .main-tabs, .sub-tabs {
         flex-wrap: wrap;
@@ -537,7 +535,6 @@
     <button class="main-tab-button" onclick="switchMainTab('tab-agents')">🏢 Agent/Mandataire</button>
     <button class="main-tab-button" onclick="switchMainTab('tab-messagerie')">💬 Messagerie</button>
   </div>
-
   <div id="tab-particuliers-acheteurs" class="main-tab-content active">
     <div class="sub-tabs">
       <button class="sub-tab-button active" onclick="switchSubTab('acheteur', 'financement')">📊 Projets Financement</button>
@@ -598,7 +595,6 @@
       </div>
     </div>
   </div>
-
   <div id="tab-particuliers-vendeurs" class="main-tab-content">
     <div class="sub-tabs">
       <button class="sub-tab-button active" onclick="switchSubTab('vendeur', 'annonces')">📋 Mes Annonces</button>
@@ -663,7 +659,6 @@
       </div>
     </div>
   </div>
-
   <div id="tab-courtiers" class="main-tab-content">
     <div class="empty-state">
       <h3>💼 Tableau de bord Courtier</h3>
@@ -671,20 +666,18 @@
       <button class="btn btn-primary" onclick="window.location.href='dashboard-courtier.html'">📊 Ouvrir le Dashboard</button>
     </div>
   </div>
-
   <div id="tab-artisans" class="main-tab-content">
     <div class="empty-state">
-      <h3>🔨 Espace Artisan</h3>
-      <p>Tableau de bord dédié aux artisans - À développer post-launch</p>
-      <button class="btn btn-secondary" disabled>À développer</button>
+      <h3>🔨 Modifier votre profil Artisan</h3>
+      <p>Accédez à la vitrine des professionnels pour gérer vos informations</p>
+      <button class="btn btn-primary" onclick="window.location.href='vitrine-pros.html?role=artisan'">📝 Modifier mon profil</button>
     </div>
   </div>
-
   <div id="tab-agents" class="main-tab-content">
     <div class="empty-state">
-      <h3>🏢 Tableau de bord Agent/Mandataire</h3>
-      <p>Tableau de bord dédié aux agents et mandataires - À développer post-launch</p>
-      <button class="btn btn-secondary" disabled>À développer</button>
+      <h3>🏢 Modifier votre profil Agent/Mandataire</h3>
+      <p>Accédez à la vitrine des professionnels pour gérer vos informations</p>
+      <button class="btn btn-primary" onclick="window.location.href='vitrine-pros.html?role=agent'">📝 Modifier mon profil</button>
     </div>
   </div>
 
@@ -700,57 +693,17 @@
           </div>
         </div>
         <div class="conversations-list" id="conversations-list">
-          <button class="conversation-btn active" onclick="selectConversation(this, 'MD', 'Marie Dupont')">
-            <div class="conv-avatar">MD</div>
-            <div class="conv-content">
-              <p class="conv-name">Marie Dupont</p>
-              <p class="conv-preview">Oui, ça me convient parfait!</p>
-            </div>
-          </button>
-          <button class="conversation-btn" onclick="selectConversation(this, 'JM', 'Jean Martin')">
-            <div class="conv-avatar">JM</div>
-            <div class="conv-content">
-              <p class="conv-name">Jean Martin</p>
-              <p class="conv-preview">Merci pour votre aide!</p>
-            </div>
-          </button>
-          <button class="conversation-btn" onclick="selectConversation(this, 'SL', 'Sophie Laurent')">
-            <div class="conv-avatar">SL</div>
-            <div class="conv-content">
-              <p class="conv-name">Sophie Laurent</p>
-              <p class="conv-preview">À bientôt pour la visite...</p>
-            </div>
-          </button>
-          <button class="conversation-btn" onclick="selectConversation(this, 'PC', 'Pierre Caron')">
-            <div class="conv-avatar">PC</div>
-            <div class="conv-content">
-              <p class="conv-name">Pierre Caron</p>
-              <p class="conv-preview">Les documents sont prêts</p>
-            </div>
-          </button>
+          <div style="padding: 20px; color: #999; text-align: center;">Chargement...</div>
         </div>
       </div>
-
       <!-- MESSAGES AREA -->
       <div class="messaging-main">
         <div class="messaging-chat-header">
-          <h3 id="chat-name">Marie Dupont</h3>
+          <h3 id="chat-name">Sélectionner une conversation</h3>
         </div>
-
         <div class="messages-box" id="messages-box">
-          <div class="message received">
-            <div class="message-avatar">MD</div>
-            <div class="message-bubble">Bonjour! J'ai bien reçu ta demande.</div>
-          </div>
-          <div class="message sent">
-            <div class="message-bubble">Merci pour la rapidité!</div>
-          </div>
-          <div class="message received">
-            <div class="message-avatar">MD</div>
-            <div class="message-bubble">Oui, ça me convient parfait pour demain! 😊</div>
-          </div>
+          <div style="text-align: center; color: #999; padding: 20px;">Sélectionnez une conversation</div>
         </div>
-
         <div class="messaging-input-area">
           <textarea class="message-input" id="message-input" placeholder="Écris un message..." rows="1"></textarea>
           <button class="send-btn" onclick="sendMessage()">➤</button>
@@ -758,242 +711,391 @@
       </div>
     </div>
   </div>
-
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
-
 <script>
-  let currentUserId = null;
-  let userRole = null;
+let currentUserId = null;
+let userRole = null;
+let allConversations = [];
+let currentConversationId = null;
+let allMessages = [];
+let messagesSubscription = null;
+let conversationsSubscription = null;
 
-  async function initPage() {
-    const userId = localStorage.getItem('alb_user');
-    if (!userId) {
-      window.location.href = 'connexion.html';
+async function initPage() {
+  const userId = localStorage.getItem('alb_user');
+  if (!userId) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUserId = userId;
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('profiles')
+      .select('email, nom, prenom, telephone, role')
+      .eq('id', userId)
+      .single();
+    if (error || !data) {
+      console.error('Erreur chargement profil:', error);
+      alert('Erreur: impossible de charger le profil');
+      return;
+    }
+    userRole = data.role;
+    
+    document.getElementById('prenom-display').textContent = data.prenom || '-';
+    document.getElementById('nom-display').textContent = data.nom || '-';
+    document.getElementById('email-display').textContent = data.email || '-';
+    document.getElementById('telephone-display').textContent = data.telephone || '-';
+    document.getElementById('role-display').textContent = data.role || '-';
+    document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
+    if (data.role === 'acheteur' || data.role === 'particulier_acheteur') {
+      loadAcheteurData();
+    }
+    if (data.role === 'vendeur' || data.role === 'particulier_vendeur') {
+      loadVendeurData();
+    }
+    // Charger les conversations pour la messagerie
+    loadConversations();
+  } catch (error) {
+    console.error('Erreur init:', error);
+  }
+}
+
+function switchMainTab(tabId) {
+  document.querySelectorAll('.main-tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.main-tab-button').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function switchSubTab(type, subTabId) {
+  const selector = type === 'acheteur' ? `#acheteur-${subTabId}` : `#vendeur-${subTabId}`;
+  const buttonSelector = `.sub-tab-button`;
+  
+  document.querySelectorAll(`[id^="${type}-"]`).forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll(buttonSelector).forEach(btn => btn.classList.remove('active'));
+  
+  document.querySelector(selector).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function loadAcheteurData() {
+  try {
+    const { data: demandes } = await window.supabaseClient
+      .from('demandes_financement')
+      .select('id, statut, budget_max, montant_emprunt, endettement_ratio, created_at')
+      .eq('acheteur_id', currentUserId);
+    const tbody = document.getElementById('acheteur-financement-tbody');
+    if (demandes && demandes.length > 0) {
+      tbody.innerHTML = demandes.map(d => `
+        <tr>
+          <td><span class="status-badge status-${d.statut}">${d.statut}</span></td>
+          <td>${d.budget_max?.toLocaleString()}€</td>
+          <td>${d.montant_emprunt?.toLocaleString()}€</td>
+          <td>${d.endettement_ratio}%</td>
+          <td>${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
+          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button></td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de financement</td></tr>';
+    }
+    const { data: visites } = await window.supabaseClient
+      .from('visites')
+      .select('id, bien_id, date_visite, statut, biens_immobiliers(titre, prix_vente, ville, code_postal)')
+      .eq('acheteur_id', currentUserId);
+    const visitesBody = document.getElementById('acheteur-visites-tbody');
+    if (visites && visites.length > 0) {
+      visitesBody.innerHTML = visites.map(v => `
+        <tr>
+          <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${v.biens_immobiliers?.code_postal} ${v.biens_immobiliers?.ville}</td>
+          <td>${v.biens_immobiliers?.prix_vente?.toLocaleString()}€</td>
+          <td>${new Date(v.date_visite).toLocaleDateString('fr-FR')}</td>
+          <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
+          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Détails</button></td>
+        </tr>
+      `).join('');
+    } else {
+      visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite demandée</td></tr>';
+    }
+  } catch (error) {
+    console.error('Erreur chargement acheteur:', error);
+  }
+}
+
+async function loadVendeurData() {
+  try {
+    const { data: annonces } = await window.supabaseClient
+      .from('biens_immobiliers')
+      .select('id, titre, prix_vente, ville, code_postal, statut')
+      .eq('vendeur_id', currentUserId);
+    const annoncesBody = document.getElementById('vendeur-annonces-tbody');
+    if (annonces && annonces.length > 0) {
+      annoncesBody.innerHTML = annonces.map(a => `
+        <tr>
+          <td>${a.titre || 'Sans titre'}</td>
+          <td>${a.prix_vente?.toLocaleString()}€</td>
+          <td>${a.code_postal} ${a.ville}</td>
+          <td><span class="status-badge status-${a.statut}">${a.statut}</span></td>
+          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Gérer</button></td>
+        </tr>
+      `).join('');
+    } else {
+      annoncesBody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune annonce</td></tr>';
+    }
+    const { data: visites } = await window.supabaseClient
+      .from('visites')
+      .select('id, bien_id, date_visite, statut, biens_immobiliers(titre), profiles:acheteur_id(email, prenom, nom)')
+      .eq('vendeur_id', currentUserId);
+    const visitesBody = document.getElementById('vendeur-visites-tbody');
+    if (visites && visites.length > 0) {
+      visitesBody.innerHTML = visites.map(v => `
+        <tr>
+          <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
+          <td>${v.profiles?.prenom} ${v.profiles?.nom}</td>
+          <td>${v.profiles?.email}</td>
+          <td>${new Date(v.date_visite).toLocaleDateString('fr-FR')}</td>
+          <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
+          <td>
+            ${v.statut === 'en_attente' ? `
+              <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #4caf50; color: white;">✅</button>
+              <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #d32f2f; color: white;">❌</button>
+            ` : `<button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button>`}
+          </td>
+        </tr>
+      `).join('');
+    } else {
+      visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de visite</td></tr>';
+    }
+  } catch (error) {
+    console.error('Erreur chargement vendeur:', error);
+  }
+}
+
+// ===== MESSAGERIE CODE =====
+async function loadConversations() {
+  try {
+    const { data: conversations, error } = await window.supabaseClient
+      .from('conversations')
+      .select(`
+        id,
+        contexte,
+        date_creation,
+        initiateur_id,
+        conversation_participants(profile_id)
+      `)
+      .or(`initiateur_id.eq.${currentUserId},conversation_participants.profile_id.eq.${currentUserId}`)
+      .order('date_creation', { ascending: false });
+
+    if (error) {
+      console.error('Erreur chargement conversations:', error);
       return;
     }
 
-    currentUserId = userId;
+    allConversations = conversations || [];
+    displayConversationsList();
+    subscribeToConversations();
+  } catch (error) {
+    console.error('Erreur:', error);
+  }
+}
 
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('profiles')
-        .select('email, nom, prenom, telephone, role')
-        .eq('id', userId)
-        .single();
-
-      if (error || !data) {
-        console.error('Erreur chargement profil:', error);
-        alert('Erreur: impossible de charger le profil');
-        return;
-      }
-
-      userRole = data.role;
-      
-      document.getElementById('prenom-display').textContent = data.prenom || '-';
-      document.getElementById('nom-display').textContent = data.nom || '-';
-      document.getElementById('email-display').textContent = data.email || '-';
-      document.getElementById('telephone-display').textContent = data.telephone || '-';
-      document.getElementById('role-display').textContent = data.role || '-';
-      document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
-
-      if (data.role === 'acheteur' || data.role === 'particulier_acheteur') {
-        loadAcheteurData();
-      }
-
-      if (data.role === 'vendeur' || data.role === 'particulier_vendeur') {
-        loadVendeurData();
-      }
-
-    } catch (error) {
-      console.error('Erreur init:', error);
-    }
+function displayConversationsList() {
+  const container = document.getElementById('conversations-list');
+  
+  if (allConversations.length === 0) {
+    container.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">Aucune conversation</div>';
+    return;
   }
 
-  function switchMainTab(tabId) {
-    document.querySelectorAll('.main-tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.main-tab-button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
-  }
-
-  function switchSubTab(type, subTabId) {
-    const selector = type === 'acheteur' ? `#acheteur-${subTabId}` : `#vendeur-${subTabId}`;
-    const buttonSelector = `.sub-tab-button`;
+  container.innerHTML = allConversations.map((conv, idx) => {
+    const initials = conv.contexte.substring(0, 2).toUpperCase();
     
-    document.querySelectorAll(`[id^="${type}-"]`).forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll(buttonSelector).forEach(btn => btn.classList.remove('active'));
-    
-    document.querySelector(selector).classList.add('active');
-    event.target.classList.add('active');
+    return `
+      <button class="conversation-btn ${idx === 0 ? 'active' : ''}" 
+              onclick="selectConversation(this, '${conv.id}', '${conv.contexte}')">
+        <div class="conv-avatar">${initials}</div>
+        <div class="conv-content">
+          <p class="conv-name">${conv.contexte}</p>
+          <p class="conv-preview">${new Date(conv.date_creation).toLocaleDateString('fr-FR')}</p>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  if (allConversations.length > 0) {
+    selectConversation(container.querySelector('.conversation-btn'), allConversations[0].id, allConversations[0].contexte);
+  }
+}
+
+async function selectConversation(btn, convId, convName) {
+  document.querySelectorAll('.conversation-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  currentConversationId = convId;
+  document.getElementById('chat-name').textContent = convName;
+  
+  await loadMessages(convId);
+  subscribeToMessages(convId);
+}
+
+async function loadMessages(convId) {
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('messages')
+      .select(`
+        id,
+        conversation_id,
+        auteur_id,
+        contenu,
+        date_envoi,
+        lu,
+        profiles:auteur_id(prenom, nom)
+      `)
+      .eq('conversation_id', convId)
+      .order('date_envoi', { ascending: true });
+
+    if (error) throw error;
+
+    allMessages = data || [];
+    displayMessages();
+  } catch (error) {
+    console.error('Erreur chargement messages:', error);
+  }
+}
+
+function displayMessages() {
+  const messagesBox = document.getElementById('messages-box');
+  
+  if (allMessages.length === 0) {
+    messagesBox.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Aucun message</div>';
+    return;
   }
 
-  // MESSAGERIE FUNCTIONS
-  function selectConversation(btn, initials, name) {
-    document.querySelectorAll('.conversation-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('chat-name').textContent = name;
-    document.getElementById('messages-box').innerHTML = `
-      <div class="message received">
-        <div class="message-avatar">${initials}</div>
-        <div class="message-bubble">Bonjour! Comment puis-je t'aider?</div>
+  messagesBox.innerHTML = allMessages.map(msg => {
+    const isSent = msg.auteur_id === currentUserId;
+    const senderName = msg.profiles ? `${msg.profiles.prenom} ${msg.profiles.nom}` : 'Anonyme';
+    const initials = senderName.substring(0, 2).toUpperCase();
+    
+    return `
+      <div class="message ${isSent ? 'sent' : 'received'}">
+        ${!isSent ? `<div class="message-avatar">${initials}</div>` : ''}
+        <div class="message-bubble">${msg.contenu}</div>
       </div>
     `;
-  }
+  }).join('');
 
-  function sendMessage() {
-    const input = document.getElementById('message-input');
-    const message = input.value.trim();
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('message-input');
+  const contenu = input.value.trim();
+  
+  if (!contenu || !currentConversationId) return;
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('messages')
+      .insert({
+        conversation_id: currentConversationId,
+        auteur_id: currentUserId,
+        contenu: contenu,
+        date_envoi: new Date().toISOString(),
+        lu: false,
+        topic: 'message'
+      });
+
+    if (error) throw error;
+
+    input.value = '';
+    input.style.height = 'auto';
     
-    if (message) {
-      const messagesBox = document.getElementById('messages-box');
-      const newMessage = document.createElement('div');
-      newMessage.className = 'message sent';
-      newMessage.innerHTML = `<div class="message-bubble">${message}</div>`;
-      messagesBox.appendChild(newMessage);
-      
-      input.value = '';
-      input.style.height = 'auto';
-      messagesBox.scrollTop = messagesBox.scrollHeight;
-    }
+    await loadMessages(currentConversationId);
+  } catch (error) {
+    console.error('Erreur envoi message:', error);
+    alert('❌ Erreur envoi message');
+  }
+}
+
+function subscribeToConversations() {
+  if (conversationsSubscription) {
+    conversationsSubscription.unsubscribe();
   }
 
-  document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && document.getElementById('message-input') === document.activeElement) {
-      e.preventDefault();
-      sendMessage();
-    }
+  conversationsSubscription = window.supabaseClient
+    .channel(`conversations:${currentUserId}`)
+    .on('postgres_changes', 
+      { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'conversations'
+      },
+      (payload) => {
+        console.log('🔄 Nouvelle conversation:', payload);
+        loadConversations();
+      }
+    )
+    .subscribe();
+}
+
+function subscribeToMessages(convId) {
+  if (messagesSubscription) {
+    messagesSubscription.unsubscribe();
+  }
+
+  messagesSubscription = window.supabaseClient
+    .channel(`messages:${convId}`)
+    .on('postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${convId}`
+      },
+      (payload) => {
+        console.log('💬 Nouveau message:', payload);
+        loadMessages(convId);
+      }
+    )
+    .subscribe();
+}
+
+window.addEventListener('beforeunload', () => {
+  if (messagesSubscription) messagesSubscription.unsubscribe();
+  if (conversationsSubscription) conversationsSubscription.unsubscribe();
+});
+
+document.getElementById('message-input')?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && document.getElementById('message-input') === document.activeElement) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+document.getElementById('message-input')?.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+document.getElementById('conv-search')?.addEventListener('input', (e) => {
+  const query = e.target.value.toLowerCase();
+  document.querySelectorAll('.conversation-btn').forEach(btn => {
+    const name = btn.querySelector('.conv-name').textContent.toLowerCase();
+    btn.style.display = name.includes(query) || query === '' ? 'flex' : 'none';
   });
+});
 
-  // Search conversations
-  document.getElementById('conv-search')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    document.querySelectorAll('.conversation-btn').forEach(btn => {
-      const name = btn.querySelector('.conv-name').textContent.toLowerCase();
-      btn.style.display = name.includes(query) || query === '' ? 'flex' : 'none';
-    });
-  });
-
-  // Textarea auto-resize
-  const textarea = document.getElementById('message-input');
-  textarea?.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-  });
-
-  async function loadAcheteurData() {
-    try {
-      const { data: demandes } = await window.supabaseClient
-        .from('demandes_financement')
-        .select('id, statut, budget_max, montant_emprunt, endettement_ratio, created_at')
-        .eq('acheteur_id', currentUserId);
-
-      const tbody = document.getElementById('acheteur-financement-tbody');
-      if (demandes && demandes.length > 0) {
-        tbody.innerHTML = demandes.map(d => `
-          <tr>
-            <td><span class="status-badge status-${d.statut}">${d.statut}</span></td>
-            <td>${d.budget_max?.toLocaleString()}€</td>
-            <td>${d.montant_emprunt?.toLocaleString()}€</td>
-            <td>${d.endettement_ratio}%</td>
-            <td>${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
-            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button></td>
-          </tr>
-        `).join('');
-      } else {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de financement</td></tr>';
-      }
-
-      const { data: visites } = await window.supabaseClient
-        .from('visites')
-        .select('id, bien_id, date_visite_demandee, statut, biens_immobiliers(titre, prix_vente, ville, code_postal)')
-        .eq('acheteur_id', currentUserId);
-
-      const visitesBody = document.getElementById('acheteur-visites-tbody');
-      if (visites && visites.length > 0) {
-        visitesBody.innerHTML = visites.map(v => `
-          <tr>
-            <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
-            <td>${v.biens_immobiliers?.code_postal} ${v.biens_immobiliers?.ville}</td>
-            <td>${v.biens_immobiliers?.prix_vente?.toLocaleString()}€</td>
-            <td>${new Date(v.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
-            <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
-            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Détails</button></td>
-          </tr>
-        `).join('');
-      } else {
-        visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite demandée</td></tr>';
-      }
-
-    } catch (error) {
-      console.error('Erreur chargement acheteur:', error);
-    }
+function logout() {
+  if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    localStorage.removeItem('alb_user');
+    window.location.href = 'index.html';
   }
+}
 
-  async function loadVendeurData() {
-    try {
-      const { data: annonces } = await window.supabaseClient
-        .from('biens_immobiliers')
-        .select('id, titre, prix_vente, ville, code_postal, statut')
-        .eq('vendeur_id', currentUserId);
-
-      const annoncesBody = document.getElementById('vendeur-annonces-tbody');
-      if (annonces && annonces.length > 0) {
-        annoncesBody.innerHTML = annonces.map(a => `
-          <tr>
-            <td>${a.titre || 'Sans titre'}</td>
-            <td>${a.prix_vente?.toLocaleString()}€</td>
-            <td>${a.code_postal} ${a.ville}</td>
-            <td><span class="status-badge status-${a.statut}">${a.statut}</span></td>
-            <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Gérer</button></td>
-          </tr>
-        `).join('');
-      } else {
-        annoncesBody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune annonce</td></tr>';
-      }
-
-      const { data: visites } = await window.supabaseClient
-        .from('visites')
-        .select('id, bien_id, nom_acheteur, email_acheteur, date_visite_demandee, statut, biens_immobiliers(titre)')
-        .eq('vendeur_id', currentUserId);
-
-      const visitesBody = document.getElementById('vendeur-visites-tbody');
-      if (visites && visites.length > 0) {
-        visitesBody.innerHTML = visites.map(v => `
-          <tr>
-            <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
-            <td>${v.nom_acheteur}</td>
-            <td>${v.email_acheteur}</td>
-            <td>${new Date(v.date_visite_demandee).toLocaleDateString('fr-FR')}</td>
-            <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
-            <td>
-              ${v.statut === 'demande_envoyee' ? `
-                <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #4caf50; color: white;">✅</button>
-                <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #d32f2f; color: white;">❌</button>
-              ` : `<button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button>`}
-            </td>
-          </tr>
-        `).join('');
-      } else {
-        visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de visite</td></tr>';
-      }
-
-    } catch (error) {
-      console.error('Erreur chargement vendeur:', error);
-    }
-  }
-
-  function logout() {
-    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      localStorage.removeItem('alb_user');
-      window.location.href = 'index.html';
-    }
-  }
-
-  initPage();
+initPage();
 </script>
-
 </body>
 </html>
