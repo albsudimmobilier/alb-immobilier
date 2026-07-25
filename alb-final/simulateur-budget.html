@@ -501,12 +501,12 @@
   const urlParams = new URLSearchParams(window.location.search);
   bienId = urlParams.get('bien_id');
 
-  async function init() {
-    const session = await window.supabaseClient.auth.getSession();
-    if (session?.data?.session) {
-      currentUser = session.data.session.user;
-    }
+ async function init() {
+  const userId = localStorage.getItem('alb_user');
+  if (userId) {
+    currentUser = { id: userId };
   }
+}
 
   document.getElementById('budget-form').addEventListener('submit', async (e) => {
     e.preventDefault();
