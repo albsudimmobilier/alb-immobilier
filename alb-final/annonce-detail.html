@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Détail Annonce - ALB Immobilier</title>
+  <title>Détails Annonce - ALB Immobilier</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,17 +15,15 @@
     }
     body {
       font-family: 'Montserrat', sans-serif;
-      background: var(--creme);
+      background: linear-gradient(135deg, #f5f3ee 0%, #fafaf8 100%);
       color: #2b2b2b;
+      min-height: 100vh;
     }
     .header {
       background: white;
       border-bottom: 3px solid var(--dore);
       padding: 15px 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      position: sticky;
-      top: 0;
-      z-index: 100;
     }
     .header-content {
       max-width: 1200px;
@@ -50,11 +48,8 @@
       cursor: pointer;
       font-weight: 600;
       text-decoration: none;
-      transition: all 0.3s;
     }
-    .btn-back:hover {
-      background: #f0ebe3;
-    }
+    .btn-back:hover { background: #f0ebe3; }
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -63,120 +58,105 @@
     .annonce-hero {
       background: white;
       border-radius: 12px;
-      overflow: hidden;
+      padding: 40px;
       box-shadow: 0 4px 20px rgba(75, 26, 62, 0.1);
       margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: center;
     }
     .annonce-image {
-      width: 100%;
-      height: 400px;
-      background: linear-gradient(135deg, #f5f3ee 0%, #fafaf8 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-size: 5rem;
+      font-size: 4rem;
+      text-align: center;
     }
-    .annonce-header {
-      padding: 30px;
-    }
+    .annonce-header { }
     .annonce-titre {
       font-family: 'Playfair Display';
-      font-size: 2rem;
       color: var(--pourpre);
+      font-size: 2rem;
       margin-bottom: 10px;
     }
     .annonce-localisation {
       color: #666;
       font-size: 1rem;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .annonce-prix {
-      font-size: 2.2rem;
+      font-size: 1.8rem;
       color: var(--dore);
       font-weight: bold;
-      font-family: 'Playfair Display';
       margin-bottom: 20px;
     }
     .btn-visite {
       background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
       color: white;
-      padding: 16px 40px;
+      padding: 12px 24px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 1.1rem;
-      transition: all 0.3s;
       width: 100%;
-      max-width: 400px;
+      transition: all 0.3s;
     }
-    .btn-visite:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(75, 26, 62, 0.3);
-    }
+    .btn-visite:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(75, 26, 62, 0.3); }
     .content-wrapper {
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 30px;
     }
-    .annonce-details {
-      background: white;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+    .annonce-details { }
     .details-title {
       font-family: 'Playfair Display';
       color: var(--pourpre);
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       margin-bottom: 20px;
-      padding-bottom: 10px;
       border-bottom: 2px solid var(--dore);
+      padding-bottom: 10px;
     }
     .caracteristiques-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
       margin-bottom: 30px;
     }
     .caracteristique {
-      padding: 15px;
       background: #f9f7f4;
-      border-radius: 6px;
-      border-left: 3px solid var(--dore);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--dore);
     }
     .caracteristique-label {
-      color: #999;
       font-size: 0.85rem;
+      color: #999;
       margin-bottom: 5px;
-      font-weight: 600;
     }
     .caracteristique-valeur {
-      color: var(--pourpre);
-      font-size: 1.1rem;
       font-weight: 600;
+      color: var(--pourpre);
+      font-size: 1rem;
     }
     .description {
-      padding: 20px;
       background: #f9f7f4;
-      border-radius: 6px;
+      padding: 20px;
+      border-radius: 8px;
       line-height: 1.6;
       margin-bottom: 30px;
     }
     .videos-section {
-      margin-top: 30px;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .video-placeholder {
-      width: 100%;
-      height: 200px;
-      background: linear-gradient(135deg, #e0dcc8 0%, #f0ebe3 100%);
-      border-radius: 6px;
+      background: #f9f7f4;
+      height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #999;
-      font-size: 2rem;
+      font-size: 3rem;
+      border-radius: 8px;
       margin-bottom: 15px;
     }
     .sidebar {
@@ -184,158 +164,72 @@
       flex-direction: column;
       gap: 20px;
     }
-    .vendeur-card {
+    .vendeur-card, .horaires-card {
       background: white;
-      border-radius: 8px;
-      padding: 25px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-top: 3px solid var(--dore);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--dore);
     }
-    .vendeur-title {
-      color: var(--pourpre);
+    .vendeur-title, .horaires-title {
       font-weight: 600;
+      color: var(--pourpre);
       margin-bottom: 15px;
-      font-size: 1rem;
     }
     .vendeur-info {
-      margin-bottom: 15px;
-    }
-    .vendeur-label {
-      color: #999;
-      font-size: 0.85rem;
-      margin-bottom: 3px;
-    }
-    .vendeur-value {
-      color: var(--pourpre);
-      font-weight: 600;
-    }
-    .vendeur-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #d4edda;
-      color: #155724;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: 600;
       margin-bottom: 10px;
     }
-    .horaires-card {
-      background: white;
-      border-radius: 8px;
-      padding: 25px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-top: 3px solid #4caf50;
+    .vendeur-label {
+      font-size: 0.85rem;
+      color: #999;
     }
-    .horaires-title {
-      color: var(--pourpre);
+    .vendeur-value {
       font-weight: 600;
-      margin-bottom: 15px;
+      color: var(--pourpre);
     }
     .horaire {
       padding: 10px 0;
       border-bottom: 1px solid #eee;
-      font-size: 0.95rem;
     }
-    .horaire:last-child {
-      border-bottom: none;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      overflow-y: auto;
-    }
-    .modal.active {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-content {
-      background: white;
-      margin: 20px auto;
-      max-width: 900px;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      position: relative;
-    }
-    .modal-close {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      background: none;
-      border: none;
-      font-size: 28px;
-      cursor: pointer;
-      color: #666;
-    }
-    .modal-close:hover {
-      color: var(--pourpre);
-    }
-    #simulateur-iframe {
-      width: 100%;
-      height: 1200px;
-      border: none;
-      border-radius: 8px;
-    }
-    @media (max-width: 1024px) {
-      .content-wrapper {
-        grid-template-columns: 1fr;
-      }
-      .caracteristiques-grid {
-        grid-template-columns: 1fr;
-      }
-      .annonce-titre {
-        font-size: 1.5rem;
-      }
+    .horaire:last-child { border-bottom: none; }
+    @media (max-width: 768px) {
+      .annonce-hero { grid-template-columns: 1fr; }
+      .content-wrapper { grid-template-columns: 1fr; }
+      .caracteristiques-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
-
 <header class="header">
   <div class="header-content">
     <div class="logo" onclick="window.location.href='index.html'"><strong>ALB</strong> Immobilier</div>
-    <div class="header-actions">
-      <a href="annonces.html" class="btn-back">← Retour aux annonces</a>
-    </div>
+    <a href="annonces.html" class="btn-back">← Retour aux annonces</a>
   </div>
 </header>
 
 <div class="container">
-  <!-- ANNONCE HERO -->
   <div class="annonce-hero">
     <div class="annonce-image">🏠</div>
     <div class="annonce-header">
       <h1 class="annonce-titre" id="annonce-titre">Chargement...</h1>
       <p class="annonce-localisation" id="annonce-localisation">📍 Chargement...</p>
       <div class="annonce-prix" id="annonce-prix">-</div>
-      <button class="btn-visite" onclick="ouvrirSimulateur()">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="showVisiteStep1(window.currentBienData)">💰 Demander une visite</button>
     </div>
   </div>
 
-  <!-- CONTENU PRINCIPAL -->
   <div class="content-wrapper">
-    <!-- GAUCHE: DÉTAILS -->
     <div class="annonce-details">
-      <!-- CARACTÉRISTIQUES -->
       <h2 class="details-title">📋 Caractéristiques</h2>
       <div class="caracteristiques-grid" id="carac-grid">
         <div style="text-align: center; color: #999;">Chargement...</div>
       </div>
 
-      <!-- DESCRIPTION -->
       <h2 class="details-title" style="margin-top: 30px;">📝 Description</h2>
       <div class="description" id="annonce-description">
         <p>Chargement...</p>
       </div>
 
-      <!-- VIDÉOS -->
       <div class="videos-section">
         <h2 class="details-title">📹 Visite virtuelle</h2>
         <div class="video-placeholder">🎬</div>
@@ -343,182 +237,22 @@
       </div>
     </div>
 
-    <!-- DROITE: SIDEBAR -->
     <div class="sidebar">
-      <!-- VENDEUR -->
       <div class="vendeur-card" id="vendeur-card">
         <div class="vendeur-title">👤 Vendu par</div>
         <div style="color: #999;">Chargement...</div>
       </div>
 
-      <!-- HORAIRES DISPONIBILITÉS -->
       <div class="horaires-card" id="horaires-card">
         <div class="horaires-title">⏰ Disponibilités pour visite</div>
         <div style="color: #999;">Chargement...</div>
       </div>
 
-      <!-- CTA SECONDAIRE -->
       <button class="btn-visite" onclick="showVisiteStep1(window.currentBienData)">💰 Demander une visite</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL SIMULATEUR -->
-<div id="modal-simulateur" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="fermerSimulateur()">&times;</button>
-    <iframe id="simulateur-iframe" src="/simulateur-budget.html?bien_id=exemple&mode=modal"></iframe>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-
-<script>
-  let bienId = null;
-
-  async function init() {
-    // Get bien_id from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    bienId = urlParams.get('id');
-
-    if (!bienId) {
-      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
-      return;
-    }
-
-    // Load bien
-    await loadBien(bienId);
-  }
-
-  async function loadBien(id) {
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('biens_immobiliers')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      displayBien(data);
-      await loadVendeur(data.vendeur_id);
-
-    } catch (err) {
-      console.error('Erreur:', err);
-      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
-    }
-  }
-
- function displayBien(bien) {
-  window.bienId = bien.id;
-  window.bienTitre = bien.titre;
-  window.currentBienData = bien;
-  
-  // Titre et prix
-  document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
-  document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
-  document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
-    
-    // Description
-    document.getElementById('annonce-description').innerHTML = `
-      <p>${bien.description || 'Aucune description'}</p>
-      <br>
-      <p>À la bien, toujours ✨ ALB Immobilier</p>
-    `;
-
-    // Caractéristiques
-    const dpeColor = bien.dpe === 'A' || bien.dpe === 'B' ? '#155724' : '#666';
-    document.getElementById('carac-grid').innerHTML = `
-      <div class="caracteristique">
-        <div class="caracteristique-label">Type de bien</div>
-        <div class="caracteristique-valeur">${bien.type_bien || 'Non spécifié'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Surface</div>
-        <div class="caracteristique-valeur">${bien.surface || '-'} m²</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Pièces</div>
-        <div class="caracteristique-valeur">${bien.nb_pieces || '-'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Terrain</div>
-        <div class="caracteristique-valeur">${bien.surface_terrain || '-'} m²</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">DPE</div>
-        <div class="caracteristique-valeur" style="color: ${dpeColor};">${bien.dpe || '-'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">GES</div>
-        <div class="caracteristique-valeur">${bien.ges || '-'}</div>
-      </div>
-    `;
-  }
-
-  async function loadVendeur(vendeurId) {
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('profiles')
-        .select('prenom, nom, disponibilites_rdv, statut_verifie')
-        .eq('id', vendeurId)
-        .single();
-
-      if (error) throw error;
-
-      // Afficher vendeur
-      const badgeVerif = data.statut_verifie ? '✅ Profil vérifié' : '⏳ Vérification en cours';
-      document.getElementById('vendeur-card').innerHTML = `
-        <div class="vendeur-title">👤 Vendu par</div>
-        <div class="vendeur-badge">${badgeVerif}</div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Nom</div>
-          <div class="vendeur-value">${data.prenom || ''} ${data.nom || 'Particulier'}</div>
-        </div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Type</div>
-          <div class="vendeur-value">Particulier</div>
-        </div>
-      `;
-
-      // Afficher horaires
-      if (data.disponibilites_rdv && data.disponibilites_rdv.length > 0) {
-        const dispos = data.disponibilites_rdv.map(d => {
-          const date = new Date(d);
-          return `📅 <strong>${date.toLocaleDateString('fr-FR')}</strong> • ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-        }).join('</div><div class="horaire">');
-        
-        document.getElementById('horaires-card').innerHTML = `
-          <div class="horaires-title">⏰ Disponibilités pour visite</div>
-          <div class="horaire">${dispos}</div>
-        `;
-      }
-
-    } catch (err) {
-      console.error('Erreur vendeur:', err);
-    }
-  }
-
-  function ouvrirSimulateur() {
-    document.getElementById('modal-simulateur').classList.add('active');
-    // Update iframe bien_id
-    document.getElementById('simulateur-iframe').src = `/simulateur-budget.html?bien_id=${bienId}`;
-  }
-
-  function fermerSimulateur() {
-    document.getElementById('modal-simulateur').classList.remove('active');
-  }
-
-  // Fermer au clic en dehors
-  document.getElementById('modal-simulateur').addEventListener('click', (e) => {
-    if (e.target.id === 'modal-simulateur') {
-      fermerSimulateur();
-    }
-  });
-
-  init();
-</script>
 <!-- FLUX VISITE COMPLET -->
 <div id="visite-step-1" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
   <h3>💰 Étape 1: Simulateur de budget</h3>
@@ -587,25 +321,21 @@
   <div id="options-section" style="display:none; background:white; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
     <div style="color:#4B1A3E; font-weight:600; margin-bottom:1rem;">📋 Prochaines étapes</div>
     
-    <div style="padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1rem; cursor:pointer;" onclick="toggleCheckbox('share-results')">
-      <label style="display:flex; align-items:center; gap:1rem; cursor:pointer;">
-        <input type="checkbox" id="share-results" style="width:20px; height:20px;">
-        <span>
-          <div style="font-weight:600; color:#4B1A3E;">Partager mon résultat avec le vendeur</div>
-          <div style="font-size:0.85rem; color:#666;">Le vendeur recevra votre budget 📧</div>
-        </span>
-      </label>
-    </div>
+    <label style="display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1rem; cursor:pointer;">
+      <input type="checkbox" id="share-results" style="width:20px; height:20px; flex-shrink:0;">
+      <span>
+        <div style="font-weight:600; color:#4B1A3E;">Partager mon résultat avec le vendeur</div>
+        <div style="font-size:0.85rem; color:#666;">Le vendeur recevra votre budget 📧</div>
+      </span>
+    </label>
     
-    <div style="padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1.5rem; cursor:pointer;" onclick="toggleCheckbox('request-courtier')">
-      <label style="display:flex; align-items:center; gap:1rem; cursor:pointer;">
-        <input type="checkbox" id="request-courtier" style="width:20px; height:20px;">
-        <span>
-          <div style="font-weight:600; color:#4B1A3E;">Demander qu'un courtier me contacte</div>
-          <div style="font-size:0.85rem; color:#666;">Un expert en financement vous aidera 👥</div>
-        </span>
-      </label>
-    </div>
+    <label style="display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1.5rem; cursor:pointer;">
+      <input type="checkbox" id="request-courtier" style="width:20px; height:20px; flex-shrink:0;">
+      <span>
+        <div style="font-weight:600; color:#4B1A3E;">Demander qu'un courtier me contacte</div>
+        <div style="font-size:0.85rem; color:#666;">Un expert en financement vous aidera 👥</div>
+      </span>
+    </label>
     
     <button onclick="nextVisite()" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
       Continuer vers les disponibilités →
@@ -621,156 +351,266 @@
   </button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <script>
-let selectedDispo = null;
-let vendeurId = null;
-let calculatedBudget = null;
+  let bienId = null;
+  let selectedDispo = null;
+  let vendeurId = null;
+  let calculatedBudget = null;
 
-function showVisiteStep1(bien) {
-  vendeurId = bien.vendeur_id;
-  document.getElementById('visite-step-1').style.display = 'block';
-  document.getElementById('revenu').focus();
-}
-
-document.getElementById('budget-form')?.addEventListener('submit', (e) => {
-  e.preventDefault();
-  calculateBudget();
-});
-
-function calculateBudget() {
-  const revenu = parseFloat(document.getElementById('revenu').value);
-  const apport = parseFloat(document.getElementById('apport').value) || 0;
-  const taux = parseFloat(document.getElementById('taux').value) / 100;
-  const duree = parseInt(document.getElementById('duree').value);
-  const charges = parseFloat(document.getElementById('charges').value) || 0;
-  
-  if (!revenu || !duree) {
-    alert('⚠️ Remplissez tous les champs obligatoires');
-    return;
+  async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    bienId = urlParams.get('id');
+    if (!bienId) {
+      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
+      return;
+    }
+    await loadBien(bienId);
   }
-  
-  const totalDisponible = revenu * 0.35;
-  const mensualiteMax = totalDisponible - charges;
-  
-  if (mensualiteMax <= 0) {
-    alert('⚠️ Les charges sont trop élevées');
-    return;
-  }
-  
-  const n = duree * 12;
-  const tauxMensuel = taux / 12;
-  let capitalEmpruntable;
-  
-  if (tauxMensuel === 0) {
-    capitalEmpruntable = mensualiteMax * n;
-  } else {
-    const factor = (Math.pow(1 + tauxMensuel, n) - 1) / (tauxMensuel * Math.pow(1 + tauxMensuel, n));
-    capitalEmpruntable = mensualiteMax * factor;
-  }
-  
-  const budgetTotal = capitalEmpruntable + apport;
-  const ratioEndettement = ((mensualiteMax + charges) / revenu) * 100;
-  
-  calculatedBudget = {
-    revenu, apport, taux, duree, charges, budgetTotal, mensualiteMax,
-    mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable
-  };
-  
-  document.getElementById('budget-max').textContent = budgetTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-  document.getElementById('mensualite-total').textContent = (mensualiteMax + charges).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-  document.getElementById('ratio').textContent = ratioEndettement.toFixed(1) + '%';
-  
-  const warningEl = document.getElementById('ratio-warning');
-  if (ratioEndettement <= 35) {
-    warningEl.textContent = '✅ Votre ratio d\'endettement est bon (≤ 35%)';
-    warningEl.classList.add('ok');
-  } else {
-    warningEl.textContent = '⚠️ Attention : votre ratio dépasse 35%. Un courtier peut vous conseiller.';
-    warningEl.classList.remove('ok');
-  }
-  warningEl.style.display = 'block';
-  warningEl.style.background = 'rgba(76,175,80,0.2)';
-  warningEl.style.border = '1px solid rgba(76,175,80,0.5)';
-  warningEl.style.color = '#4caf50';
-  
-  document.getElementById('result-section').style.display = 'block';
-  document.getElementById('options-section').style.display = 'block';
-}
 
-function toggleCheckbox(id) {
-  const checkbox = document.getElementById(id);
-  checkbox.checked = !checkbox.checked;
-}
-
-function nextVisite() {
-  document.getElementById('visite-step-1').style.display = 'none';
-  document.getElementById('visite-step-2').style.display = 'block';
-  loadDispos();
-}
-
-async function loadDispos() {
-  const { data, error } = await window.supabaseClient
-    .from('profiles')
-    .select('disponibilites_rdv')
-    .eq('id', vendeurId);
-  
-  if (error || !data || !data[0]?.disponibilites_rdv?.length) {
-    document.getElementById('dispos-list').innerHTML = '<p style="color:#999;">⚠️ Aucun créneau disponible</p>';
-    return;
+  async function loadBien(id) {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      displayBien(data);
+      await loadVendeur(data.vendeur_id);
+    } catch (err) {
+      console.error('Erreur:', err);
+      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
+    }
   }
-  
-  const dispos = data[0].disponibilites_rdv;
-  let html = '';
-  dispos.forEach((dispo, idx) => {
-    const date = new Date(dispo);
-    const dateStr = date.toLocaleDateString('fr-FR');
-    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    html += `<div style="padding:1rem; background:white; border-radius:8px; margin-bottom:1rem; cursor:pointer; border:2px solid transparent; transition:all 0.2s;" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">📅 ${dateStr} à ${timeStr}</div>`;
+
+  function displayBien(bien) {
+    window.bienId = bien.id;
+    window.bienTitre = bien.titre;
+    window.currentBienData = bien;
+    
+    document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
+    document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
+    document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
+    
+    document.getElementById('annonce-description').innerHTML = `
+      <p>${bien.description || 'Aucune description'}</p>
+      <br>
+      <p>À la bien, toujours ✨ ALB Immobilier</p>
+    `;
+    
+    const dpeColor = bien.dpe === 'A' || bien.dpe === 'B' ? '#155724' : '#666';
+    document.getElementById('carac-grid').innerHTML = `
+      <div class="caracteristique">
+        <div class="caracteristique-label">Type de bien</div>
+        <div class="caracteristique-valeur">${bien.type_bien || 'Non spécifié'}</div>
+      </div>
+      <div class="caracteristique">
+        <div class="caracteristique-label">Surface</div>
+        <div class="caracteristique-valeur">${bien.surface || '-'} m²</div>
+      </div>
+      <div class="caracteristique">
+        <div class="caracteristique-label">Pièces</div>
+        <div class="caracteristique-valeur">${bien.nb_pieces || '-'}</div>
+      </div>
+      <div class="caracteristique">
+        <div class="caracteristique-label">Terrain</div>
+        <div class="caracteristique-valeur">${bien.surface_terrain || '-'} m²</div>
+      </div>
+      <div class="caracteristique">
+        <div class="caracteristique-label">DPE</div>
+        <div class="caracteristique-valeur" style="color: ${dpeColor};">${bien.dpe || '-'}</div>
+      </div>
+      <div class="caracteristique">
+        <div class="caracteristique-label">GES</div>
+        <div class="caracteristique-valeur">${bien.ges || '-'}</div>
+      </div>
+    `;
+  }
+
+  async function loadVendeur(vendeurId) {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('prenom, nom, disponibilites_rdv, statut_verifie')
+        .eq('id', vendeurId)
+        .single();
+      if (error) throw error;
+      
+      const badgeVerif = data.statut_verifie ? '✅ Profil vérifié' : '⏳ Vérification en cours';
+      document.getElementById('vendeur-card').innerHTML = `
+        <div class="vendeur-title">👤 Vendu par</div>
+        <div style="color:#999; margin-bottom:10px;">${badgeVerif}</div>
+        <div class="vendeur-info">
+          <div class="vendeur-label">Nom</div>
+          <div class="vendeur-value">${data.prenom || ''} ${data.nom || 'Particulier'}</div>
+        </div>
+        <div class="vendeur-info">
+          <div class="vendeur-label">Type</div>
+          <div class="vendeur-value">Particulier</div>
+        </div>
+      `;
+      
+      if (data.disponibilites_rdv && data.disponibilites_rdv.length > 0) {
+        const dispos = data.disponibilites_rdv.map(d => {
+          const date = new Date(d);
+          return `📅 <strong>${date.toLocaleDateString('fr-FR')}</strong> • ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+        }).join('</div><div class="horaire">');
+        
+        document.getElementById('horaires-card').innerHTML = `
+          <div class="horaires-title">⏰ Disponibilités pour visite</div>
+          <div class="horaire">${dispos}</div>
+        `;
+      }
+    } catch (err) {
+      console.error('Erreur vendeur:', err);
+    }
+  }
+
+  function showVisiteStep1(bien) {
+    vendeurId = bien.vendeur_id;
+    document.getElementById('visite-step-1').style.display = 'block';
+    document.getElementById('revenu').focus();
+  }
+
+  document.getElementById('budget-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    calculateBudget();
   });
-  
-  document.getElementById('dispos-list').innerHTML = html;
-}
 
-function selectDispo(dispo, idx) {
-  selectedDispo = dispo;
-  document.querySelectorAll('[id^="dispo-"]').forEach(el => {
-    el.style.borderColor = 'transparent';
-  });
-  document.getElementById(`dispo-${idx}`).style.borderColor = '#4B1A3E';
-}
+  function calculateBudget() {
+    const revenu = parseFloat(document.getElementById('revenu').value);
+    const apport = parseFloat(document.getElementById('apport').value) || 0;
+    const taux = parseFloat(document.getElementById('taux').value) / 100;
+    const duree = parseInt(document.getElementById('duree').value);
+    const charges = parseFloat(document.getElementById('charges').value) || 0;
+    
+    if (!revenu || !duree) {
+      alert('⚠️ Remplissez tous les champs obligatoires');
+      return;
+    }
+    
+    const totalDisponible = revenu * 0.35;
+    const mensualiteMax = totalDisponible - charges;
+    
+    if (mensualiteMax <= 0) {
+      alert('⚠️ Les charges sont trop élevées');
+      return;
+    }
+    
+    const n = duree * 12;
+    const tauxMensuel = taux / 12;
+    let capitalEmpruntable;
+    
+    if (tauxMensuel === 0) {
+      capitalEmpruntable = mensualiteMax * n;
+    } else {
+      const factor = (Math.pow(1 + tauxMensuel, n) - 1) / (tauxMensuel * Math.pow(1 + tauxMensuel, n));
+      capitalEmpruntable = mensualiteMax * factor;
+    }
+    
+    const budgetTotal = capitalEmpruntable + apport;
+    const ratioEndettement = ((mensualiteMax + charges) / revenu) * 100;
+    
+    calculatedBudget = {
+      revenu, apport, taux, duree, charges, budgetTotal, mensualiteMax,
+      mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable
+    };
+    
+    document.getElementById('budget-max').textContent = budgetTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+    document.getElementById('mensualite-total').textContent = (mensualiteMax + charges).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+    document.getElementById('ratio').textContent = ratioEndettement.toFixed(1) + '%';
+    
+    const warningEl = document.getElementById('ratio-warning');
+    if (ratioEndettement <= 35) {
+      warningEl.textContent = '✅ Votre ratio d\'endettement est bon (≤ 35%)';
+      warningEl.style.background = 'rgba(76,175,80,0.2)';
+      warningEl.style.border = '1px solid rgba(76,175,80,0.5)';
+      warningEl.style.color = '#4caf50';
+    } else {
+      warningEl.textContent = '⚠️ Attention : votre ratio dépasse 35%. Un courtier peut vous conseiller.';
+      warningEl.style.background = 'rgba(255,193,7,0.2)';
+      warningEl.style.border = '1px solid rgba(255,193,7,0.5)';
+      warningEl.style.color = '#ffc107';
+    }
+    warningEl.style.display = 'block';
+    
+    document.getElementById('result-section').style.display = 'block';
+    document.getElementById('options-section').style.display = 'block';
+  }
 
-async function validerVisite() {
-  if (!selectedDispo) {
-    alert('⚠️ Sélectionner un créneau');
-    return;
+  function nextVisite() {
+    document.getElementById('visite-step-1').style.display = 'none';
+    document.getElementById('visite-step-2').style.display = 'block';
+    loadDispos();
   }
-  
-  const userId = localStorage.getItem('alb_user');
-  if (!userId) {
-    alert('❌ Vous devez être connecté');
-    return;
-  }
-  
-  const { error } = await window.supabaseClient
-    .from('visites')
-    .insert({
-      bien_id: window.currentBienData.id,
-      vendeur_id: window.currentBienData.vendeur_id,
-      acheteur_id: userId,
-      date_visite_demandee: selectedDispo,
-      statut: 'en_attente',
-      resultat_simulateur_partage: document.getElementById('share-results').checked,
-      resultat_simulateur: document.getElementById('share-results').checked ? calculatedBudget : null
+
+  async function loadDispos() {
+    const { data, error } = await window.supabaseClient
+      .from('profiles')
+      .select('disponibilites_rdv')
+      .eq('id', vendeurId);
+    
+    if (error || !data || !data[0]?.disponibilites_rdv?.length) {
+      document.getElementById('dispos-list').innerHTML = '<p style="color:#999;">⚠️ Aucun créneau disponible</p>';
+      return;
+    }
+    
+    const dispos = data[0].disponibilites_rdv;
+    let html = '';
+    dispos.forEach((dispo, idx) => {
+      const date = new Date(dispo);
+      const dateStr = date.toLocaleDateString('fr-FR');
+      const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      html += `<div style="padding:1rem; background:white; border-radius:8px; margin-bottom:1rem; cursor:pointer; border:2px solid transparent; transition:all 0.2s;" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">📅 ${dateStr} à ${timeStr}</div>`;
     });
-  
-  if (error) {
-    alert('❌ Erreur: ' + error.message);
-    return;
+    
+    document.getElementById('dispos-list').innerHTML = html;
   }
-  
-  alert('✅ Visite demandée! Le vendeur recevra votre demande.');
-  location.reload();
-}
+
+  function selectDispo(dispo, idx) {
+    selectedDispo = dispo;
+    document.querySelectorAll('[id^="dispo-"]').forEach(el => {
+      el.style.borderColor = 'transparent';
+    });
+    document.getElementById(`dispo-${idx}`).style.borderColor = '#4B1A3E';
+  }
+
+  async function validerVisite() {
+    if (!selectedDispo) {
+      alert('⚠️ Sélectionner un créneau');
+      return;
+    }
+    
+    const userId = localStorage.getItem('alb_user');
+    if (!userId) {
+      alert('❌ Vous devez être connecté');
+      return;
+    }
+    
+    const { error } = await window.supabaseClient
+      .from('visites')
+      .insert({
+        bien_id: window.currentBienData.id,
+        vendeur_id: window.currentBienData.vendeur_id,
+        acheteur_id: userId,
+        date_visite_demandee: selectedDispo,
+        statut: 'en_attente',
+        resultat_simulateur_partage: document.getElementById('share-results').checked,
+        resultat_simulateur: document.getElementById('share-results').checked ? calculatedBudget : null
+      });
+    
+    if (error) {
+      alert('❌ Erreur: ' + error.message);
+      return;
+    }
+    
+    alert('✅ Visite demandée! Le vendeur recevra votre demande.');
+    location.reload();
+  }
+
+  init();
 </script>
 </body>
 </html>
