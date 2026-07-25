@@ -519,29 +519,104 @@
 
   init();
 </script>
-<!-- FLUX VISITE -->
+<!-- FLUX VISITE COMPLET -->
 <div id="visite-step-1" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
-  <h3>💰 Étape 1: Simulateur de financement</h3>
-  <iframe src="financement_interactive.html" style="width:100%; height:600px; border:none; border-radius: 8px;"></iframe>
+  <h3>💰 Étape 1: Simulateur de budget</h3>
   
-  <div style="margin-top: 2rem; padding: 1rem; background: white; border-radius: 8px;">
-    <label style="display:flex; gap: 1rem; align-items: center; cursor: pointer;">
-      <input type="checkbox" id="demander-courtier">
-      <span>📞 Demander qu'un courtier me contacte</span>
-    </label>
+  <form id="budget-form" style="margin-top: 1.5rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+      <div>
+        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Revenu mensuel net (€)</label>
+        <input type="number" id="revenu" placeholder="3000" min="0" step="100" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+      </div>
+      <div>
+        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Apport propre (€)</label>
+        <input type="number" id="apport" placeholder="50000" min="0" step="1000" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+      <div>
+        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Taux d'intérêt (%)</label>
+        <input type="number" id="taux" placeholder="3.5" min="0" max="10" step="0.1" value="3.5" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+      </div>
+      <div>
+        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Durée du crédit</label>
+        <select id="duree" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+          <option value="">Sélectionner...</option>
+          <option value="15">15 ans</option>
+          <option value="20">20 ans</option>
+          <option value="25">25 ans</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Charges mensuelles (€)</label>
+      <input type="number" id="charges" placeholder="250" min="0" step="10" value="250" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+      <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">Assurance, copro, taxes, etc.</div>
+    </div>
+    
+    <button type="submit" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-bottom:1.5rem;">
+      📊 Calculer mon budget
+    </button>
+  </form>
+  
+  <div id="result-section" style="display:none; background:linear-gradient(135deg,#4B1A3E,#6b2d5f); color:white; border-radius:12px; padding:2rem; margin-bottom:1.5rem;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:2rem;">
+      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
+        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Budget maximal</div>
+        <div style="font-size:1.8rem; font-weight:bold;" id="budget-max">-</div>
+        <div style="font-size:0.9rem; opacity:0.8;">€</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
+        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Mensualité + Charges</div>
+        <div style="font-size:1.8rem; font-weight:bold;" id="mensualite-total">-</div>
+        <div style="font-size:0.9rem; opacity:0.8;">€/mois</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
+        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Ratio d'endettement</div>
+        <div style="font-size:1.8rem; font-weight:bold;" id="ratio">-</div>
+        <div style="font-size:0.9rem; opacity:0.8;">%</div>
+      </div>
+    </div>
+    
+    <div id="ratio-warning" style="display:none; background:rgba(255,193,7,0.2); border:1px solid rgba(255,193,7,0.5); color:#ffc107; padding:15px; border-radius:6px; margin-bottom:1.5rem; font-size:0.9rem;"></div>
   </div>
   
-  <button onclick="nextVisite()" style="width:100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;">
-    Continuer vers les disponibilités →
-  </button>
+  <div id="options-section" style="display:none; background:white; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+    <div style="color:#4B1A3E; font-weight:600; margin-bottom:1rem;">📋 Prochaines étapes</div>
+    
+    <div style="padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1rem; cursor:pointer;" onclick="toggleCheckbox('share-results')">
+      <label style="display:flex; align-items:center; gap:1rem; cursor:pointer;">
+        <input type="checkbox" id="share-results" style="width:20px; height:20px;">
+        <span>
+          <div style="font-weight:600; color:#4B1A3E;">Partager mon résultat avec le vendeur</div>
+          <div style="font-size:0.85rem; color:#666;">Le vendeur recevra votre budget 📧</div>
+        </span>
+      </label>
+    </div>
+    
+    <div style="padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1.5rem; cursor:pointer;" onclick="toggleCheckbox('request-courtier')">
+      <label style="display:flex; align-items:center; gap:1rem; cursor:pointer;">
+        <input type="checkbox" id="request-courtier" style="width:20px; height:20px;">
+        <span>
+          <div style="font-weight:600; color:#4B1A3E;">Demander qu'un courtier me contacte</div>
+          <div style="font-size:0.85rem; color:#666;">Un expert en financement vous aidera 👥</div>
+        </span>
+      </label>
+    </div>
+    
+    <button onclick="nextVisite()" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+      Continuer vers les disponibilités →
+    </button>
+  </div>
 </div>
 
-<div id="visite-step-2" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
+<div id="visite-step-2" style="display:none; margin-top:2rem; padding:2rem; background:#f5f3ee; border-radius:12px;">
   <h3>📅 Étape 2: Choisir un créneau de visite</h3>
-  
-  <div id="dispos-list" style="margin-top: 1.5rem;"></div>
-  
-  <button onclick="validerVisite()" style="width:100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;">
+  <div id="dispos-list" style="margin-top:1.5rem;"></div>
+  <button onclick="validerVisite()" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-top:1rem;">
     ✅ Valider ma demande de visite
   </button>
 </div>
@@ -549,10 +624,82 @@
 <script>
 let selectedDispo = null;
 let vendeurId = null;
+let calculatedBudget = null;
 
 function showVisiteStep1(bien) {
   vendeurId = bien.vendeur_id;
   document.getElementById('visite-step-1').style.display = 'block';
+  document.getElementById('revenu').focus();
+}
+
+document.getElementById('budget-form')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  calculateBudget();
+});
+
+function calculateBudget() {
+  const revenu = parseFloat(document.getElementById('revenu').value);
+  const apport = parseFloat(document.getElementById('apport').value) || 0;
+  const taux = parseFloat(document.getElementById('taux').value) / 100;
+  const duree = parseInt(document.getElementById('duree').value);
+  const charges = parseFloat(document.getElementById('charges').value) || 0;
+  
+  if (!revenu || !duree) {
+    alert('⚠️ Remplissez tous les champs obligatoires');
+    return;
+  }
+  
+  const totalDisponible = revenu * 0.35;
+  const mensualiteMax = totalDisponible - charges;
+  
+  if (mensualiteMax <= 0) {
+    alert('⚠️ Les charges sont trop élevées');
+    return;
+  }
+  
+  const n = duree * 12;
+  const tauxMensuel = taux / 12;
+  let capitalEmpruntable;
+  
+  if (tauxMensuel === 0) {
+    capitalEmpruntable = mensualiteMax * n;
+  } else {
+    const factor = (Math.pow(1 + tauxMensuel, n) - 1) / (tauxMensuel * Math.pow(1 + tauxMensuel, n));
+    capitalEmpruntable = mensualiteMax * factor;
+  }
+  
+  const budgetTotal = capitalEmpruntable + apport;
+  const ratioEndettement = ((mensualiteMax + charges) / revenu) * 100;
+  
+  calculatedBudget = {
+    revenu, apport, taux, duree, charges, budgetTotal, mensualiteMax,
+    mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable
+  };
+  
+  document.getElementById('budget-max').textContent = budgetTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+  document.getElementById('mensualite-total').textContent = (mensualiteMax + charges).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+  document.getElementById('ratio').textContent = ratioEndettement.toFixed(1) + '%';
+  
+  const warningEl = document.getElementById('ratio-warning');
+  if (ratioEndettement <= 35) {
+    warningEl.textContent = '✅ Votre ratio d\'endettement est bon (≤ 35%)';
+    warningEl.classList.add('ok');
+  } else {
+    warningEl.textContent = '⚠️ Attention : votre ratio dépasse 35%. Un courtier peut vous conseiller.';
+    warningEl.classList.remove('ok');
+  }
+  warningEl.style.display = 'block';
+  warningEl.style.background = 'rgba(76,175,80,0.2)';
+  warningEl.style.border = '1px solid rgba(76,175,80,0.5)';
+  warningEl.style.color = '#4caf50';
+  
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('options-section').style.display = 'block';
+}
+
+function toggleCheckbox(id) {
+  const checkbox = document.getElementById(id);
+  checkbox.checked = !checkbox.checked;
 }
 
 function nextVisite() {
@@ -567,29 +714,18 @@ async function loadDispos() {
     .select('disponibilites_rdv')
     .eq('id', vendeurId);
   
-  if (error || !data || data.length === 0) {
-    document.getElementById('dispos-list').innerHTML = '<p>⚠️ Aucun créneau</p>';
+  if (error || !data || !data[0]?.disponibilites_rdv?.length) {
+    document.getElementById('dispos-list').innerHTML = '<p style="color:#999;">⚠️ Aucun créneau disponible</p>';
     return;
   }
   
-  const dispos = data[0].disponibilites_rdv || [];
-  if (!dispos.length) {
-    document.getElementById('dispos-list').innerHTML = '<p>⚠️ Aucun créneau</p>';
-    return;
-  }
-  
+  const dispos = data[0].disponibilites_rdv;
   let html = '';
   dispos.forEach((dispo, idx) => {
     const date = new Date(dispo);
     const dateStr = date.toLocaleDateString('fr-FR');
     const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
-    html += `
-      <div style="padding: 1rem; background: white; border-radius: 8px; margin-bottom: 1rem; cursor: pointer; border: 2px solid transparent;" 
-           onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">
-        📅 ${dateStr} à ${timeStr}
-      </div>
-    `;
+    html += `<div style="padding:1rem; background:white; border-radius:8px; margin-bottom:1rem; cursor:pointer; border:2px solid transparent; transition:all 0.2s;" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">📅 ${dateStr} à ${timeStr}</div>`;
   });
   
   document.getElementById('dispos-list').innerHTML = html;
@@ -605,7 +741,13 @@ function selectDispo(dispo, idx) {
 
 async function validerVisite() {
   if (!selectedDispo) {
-    alert('Choisir un créneau');
+    alert('⚠️ Sélectionner un créneau');
+    return;
+  }
+  
+  const userId = localStorage.getItem('alb_user');
+  if (!userId) {
+    alert('❌ Vous devez être connecté');
     return;
   }
   
@@ -614,17 +756,19 @@ async function validerVisite() {
     .insert({
       bien_id: window.currentBienData.id,
       vendeur_id: window.currentBienData.vendeur_id,
-      acheteur_id: localStorage.getItem('alb_user'),
+      acheteur_id: userId,
       date_visite_demandee: selectedDispo,
-      statut: 'en_attente'
+      statut: 'en_attente',
+      resultat_simulateur_partage: document.getElementById('share-results').checked,
+      resultat_simulateur: document.getElementById('share-results').checked ? calculatedBudget : null
     });
   
   if (error) {
-    alert('Erreur: ' + error.message);
+    alert('❌ Erreur: ' + error.message);
     return;
   }
   
-  alert('✅ Visite demandée!');
+  alert('✅ Visite demandée! Le vendeur recevra votre demande.');
   location.reload();
 }
 </script>
