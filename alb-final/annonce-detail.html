@@ -519,6 +519,114 @@
 
   init();
 </script>
+<!-- FLUX VISITE -->
+<div id="visite-step-1" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
+  <h3>💰 Étape 1: Simulateur de financement</h3>
+  <iframe src="financement_interactive.html" style="width:100%; height:600px; border:none; border-radius: 8px;"></iframe>
+  
+  <div style="margin-top: 2rem; padding: 1rem; background: white; border-radius: 8px;">
+    <label style="display:flex; gap: 1rem; align-items: center; cursor: pointer;">
+      <input type="checkbox" id="demander-courtier">
+      <span>📞 Demander qu'un courtier me contacte</span>
+    </label>
+  </div>
+  
+  <button onclick="nextVisite()" style="width:100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;">
+    Continuer vers les disponibilités →
+  </button>
+</div>
 
+<div id="visite-step-2" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
+  <h3>📅 Étape 2: Choisir un créneau de visite</h3>
+  
+  <div id="dispos-list" style="margin-top: 1.5rem;"></div>
+  
+  <button onclick="validerVisite()" style="width:100%; padding: 12px; background: #4B1A3E; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;">
+    ✅ Valider ma demande de visite
+  </button>
+</div>
+
+<script>
+let selectedDispo = null;
+let vendeurId = null;
+
+function showVisiteStep1(bien) {
+  vendeurId = bien.vendeur_id;
+  document.getElementById('visite-step-1').style.display = 'block';
+}
+
+function nextVisite() {
+  document.getElementById('visite-step-1').style.display = 'none';
+  document.getElementById('visite-step-2').style.display = 'block';
+  loadDispos();
+}
+
+async function loadDispos() {
+  const { data, error } = await window.supabaseClient
+    .from('profiles')
+    .select('disponibilites_rdv')
+    .eq('id', vendeurId);
+  
+  if (error || !data || data.length === 0) {
+    document.getElementById('dispos-list').innerHTML = '<p>⚠️ Aucun créneau</p>';
+    return;
+  }
+  
+  const dispos = data[0].disponibilites_rdv || [];
+  if (!dispos.length) {
+    document.getElementById('dispos-list').innerHTML = '<p>⚠️ Aucun créneau</p>';
+    return;
+  }
+  
+  let html = '';
+  dispos.forEach((dispo, idx) => {
+    const date = new Date(dispo);
+    const dateStr = date.toLocaleDateString('fr-FR');
+    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    html += `
+      <div style="padding: 1rem; background: white; border-radius: 8px; margin-bottom: 1rem; cursor: pointer; border: 2px solid transparent;" 
+           onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">
+        📅 ${dateStr} à ${timeStr}
+      </div>
+    `;
+  });
+  
+  document.getElementById('dispos-list').innerHTML = html;
+}
+
+function selectDispo(dispo, idx) {
+  selectedDispo = dispo;
+  document.querySelectorAll('[id^="dispo-"]').forEach(el => {
+    el.style.borderColor = 'transparent';
+  });
+  document.getElementById(`dispo-${idx}`).style.borderColor = '#4B1A3E';
+}
+
+async function validerVisite() {
+  if (!selectedDispo) {
+    alert('Choisir un créneau');
+    return;
+  }
+  
+  const { error } = await window.supabaseClient
+    .from('visites')
+    .insert({
+      bien_id: window.currentBienData.id,
+      vendeur_id: window.currentBienData.vendeur_id,
+      acheteur_id: localStorage.getItem('alb_user'),
+      date_visite_demandee: selectedDispo,
+      statut: 'en_attente'
+    });
+  
+  if (error) {
+    alert('Erreur: ' + error.message);
+    return;
+  }
+  
+  alert('✅ Visite demandée!');
+  location.reload();
+}
+</script>
 </body>
 </html>
