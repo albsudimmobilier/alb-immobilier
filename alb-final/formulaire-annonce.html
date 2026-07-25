@@ -405,14 +405,13 @@
 
   let currentUser = null;
 
-  async function init() {
-    const session = await window.supabaseClient.auth.getSession();
-    if (session?.data?.session) {
-      currentUser = session.data.session.user;
-    } else {
-      // Redirect to login if not authenticated
-      window.location.href = '/login.html';
+ async function init() {
+    const userId = localStorage.getItem('alb_user');
+    if (!userId) {
+      window.location.href = 'login.html';
+      return;
     }
+    currentUser = { id: userId };
   }
 
   form.addEventListener('submit', async (e) => {
