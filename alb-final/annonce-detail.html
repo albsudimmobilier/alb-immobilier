@@ -609,7 +609,7 @@ async function validerVisite() {
         acheteur_id: userId,
         nom_acheteur: userData.prenom + ' ' + userData.nom,
         telephone_acheteur: userData.telephone,
-        email_acheteur: userData.email,
+       
         date_visite: date.toISOString().split('T')[0],
         heure_visite: date.toTimeString().slice(0, 5),
         statut: 'en_attente'
