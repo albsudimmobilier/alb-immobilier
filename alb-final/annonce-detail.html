@@ -380,7 +380,7 @@
   async function init() {
     // Get bien_id from URL
     const urlParams = new URLSearchParams(window.location.search);
-    bienId = urlParams.get('bien_id');
+    bienId = urlParams.get('id');
 
     if (!bienId) {
       document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
