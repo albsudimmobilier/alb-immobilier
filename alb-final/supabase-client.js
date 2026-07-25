@@ -3,14 +3,11 @@
 // règles RLS posées côté Supabase, jamais la clé secrète ici.
 const SUPABASE_URL = "https://kutbxyinpokebjdemlnq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ";
-
 window.supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
-
 // ========== FONCTIONS RÉUTILISABLES ==========
-
 async function albFetchPros(filters = {}) {
   let query = window.supabaseClient.from('profils_publics').select('*');
   if (filters.role) query = query.eq('role', filters.role);
@@ -18,7 +15,6 @@ async function albFetchPros(filters = {}) {
   const { data, error } = await query.order('date_creation', { ascending: false });
   return { data, error };
 }
-
 async function albFetchAvisForPro(proId) {
   const { data, error } = await window.supabaseClient
     .from('avis')
@@ -28,7 +24,6 @@ async function albFetchAvisForPro(proId) {
     .order('date_creation', { ascending: false });
   return { data, error };
 }
-
 function albCalculateBadges(avis) {
   if (!avis || avis.length === 0) return { moyenne: null, count: 0, hasAlbBadge: false };
   const notes = avis.map(a => a.note);
@@ -36,7 +31,6 @@ function albCalculateBadges(avis) {
   const hasAlbBadge = moyenne >= 4.5 && avis.length >= 5;
   return { moyenne: parseFloat(moyenne.toFixed(1)), count: avis.length, hasAlbBadge };
 }
-
 async function albUploadPhoto(userId, file) {
   if (!file) return { error: { message: "Aucun fichier sélectionné" } };
   const filename = `${userId}-${Date.now()}.jpg`;
@@ -45,12 +39,10 @@ async function albUploadPhoto(userId, file) {
   const { data: publicUrl } = window.supabaseClient.storage.from('pro-photos').getPublicUrl(filename);
   return { data: publicUrl.publicUrl, error: null };
 }
-
 async function albUpdateProfilePhoto(userId, photoUrl) {
   const { error } = await window.supabaseClient.from('profiles').update({ photo_url: photoUrl }).eq('id', userId);
   return { error };
 }
-
 async function albSubmitAvis(proId, note, commentaire) {
   if (!albUser) return { error: { message: "Non connecté" } };
   const { data, error } = await window.supabaseClient.from('avis').upsert({
@@ -60,27 +52,23 @@ async function albSubmitAvis(proId, note, commentaire) {
   }, { onConflict: 'profil_note_id,auteur_id' });
   return { data, error };
 }
-
 async function albCreateDemandReleve(proProposantId, proProposéId) {
   const { data, error } = await window.supabaseClient.from('demandes_releve').insert({
     pro_proposant_id: proProposantId, pro_proposé_id: proProposéId, statut: 'en_attente'
   });
   return { data, error };
 }
-
 async function albFetchDemandesReleve(proId, statut = null) {
   let query = window.supabaseClient.from('demandes_releve').select('*').eq('pro_proposé_id', proId);
   if (statut) query = query.eq('statut', statut);
   const { data, error } = await query.order('created_at', { ascending: false });
   return { data, error };
 }
-
 async function albUpdateDemandReleve(demandeId, newStatut) {
   const { error } = await window.supabaseClient.from('demandes_releve')
     .update({ statut: newStatut, updated_at: new Date().toISOString() }).eq('id', demandeId);
   return { error };
 }
-
 async function albFetchProDetail(proId) {
   const { data: pro, error: proError } = await window.supabaseClient.from('profils_publics').select('*').eq('id', proId).single();
   if (proError) return { error: proError };
