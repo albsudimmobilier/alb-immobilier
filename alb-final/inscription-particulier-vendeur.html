@@ -3,232 +3,237 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>S'inscrire - Vendeur - ALB Immobilier</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>S'inscrire Vendeur - ALB Immobilier</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --pourpre: #4B1A3E;
-      --dore: #B28E3D;
-      --creme: #f5f3ee;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background-color: var(--creme);
-      color: var(--pourpre);
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Montserrat, sans-serif; 
+      background: linear-gradient(135deg, #f5f3ee 0%, #fbf8f3 100%);
       min-height: 100vh;
-    }
-    .container {
-      max-width: 600px;
-      margin: 50px auto;
-      padding: 20px;
-    }
-    .form-wrapper {
-      background-color: #ffffff;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      font-family: 'Playfair Display', serif;
-      color: var(--pourpre);
-      margin-bottom: 10px;
-      font-size: 28px;
-    }
-    .subtitle {
-      color: #999;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--pourpre);
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--dore);
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-    input:focus {
-      outline: none;
-      border-color: var(--pourpre);
-      box-shadow: 0 0 5px rgba(75, 26, 62, 0.3);
-    }
-    .checkbox-group {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      justify-content: center;
+      padding: 1rem;
     }
-    .checkbox-group input[type="checkbox"] {
-      width: auto;
-      margin-right: 10px;
-    }
-    .checkbox-group label {
-      margin-bottom: 0;
-      font-weight: normal;
-    }
-    .checkbox-group a {
-      color: var(--dore);
-      text-decoration: none;
-    }
-    .submit-btn {
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(75, 26, 62, 0.1);
+      max-width: 500px;
       width: 100%;
-      padding: 14px;
-      background-color: var(--dore);
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s;
+      padding: 3rem 2rem;
+      border-left: 6px solid #B28E3D;
     }
-    .submit-btn:hover {
-      background-color: #a67c2c;
-    }
-    .error-message {
-      color: #dc3545;
-      background-color: #ffe6e6;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      text-align: center;
-      display: none;
-    }
-    .success-message {
-      color: #28a745;
-      background-color: #e6ffe6;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      text-align: center;
-      display: none;
-    }
-    .back-link {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .back-link a {
-      color: var(--dore);
-      text-decoration: none;
+    
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-family: Playfair Display, serif; font-size: 28px; color: #4B1A3E; margin-bottom: 0.5rem; }
+    .header p { color: #999; font-size: 14px; }
+    
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 0.5rem; color: #2c2c2a; }
+    .form-group input { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 1px solid #d3d1c7; 
+      border-radius: 8px; 
+      font-family: Montserrat, sans-serif;
       font-size: 14px;
+      transition: all 0.2s;
+    }
+    .form-group input:focus { 
+      outline: none; 
+      border-color: #4B1A3E; 
+      box-shadow: 0 0 0 3px rgba(75, 26, 62, 0.1);
+    }
+    
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    
+    .checkbox-group { display: flex; gap: 0.5rem; align-items: flex-start; }
+    .checkbox-group input { margin-top: 3px; cursor: pointer; width: auto; }
+    .checkbox-group label { margin: 0; font-size: 12px; cursor: pointer; line-height: 1.4; }
+    .checkbox-group a { color: #B28E3D; text-decoration: none; font-weight: 600; }
+    .checkbox-group a:hover { text-decoration: underline; }
+    
+    .btn-submit { 
+      width: 100%; 
+      padding: 12px; 
+      background: #4B1A3E; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+    .btn-submit:hover { background: #35132b; opacity: 0.9; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .link-group { text-align: center; margin-top: 1.5rem; font-size: 12px; }
+    .link-group a { color: #B28E3D; text-decoration: none; font-weight: 600; }
+    .link-group a:hover { text-decoration: underline; }
+    
+    .loading, .error, .success { 
+      display: none; 
+      padding: 1rem; 
+      margin: 1rem 0; 
+      border-radius: 8px; 
+      text-align: center; 
+      font-size: 14px;
+    }
+    .loading { background: #e3f2fd; color: #1565c0; }
+    .error { background: #ffebee; color: #c62828; }
+    .success { background: #e8f5e9; color: #2e7d32; }
+    
+    .back-link { text-align: center; margin-top: 2rem; }
+    .back-link a { color: #B28E3D; text-decoration: none; font-size: 12px; font-weight: 600; }
+    .back-link a:hover { text-decoration: underline; }
+    
+    @media (max-width: 600px) {
+      .container { padding: 2rem 1.5rem; }
+      .form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="form-wrapper">
-      <h1>S'inscrire</h1>
-      <p class="subtitle">Particulier Vendeur</p>
-
-      <div id="errorMessage" class="error-message"></div>
-      <div id="successMessage" class="success-message"></div>
-
-      <form id="inscriptionForm">
-        <div class="form-group">
-          <label for="prenom">Prénom *</label>
-          <input type="text" id="prenom" name="prenom" required />
-        </div>
-
-        <div class="form-group">
-          <label for="nom">Nom *</label>
-          <input type="text" id="nom" name="nom" required />
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email *</label>
-          <input type="email" id="email" name="email" required />
-        </div>
-
-        <div class="form-group">
-          <label for="telephone">Téléphone *</label>
-          <input type="tel" id="telephone" name="telephone" required />
-        </div>
-
-        <div class="checkbox-group">
-          <input type="checkbox" id="cgu" name="cgu" required />
-          <label for="cgu">
-            J'accepte les <a href="/conditions-generales">conditions générales</a> et la <a href="/confidentialite">politique de confidentialité</a>
-          </label>
-        </div>
-
-        <button type="submit" class="submit-btn">Créer mon compte</button>
-      </form>
-
-      <div class="back-link">
-        <a href="/">← Retour</a>
+<div class="container">
+  <div class="header">
+    <h1>🏠 Créer une Annonce</h1>
+    <p>Inscrivez-vous en tant que vendeur</p>
+  </div>
+  
+  <form id="signup-form" onsubmit="handleSignup(event)">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="prenom">Prénom *</label>
+        <input type="text" id="prenom" placeholder="Jean" required>
+      </div>
+      <div class="form-group">
+        <label for="nom">Nom *</label>
+        <input type="text" id="nom" placeholder="Dupont" required>
       </div>
     </div>
+    
+    <div class="form-group">
+      <label for="email">Email *</label>
+      <input type="email" id="email" placeholder="vous@example.fr" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="telephone">Téléphone *</label>
+      <input type="tel" id="telephone" placeholder="06 12 34 56 78" required>
+    </div>
+    
+    <div class="checkbox-group">
+      <input type="checkbox" id="cgu-checkbox" required>
+      <label for="cgu-checkbox">
+        J'accepte les <a href="cgu.html" target="_blank">conditions générales</a> et la <a href="confidentialite.html" target="_blank">politique de confidentialité</a>
+      </label>
+    </div>
+    
+    <button type="submit" class="btn-submit" id="btn-submit">Créer mon compte</button>
+  </form>
+  
+  <div class="loading" id="loading">Création du compte en cours...</div>
+  <div class="error" id="error"></div>
+  <div class="success" id="success">✅ Compte créé avec succès! Votre PIN a été envoyé par email.</div>
+  
+  <div class="link-group">
+    <a href="login.html">← Déjà inscrit? Se connecter</a>
   </div>
+  
+  <div class="back-link">
+    <a href="annonces.html">← Retour aux annonces</a>
+  </div>
+</div>
 
-  <script>
-    const form = document.getElementById('inscriptionForm');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const prenom = document.getElementById('prenom').value.trim();
-      const nom = document.getElementById('nom').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const telephone = document.getElementById('telephone').value.trim();
-
-      if (!prenom || !nom || !email || !telephone) {
-        showError('Veuillez remplir tous les champs');
-        return;
-      }
-
-      try {
-        const response = await fetch('/.netlify/functions/create-account', {
-          method: 'POST',
-          body: JSON.stringify({
-            prenom,
-            nom,
-            email,
-            telephone,
-            profil: 'particulier_vendeur'  // ← VALEUR CORRECTE
-          })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Erreur lors de la création du compte');
-        }
-
-        showSuccess('Compte créé ! Vérifiez votre email pour votre PIN');
-        form.reset();
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
-      } catch (err) {
-        showError(err.message);
-      }
-    });
-
-    function showError(msg) {
-      const el = document.getElementById('errorMessage');
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 5000);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script>
+async function handleSignup(event) {
+  event.preventDefault();
+  
+  const prenom = document.getElementById('prenom').value;
+  const nom = document.getElementById('nom').value;
+  const email = document.getElementById('email').value;
+  const telephone = document.getElementById('telephone').value;
+  const cguAccepted = document.getElementById('cgu-checkbox').checked;
+  
+  const errorEl = document.getElementById('error');
+  const successEl = document.getElementById('success');
+  const loadingEl = document.getElementById('loading');
+  const btnSubmit = document.getElementById('btn-submit');
+  
+  errorEl.style.display = 'none';
+  successEl.style.display = 'none';
+  
+  if (!cguAccepted) {
+    errorEl.textContent = '❌ Vous devez accepter les conditions générales';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  loadingEl.style.display = 'block';
+  btnSubmit.disabled = true;
+  
+  try {
+    const pin = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    
+    console.log('📝 Inscription:', { prenom, nom, email, telephone, pin });
+    
+    const { data, error } = await window.supabaseClient
+      .from('profiles')
+      .insert({
+        prenom: prenom,
+        nom: nom,
+        email: email,
+        telephone: telephone,
+        pin: pin,
+        role: 'particulier',
+        est_vendeur: true,
+        est_acquereur: false,
+        statut_verifie: true,
+        cgu_acceptees_le: new Date().toISOString(),
+        date_creation: new Date().toISOString(),
+        accepte_contracts: false,
+        accepte_avis: true
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      throw new Error(error.message || 'Erreur lors de la création du compte');
     }
+    
+    console.log('✅ Profil créé:', data.id);
+    
+    alert(`✅ Compte créé avec succès!\n\nVotre PIN: ${pin}\n\nConservez-le précieusement! Vous pouvez maintenant vous connecter.`);
+    
+    successEl.style.display = 'block';
+    loadingEl.style.display = 'none';
+    
+    document.getElementById('signup-form').reset();
+    
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    errorEl.textContent = '❌ ' + error.message;
+    errorEl.style.display = 'block';
+    loadingEl.style.display = 'none';
+    btnSubmit.disabled = false;
+  }
+}
 
-    function showSuccess(msg) {
-      const el = document.getElementById('successMessage');
-      el.textContent = msg;
-      el.style.display = 'block';
-    }
-  </script>
+if (localStorage.getItem('alb_user')) {
+  window.location.href = 'formulaire-annonce.html';
+}
+</script>
 </body>
 </html>
