@@ -127,34 +127,22 @@
     <h1>ALB <span style="color: #2c2c2a;">Immobilier</span></h1>
     <div class="tagline">À la bien, toujours ✨</div>
   </div>
-  <!-- ONGLETS -->
+  
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('connexion')">Connexion</button>
     <button class="tab-btn" onclick="switchTab('inscription')">S'inscrire</button>
   </div>
   
-  <!-- ===== ONGLET CONNEXION ===== -->
+  <!-- CONNEXION -->
   <div id="connexion" class="tab-content active">
     <form id="login-form" onsubmit="handleLogin(event)">
       <div class="form-group">
         <label for="email-login">Email</label>
-        <input 
-          type="email" 
-          id="email-login" 
-          placeholder="vous@example.fr"
-          required
-        >
+        <input type="email" id="email-login" placeholder="vous@example.fr" required>
       </div>
       <div class="form-group">
         <label for="pin-login">Code PIN (4 chiffres)</label>
-        <input 
-          type="text" 
-          id="pin-login" 
-          placeholder="0000"
-          maxlength="4"
-          pattern="[0-9]{4}"
-          required
-        >
+        <input type="text" id="pin-login" placeholder="0000" maxlength="4" pattern="[0-9]{4}" required>
       </div>
       <button type="submit" class="btn-login" id="btn-login">Se connecter</button>
     </form>
@@ -166,48 +154,28 @@
     <div class="success" id="success-login">Connexion réussie, redirection...</div>
   </div>
   
-  <!-- ===== ONGLET S'INSCRIRE ===== -->
+  <!-- S'INSCRIRE -->
   <div id="inscription" class="tab-content">
     <form id="signup-form" onsubmit="handleSignup(event)">
       <div class="form-row">
         <div class="form-group">
           <label for="prenom-signup">Prénom *</label>
-          <input 
-            type="text" 
-            id="prenom-signup" 
-            placeholder="Jean"
-            required
-          >
+          <input type="text" id="prenom-signup" placeholder="Jean" required>
         </div>
         <div class="form-group">
           <label for="nom-signup">Nom *</label>
-          <input 
-            type="text" 
-            id="nom-signup" 
-            placeholder="Dupont"
-            required
-          >
+          <input type="text" id="nom-signup" placeholder="Dupont" required>
         </div>
       </div>
       
       <div class="form-group">
         <label for="email-signup">Email *</label>
-        <input 
-          type="email" 
-          id="email-signup" 
-          placeholder="vous@example.fr"
-          required
-        >
+        <input type="email" id="email-signup" placeholder="vous@example.fr" required>
       </div>
       
       <div class="form-group">
         <label for="telephone-signup">Téléphone *</label>
-        <input 
-          type="tel" 
-          id="telephone-signup" 
-          placeholder="06 12 34 56 78"
-          required
-        >
+        <input type="tel" id="telephone-signup" placeholder="06 12 34 56 78" required>
       </div>
       
       <div class="form-group">
@@ -254,7 +222,7 @@ function switchTab(tab) {
   event.target.classList.add('active');
 }
 
-// ===== CONNEXION =====
+// CONNEXION
 async function handleLogin(event) {
   event.preventDefault();
   const email = document.getElementById('email-login').value;
@@ -301,7 +269,7 @@ async function handleLogin(event) {
   }
 }
 
-// ===== S'INSCRIRE VIA EDGE FUNCTION =====
+// S'INSCRIRE VIA EDGE FUNCTION
 async function handleSignup(event) {
   event.preventDefault();
   
