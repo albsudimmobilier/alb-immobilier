@@ -241,8 +241,8 @@
         showSuccess('Compte créé ! Vérifiez votre email pour le questionnaire et votre PIN');
         form.reset();
         setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
+  window.location.href = '/dashboard-courtier.html';
+}, 2000);
       } catch (err) {
         showError(err.message);
       }
