@@ -176,9 +176,9 @@ export default async (req) => {
 
     console.log('📤 ProfileData to insert:', profileData);
 
-    const { error: profileInsertError } = await supabase
-      .from('profiles')
-      .insert(profileData);
+   const { error: profileInsertError } = await supabase
+  .from('profiles')
+  .upsert(profileData, { onConflict: 'id' });
 
     if (profileInsertError) {
       console.error('❌ Insert error:', profileInsertError);
