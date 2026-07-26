@@ -511,14 +511,20 @@
   let selectedLeadId = null;
 
   async function init() {
-    // Check auth
-    const session = await window.supabaseClient.auth.getSession();
-    if (!session?.data?.session) {
-      window.location.href = '/login.html';
-      return;
-    }
-
-    currentUser = session.data.session.user;
+    
+// Check localStorage first (newly created pro)
+const localUser = localStorage.getItem('alb_user');
+if (localUser) {
+  currentUser = { id: localUser };
+} else {
+  // Check auth session
+  const session = await window.supabaseClient.auth.getSession();
+  if (!session?.data?.session) {
+    window.location.href = '/login.html';
+    return;
+  }
+  currentUser = session.data.session.user;
+}
     
     // Load courtier name
     await loadCourtierInfo();
