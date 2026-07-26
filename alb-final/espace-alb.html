@@ -738,7 +738,7 @@ async function initPage() {
   try {
     const { data, error } = await window.supabaseClient
       .from('profiles')
-      .select('email, nom, prenom, telephone, role')
+      .select('email, nom, prenom, telephone, role, est_acheteur, est_vendeur')
       .eq('id', userId)
       .single();
     if (error || !data) {
@@ -754,10 +754,11 @@ async function initPage() {
     document.getElementById('telephone-display').textContent = data.telephone || '-';
     document.getElementById('role-display').textContent = data.role || '-';
     document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
-    if (data.role === 'acheteur' || data.role === 'particulier_acheteur') {
+    
+    if (data.est_acheteur) {
       loadAcheteurData();
     }
-    if (data.role === 'vendeur' || data.role === 'particulier_vendeur') {
+    if (data.est_vendeur) {
       loadVendeurData();
     }
     // Charger les conversations pour la messagerie
