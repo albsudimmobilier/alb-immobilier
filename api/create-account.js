@@ -52,12 +52,10 @@ async function sendWelcomeTemplate(email, pin, prenom, templateId, fromEmail, br
       }
     })
   });
-
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Brevo error: ${errorText}`);
   }
-
   return response.json();
 }
 
@@ -82,12 +80,10 @@ async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones,
       }
     })
   });
-
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Brevo error: ${errorText}`);
   }
-
   return response.json();
 }
 
@@ -112,6 +108,8 @@ export default async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
     const { prenom, nom, email, telephone, siret, zones, profil } = body;
+
+    console.log('📥 Body received:', { prenom, nom, siret, profil, email, telephone });
 
     if (!prenom || !nom || !email || !telephone || !profil) {
       return json({ error: 'Missing required fields' }, 400);
@@ -176,29 +174,37 @@ export default async (req) => {
       profileData.est_vendeur = profil === 'particulier_vendeur';
     }
 
+    console.log('📤 ProfileData to insert:', profileData);
+
     const { error: profileInsertError } = await supabase
       .from('profiles')
       .insert(profileData);
 
     if (profileInsertError) {
+      console.error('❌ Insert error:', profileInsertError);
       return json({ error: profileInsertError.message || 'Failed to create profile' }, 500);
     }
 
+    console.log('✅ Profile inserted successfully');
+
     try {
       const fromEmail = getFromEmail(profil);
-
       if (isPro) {
-  // Fire and forget (async, don't wait)
-  sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey).catch(err => console.error('Email 1:', err));
-  sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey).catch(err => console.error('Email 2:', err));
-} else if (profil === 'particulier_acquereur') {
-  await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
-} else if (profil === 'particulier_vendeur') {
-  await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
-}
+        // Fire and forget for pros - don't wait
+        sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey).catch(err => console.error('📧 Email 1 error:', err.message));
+        sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey).catch(err => console.error('📧 Email 2 error:', err.message));
+      } else if (profil === 'particulier_acquereur') {
+        await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
+      } else if (profil === 'particulier_vendeur') {
+        await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
+      }
+    } catch (emailError) {
+      console.error('📧 Email sending error:', emailError);
+    }
 
     return json({ success: true, message: 'Account created successfully', userId, email, profil }, 200);
   } catch (error) {
+    console.error('💥 Fatal error:', error);
     return json({ error: error.message || 'Failed to create account' }, 500);
   }
 };
