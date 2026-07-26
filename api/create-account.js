@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -137,7 +138,7 @@ export default async (req) => {
     }
 
     const pin = generatePin();
-    const tempPassword = crypto.randomUUID();
+    const tempPassword = randomUUID();
     const statut_verifie = profil === 'particulier_acquereur' ? true : false;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
