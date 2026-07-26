@@ -18,7 +18,6 @@
       background: var(--creme);
       color: #2b2b2b;
     }
-
     .header {
       background: white;
       border-bottom: 3px solid var(--dore);
@@ -97,33 +96,28 @@
         font-size: 0.85rem;
       }
     }
-
     .container {
       max-width: 1400px;
       margin: 0 auto;
       padding: 40px 20px;
     }
-
     .page-title {
       font-family: 'Playfair Display';
       color: var(--pourpre);
       margin-bottom: 10px;
       font-size: 2.2rem;
     }
-
     .page-subtitle {
       color: #666;
       margin-bottom: 40px;
       font-size: 1rem;
     }
-
     .filters {
       display: flex;
       gap: 10px;
       margin-bottom: 40px;
       flex-wrap: wrap;
     }
-
     .filter-btn {
       padding: 10px 20px;
       border: 2px solid var(--dore);
@@ -134,24 +128,20 @@
       font-weight: 600;
       transition: all 0.3s;
     }
-
     .filter-btn:hover {
       background: var(--light-bg);
     }
-
     .filter-btn.active {
       background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
       color: white;
       border-color: var(--pourpre);
     }
-
     .pros-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 30px;
       margin-bottom: 40px;
     }
-
     .pro-card {
       background: white;
       border-radius: 8px;
@@ -161,12 +151,10 @@
       display: flex;
       flex-direction: column;
     }
-
     .pro-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 20px rgba(75, 26, 62, 0.15);
     }
-
     .pro-card-header {
       background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
       padding: 20px;
@@ -175,7 +163,6 @@
       align-items: center;
       gap: 15px;
     }
-
     .pro-avatar {
       width: 50px;
       height: 50px;
@@ -188,26 +175,22 @@
       font-size: 1.2rem;
       color: white;
     }
-
     .pro-name {
       font-size: 1.1rem;
       font-weight: 700;
     }
-
     .pro-role {
       font-size: 0.75rem;
       opacity: 0.9;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-
     .pro-card-body {
       padding: 20px;
       flex: 1;
       display: flex;
       flex-direction: column;
     }
-
     .pro-location {
       display: flex;
       align-items: center;
@@ -216,24 +199,20 @@
       color: #666;
       font-size: 0.9rem;
     }
-
     .pro-location::before {
       content: "📍";
       font-size: 1rem;
     }
-
     .pro-info-row {
       margin-bottom: 12px;
       padding-bottom: 12px;
       border-bottom: 1px solid #f0f0f0;
     }
-
     .pro-info-row:last-of-type {
       border-bottom: none;
       margin-bottom: 0;
       padding-bottom: 0;
     }
-
     .pro-info-label {
       color: #999;
       font-size: 0.8rem;
@@ -241,13 +220,11 @@
       text-transform: uppercase;
       margin-bottom: 4px;
     }
-
     .pro-info-value {
       color: var(--pourpre);
       font-weight: 500;
       font-size: 0.95rem;
     }
-
     .pro-description {
       color: #666;
       font-size: 0.9rem;
@@ -257,7 +234,6 @@
       border-top: 1px solid #f0f0f0;
       flex: 1;
     }
-
     .verified-badge {
       display: inline-block;
       background: #d4edda;
@@ -268,7 +244,6 @@
       font-weight: 600;
       margin-top: 10px;
     }
-
     .pro-cta {
       background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
       color: white;
@@ -280,12 +255,10 @@
       margin-top: 15px;
       transition: all 0.3s;
     }
-
     .pro-cta:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
     }
-
     .empty-state {
       text-align: center;
       padding: 60px 20px;
@@ -293,23 +266,19 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-
     .empty-state h3 {
       color: var(--pourpre);
       margin-bottom: 10px;
       font-size: 1.3rem;
     }
-
     .empty-state p {
       color: #999;
     }
-
     .loading {
       text-align: center;
       padding: 40px;
       color: #999;
     }
-
     @media (max-width: 768px) {
       .pro-card {
         grid-column: span 1;
@@ -324,7 +293,6 @@
   </style>
 </head>
 <body>
-
 <header class="header">
   <div class="header-content">
     <a href="index.html" style="text-decoration: none;">
@@ -343,30 +311,27 @@
     </div>
   </div>
 </header>
-
 <div class="container">
   <h1 class="page-title">🤝 Nos Professionnels</h1>
   <p class="page-subtitle">Découvrez les courtiers, artisans et agents immobiliers vérifiés du Var et région PACA</p>
-
-  <!-- FILTRES -->
   <div class="filters">
     <button class="filter-btn active" onclick="filterPros('all')">Tous</button>
     <button class="filter-btn" onclick="filterPros('courtier')">💼 Courtiers</button>
     <button class="filter-btn" onclick="filterPros('artisan')">🔨 Artisans</button>
     <button class="filter-btn" onclick="filterPros('immo')">🏢 Agents/Mandataires</button>
   </div>
-
-  <!-- GRID PROS -->
   <div id="pros-container">
     <div class="loading">Chargement des professionnels...</div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-
 <script>
+  window.supabaseClient = window.supabase.createClient(
+    'https://kutbxyinpokebjdemlnq.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTQ5MTAxOTksImV4cCI6MjAzMDQ4NjE5OX0.CQl6fPcP42WNQ0JlhxQHPX3E5g9OMRKj9ywKMfbYgOA'
+  );
+
   let allPros = [];
   let currentFilter = 'all';
 
@@ -374,11 +339,11 @@
     try {
       const { data, error } = await window.supabaseClient
         .from('profiles')
-        .select('id, nom_entreprise, ville, code_postal, zone_intervention, temps_reponse_moyen, presentation, role')
+        .select('id, prenom, nom, ville, code_postal, zone_intervention, temps_reponse_moyen, presentation, role')
         .eq('statut_verifie', true)
-        .in('role', ['courtier', 'artisan', 'immo'])
+        .in('role', ['courtier', 'artisan', 'agent', 'mandataire'])
         .order('role', { ascending: true })
-        .order('nom_entreprise', { ascending: true });
+        .order('nom', { ascending: true });
 
       if (error) {
         console.error('Erreur chargement pros:', error);
@@ -394,15 +359,10 @@
       allPros = data || [];
       renderPros();
       
-      // Écouter les changements en temps réel
-      subscribeToProChanges();
-
-      // Affiche logout si connecté
       const userId = localStorage.getItem('alb_user');
       if (userId) {
         document.getElementById('btn-logout').style.display = 'block';
       }
-
     } catch (error) {
       console.error('Erreur:', error);
       document.getElementById('pros-container').innerHTML = `
@@ -414,43 +374,10 @@
     }
   }
 
-  function subscribeToProChanges() {
-    window.supabaseClient
-      .channel('pros-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: 'statut_verifie=eq.true'
-      }, payload => {
-        console.log('Pro mis à jour en temps réel:', payload.new.nom_entreprise);
-        
-        // Mettre à jour le pro dans allPros
-        const index = allPros.findIndex(p => p.id === payload.new.id);
-        if (index !== -1) {
-          allPros[index] = {
-            ...allPros[index],
-            nom_entreprise: payload.new.nom_entreprise,
-            presentation: payload.new.presentation,
-            zone_intervention: payload.new.zone_intervention,
-            temps_reponse_moyen: payload.new.temps_reponse_moyen,
-            ville: payload.new.ville,
-            code_postal: payload.new.code_postal,
-            role: payload.new.role
-          };
-          renderPros();
-        }
-      })
-      .subscribe();
-  }
-
   function filterPros(role) {
     currentFilter = role;
-
-    // Mise à jour des boutons
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-
     renderPros();
   }
 
@@ -473,36 +400,31 @@
     const html = filtered.map(pro => `
       <div class="pro-card">
         <div class="pro-card-header">
-          <div class="pro-avatar">${getInitials(pro.nom_entreprise)}</div>
+          <div class="pro-avatar">${getInitials(pro.prenom, pro.nom)}</div>
           <div>
-            <div class="pro-name">${pro.nom_entreprise}</div>
+            <div class="pro-name">${pro.prenom} ${pro.nom}</div>
             <div class="pro-role">${getRoleLabel(pro.role)}</div>
           </div>
         </div>
         <div class="pro-card-body">
-          <div class="pro-location">${pro.code_postal} ${pro.ville}</div>
-
+          <div class="pro-location">${pro.code_postal || '-'} ${pro.ville || '-'}</div>
           ${pro.zone_intervention ? `
             <div class="pro-info-row">
               <div class="pro-info-label">Zone d'intervention</div>
               <div class="pro-info-value">${pro.zone_intervention}</div>
             </div>
           ` : ''}
-
           ${pro.temps_reponse_moyen ? `
             <div class="pro-info-row">
               <div class="pro-info-label">Temps de réponse</div>
               <div class="pro-info-value">${pro.temps_reponse_moyen}</div>
             </div>
           ` : ''}
-
           ${pro.presentation ? `
             <div class="pro-description">${pro.presentation}</div>
           ` : ''}
-
           <div class="verified-badge">✅ Professionnel vérifié</div>
-
-          <button class="pro-cta" onclick="contactPro('${pro.id}', '${pro.nom_entreprise}')">
+          <button class="pro-cta" onclick="contactPro('${pro.id}', '${pro.prenom} ${pro.nom}')">
             📩 Nous contacter
           </button>
         </div>
@@ -516,21 +438,19 @@
     document.getElementById('pros-container').appendChild(container);
   }
 
-  function getInitials(name) {
-    if (!name) return 'P';
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  function getInitials(prenom, nom) {
+    if (!prenom && !nom) return 'P';
+    const p = prenom ? prenom[0].toUpperCase() : '';
+    const n = nom ? nom[0].toUpperCase() : '';
+    return (p + n).slice(0, 2);
   }
 
   function getRoleLabel(role) {
     const labels = {
       'courtier': '💼 Courtier',
       'artisan': '🔨 Artisan',
-      'immo': '🏢 Agent/Mandataire'
+      'agent': '🏢 Agent immobilier',
+      'mandataire': '🏢 Mandataire'
     };
     return labels[role] || role;
   }
@@ -543,7 +463,6 @@
       }
       return;
     }
-
     alert(`✅ Demande de contact envoyée à ${proName}! Vous serez recontacté(e) très bientôt.`);
   }
 
@@ -554,9 +473,7 @@
     }
   }
 
-  // Charge les pros au chargement
   loadPros();
 </script>
-
 </body>
 </html>
