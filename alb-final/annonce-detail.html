@@ -214,7 +214,7 @@
       <h1 class="annonce-titre" id="annonce-titre">Chargement...</h1>
       <p class="annonce-localisation" id="annonce-localisation">📍 Chargement...</p>
       <div class="annonce-prix" id="annonce-prix">-</div>
-      <button class="btn-visite" onclick="showVisiteStep1(window.currentBienData)">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="checkLoginAndRedirect()">💰 Demander une visite</button>
     </div>
   </div>
 
@@ -248,7 +248,7 @@
         <div style="color: #999;">Chargement...</div>
       </div>
 
-      <button class="btn-visite" onclick="showVisiteStep1(window.currentBienData)">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="checkLoginAndRedirect()">💰 Demander une visite</button>
     </div>
   </div>
 </div>
@@ -465,6 +465,18 @@
       }
     } catch (err) {
       console.error('Erreur vendeur:', err);
+    }
+  }
+
+  function checkLoginAndRedirect() {
+    const userId = localStorage.getItem('alb_user');
+    
+    if (!userId) {
+      // Non loggé → redirect inscription acheteur
+      window.location.href = `inscription-particulier-acheteur.html?bien_id=${window.bienId}`;
+    } else {
+      // Loggé → affiche le formulaire visite
+      showVisiteStep1(window.currentBienData);
     }
   }
 
