@@ -740,9 +740,29 @@
     const date = new Date(selectedDispo);
     
     try {
-      const { error } = await window.supabaseClient
+      // Étape 1: Créer le profil acheteur
+      const { data: acheteurData, error: acheteurError } = await window.supabaseClient
+        .from('profiles')
+        .insert({
+          prenom: prenom,
+          nom: nom,
+          email: email,
+          telephone: telephone,
+          role: 'particulier',
+          est_acquereur: true
+        })
+        .select()
+        .single();
+      
+      if (acheteurError) throw new Error('Erreur création profil acheteur: ' + acheteurError.message);
+      
+      const acheteurId = acheteurData.id;
+      
+      // Étape 2: Créer la visite avec l'acheteur_id
+      const { error: visiteError } = await window.supabaseClient
         .from('visites')
         .insert({
+          acheteur_id: acheteurId,
           annonce_id: currentBienData.id,
           vendeur_id: currentBienData.vendeur_id,
           nom_acheteur: prenom + ' ' + nom,
@@ -757,13 +777,13 @@
           statut_simulation: 'validee'
         });
       
-      if (error) throw error;
+      if (visiteError) throw new Error('Erreur création visite: ' + visiteError.message);
       
       alert('✅ Visite demandée avec succès! Le vendeur recevra votre demande.');
       location.reload();
     } catch (err) {
       alert('❌ Erreur: ' + err.message);
-      console.error('Erreur visite:', err);
+      console.error('Erreur:', err);
     }
   }
 
