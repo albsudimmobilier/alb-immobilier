@@ -688,7 +688,6 @@
     });
     document.getElementById('dispos-list').innerHTML = html;
     
-    // Afficher infos vendeur étape 2
     if (vendeurData) {
       document.getElementById('vendeur-info-step2').innerHTML = `
         <div class="vendeur-info">
@@ -744,7 +743,7 @@
       const { error } = await window.supabaseClient
         .from('visites')
         .insert({
-          bien_id: currentBienData.id,
+          annonce_id: currentBienData.id,
           vendeur_id: currentBienData.vendeur_id,
           nom_acheteur: prenom + ' ' + nom,
           telephone_acheteur: telephone,
@@ -768,7 +767,6 @@
     }
   }
 
-  // Intercept nextStep pour étape 1→2
   const originalNextStep = window.nextStep;
   window.nextStep = function(from, to) {
     if (from === 1 && to === 2) {
