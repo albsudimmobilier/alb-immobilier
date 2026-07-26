@@ -237,7 +237,8 @@
         if (!response.ok) {
           throw new Error(result.error || 'Erreur lors de la création du compte');
         }
-
+localStorage.setItem('alb_user', result.userId);
+localStorage.setItem('profil', result.profil);
         showSuccess('Compte créé ! Vérifiez votre email pour le questionnaire et votre PIN');
         form.reset();
         setTimeout(() => {
