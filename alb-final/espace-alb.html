@@ -738,7 +738,7 @@ async function initPage() {
   try {
     const { data, error } = await window.supabaseClient
       .from('profiles')
-      .select('email, nom, prenom, telephone, role, est_acheteur, est_vendeur')
+      .select('email, nom, prenom, telephone, role, est_acquereur, est_vendeur')
       .eq('id', userId)
       .single();
     if (error || !data) {
@@ -755,7 +755,7 @@ async function initPage() {
     document.getElementById('role-display').textContent = data.role || '-';
     document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
     
-    if (data.est_acheteur) {
+    if (data.est_acquereur) {
       loadAcheteurData();
     }
     if (data.est_vendeur) {
