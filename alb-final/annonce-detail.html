@@ -192,10 +192,112 @@
       border-bottom: 1px solid #eee;
     }
     .horaire:last-child { border-bottom: none; }
+    .form-step {
+      display: none;
+      margin-top: 2rem;
+      padding: 2rem;
+      background: #f5f3ee;
+      border-radius: 12px;
+    }
+    .form-step.active {
+      display: block;
+    }
+    .form-step h3 {
+      color: var(--pourpre);
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      color: var(--pourpre);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: 0;
+      border-color: var(--dore);
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--pourpre);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-submit:hover {
+      background: #6b2d5f;
+    }
+    .result-box {
+      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
+      color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .result-box.active {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+    .result-item {
+      background: rgba(255,255,255,0.1);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .result-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .result-label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    .dispo-list {
+      margin: 1.5rem 0;
+    }
+    .dispo-item {
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .dispo-item:hover {
+      border-color: var(--dore);
+    }
+    .dispo-item.selected {
+      border-color: var(--pourpre);
+      background: #f9f7f4;
+    }
+    .vendeur-details {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--dore);
+    }
     @media (max-width: 768px) {
       .annonce-hero { grid-template-columns: 1fr; }
       .content-wrapper { grid-template-columns: 1fr; }
       .caracteristiques-grid { grid-template-columns: repeat(2, 1fr); }
+      .result-box.active { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -214,7 +316,7 @@
       <h1 class="annonce-titre" id="annonce-titre">Chargement...</h1>
       <p class="annonce-localisation" id="annonce-localisation">📍 Chargement...</p>
       <div class="annonce-prix" id="annonce-prix">-</div>
-      <button class="btn-visite" onclick="checkLoginAndRedirect()">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="startVisiteFlow()">💰 Demander une visite</button>
     </div>
   </div>
 
@@ -248,120 +350,124 @@
         <div style="color: #999;">Chargement...</div>
       </div>
 
-      <button class="btn-visite" onclick="checkLoginAndRedirect()">💰 Demander une visite</button>
+      <button class="btn-visite" onclick="startVisiteFlow()">💰 Demander une visite</button>
     </div>
   </div>
-</div>
 
-<!-- FLUX VISITE COMPLET -->
-<div id="visite-step-1" style="display:none; margin-top: 2rem; padding: 2rem; background: #f5f3ee; border-radius: 12px;">
-  <h3>💰 Étape 1: Simulateur de budget</h3>
-  
-  <form id="budget-form" style="margin-top: 1.5rem;">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-      <div>
-        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Revenu mensuel net (€)</label>
-        <input type="number" id="revenu" placeholder="3000" min="0" step="100" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+  <!-- ÉTAPE 0: INSCRIPTION ACHETEUR -->
+  <div id="form-step-0" class="form-step active">
+    <h3>👤 Étape 1: Vos informations</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label>Prénom *</label>
+        <input type="text" id="prenom" placeholder="Jean" required>
       </div>
-      <div>
-        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Apport propre (€)</label>
-        <input type="number" id="apport" placeholder="50000" min="0" step="1000" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" id="nom" placeholder="Dupont" required>
       </div>
     </div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-      <div>
-        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Taux d'intérêt (%)</label>
-        <input type="number" id="taux" placeholder="3.5" min="0" max="10" step="0.1" value="3.5" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-      </div>
-      <div>
-        <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Durée du crédit</label>
-        <select id="duree" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-          <option value="">Sélectionner...</option>
-          <option value="15">15 ans</option>
-          <option value="20">20 ans</option>
-          <option value="25">25 ans</option>
-        </select>
-      </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="email" placeholder="jean@example.com" required>
     </div>
-    
-    <div style="margin-bottom: 1.5rem;">
-      <label style="display: block; color: #4B1A3E; font-weight: 600; margin-bottom: 8px;">Charges mensuelles (€)</label>
-      <input type="number" id="charges" placeholder="250" min="0" step="10" value="250" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-      <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">Assurance, copro, taxes, etc.</div>
+    <div class="form-group">
+      <label>Téléphone *</label>
+      <input type="tel" id="telephone" placeholder="06 12 34 56 78" required>
     </div>
-    
-    <button type="submit" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-bottom:1.5rem;">
-      📊 Calculer mon budget
-    </button>
-  </form>
-  
-  <div id="result-section" style="display:none; background:linear-gradient(135deg,#4B1A3E,#6b2d5f); color:white; border-radius:12px; padding:2rem; margin-bottom:1.5rem;">
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:2rem;">
-      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
-        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Budget maximal</div>
-        <div style="font-size:1.8rem; font-weight:bold;" id="budget-max">-</div>
-        <div style="font-size:0.9rem; opacity:0.8;">€</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
-        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Mensualité + Charges</div>
-        <div style="font-size:1.8rem; font-weight:bold;" id="mensualite-total">-</div>
-        <div style="font-size:0.9rem; opacity:0.8;">€/mois</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.1); padding:1.5rem; border-radius:8px; text-align:center;">
-        <div style="font-size:0.85rem; opacity:0.9; margin-bottom:8px;">Ratio d'endettement</div>
-        <div style="font-size:1.8rem; font-weight:bold;" id="ratio">-</div>
-        <div style="font-size:0.9rem; opacity:0.8;">%</div>
-      </div>
-    </div>
-    
-    <div id="ratio-warning" style="display:none; background:rgba(255,193,7,0.2); border:1px solid rgba(255,193,7,0.5); color:#ffc107; padding:15px; border-radius:6px; margin-bottom:1.5rem; font-size:0.9rem;"></div>
+    <button class="btn-submit" onclick="nextStep(0, 1)">Continuer vers le budget →</button>
   </div>
-  
-  <div id="options-section" style="display:none; background:white; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
-    <div style="color:#4B1A3E; font-weight:600; margin-bottom:1rem;">📋 Prochaines étapes</div>
-    
-    <label style="display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1rem; cursor:pointer;">
-      <input type="checkbox" id="share-results" style="width:20px; height:20px; flex-shrink:0;">
-      <span>
-        <div style="font-weight:600; color:#4B1A3E;">Partager mon résultat avec le vendeur</div>
-        <div style="font-size:0.85rem; color:#666;">Le vendeur recevra votre budget 📧</div>
-      </span>
-    </label>
-    
-    <label style="display:flex; align-items:center; gap:1rem; padding:1rem; background:#f9f7f4; border-radius:8px; margin-bottom:1.5rem; cursor:pointer;">
-      <input type="checkbox" id="request-courtier" style="width:20px; height:20px; flex-shrink:0;">
-      <span>
-        <div style="font-weight:600; color:#4B1A3E;">Demander qu'un courtier me contacte</div>
-        <div style="font-size:0.85rem; color:#666;">Un expert en financement vous aidera 👥</div>
-      </span>
-    </label>
-    
-    <button onclick="nextVisite()" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
-      Continuer vers les disponibilités →
-    </button>
-  </div>
-</div>
 
-<div id="visite-step-2" style="display:none; margin-top:2rem; padding:2rem; background:#f5f3ee; border-radius:12px;">
-  <h3>📅 Étape 2: Choisir un créneau de visite</h3>
-  <div id="dispos-list" style="margin-top:1.5rem;"></div>
-  <button onclick="validerVisite()" style="width:100%; padding:12px; background:#4B1A3E; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-top:1rem;">
-    ✅ Valider ma demande de visite
-  </button>
+  <!-- ÉTAPE 1: SIMULATEUR BUDGET -->
+  <div id="form-step-1" class="form-step">
+    <h3>💰 Étape 2: Simulateur de budget</h3>
+    
+    <form id="budget-form" onsubmit="calculateBudget(event)">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label>Revenu mensuel net (€) *</label>
+          <input type="number" id="revenu" placeholder="3000" min="0" step="100" required>
+        </div>
+        <div class="form-group">
+          <label>Apport propre (€)</label>
+          <input type="number" id="apport" placeholder="50000" min="0" step="1000">
+        </div>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label>Taux d'intérêt (%) *</label>
+          <input type="number" id="taux" placeholder="3.5" min="0" max="10" step="0.1" value="3.5" required>
+        </div>
+        <div class="form-group">
+          <label>Durée du crédit *</label>
+          <select id="duree" required>
+            <option value="">Sélectionner...</option>
+            <option value="15">15 ans</option>
+            <option value="20">20 ans</option>
+            <option value="25">25 ans</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Charges mensuelles (€)</label>
+        <input type="number" id="charges" placeholder="250" min="0" step="10" value="250">
+        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Assurance, copro, taxes, etc.</div>
+      </div>
+      
+      <button type="submit" class="btn-submit">📊 Calculer mon budget</button>
+    </form>
+    
+    <div id="result-section" class="result-box">
+      <div class="result-item">
+        <div class="result-label">Budget maximal</div>
+        <div class="result-value" id="budget-max">-</div>
+        <div style="font-size: 0.9rem;">€</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Mensualité + Charges</div>
+        <div class="result-value" id="mensualite-total">-</div>
+        <div style="font-size: 0.9rem;">€/mois</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Ratio d'endettement</div>
+        <div class="result-value" id="ratio">-</div>
+        <div style="font-size: 0.9rem;">%</div>
+      </div>
+    </div>
+    
+    <div id="ratio-warning" style="display: none; background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.5); color: #ffc107; padding: 15px; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem;"></div>
+    
+    <button class="btn-submit" onclick="nextStep(1, 2)" style="display: none;" id="btn-next-horaire">Continuer vers les disponibilités →</button>
+  </div>
+
+  <!-- ÉTAPE 2: SÉLECTION HORAIRE -->
+  <div id="form-step-2" class="form-step">
+    <h3>📅 Étape 3: Choisir un créneau de visite</h3>
+    
+    <div class="vendeur-details" id="vendeur-details-step2">
+      <div style="font-weight: 600; color: var(--pourpre); margin-bottom: 1rem;">👤 Vendeur de ce bien</div>
+      <div id="vendeur-info-step2"></div>
+    </div>
+    
+    <div class="dispo-list" id="dispos-list"></div>
+    
+    <button class="btn-submit" onclick="validerVisite()">✅ Valider ma demande de visite</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
-  let bienId = null;
+  let currentBienData = null;
+  let vendeurData = null;
   let selectedDispo = null;
-  let vendeurId = null;
   let calculatedBudget = null;
 
   async function init() {
     const urlParams = new URLSearchParams(window.location.search);
-    bienId = urlParams.get('id');
+    const bienId = urlParams.get('id');
     if (!bienId) {
       document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
       return;
@@ -377,6 +483,7 @@
         .eq('id', id)
         .single();
       if (error) throw error;
+      currentBienData = data;
       displayBien(data);
       await loadVendeur(data.vendeur_id);
     } catch (err) {
@@ -386,10 +493,6 @@
   }
 
   function displayBien(bien) {
-    window.bienId = bien.id;
-    window.bienTitre = bien.titre;
-    window.currentBienData = bien;
-    
     document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
     document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
     document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
@@ -438,6 +541,8 @@
         .single();
       if (error) throw error;
       
+      vendeurData = data;
+      
       const badgeVerif = data.statut_verifie ? '✅ Profil vérifié' : '⏳ Vérification en cours';
       document.getElementById('vendeur-card').innerHTML = `
         <div class="vendeur-title">👤 Vendu par</div>
@@ -468,30 +573,33 @@
     }
   }
 
-  function checkLoginAndRedirect() {
-    const userId = localStorage.getItem('alb_user');
-    
-    if (!userId) {
-      // Non loggé → redirect inscription acheteur
-      window.location.href = `inscription-particulier-acheteur.html?bien_id=${window.bienId}`;
-    } else {
-      // Loggé → affiche le formulaire visite
-      showVisiteStep1(window.currentBienData);
+  function startVisiteFlow() {
+    document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+    document.getElementById('form-step-0').classList.add('active');
+    window.scrollTo({ top: document.getElementById('form-step-0').offsetTop - 100, behavior: 'smooth' });
+  }
+
+  function nextStep(from, to) {
+    if (from === 0) {
+      const prenom = document.getElementById('prenom').value.trim();
+      const nom = document.getElementById('nom').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const telephone = document.getElementById('telephone').value.trim();
+      
+      if (!prenom || !nom || !email || !telephone) {
+        alert('⚠️ Remplissez tous les champs');
+        return;
+      }
     }
+    
+    document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(`form-step-${to}`).classList.add('active');
+    window.scrollTo({ top: document.getElementById(`form-step-${to}`).offsetTop - 100, behavior: 'smooth' });
   }
 
-  function showVisiteStep1(bien) {
-    vendeurId = bien.vendeur_id;
-    document.getElementById('visite-step-1').style.display = 'block';
-    document.getElementById('revenu').focus();
-  }
-
-  document.getElementById('budget-form')?.addEventListener('submit', (e) => {
+  function calculateBudget(e) {
     e.preventDefault();
-    calculateBudget();
-  });
-
-  function calculateBudget() {
+    
     const revenu = parseFloat(document.getElementById('revenu').value);
     const apport = parseFloat(document.getElementById('apport').value) || 0;
     const taux = parseFloat(document.getElementById('taux').value) / 100;
@@ -525,9 +633,17 @@
     const budgetTotal = capitalEmpruntable + apport;
     const ratioEndettement = ((mensualiteMax + charges) / revenu) * 100;
     
+    let scoreFaisabilite = 50;
+    if (ratioEndettement <= 35) scoreFaisabilite += 30;
+    else if (ratioEndettement <= 40) scoreFaisabilite += 15;
+    if (apport > budgetTotal * 0.2) scoreFaisabilite += 15;
+    if (revenu > 3000) scoreFaisabilite += 5;
+    scoreFaisabilite = Math.min(100, scoreFaisabilite);
+    
     calculatedBudget = {
       revenu, apport, taux, duree, charges, budgetTotal, mensualiteMax,
-      mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable
+      mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable,
+      scoreFaisabilite
     };
     
     document.getElementById('budget-max').textContent = budgetTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
@@ -548,45 +664,57 @@
     }
     warningEl.style.display = 'block';
     
-    document.getElementById('result-section').style.display = 'block';
-    document.getElementById('options-section').style.display = 'block';
+    document.getElementById('result-section').classList.add('active');
+    document.getElementById('btn-next-horaire').style.display = 'block';
   }
 
-  function nextVisite() {
-    document.getElementById('visite-step-1').style.display = 'none';
-    document.getElementById('visite-step-2').style.display = 'block';
-    loadDispos();
-  }
-
-  async function loadDispos() {
-    const { data, error } = await window.supabaseClient
-      .from('profiles')
-      .select('disponibilites_rdv')
-      .eq('id', vendeurId);
-    
-    if (error || !data || !data[0]?.disponibilites_rdv?.length) {
+  function loadDisposStep2() {
+    if (!vendeurData || !vendeurData.disponibilites_rdv || vendeurData.disponibilites_rdv.length === 0) {
       document.getElementById('dispos-list').innerHTML = '<p style="color:#999;">⚠️ Aucun créneau disponible</p>';
       return;
     }
     
-    const dispos = data[0].disponibilites_rdv;
+    const dispos = vendeurData.disponibilites_rdv;
     let html = '';
     dispos.forEach((dispo, idx) => {
       const date = new Date(dispo);
       const dateStr = date.toLocaleDateString('fr-FR');
       const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      html += `<div style="padding:1rem; background:white; border-radius:8px; margin-bottom:1rem; cursor:pointer; border:2px solid transparent; transition:all 0.2s;" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">📅 ${dateStr} à ${timeStr}</div>`;
+      html += `
+        <div class="dispo-item" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">
+          📅 ${dateStr} à ${timeStr}
+        </div>
+      `;
     });
-    
     document.getElementById('dispos-list').innerHTML = html;
+    
+    // Afficher infos vendeur étape 2
+    if (vendeurData) {
+      document.getElementById('vendeur-info-step2').innerHTML = `
+        <div class="vendeur-info">
+          <div class="vendeur-label">Nom</div>
+          <div class="vendeur-value">${vendeurData.prenom || ''} ${vendeurData.nom || 'Particulier'}</div>
+        </div>
+        <div class="vendeur-info">
+          <div class="vendeur-label">Type</div>
+          <div class="vendeur-value">Particulier</div>
+        </div>
+        <div class="vendeur-info">
+          <div class="vendeur-label">Bien</div>
+          <div class="vendeur-value">${currentBienData.titre || 'Sans titre'}</div>
+        </div>
+        <div class="vendeur-info">
+          <div class="vendeur-label">Localisation</div>
+          <div class="vendeur-value">${currentBienData.code_postal} ${currentBienData.ville}</div>
+        </div>
+      `;
+    }
   }
 
   function selectDispo(dispo, idx) {
     selectedDispo = dispo;
-    document.querySelectorAll('[id^="dispo-"]').forEach(el => {
-      el.style.borderColor = 'transparent';
-    });
-    document.getElementById(`dispo-${idx}`).style.borderColor = '#4B1A3E';
+    document.querySelectorAll('[id^="dispo-"]').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`dispo-${idx}`).classList.add('selected');
   }
 
   async function validerVisite() {
@@ -595,48 +723,59 @@
       return;
     }
     
-    const userId = localStorage.getItem('alb_user');
-    if (!userId) {
-      alert('❌ Vous devez être connecté');
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+    
+    if (!prenom || !nom || !email || !telephone) {
+      alert('⚠️ Remplissez tous les champs');
       return;
     }
     
-    const { data: userData, error: userError } = await window.supabaseClient
-      .from('profiles')
-      .select('prenom, nom, telephone, email')
-      .eq('id', userId)
-      .single();
-    
-    if (userError) {
-      alert('❌ Erreur chargement profil');
-      console.error('Erreur userData:', userError);
+    if (!calculatedBudget) {
+      alert('⚠️ Calculer le budget d\'abord');
       return;
     }
     
     const date = new Date(selectedDispo);
-    const { error } = await window.supabaseClient
-      .from('visites')
-      .insert({
-        annonce_id: window.currentBienData.id,
-        vendeur_id: window.currentBienData.vendeur_id,
-        acheteur_id: userId,
-        nom_acheteur: userData.prenom + ' ' + userData.nom,
-        telephone_acheteur: userData.telephone,
-        email_acheteur: userData.email,
-        date_visite: date.toISOString().split('T')[0],
-        heure_visite: date.toTimeString().slice(0, 5),
-        statut: 'en_attente'
-      });
     
-    if (error) {
-      alert('❌ Erreur: ' + error.message);
-      console.error('Erreur visite:', error);
-      return;
+    try {
+      const { error } = await window.supabaseClient
+        .from('visites')
+        .insert({
+          bien_id: currentBienData.id,
+          vendeur_id: currentBienData.vendeur_id,
+          nom_acheteur: prenom + ' ' + nom,
+          telephone_acheteur: telephone,
+          email_acheteur: email,
+          date_visite: date.toISOString().split('T')[0],
+          heure_visite: date.toTimeString().slice(0, 5),
+          statut: 'en_attente',
+          budget_estime: calculatedBudget.budgetTotal || null,
+          score_faisabilite: calculatedBudget.scoreFaisabilite || null,
+          ratio_endettement: calculatedBudget.ratioEndettement || null,
+          statut_simulation: 'validee'
+        });
+      
+      if (error) throw error;
+      
+      alert('✅ Visite demandée avec succès! Le vendeur recevra votre demande.');
+      location.reload();
+    } catch (err) {
+      alert('❌ Erreur: ' + err.message);
+      console.error('Erreur visite:', err);
     }
-    
-    alert('✅ Visite demandée! Le vendeur recevra votre demande.');
-    location.reload();
   }
+
+  // Intercept nextStep pour étape 1→2
+  const originalNextStep = window.nextStep;
+  window.nextStep = function(from, to) {
+    if (from === 1 && to === 2) {
+      loadDisposStep2();
+    }
+    originalNextStep.call(this, from, to);
+  };
 
   init();
 </script>
