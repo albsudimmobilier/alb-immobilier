@@ -188,16 +188,14 @@ export default async (req) => {
       const fromEmail = getFromEmail(profil);
 
       if (isPro) {
-        await sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey);
-        await sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey);
-      } else if (profil === 'particulier_acquereur') {
-        await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
-      } else if (profil === 'particulier_vendeur') {
-        await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
-      }
-    } catch (emailError) {
-      console.error('Email sending error:', emailError);
-    }
+  // Fire and forget (async, don't wait)
+  sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey).catch(err => console.error('Email 1:', err));
+  sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey).catch(err => console.error('Email 2:', err));
+} else if (profil === 'particulier_acquereur') {
+  await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
+} else if (profil === 'particulier_vendeur') {
+  await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
+}
 
     return json({ success: true, message: 'Account created successfully', userId, email, profil }, 200);
   } catch (error) {
