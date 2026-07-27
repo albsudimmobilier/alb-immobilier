@@ -1,550 +1,515 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Espace ALB - ALB Immobilier</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <title>Espace ALB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root, [data-theme="light"] {
-      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
-      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem;
-      --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
-      --color-bg: #f7f6f2;
-      --color-surface: #f9f8f5;
-      --color-surface-2: #fbfbf9;
-      --color-surface-offset: #f0ede8;
-      --color-border: #d4d1ca;
-      --color-divider: #dedbd5;
-      --color-text: #28251d;
-      --color-text-muted: #6f6c66;
-      --color-text-faint: #9f9b93;
-      --color-text-inverse: #f9f8f4;
-      --color-primary: #01696f;
-      --color-primary-hover: #0c4e54;
-      --color-primary-soft: #dcebea;
-      --color-success: #437a22;
-      --color-success-soft: #e1ecd9;
-      --color-warning: #b06a00;
-      --color-warning-soft: #f2e4cf;
-      --color-danger: #a13544;
-      --color-danger-soft: #f3d9dc;
-      --radius-sm: .5rem; --radius-md: .875rem; --radius-lg: 1.25rem; --radius-xl: 1.5rem; --radius-full: 9999px;
-      --shadow-sm: 0 1px 2px rgba(25,20,14,.05);
-      --shadow-md: 0 8px 24px rgba(25,20,14,.08);
-      --transition: 180ms cubic-bezier(.16,1,.3,1);
-    }
-    [data-theme="dark"] {
-      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d; --color-surface-offset: #262422;
-      --color-border: #393836; --color-divider: #302f2d; --color-text: #e4e1db; --color-text-muted: #afaba2;
-      --color-text-faint: #7d7972; --color-text-inverse: #11100f; --color-primary: #4f98a3; --color-primary-hover: #72adb6;
-      --color-primary-soft: #243739; --color-success: #88bb63; --color-success-soft: #273324; --color-warning: #f0b04b;
-      --color-warning-soft: #3d3122; --color-danger: #e1838e; --color-danger-soft: #3f282c; --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
-      --shadow-md: 0 8px 24px rgba(0,0,0,.35);
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; overflow: hidden; }
-    body { font-family: 'Satoshi', Arial, sans-serif; font-size: var(--text-base); background: var(--color-bg); color: var(--color-text); line-height: 1.5; }
-    button, input, select, textarea { font: inherit; }
-    a, button { transition: all var(--transition); }
-    .dashboard { height: 100dvh; display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; }
-    .sidebar { grid-row: 1 / -1; overflow-y: auto; border-right: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); background: color-mix(in srgb, var(--color-surface) 92%, var(--color-primary) 8%); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
-    .brand { display: flex; align-items: center; gap: var(--space-3); }
-    .brand-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--color-primary-soft); display: grid; place-items: center; color: var(--color-primary); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent); flex: none; }
-    .brand h1 { font-size: var(--text-sm); margin: 0; }
-    .brand p { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
-    .nav-group { display: grid; gap: var(--space-2); }
-    .nav-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin-bottom: var(--space-2); }
-    .nav-item { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: var(--color-text); padding: .85rem 1rem; border-radius: var(--radius-md); background: transparent; min-height: 44px; cursor: pointer; border: none; }
-    .nav-item:hover, .nav-item.active { background: var(--color-surface-2); box-shadow: var(--shadow-sm); }
-    .nav-item.active { color: var(--color-primary); font-weight: 700; }
-    .header { grid-column: 2; position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--color-bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); display: flex; justify-content: space-between; align-items: center; padding: var(--space-4) var(--space-6); }
-    .header-title h2 { margin: 0; font-size: var(--text-xl); }
-    .header-title p { margin: .3rem 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
-    .header-actions { display: flex; gap: var(--space-3); align-items: center; }
-    .icon-btn { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-full); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); background: var(--color-surface); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    .btn-logout { background: #d32f2f; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    .btn-logout:hover { background: #b71c1c; }
-    .btn-primary { background: var(--color-primary); color: white; padding: 10px 20px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
-    .btn-primary:hover { background: var(--color-primary-hover); }
-    .btn-save { background: var(--color-success); color: white; padding: 10px 20px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; margin-top: var(--space-4); }
-    .btn-save:hover { opacity: 0.9; }
-    .btn-danger { background: #d32f2f; color: white; padding: 8px 14px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
-    .main { grid-column: 2; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6); }
-    .page { display: grid; gap: var(--space-6); }
-    .panel { background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); padding: var(--space-6); }
-    .form-group { margin-bottom: var(--space-6); }
-    .form-group label { display: block; margin-bottom: var(--space-2); font-weight: 600; font-size: var(--text-sm); }
-    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); }
-    .form-group textarea { resize: vertical; min-height: 100px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
-    .checkbox-group { display: flex; align-items: center; gap: var(--space-3); }
-    .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-    .section-title { font-size: var(--text-lg); margin: var(--space-6) 0 var(--space-4) 0; font-weight: 600; }
-    .empty-msg { color: var(--color-text-muted); font-size: var(--text-sm); }
-    .tab-section { display: none; }
-    .tab-section.active { display: block; }
-    .photo-upload { border: 2px dashed var(--color-primary); border-radius: var(--radius-md); padding: var(--space-6); text-align: center; cursor: pointer; }
-    .photo-upload:hover { background: var(--color-primary-soft); }
-    .photo-upload input { display: none; }
-    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
-    .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; }
-    .photo-item img { width: 100%; height: 120px; object-fit: cover; }
-    .photo-item-remove { position: absolute; top: 5px; right: 5px; background: #d32f2f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
-    .annonce-card { background: var(--color-bg); padding: var(--space-4); border-radius: var(--radius-md); border-left: 4px solid var(--color-primary); margin-bottom: var(--space-4); }
-    .annonce-card h4 { margin: 0 0 var(--space-2) 0; font-size: var(--text-sm); font-weight: 600; }
-    .annonce-meta { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-2); }
-    .visite-card { background: var(--color-bg); padding: var(--space-4); border-radius: var(--radius-md); border-left: 4px solid var(--color-warning); margin-bottom: var(--space-4); }
-    .visite-status { display: inline-block; font-size: var(--text-xs); padding: 4px 8px; border-radius: 4px; font-weight: 600; }
-    .status-attente { background: var(--color-warning-soft); color: var(--color-warning); }
-    .status-accepte { background: var(--color-success-soft); color: var(--color-success); }
-    .status-refuse { background: var(--color-danger-soft); color: var(--color-danger); }
+    :root{--bg:#f6f1ea;--surface:#fff;--soft:#fbf8f4;--primary:#5b2a4c;--accent:#c9a35f;--text:#241821;--muted:#7a6d76;--border:#eadfd3;--success:#2f7d57;--danger:#a44646;--radius:18px;--shadow:0 16px 42px rgba(91,42,76,.09)}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:'Montserrat',sans-serif;background:linear-gradient(180deg,#fcfaf7 0%,#f4ede5 100%);color:var(--text)}
+    a{color:inherit} .wrap{max-width:1440px;margin:0 auto;padding:24px}
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(252,250,247,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .topbar-inner{max-width:1440px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+    .brand{display:flex;align-items:center;gap:14px}.brand-mark{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:grid;place-items:center;font-weight:800;letter-spacing:.02em}.brand h1{margin:0;font-size:1.15rem}.brand p{margin:3px 0 0;color:var(--muted);font-size:.92rem}
+    .btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;text-decoration:none;transition:.2s transform,.2s opacity}.btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:var(--primary);color:#fff}.btn-secondary{background:#fff;color:var(--primary);border:1px solid var(--border)}
+    .grid{display:grid;gap:20px}.hero-grid{grid-template-columns:1.4fr .9fr}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .panel,.card,.shell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .panel{padding:22px}.hero{padding:26px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(91,42,76,.08);color:var(--primary);font-weight:700;font-size:.8rem;margin-bottom:14px}
+    h2,h3{font-family:'Playfair Display',serif;margin:0;color:var(--primary)} h2{font-size:2.15rem;line-height:1.1} h3{font-size:1.3rem}
+    p{line-height:1.6} .muted{color:var(--muted)} .section-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+    .kpi{padding:18px;background:var(--soft);border:1px solid var(--border);border-radius:16px}.kpi strong{display:block;font-size:1.45rem;color:var(--primary)}
+    .feature{padding:18px;border-radius:16px;background:#fff;border:1px solid var(--border)}.feature strong{display:block;margin-bottom:6px;color:var(--primary)}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.tabs button{padding:11px 14px;border:1px solid var(--border);background:#fff;border-radius:12px;font-weight:700;cursor:pointer}.tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .tab{display:none}.tab.active{display:block}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:grid;gap:8px}.field.full{grid-column:1/-1}
+    label{font-size:.9rem;font-weight:700;color:var(--primary)} input,textarea{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font:inherit;outline:none} textarea{min-height:120px;resize:vertical}
+    .status{margin-top:14px;padding:12px 14px;border-radius:12px;font-weight:700;display:none}.status.loading{background:#fff7e6;color:#9c6d00}.status.error{background:#fff0f0;color:var(--danger)}.status.success{background:#edf8f2;color:var(--success)}
+    .list-grid{display:grid;gap:14px}.lead{padding:18px;border-radius:16px;border:1px solid var(--border);background:#fff}.badge{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:800}.warn{background:rgba(183,128,31,.14);color:#b7801f}.ok{background:rgba(47,125,87,.12);color:var(--success)}
+    table{width:100%;border-collapse:collapse} th,td{padding:12px 10px;border-bottom:1px solid #efe7dd;text-align:left;font-size:.92rem} th{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--primary);background:#faf6f1}
+    .messages{display:grid;grid-template-columns:300px 1fr;gap:16px}.thread,.chat{border:1px solid var(--border);border-radius:16px;background:#fff}.thread{padding:14px}.chat{padding:16px;min-height:360px}.bubble{max-width:80%;padding:12px 14px;border-radius:16px;background:#f5eee8;margin-bottom:10px}.bubble.me{margin-left:auto;background:rgba(91,42,76,.08)}
+    .small{font-size:.92rem}.center{text-align:center}.spacer{height:8px}
+    @media (max-width:1100px){.hero-grid,.three,.two,.form-grid,.messages{grid-template-columns:1fr}.topbar-inner{padding:14px 16px}.wrap{padding:16px}}
   </style>
 </head>
 <body>
-
-<div class="dashboard">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">A</div>
-      <div><h1>ALB</h1><p>Immobilier</p></div>
-    </div>
-    <nav class="nav-group" id="nav-container"></nav>
-    <div style="flex: 1;"></div>
-    <button class="btn-logout" onclick="logout()">🚪 Déconnexion</button>
-  </aside>
-
-  <header class="header">
-    <div class="header-title">
-      <h2 id="page-title">Espace ALB</h2>
-      <p id="page-desc">Gère tes données</p>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="toggleTheme()">🌙</button>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">ALB</div>
+        <div>
+          <h1>Espace ALB</h1>
+          <p>Simple, humain, pro — pour particuliers et courtiers</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn-secondary" href="https://reliable-crumble-6e286a.netlify.app/questionnaire-inscription">Questionnaire d'inscription</a>
+      </div>
     </div>
   </header>
 
-  <main class="main">
-    <div class="page">
-      <!-- RECHERCHE ANNONCES -->
-      <div id="tab-recherche" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">🔍 Rechercher une Annonce</h3>
+  <main class="wrap">
+    <section class="panel hero" style="margin-bottom:22px;">
+      <div class="grid hero-grid">
+        <div>
+          <div class="eyebrow">ALB Immobilier</div>
+          <h2>Un espace clair pour avancer sans se compliquer la vie.</h2>
+          <p class="muted">Particulier vendeur ou acheteur, courtier, agent ou pro : chacun arrive au bon endroit, avec les bons outils, le bon ton, et un parcours simple à comprendre.</p>
+          <div class="spacer"></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a class="btn btn-primary" href="#connexion-card">Commencer mon espace</a>
+            <a class="btn btn-secondary" href="#particulier-zone">Voir l'espace particulier</a>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="kpi"><span class="muted">Particulier</span><strong>Vendeur + acheteur</strong><div class="small muted">Visites, annonces, financement, travaux, messagerie.</div></div>
+          <div class="kpi"><span class="muted">Courtier</span><strong>Leads utiles</strong><div class="small muted">ORIAS, disponibilité, demandes de contact, redirection.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid three" style="margin-bottom:22px;">
+      <div class="feature"><strong>Simple</strong><div class="muted">Une porte d’entrée claire, un PIN, et le bon espace derrière.</div></div>
+      <div class="feature"><strong>Humain</strong><div class="muted">Un ton local, direct, et des échanges qui restent à la bien.</div></div>
+      <div class="feature"><strong>Pro</strong><div class="muted">Des dashboards utiles, pas des pages chargées pour rien.</div></div>
+    </section>
+
+    <section class="panel" id="connexion-card" style="margin-bottom:22px;">
+      <div class="section-title">
+        <div>
+          <h3>Connexion</h3>
+          <p class="muted">Entrez votre email et votre code PIN.</p>
+        </div>
+      </div>
+      <form id="connexion-form" onsubmit="handleLogin(event)">
+        <div class="form-grid">
+          <div class="field">
+            <label for="email-connexion">Email</label>
+            <input type="email" id="email-connexion" placeholder="vous@example.fr" required>
+          </div>
+          <div class="field">
+            <label for="pin-connexion">Code PIN (4 chiffres)</label>
+            <input type="text" id="pin-connexion" placeholder="0000" maxlength="4" pattern="[0-9]{4}" required>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center;">
+          <button type="submit" class="btn btn-primary" id="btn-login">Se connecter</button>
+          <a class="btn btn-secondary" href="https://d2z0o16i8xm8ak.cloudfront.net/web/direct-files/5cc067fda209bd9ffc6d4423b811fd72/67ffb21b-2e05-4e2f-a6b9-8c8be5290fc7/pin-oublie.html">PIN oublié ?</a>
+          <a class="btn btn-secondary" href="https://reliable-crumble-6e286a.netlify.app/questionnaire-inscription">Je suis nouveau</a>
+        </div>
+      </form>
+      <div id="loading-connexion" class="status loading">Vérification en cours...</div>
+      <div id="error-connexion" class="status error"></div>
+      <div id="success-connexion" class="status success">Connexion réussie, redirection...</div>
+    </section>
+
+    <section class="panel" style="margin-bottom:22px;">
+      <div class="section-title">
+        <div>
+          <h3>Pourquoi c’est utile</h3>
+          <p class="muted">Trois arguments à montrer aux utilisateurs.</p>
+        </div>
+      </div>
+      <div class="grid three">
+        <div class="feature"><strong>Gagner du temps</strong><div class="muted">Le bon pro, au bon moment, sans tourner en rond.</div></div>
+        <div class="feature"><strong>Avancer sereinement</strong><div class="muted">Un parcours clair pour l’immobilier ancien.</div></div>
+        <div class="feature"><strong>Créer la bonne rencontre</strong><div class="muted">Des échanges utiles entre particuliers et pros.</div></div>
+      </div>
+    </section>
+
+    <section id="particulier-zone" class="panel" style="margin-bottom:22px;">
+      <div class="section-title">
+        <div>
+          <h3>Particulier</h3>
+          <p class="muted">Vendeur et acheteur dans le même espace.</p>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="p-visites">Visites</button>
+        <button class="tab-btn" data-tab="p-annonces">Annonce vendeur</button>
+        <button class="tab-btn" data-tab="p-financement">Projet financement</button>
+        <button class="tab-btn" data-tab="p-travaux">Projet travaux</button>
+        <button class="tab-btn" data-tab="p-messagerie">Messagerie</button>
+        <button class="tab-btn" data-tab="p-profil">Profil & dispos</button>
+      </div>
+
+      <div id="p-visites" class="tab active">
+        <div class="grid two">
+          <div>
+            <h3>Visites et visites programmées</h3>
+            <p class="muted">Le même particulier peut être vendeur et acheteur, donc on regroupe les deux vues dans le même espace.</p>
+            <div class="spacer"></div>
+            <div class="shell" style="overflow:auto;border:1px solid var(--border);border-radius:16px;">
+              <table id="visitesTable"><thead><tr><th>Annonce</th><th>Date</th><th>Heure</th><th>Statut</th><th>Rôle</th></tr></thead><tbody><tr><td colspan="5" class="muted">Chargement...</td></tr></tbody></table>
+            </div>
+          </div>
+          <div>
+            <h3>Visites programmées</h3>
+            <p class="muted">Les créneaux qui avancent vraiment.</p>
+            <div class="spacer"></div>
+            <div class="shell" style="overflow:auto;border:1px solid var(--border);border-radius:16px;">
+              <table id="visitesProgTable"><thead><tr><th>Annonce</th><th>Date</th><th>Message</th><th>Statut</th><th>Rôle</th></tr></thead><tbody><tr><td colspan="5" class="muted">Chargement...</td></tr></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="p-annonces" class="tab">
+        <h3>Annonces vendeur</h3>
+        <p class="muted">Modification de l'annonce et des médias.</p>
+        <form id="annonceForm">
           <div class="form-grid">
-            <div class="form-group">
-              <label>Budget (€)</label>
-              <input type="number" id="search-budget" placeholder="Max: 500000">
-            </div>
-            <div class="form-group">
-              <label>Surface (m²)</label>
-              <input type="number" id="search-surface" placeholder="Min: 50">
-            </div>
+            <div class="field"><label for="annonceTitre">Titre</label><input id="annonceTitre"></div>
+            <div class="field"><label for="annoncePrix">Prix</label><input id="annoncePrix" type="number"></div>
+            <div class="field"><label for="annonceVille">Ville</label><input id="annonceVille"></div>
+            <div class="field"><label for="annonceCodePostal">Code postal</label><input id="annonceCodePostal"></div>
+            <div class="field"><label for="annonceTelephone">Téléphone contact</label><input id="annonceTelephone"></div>
+            <div class="field"><label for="annonceSurface">Surface m²</label><input id="annonceSurface" type="number" step="0.01"></div>
+            <div class="field"><label for="annonceStatut">Statut</label><input id="annonceStatut"></div>
+            <div class="field"><label for="annonceDateCompromis">Date fin compromis</label><input id="annonceDateCompromis" type="datetime-local"></div>
+            <div class="field full"><label for="annonceAdresse">Adresse complète</label><input id="annonceAdresse"></div>
+            <div class="field full"><label for="annonceDescription">Description</label><textarea id="annonceDescription"></textarea></div>
+            <div class="field full"><label for="mediaUrl">Ajouter une photo URL</label><input id="mediaUrl" placeholder="https://..."></div>
           </div>
-          <button class="btn-primary" onclick="searchAnnonces()" style="width: 100%; margin-top: var(--space-4);">🔎 Rechercher</button>
-          <div id="annonces-list" style="margin-top: var(--space-6);"></div>
-        </div>
-      </div>
-
-      <!-- MES ANNONCES (VENDEUR) -->
-      <div id="tab-mes-annonces" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">📋 Mes Annonces</h3>
-          <div id="annonce-form-container"></div>
-        </div>
-      </div>
-
-      <!-- DISPONIBILITÉS VENDEUR -->
-      <div id="tab-disponibilites" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">📅 Mes Disponibilités (Réception Acheteurs)</h3>
-          <div class="form-group">
-            <label>Horaires de réception</label>
-            <textarea id="dispo-horaires" placeholder="Ex: Lun-Ven: 14h-18h&#10;Sam: 10h-17h&#10;Dim: Sur RDV"></textarea>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+            <button type="submit" class="btn btn-primary">Enregistrer l'annonce</button>
+            <button type="button" class="btn btn-secondary" id="addMediaBtn">Ajouter le média</button>
           </div>
-          <button class="btn-save" onclick="saveDisponibilites()">💾 Enregistrer</button>
+        </form>
+      </div>
+
+      <div id="p-financement" class="tab">
+        <h3>Projet financement</h3>
+        <p class="muted">Dossiers issus de demandes_financement.</p>
+        <div style="overflow:auto;border:1px solid var(--border);border-radius:16px;">
+          <table id="financementTable"><thead><tr><th>Origine</th><th>Infos</th><th>Courtier</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr><td colspan="5" class="muted">Chargement...</td></tr></tbody></table>
         </div>
       </div>
 
-      <!-- PLANNING VENDEUR -->
-      <div id="tab-planning-vendeur" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">📅 Mes Visites (Vendeur)</h3>
-          <div id="planning-vendeur-list"></div>
+      <div id="p-travaux" class="tab">
+        <h3>Projet travaux</h3>
+        <p class="muted">Suivi des projets travaux du particulier.</p>
+        <div style="overflow:auto;border:1px solid var(--border);border-radius:16px;">
+          <table id="travauxTable"><thead><tr><th>Titre</th><th>Description</th><th>Corps de métier</th><th>Statut</th><th>Date</th></tr></thead><tbody><tr><td colspan="5" class="muted">Chargement...</td></tr></tbody></table>
         </div>
       </div>
 
-      <!-- MES DEMANDES VISITE (ACHETEUR) -->
-      <div id="tab-mes-demandes" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">📩 Mes Demandes de Visite</h3>
-          <div id="demandes-list"></div>
+      <div id="p-messagerie" class="tab">
+        <h3>Messagerie</h3>
+        <p class="muted">Les échanges liés aux annonces, financements et projets.</p>
+        <div class="messages">
+          <div class="thread" id="threadsBox"><div class="muted">Chargement...</div></div>
+          <div class="chat">
+            <div style="margin-bottom:12px;">
+              <strong style="color:var(--primary);">Conversation</strong>
+              <div class="muted small">Historique des échanges.</div>
+            </div>
+            <div id="messagesBox"><div class="bubble">Aucun message pour le moment.</div></div>
+            <form id="messageForm" style="display:flex;gap:12px;margin-top:14px;">
+              <textarea id="messageInput" placeholder="Écrire un message..."></textarea>
+              <button class="btn btn-primary" type="submit">Envoyer</button>
+            </form>
+          </div>
         </div>
       </div>
 
-      <!-- PLANNING ACHETEUR -->
-      <div id="tab-planning-acheteur" class="tab-section">
-        <div class="panel">
-          <h3 class="section-title">📅 Mes Visites Confirmées (Acheteur)</h3>
-          <div id="planning-acheteur-list"></div>
+      <div id="p-profil" class="tab">
+        <h3>Profil & disponibilités</h3>
+        <p class="muted">Le vendeur peut définir ses disponibilités pour que l'acheteur choisisse son créneau de visite.</p>
+        <form id="profileForm">
+          <div class="form-grid">
+            <div class="field"><label for="profilPrenom">Prénom</label><input id="profilPrenom"></div>
+            <div class="field"><label for="profilNom">Nom</label><input id="profilNom"></div>
+            <div class="field"><label for="profilTelephone">Téléphone</label><input id="profilTelephone"></div>
+            <div class="field"><label for="profilVille">Ville</label><input id="profilVille"></div>
+            <div class="field"><label for="profilCodePostal">Code postal</label><input id="profilCodePostal"></div>
+            <div class="field"><label for="profilProfession">Profession</label><input id="profilProfession"></div>
+            <div class="field full"><label for="profilAdresseBien">Adresse bien</label><input id="profilAdresseBien"></div>
+            <div class="field full"><label for="profilDisposVendeur">Disponibilités vendeur</label><textarea id="profilDisposVendeur" placeholder="Ex : lundi soir, mercredi après-midi, samedi matin"></textarea></div>
+            <div class="field full"><label for="profilDisposRdv">Disponibilités RDV (JSON ou texte)</label><textarea id="profilDisposRdv"></textarea></div>
+          </div>
+          <div style="margin-top:16px;"><button class="btn btn-primary" type="submit">Mettre à jour le profil</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" id="courtier-zone" style="margin-bottom:22px;">
+      <div class="section-title">
+        <div>
+          <h3>Courtier</h3>
+          <p class="muted">Le dashboard reprend la logique de ton fichier partagé, avec leads à prioriser et accès aux bonnes tables.</p>
         </div>
       </div>
-    </div>
+      <div class="grid two">
+        <div class="kpi"><span class="muted">Dossiers financement</span><strong id="courtierNbDemandes">0</strong></div>
+        <div class="kpi"><span class="muted">Demandes contact</span><strong id="courtierNbContacts">0</strong></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="grid two">
+        <div class="list-grid" id="courtierLeadList"><div class="lead"><strong>Chargement...</strong><p class="muted">Leads en cours de récupération.</p></div></div>
+        <div class="lead">
+          <h3 id="courtierNomCard" style="margin-bottom:10px;">Profil courtier</h3>
+          <div class="grid two">
+            <div><span class="muted small">Statut</span><br><strong id="courtierBadgeStatut">-</strong></div>
+            <div><span class="muted small">Courtier immobilier</span><br><strong id="courtierSousRole">-</strong></div>
+            <div><span class="muted small">Entreprise</span><br><strong id="courtierEntreprise">-</strong></div>
+            <div><span class="muted small">Téléphone</span><br><strong id="courtierPhone">-</strong></div>
+          </div>
+          <div class="spacer"></div>
+          <div class="form-grid">
+            <div class="field"><label for="courtierOrias">ORIAS</label><input id="courtierOrias"></div>
+            <div class="field"><label for="courtierRedirection">Redirection courtier</label><input id="courtierRedirection" placeholder="UUID autre courtier"></div>
+            <div class="field full"><label for="courtierZones">Zone d'activité</label><input id="courtierZones" placeholder="83, 06..."></div>
+            <div class="field full"><label for="courtierPresentation">Présentation</label><textarea id="courtierPresentation"></textarea></div>
+            <div class="field full"><label for="courtierHoraires">Horaires disponibilité (JSON)</label><textarea id="courtierHoraires"></textarea></div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+            <button class="btn btn-primary" id="saveCourtierBtn" type="button">Mettre à jour la vitrine</button>
+            <button class="btn btn-secondary" id="reloadCourtierBtn" type="button">Recharger</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
-</div>
 
-<script src="supabase-client.js"></script>
-<script>
-  let currentUser = null;
-  let userData = null;
-  let uploadedPhotos = [];
-  let toutesAnnonces = [];
+  <script>
+    const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const state = { profileId: null, activeConversationId: null, currentAnnonceId: null };
 
-  async function init() {
-    const localUser = localStorage.getItem('alb_user');
-    if (localUser) {
-      currentUser = { id: localUser };
-    } else {
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      if (!session) {
-        window.location.href = '/login.html';
-        return;
-      }
-      currentUser = session.user;
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    }));
+
+    function renderTable(tableId, rows, colspan, emptyText){
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="${colspan}" class="muted">${emptyText}</td></tr>`;
     }
-    await loadUserInfo();
-  }
+    function fmt(v){ if(!v) return '-'; try{ return new Date(v).toLocaleDateString('fr-FR'); } catch(e){ return v; } }
+    function fmtdt(v){ if(!v) return '-'; try{ return new Date(v).toLocaleString('fr-FR'); } catch(e){ return v; } }
 
-  async function loadUserInfo() {
-    const { data, error } = await window.supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('id', currentUser.id)
-      .single();
-
-    if (error) {
-      console.error('Erreur:', error);
-      return;
+    async function initSession(){
+      const { data:{ session } } = await supabaseClient.auth.getSession();
+      state.profileId = session?.user?.id || null;
+      if(state.profileId){ await syncAll(); }
     }
 
-    userData = data;
-    
-    const isPro = ['courtier', 'artisan', 'agent', 'mandataire'].includes(userData.role);
-    if (isPro) {
-      window.location.href = '/alb-final/dashboard-courtier-complet.html';
-      return;
+    async function handleLogin(event){
+      event.preventDefault();
+      const loading = document.getElementById('loading-connexion');
+      const error = document.getElementById('error-connexion');
+      const success = document.getElementById('success-connexion');
+      const email = document.getElementById('email-connexion').value.trim().toLowerCase();
+      const pin = document.getElementById('pin-connexion').value.trim();
+      loading.style.display = 'block'; error.style.display='none'; success.style.display='none';
+      try{
+        const { data, error: qError } = await supabaseClient.from('profiles').select('id, email, pin, role, est_vendeur, est_acheteur, statut_verifie').eq('email', email).maybeSingle();
+        if(qError) throw qError;
+        if(!data || String(data.pin || '').trim() !== pin) throw new Error('Email ou PIN incorrect');
+        state.profileId = data.id;
+        success.style.display='block';
+        await syncAll();
+      } catch(err){
+        error.textContent = err.message || 'Connexion impossible';
+        error.style.display='block';
+      } finally { loading.style.display='none'; }
     }
 
-    uploadedPhotos = userData.annonce_photos ? JSON.parse(userData.annonce_photos) : [];
-    
-    renderLayout();
-    renderNavigation();
-    if (userData.est_vendeur) renderAnnonceForm();
-    loadAnnoncesForSearch();
-    loadVisites();
-  }
-
-  function renderLayout() {
-    document.querySelector('.brand p').textContent = 'Particulier';
-  }
-
-  function renderNavigation() {
-    const container = document.getElementById('nav-container');
-    const items = [];
-
-    if (userData.est_acquereur) {
-      items.push('<button class="nav-item active" onclick="switchTab(\'recherche\')">🔍 Rechercher</button>');
-    }
-    
-    if (userData.est_vendeur) {
-      items.push('<button class="nav-item' + (!userData.est_acquereur ? ' active' : '') + '" onclick="switchTab(\'mes-annonces\')">📋 Mes Annonces</button>');
-      items.push('<button class="nav-item" onclick="switchTab(\'disponibilites\')">📅 Disponibilités</button>');
-      items.push('<button class="nav-item" onclick="switchTab(\'planning-vendeur\')">📅 Planning Vendeur</button>');
+    async function loadProfile(){
+      const { data } = await supabaseClient.from('profiles').select('*').eq('id', state.profileId).maybeSingle();
+      if(!data) return;
+      document.getElementById('profilPrenom').value = data.prenom || '';
+      document.getElementById('profilNom').value = data.nom || '';
+      document.getElementById('profilTelephone').value = data.telephone || '';
+      document.getElementById('profilVille').value = data.ville || '';
+      document.getElementById('profilCodePostal').value = data.code_postal || '';
+      document.getElementById('profilProfession').value = data.profession || '';
+      document.getElementById('profilAdresseBien').value = data.adresse_bien || '';
+      document.getElementById('profilDisposVendeur').value = data.disponibilites_vendeur || '';
+      document.getElementById('profilDisposRdv').value = typeof data.disponibilites_rdv === 'object' ? JSON.stringify(data.disponibilites_rdv, null, 2) : (data.disponibilites_rdv || '');
     }
 
-    if (userData.est_acquereur) {
-      items.push('<button class="nav-item" onclick="switchTab(\'mes-demandes\')">📩 Mes Demandes</button>');
-      items.push('<button class="nav-item" onclick="switchTab(\'planning-acheteur\')">📅 Planning Acheteur</button>');
+    async function loadVisites(){
+      const { data } = await supabaseClient.from('visites').select('*').or(`vendeur_id.eq.${state.profileId},acheteur_id.eq.${state.profileId}`).order('created_at',{ascending:false});
+      const rows = (data || []).map(v => `<tr><td>${v.annonce_id || '-'}</td><td>${fmt(v.date_visite)}</td><td>${v.heure_visite || '-'}</td><td>${v.statut || '-'}</td><td>${v.vendeur_id===state.profileId?'Vendeur':'Acheteur'}</td></tr>`);
+      renderTable('visitesTable', rows, 5, 'Aucune visite pour le moment');
     }
 
-    container.innerHTML = '<div class="nav-group">' + items.join('') + '</div>';
-    
-    const firstTab = userData.est_acquereur ? 'recherche' : 'mes-annonces';
-    switchTab(firstTab);
-  }
-
-  async function loadAnnoncesForSearch() {
-    const { data } = await window.supabaseClient
-      .from('profiles')
-      .select('id, prenom, nom, description, prix, surface_m2, dpe, ges, annonce_photos')
-      .eq('est_vendeur', true);
-    
-    toutesAnnonces = data || [];
-  }
-
-  async function searchAnnonces() {
-    const budget = document.getElementById('search-budget').value || 999999999;
-    const surface = document.getElementById('search-surface').value || 0;
-    
-    const filtered = toutesAnnonces.filter(a => 
-      parseInt(a.prix || 0) <= parseInt(budget) && 
-      parseInt(a.surface_m2 || 0) >= parseInt(surface)
-    );
-
-    const html = filtered.map(a => {
-      const photos = a.annonce_photos ? JSON.parse(a.annonce_photos) : [];
-      return `
-        <div class="annonce-card">
-          <h4>${a.prenom} ${a.nom}</h4>
-          <div class="annonce-meta">
-            💰 ${a.prix}€ | 📐 ${a.surface_m2}m² | DPE: ${a.dpe || '-'} | GES: ${a.ges || '-'}
-          </div>
-          <p style="margin: 0 0 var(--space-3) 0; font-size: var(--text-sm);">${a.description || 'Pas de description'}</p>
-          ${photos.length > 0 ? `<img src="${photos[0]}" style="width: 100%; height: 150px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: var(--space-3);">` : ''}
-          <button class="btn-primary" onclick="openDemande('${a.id}', '${a.prenom} ${a.nom}')" style="width: 100%;">📧 Demander Visite</button>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('annonces-list').innerHTML = html || '<p class="empty-msg">Aucune annonce trouvée</p>';
-  }
-
-  function renderAnnonceForm() {
-    const form = `
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="description" placeholder="Décrivez votre bien...">${userData.description || ''}</textarea>
-        </div>
-        <div class="form-group">
-          <label>Prix (€)</label>
-          <input type="number" id="prix" value="${userData.prix || ''}" placeholder="250000">
-        </div>
-        <div class="form-group">
-          <label>Surface (m²)</label>
-          <input type="number" id="surface_m2" value="${userData.surface_m2 || ''}" placeholder="85">
-        </div>
-        <div class="form-group">
-          <label>DPE</label>
-          <select id="dpe">
-            <option value="">--</option>
-            <option value="A" ${userData.dpe === 'A' ? 'selected' : ''}>A</option>
-            <option value="B" ${userData.dpe === 'B' ? 'selected' : ''}>B</option>
-            <option value="C" ${userData.dpe === 'C' ? 'selected' : ''}>C</option>
-            <option value="D" ${userData.dpe === 'D' ? 'selected' : ''}>D</option>
-            <option value="E" ${userData.dpe === 'E' ? 'selected' : ''}>E</option>
-            <option value="F" ${userData.dpe === 'F' ? 'selected' : ''}>F</option>
-            <option value="G" ${userData.dpe === 'G' ? 'selected' : ''}>G</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>GES</label>
-          <select id="ges">
-            <option value="">--</option>
-            <option value="A" ${userData.ges === 'A' ? 'selected' : ''}>A</option>
-            <option value="B" ${userData.ges === 'B' ? 'selected' : ''}>B</option>
-            <option value="C" ${userData.ges === 'C' ? 'selected' : ''}>C</option>
-            <option value="D" ${userData.ges === 'D' ? 'selected' : ''}>D</option>
-            <option value="E" ${userData.ges === 'E' ? 'selected' : ''}>E</option>
-            <option value="F" ${userData.ges === 'F' ? 'selected' : ''}>F</option>
-            <option value="G" ${userData.ges === 'G' ? 'selected' : ''}>G</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="checkbox-group">
-        <input type="checkbox" id="sous_compromis" ${userData.sous_compromis ? 'checked' : ''}>
-        <label for="sous_compromis" style="margin: 0;">Sous compromis</label>
-      </div>
-
-      <h3 class="section-title">📸 Photos (max 10)</h3>
-      <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
-        <p>📤 Cliquer pour ajouter (${uploadedPhotos.length}/10)</p>
-        <input type="file" id="photo-input" multiple accept="image/*" onchange="handlePhotoUpload(event)">
-      </div>
-
-      <div class="photo-grid" id="photo-grid">
-        ${uploadedPhotos.map((url, idx) => `
-          <div class="photo-item">
-            <img src="${url}" alt="Photo">
-            <button class="photo-item-remove" onclick="removePhoto(${idx})">×</button>
-          </div>
-        `).join('')}
-      </div>
-
-      <button class="btn-save" onclick="saveAnnonce()">💾 Enregistrer</button>
-    `;
-    document.getElementById('annonce-form-container').innerHTML = form;
-  }
-
-  async function handlePhotoUpload(event) {
-    const files = Array.from(event.target.files);
-    if (uploadedPhotos.length + files.length > 10) {
-      alert('Max 10 photos!');
-      return;
+    async function loadVisitesProgrammees(){
+      const { data } = await supabaseClient.from('visites_programmees').select('*').or(`vendeur_id.eq.${state.profileId},acheteur_id.eq.${state.profileId}`).order('created_at',{ascending:false});
+      const rows = (data || []).map(v => `<tr><td>${v.annonce_id || '-'}</td><td>${fmt(v.date_visite || v.created_at)}</td><td>${v.message || '-'}</td><td>${v.statut || '-'}</td><td>${v.vendeur_id===state.profileId?'Vendeur':'Acheteur'}</td></tr>`);
+      renderTable('visitesProgTable', rows, 5, 'Aucune visite programmée');
     }
 
-    for (let file of files) {
-      if (!file.type.startsWith('image/')) continue;
-      const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
-      const { error: uploadError } = await window.supabaseClient.storage.from('annonces').upload(fileName, file);
-      if (uploadError) continue;
-      const { data } = window.supabaseClient.storage.from('annonces').getPublicUrl(fileName);
-      uploadedPhotos.push(data.publicUrl);
-    }
-    renderPhotoGrid();
-  }
-
-  function removePhoto(idx) {
-    uploadedPhotos.splice(idx, 1);
-    renderPhotoGrid();
-  }
-
-  function renderPhotoGrid() {
-    const grid = document.getElementById('photo-grid');
-    if (!grid) return;
-    grid.innerHTML = uploadedPhotos.map((url, idx) => `
-      <div class="photo-item">
-        <img src="${url}" alt="Photo">
-        <button class="photo-item-remove" onclick="removePhoto(${idx})">×</button>
-      </div>
-    `).join('');
-  }
-
-  async function saveAnnonce() {
-    const { error } = await window.supabaseClient.from('profiles').update({
-      description: document.getElementById('description').value,
-      prix: document.getElementById('prix').value,
-      surface_m2: document.getElementById('surface_m2').value,
-      dpe: document.getElementById('dpe').value,
-      ges: document.getElementById('ges').value,
-      sous_compromis: document.getElementById('sous_compromis').checked,
-      annonce_photos: JSON.stringify(uploadedPhotos),
-    }).eq('id', currentUser.id);
-
-    alert(error ? '❌ Erreur: ' + error.message : '✅ Annonce enregistrée!');
-  }
-
-  async function saveDisponibilites() {
-    const { error } = await window.supabaseClient.from('profiles').update({
-      disponibilites_vendeur: document.getElementById('dispo-horaires').value,
-    }).eq('id', currentUser.id);
-
-    alert(error ? '❌ Erreur: ' + error.message : '✅ Disponibilités enregistrées!');
-  }
-
-  function openDemande(vendeurId, vendeurNom) {
-    const date = prompt(`Quelle date pour visiter chez ${vendeurNom}? (YYYY-MM-DD)`);
-    if (!date) return;
-    const heure = prompt('Quelle heure? (HH:MM)');
-    if (!heure) return;
-    
-    submitDemande(vendeurId, date, heure);
-  }
-
-  async function submitDemande(vendeurId, date, heure) {
-    const { error } = await window.supabaseClient.from('visites_programmees').insert({
-      vendeur_id: vendeurId,
-      acheteur_id: currentUser.id,
-      date_visite: date,
-      heure_visite: heure,
-      statut: 'en_attente',
-    });
-
-    if (error) {
-      alert('❌ Erreur: ' + error.message);
-    } else {
-      alert('✅ Demande envoyée!');
-      loadVisites();
-    }
-  }
-
-  async function loadVisites() {
-    const { data: visites } = await window.supabaseClient
-      .from('visites_programmees')
-      .select('*, profiles!vendeur_id(prenom, nom), profiles!acheteur_id(prenom, nom)')
-      .or(`vendeur_id.eq.${currentUser.id},acheteur_id.eq.${currentUser.id}`);
-
-    if (userData.est_vendeur) {
-      const vendeur = visites?.filter(v => v.vendeur_id === currentUser.id) || [];
-      document.getElementById('planning-vendeur-list').innerHTML = vendeur.map(v => `
-        <div class="visite-card">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h4 style="margin: 0;">Visite: ${v.profiles[1]?.prenom} ${v.profiles[1]?.nom}</h4>
-              <p style="margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-sm);">${v.date_visite} à ${v.heure_visite}</p>
-            </div>
-            <div>
-              <span class="visite-status status-${v.statut}">${v.statut === 'en_attente' ? '⏳ En attente' : v.statut === 'acceptee' ? '✅ Acceptée' : '❌ Refusée'}</span>
-            </div>
-          </div>
-          ${v.statut === 'en_attente' ? `
-            <button class="btn-primary" onclick="acceptVisite('${v.id}')" style="margin-top: var(--space-2); margin-right: var(--space-2);">✅ Accepter</button>
-            <button class="btn-danger" onclick="refuseVisite('${v.id}')" style="margin-top: var(--space-2);">❌ Refuser</button>
-          ` : ''}
-        </div>
-      `).join('') || '<p class="empty-msg">Aucune visite</p>';
+    async function loadAnnonce(){
+      const { data } = await supabaseClient.from('annonces').select('*').eq('vendeur_id', state.profileId).order('created_at',{ascending:false}).limit(1);
+      const annonce = data?.[0];
+      if(!annonce){ return; }
+      state.currentAnnonceId = annonce.id;
+      document.getElementById('annonceTitre').value = annonce.titre || '';
+      document.getElementById('annoncePrix').value = annonce.prix || '';
+      document.getElementById('annonceVille').value = annonce.ville || '';
+      document.getElementById('annonceCodePostal').value = annonce.code_postal || '';
+      document.getElementById('annonceTelephone').value = annonce.telephone_contact || '';
+      document.getElementById('annonceSurface').value = annonce.surface_m2 || '';
+      document.getElementById('annonceStatut').value = annonce.statut || '';
+      document.getElementById('annonceDateCompromis').value = annonce.date_fin_compromis ? new Date(annonce.date_fin_compromis).toISOString().slice(0,16) : '';
+      document.getElementById('annonceAdresse').value = annonce.adresse_complete || '';
+      document.getElementById('annonceDescription').value = annonce.description || '';
     }
 
-    if (userData.est_acquereur) {
-      const acheteur = visites?.filter(v => v.acheteur_id === currentUser.id) || [];
-      
-      document.getElementById('demandes-list').innerHTML = acheteur.map(v => `
-        <div class="visite-card">
-          <h4 style="margin: 0;">Demande chez ${v.profiles[0]?.prenom} ${v.profiles[0]?.nom}</h4>
-          <p style="margin: 4px 0; color: var(--color-text-muted); font-size: var(--text-sm);">${v.date_visite} à ${v.heure_visite}</p>
-          <span class="visite-status status-${v.statut}">${v.statut === 'en_attente' ? '⏳ En attente' : v.statut === 'acceptee' ? '✅ Acceptée' : '❌ Refusée'}</span>
-        </div>
-      `).join('') || '<p class="empty-msg">Aucune demande</p>';
-
-      const acceptees = visites?.filter(v => v.acheteur_id === currentUser.id && v.statut === 'acceptee') || [];
-      document.getElementById('planning-acheteur-list').innerHTML = acceptees.map(v => `
-        <div class="visite-card">
-          <h4 style="margin: 0;">Visite confirmée chez ${v.profiles[0]?.prenom} ${v.profiles[0]?.nom}</h4>
-          <p style="margin: 4px 0; color: var(--color-text-muted); font-size: var(--text-sm);">📅 ${v.date_visite} à ${v.heure_visite}</p>
-        </div>
-      `).join('') || '<p class="empty-msg">Aucune visite confirmée</p>';
+    async function saveAnnonce(e){
+      e.preventDefault(); if(!state.currentAnnonceId) return alert('Aucune annonce liée à ce profil.');
+      const payload = {
+        titre: document.getElementById('annonceTitre').value,
+        description: document.getElementById('annonceDescription').value,
+        prix: Number(document.getElementById('annoncePrix').value || 0),
+        ville: document.getElementById('annonceVille').value,
+        code_postal: document.getElementById('annonceCodePostal').value,
+        adresse_complete: document.getElementById('annonceAdresse').value,
+        telephone_contact: document.getElementById('annonceTelephone').value,
+        surface_m2: Number(document.getElementById('annonceSurface').value || 0),
+        statut: document.getElementById('annonceStatut').value,
+        date_fin_compromis: document.getElementById('annonceDateCompromis').value || null
+      };
+      const { error } = await supabaseClient.from('annonces').update(payload).eq('id', state.currentAnnonceId).eq('vendeur_id', state.profileId);
+      if(error) return alert(error.message);
+      alert('Annonce mise à jour.');
     }
-  }
 
-  async function acceptVisite(visteId) {
-    const { error } = await window.supabaseClient.from('visites_programmees').update({ statut: 'acceptee' }).eq('id', visteId);
-    if (!error) {
-      alert('✅ Visite acceptée!');
-      loadVisites();
+    async function addAnnonceMedia(){
+      const url = document.getElementById('mediaUrl').value.trim();
+      if(!state.currentAnnonceId || !url) return;
+      const { data } = await supabaseClient.from('annonce_medias').select('ordre').eq('annonce_id', state.currentAnnonceId).order('ordre',{ascending:false}).limit(1);
+      const ordre = (data?.[0]?.ordre || 0) + 1;
+      const { error } = await supabaseClient.from('annonce_medias').insert({ annonce_id: state.currentAnnonceId, url, ordre, type: 'photo' });
+      if(error) return alert(error.message);
+      document.getElementById('mediaUrl').value = '';
+      alert('Média ajouté.');
     }
-  }
 
-  async function refuseVisite(visteId) {
-    const { error } = await window.supabaseClient.from('visites_programmees').update({ statut: 'refusee' }).eq('id', visteId);
-    if (!error) {
-      alert('❌ Visite refusée');
-      loadVisites();
+    async function loadFinancement(){
+      const { data } = await supabaseClient.from('demandes_financement').select('*').eq('particulier_id', state.profileId).order('date_creation',{ascending:false});
+      const rows = (data || []).map(d => `<tr><td>${d.origine || '-'}</td><td><pre style="margin:0;white-space:pre-wrap;font-family:inherit;">${JSON.stringify(d.infos || {}, null, 1)}</pre></td><td>${d.courtier_assigne_id || '-'}</td><td>${d.statut || '-'}</td><td>${fmtdt(d.date_creation)}</td></tr>`);
+      renderTable('financementTable', rows, 5, 'Aucun projet financement pour le moment');
     }
-  }
 
-  function switchTab(tabId) {
-    document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tabId)?.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.querySelector(`[onclick="switchTab('${tabId}')"]`)?.classList.add('active');
-  }
+    async function loadTravaux(){
+      const { data } = await supabaseClient.from('projets_travaux').select('*').eq('particulier_id', state.profileId).order('date_creation',{ascending:false});
+      const rows = (data || []).map(t => `<tr><td>${t.titre}</td><td>${t.description || '-'}</td><td>${Array.isArray(t.corps_metier_recherches)?t.corps_metier_recherches.join(', '):'-'}</td><td>${t.statut || '-'}</td><td>${fmtdt(t.date_creation)}</td></tr>`);
+      renderTable('travauxTable', rows, 5, 'Aucun projet travaux pour le moment');
+    }
 
-  function toggleTheme() {
-    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-  }
+    async function loadConversations(){
+      const { data } = await supabaseClient.from('conversation_participants').select('conversation_id, conversations(*)').eq('profile_id', state.profileId);
+      const convs = (data || []).map(x => x.conversations).filter(Boolean);
+      const list = document.getElementById('threadsBox');
+      if(!convs.length){ list.innerHTML = '<div class="muted">Aucune conversation pour le moment.</div>'; document.getElementById('messagesBox').innerHTML = '<div class="bubble">Aucun message.</div>'; return; }
+      list.innerHTML = convs.map((c,i)=>`<div class="thread" data-id="${c.id}" style="cursor:pointer;margin-bottom:10px;"><strong>${c.contexte || 'Conversation'}</strong><div class="muted small">${fmtdt(c.date_creation)}</div></div>`).join('');
+      state.activeConversationId = convs[0].id;
+      bindThreads();
+      await loadMessages(state.activeConversationId);
+    }
 
-  function logout() {
-    localStorage.removeItem('alb_user');
-    window.location.href = '/login.html';
-  }
+    function bindThreads(){
+      document.querySelectorAll('.thread[data-id]').forEach(el => el.addEventListener('click', async () => { state.activeConversationId = el.dataset.id; document.querySelectorAll('.thread').forEach(t => t.style.background = '#fff'); el.style.background = 'rgba(91,42,76,.05)'; await loadMessages(state.activeConversationId); }));
+    }
 
-  init();
-</script>
+    async function loadMessages(conversationId){
+      const { data } = await supabaseClient.from('messages').select('*, profiles:profiles!messages_auteur_id_fkey(prenom, nom)').eq('conversation_id', conversationId).order('date_envoi',{ascending:true});
+      const box = document.getElementById('messagesBox');
+      if(!data || !data.length){ box.innerHTML = '<div class="bubble">Aucun message pour le moment.</div>'; return; }
+      box.innerHTML = data.map(m => `<div class="bubble ${m.auteur_id===state.profileId?'me':''}"><strong>${m.profiles?.prenom || ''} ${m.profiles?.nom || ''}</strong><br>${m.contenu}</div>`).join('');
+    }
 
+    async function sendMessage(e){
+      e.preventDefault(); const contenu = document.getElementById('messageInput').value.trim(); if(!contenu || !state.activeConversationId) return;
+      const { error } = await supabaseClient.from('messages').insert({ conversation_id: state.activeConversationId, auteur_id: state.profileId, contenu, lu: false, date_envoi: new Date().toISOString() });
+      if(error) return alert(error.message);
+      document.getElementById('messageInput').value = '';
+      await loadMessages(state.activeConversationId);
+    }
+
+    async function saveProfile(e){
+      e.preventDefault(); let disponibilites_rdv = document.getElementById('profilDisposRdv').value; try{ disponibilites_rdv = JSON.parse(disponibilites_rdv || '{}'); }catch(err){}
+      const payload = {
+        prenom: document.getElementById('profilPrenom').value,
+        nom: document.getElementById('profilNom').value,
+        telephone: document.getElementById('profilTelephone').value,
+        ville: document.getElementById('profilVille').value,
+        code_postal: document.getElementById('profilCodePostal').value,
+        profession: document.getElementById('profilProfession').value,
+        adresse_bien: document.getElementById('profilAdresseBien').value,
+        disponibilites_vendeur: document.getElementById('profilDisposVendeur').value,
+        disponibilites_rdv,
+        status_updated_at: new Date().toISOString()
+      };
+      const { error } = await supabaseClient.from('profiles').update(payload).eq('id', state.profileId);
+      if(error) return alert(error.message);
+      alert('Profil mis à jour.');
+    }
+
+    async function loadCourtierDashboard(){
+      const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', state.profileId).maybeSingle();
+      if(!profile) return;
+      document.getElementById('courtierNomCard').textContent = `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Profil courtier';
+      document.getElementById('courtierBadgeStatut').textContent = profile.statut_verifie ? 'Vérifié ALB' : 'À vérifier';
+      document.getElementById('courtierSousRole').textContent = profile.sous_role_immo || 'Courtier immobilier';
+      document.getElementById('courtierEntreprise').textContent = profile.nom_entreprise || '-';
+      document.getElementById('courtierPhone').textContent = profile.telephone || '-';
+      document.getElementById('courtierOrias').value = profile.numero_orias || '';
+      document.getElementById('courtierRedirection').value = profile.courtier_redirection_id || '';
+      document.getElementById('courtierZones').value = Array.isArray(profile.zone_intervention) ? profile.zone_intervention.join(', ') : (profile.zone_intervention || '');
+      document.getElementById('courtierPresentation').value = profile.presentation || '';
+      document.getElementById('courtierHoraires').value = profile.horaires_disponibilite ? JSON.stringify(profile.horaires_disponibilite, null, 2) : '{}';
+      const { data: demandes } = await supabaseClient.from('demandes_financement').select('*').eq('courtier_assigne_id', state.profileId).order('date_creation',{ascending:false});
+      const { data: contacts } = await supabaseClient.from('demandes_contact').select('*').eq('pro_id', state.profileId).order('created_at',{ascending:false});
+      const { data: avis } = await supabaseClient.from('avis').select('note').eq('pro_id', state.profileId);
+      document.getElementById('courtierNbDemandes').textContent = (demandes || []).length;
+      document.getElementById('courtierNbContacts').textContent = (contacts || []).length;
+      const list = document.getElementById('courtierLeadList');
+      const items = [];
+      (demandes || []).forEach(d => items.push({ title: `Dossier financement · ${d.origine || 'origine inconnue'}`, badge: ['nouveau','en_attente','en cours','a_traiter'].includes(String(d.statut).toLowerCase()) ? 'Prioritaire' : 'Suivi', desc: d.infos ? JSON.stringify(d.infos) : 'Dossier de financement assigné.' }));
+      (contacts || []).forEach(c => items.push({ title: `${c.nom} · Demande contact vitrine`, badge: c.lue ? 'Suivi' : 'Prioritaire', desc: c.message || 'Demande reçue depuis la vitrine.' }));
+      list.innerHTML = items.length ? items.map(i => `<div class="lead"><strong>${i.title}</strong><div class="spacer"></div><span class="badge ${i.badge==='Prioritaire'?'warn':'ok'}">${i.badge}</span><div class="spacer"></div><div class="muted">${i.desc}</div></div>`).join('') : '<div class="lead"><strong>Aucun lead pour le moment</strong><div class="muted">Les demandes financement et demandes contact apparaîtront ici.</div></div>';
+    }
+
+    async function saveCourtier(){
+      let horaires = {}; try{ horaires = JSON.parse(document.getElementById('courtierHoraires').value || '{}'); }catch(e){ return alert('Le JSON des horaires n\'est pas valide.'); }
+      const payload = {
+        numero_orias: document.getElementById('courtierOrias').value,
+        courtier_redirection_id: document.getElementById('courtierRedirection').value || null,
+        zone_intervention: document.getElementById('courtierZones').value.split(',').map(v=>v.trim()).filter(Boolean),
+        presentation: document.getElementById('courtierPresentation').value,
+        horaires_disponibilite: horaires
+      };
+      const { error } = await supabaseClient.from('profiles').update(payload).eq('id', state.profileId);
+      if(error) return alert(error.message);
+      alert('Profil courtier mis à jour.');
+      await loadCourtierDashboard();
+    }
+
+    async function syncAll(){
+      if(!state.profileId) return;
+      await Promise.all([loadProfile(), loadVisites(), loadVisitesProgrammees(), loadAnnonce(), loadFinancement(), loadTravaux(), loadConversations(), loadCourtierDashboard()]);
+    }
+
+    document.getElementById('annonceForm').addEventListener('submit', saveAnnonce);
+    document.getElementById('addMediaBtn').addEventListener('click', addAnnonceMedia);
+    document.getElementById('profileForm').addEventListener('submit', saveProfile);
+    document.getElementById('messageForm').addEventListener('submit', sendMessage);
+    document.getElementById('saveCourtierBtn').addEventListener('click', saveCourtier);
+    document.getElementById('reloadCourtierBtn').addEventListener('click', loadCourtierDashboard);
+    initSession();
+  </script>
 </body>
 </html>
