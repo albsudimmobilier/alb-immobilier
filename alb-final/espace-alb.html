@@ -1,1107 +1,550 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Espace ALB - Hub Central</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace ALB - ALB Immobilier</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --pourpre: #4B1A3E;
-      --dore: #B28E3D;
-      --creme: #f5f3ee;
-      --light-bg: #f9f7f4;
-    }
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background: var(--creme);
-      color: #2b2b2b;
-    }
-    .header {
-      background: white;
-      border-bottom: 3px solid var(--dore);
-      padding: 15px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo {
-      font-family: 'Playfair Display';
-      font-size: 1.3rem;
-      color: var(--pourpre);
-    }
-    .logo strong { color: var(--dore); }
-    .header-actions {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-    }
-    .btn-logout {
-      background: #d32f2f;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-    .btn-logout:hover {
-      background: #b71c1c;
-    }
-    .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
-    .page-title {
-      font-family: 'Playfair Display';
-      color: var(--pourpre);
-      margin-bottom: 30px;
-      font-size: 2rem;
-    }
-    .main-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #e0e0e0;
-      flex-wrap: wrap;
-      background: white;
-      border-radius: 8px 8px 0 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .main-tab-button {
-      padding: 15px 25px;
-      background: transparent;
-      border: none;
-      color: #666;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
-      font-size: 0.95rem;
-    }
-    .main-tab-button:hover {
-      color: var(--pourpre);
-    }
-    .main-tab-button.active {
-      color: var(--pourpre);
-      border-bottom-color: var(--dore);
-    }
-    .main-tab-content {
-      display: none;
-    }
-    .main-tab-content.active {
-      display: block;
-    }
-    .sub-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #e0e0e0;
-      flex-wrap: wrap;
-    }
-    .sub-tab-button {
-      padding: 12px 20px;
-      background: transparent;
-      border: none;
-      color: #999;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.3s;
-      font-size: 0.9rem;
-    }
-    .sub-tab-button:hover {
-      color: var(--pourpre);
-    }
-    .sub-tab-button.active {
-      color: var(--pourpre);
-      border-bottom-color: var(--dore);
-    }
-    .sub-tab-content {
-      display: none;
-    }
-    .sub-tab-content.active {
-      display: block;
-    }
-    .user-card {
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 25px;
-      margin-bottom: 30px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-left: 4px solid var(--dore);
-    }
-    .user-card h3 {
-      color: var(--pourpre);
-      margin-bottom: 15px;
-      font-size: 1.3rem;
-    }
-    .user-info {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    .user-info-item {
-      display: flex;
-      flex-direction: column;
-    }
-    .user-info-label {
-      color: #666;
-      font-size: 0.85rem;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
-    .user-info-value {
-      color: var(--pourpre);
-      font-size: 1rem;
-      font-weight: 600;
-    }
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
-      color: white;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
-    }
-    .btn-secondary {
-      background: var(--light-bg);
-      color: var(--pourpre);
-      border: 1px solid var(--dore);
-    }
-    .btn-secondary:hover {
-      background: #f0ebe3;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-    }
-    .table th {
-      background: var(--light-bg);
-      padding: 15px;
-      text-align: left;
-      font-weight: 600;
-      color: var(--pourpre);
-      border-bottom: 2px solid var(--dore);
-    }
-    .table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .table tr:hover {
-      background: #fafaf8;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .status-en-attente { background: #fff3cd; color: #856404; }
-    .status-disponible { background: #d4edda; color: #155724; }
-    .status-acceptee { background: #d1ecf1; color: #0c5460; }
-    .status-confirmee { background: #d4edda; color: #155724; }
-    .status-refusee { background: #f8d7da; color: #721c24; }
-    .status-completee { background: #d4edda; color: #155724; }
-    .no-data {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
-    .empty-state {
-      background: white;
-      border-radius: 8px;
-      padding: 60px 20px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .empty-state h3 {
-      color: var(--pourpre);
-      margin-bottom: 10px;
-      font-size: 1.3rem;
-    }
-    .empty-state p {
-      color: #999;
-      margin-bottom: 20px;
-    }
-    /* ===== MESSAGERIE STYLES ===== */
-    .messaging-wrapper {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 0;
-      height: 600px;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .messaging-sidebar {
-      border-right: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      background: var(--light-bg);
-    }
-    .messaging-header {
-      padding: 15px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .messaging-header h3 {
-      margin: 0 0 10px 0;
-      color: var(--pourpre);
-      font-size: 1.1rem;
-    }
-    .search-conv {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
-    .search-conv input {
-      border: 0;
-      outline: 0;
-      background: transparent;
-      width: 100%;
-      font-family: 'Montserrat', sans-serif;
-      color: #2b2b2b;
-    }
-    .search-conv input::placeholder {
-      color: #999;
-    }
-    .conversations-list {
-      overflow-y: auto;
-      flex: 1;
-    }
-    .conversation-btn {
-      display: flex;
-      gap: 12px;
-      padding: 12px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      align-items: flex-start;
-      text-align: left;
-      color: #2b2b2b;
-      border-bottom: 1px solid #e0e0e0;
-      transition: background 0.3s;
-      width: 100%;
-    }
-    .conversation-btn:hover {
-      background: #f0ebe3;
-    }
-    .conversation-btn.active {
-      background: white;
-      border-left: 3px solid var(--dore);
-    }
-    .conv-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--dore);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 0.9rem;
-      flex: none;
-    }
-    .conv-content {
-      min-width: 0;
-      flex: 1;
-    }
-    .conv-name {
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: #2b2b2b;
-      margin: 0 0 3px 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .conv-preview {
-      font-size: 0.8rem;
-      color: #999;
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .messaging-main {
-      display: flex;
-      flex-direction: column;
-    }
-    .messaging-chat-header {
-      padding: 15px;
-      border-bottom: 1px solid #e0e0e0;
-      background: white;
-    }
-    .messaging-chat-header h3 {
-      margin: 0;
-      color: var(--pourpre);
-      font-size: 1rem;
-    }
-    .messages-box {
-      overflow-y: auto;
-      flex: 1;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .message {
-      display: flex;
-      gap: 8px;
-      max-width: 70%;
-    }
-    .message.sent {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
-    .message.received {
-      align-self: flex-start;
-    }
-    .message-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--dore);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 0.75rem;
-      flex: none;
-    }
-    .message.sent .message-avatar {
-      display: none;
-    }
-    .message-bubble {
-      padding: 10px 15px;
-      border-radius: 12px;
-      word-wrap: break-word;
-      line-height: 1.4;
-      font-size: 0.9rem;
-    }
-    .message.received .message-bubble {
-      background: #f0ebe3;
-      color: #2b2b2b;
-    }
-    .message.sent .message-bubble {
-      background: var(--pourpre);
-      color: white;
-    }
-    .messaging-input-area {
-      padding: 15px;
-      border-top: 1px solid #e0e0e0;
-      background: white;
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    .message-input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      font-family: 'Montserrat', sans-serif;
-      font-size: 0.9rem;
-      resize: none;
-      max-height: 100px;
-    }
-    .message-input:focus {
-      outline: 0;
-      border-color: var(--dore);
-    }
-    .message-input::placeholder {
-      color: #999;
-    }
-    .send-btn {
-      background: var(--pourpre);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-    .send-btn:hover {
-      background: #6b2d5f;
-    }
-    @media (max-width: 768px) {
-      .main-tabs, .sub-tabs {
-        flex-wrap: wrap;
-      }
-      .main-tab-button, .sub-tab-button {
-        padding: 10px 15px;
-        font-size: 0.85rem;
-      }
-      .table {
-        font-size: 0.8rem;
-      }
-      .table th, .table td {
-        padding: 8px;
-      }
-      .messaging-wrapper {
-        grid-template-columns: 1fr;
-        height: 500px;
-      }
-      .messaging-sidebar {
-        display: none;
-      }
-      .message {
-        max-width: 85%;
-      }
-    }
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem;
+      --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
+      --color-bg: #f7f6f2;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #fbfbf9;
+      --color-surface-offset: #f0ede8;
+      --color-border: #d4d1ca;
+      --color-divider: #dedbd5;
+      --color-text: #28251d;
+      --color-text-muted: #6f6c66;
+      --color-text-faint: #9f9b93;
+      --color-text-inverse: #f9f8f4;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-primary-soft: #dcebea;
+      --color-success: #437a22;
+      --color-success-soft: #e1ecd9;
+      --color-warning: #b06a00;
+      --color-warning-soft: #f2e4cf;
+      --color-danger: #a13544;
+      --color-danger-soft: #f3d9dc;
+      --radius-sm: .5rem; --radius-md: .875rem; --radius-lg: 1.25rem; --radius-xl: 1.5rem; --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(25,20,14,.05);
+      --shadow-md: 0 8px 24px rgba(25,20,14,.08);
+      --transition: 180ms cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d; --color-surface-offset: #262422;
+      --color-border: #393836; --color-divider: #302f2d; --color-text: #e4e1db; --color-text-muted: #afaba2;
+      --color-text-faint: #7d7972; --color-text-inverse: #11100f; --color-primary: #4f98a3; --color-primary-hover: #72adb6;
+      --color-primary-soft: #243739; --color-success: #88bb63; --color-success-soft: #273324; --color-warning: #f0b04b;
+      --color-warning-soft: #3d3122; --color-danger: #e1838e; --color-danger-soft: #3f282c; --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+      --shadow-md: 0 8px 24px rgba(0,0,0,.35);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    body { font-family: 'Satoshi', Arial, sans-serif; font-size: var(--text-base); background: var(--color-bg); color: var(--color-text); line-height: 1.5; }
+    button, input, select, textarea { font: inherit; }
+    a, button { transition: all var(--transition); }
+    .dashboard { height: 100dvh; display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; }
+    .sidebar { grid-row: 1 / -1; overflow-y: auto; border-right: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); background: color-mix(in srgb, var(--color-surface) 92%, var(--color-primary) 8%); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
+    .brand { display: flex; align-items: center; gap: var(--space-3); }
+    .brand-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--color-primary-soft); display: grid; place-items: center; color: var(--color-primary); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent); flex: none; }
+    .brand h1 { font-size: var(--text-sm); margin: 0; }
+    .brand p { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
+    .nav-group { display: grid; gap: var(--space-2); }
+    .nav-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin-bottom: var(--space-2); }
+    .nav-item { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: var(--color-text); padding: .85rem 1rem; border-radius: var(--radius-md); background: transparent; min-height: 44px; cursor: pointer; border: none; }
+    .nav-item:hover, .nav-item.active { background: var(--color-surface-2); box-shadow: var(--shadow-sm); }
+    .nav-item.active { color: var(--color-primary); font-weight: 700; }
+    .header { grid-column: 2; position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--color-bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); display: flex; justify-content: space-between; align-items: center; padding: var(--space-4) var(--space-6); }
+    .header-title h2 { margin: 0; font-size: var(--text-xl); }
+    .header-title p { margin: .3rem 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+    .header-actions { display: flex; gap: var(--space-3); align-items: center; }
+    .icon-btn { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-full); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); background: var(--color-surface); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .btn-logout { background: #d32f2f; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-logout:hover { background: #b71c1c; }
+    .btn-primary { background: var(--color-primary); color: white; padding: 10px 20px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-save { background: var(--color-success); color: white; padding: 10px 20px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; margin-top: var(--space-4); }
+    .btn-save:hover { opacity: 0.9; }
+    .btn-danger { background: #d32f2f; color: white; padding: 8px 14px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
+    .main { grid-column: 2; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6); }
+    .page { display: grid; gap: var(--space-6); }
+    .panel { background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); padding: var(--space-6); }
+    .form-group { margin-bottom: var(--space-6); }
+    .form-group label { display: block; margin-bottom: var(--space-2); font-weight: 600; font-size: var(--text-sm); }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+    .checkbox-group { display: flex; align-items: center; gap: var(--space-3); }
+    .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+    .section-title { font-size: var(--text-lg); margin: var(--space-6) 0 var(--space-4) 0; font-weight: 600; }
+    .empty-msg { color: var(--color-text-muted); font-size: var(--text-sm); }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    .photo-upload { border: 2px dashed var(--color-primary); border-radius: var(--radius-md); padding: var(--space-6); text-align: center; cursor: pointer; }
+    .photo-upload:hover { background: var(--color-primary-soft); }
+    .photo-upload input { display: none; }
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+    .photo-item { position: relative; border-radius: var(--radius-md); overflow: hidden; }
+    .photo-item img { width: 100%; height: 120px; object-fit: cover; }
+    .photo-item-remove { position: absolute; top: 5px; right: 5px; background: #d32f2f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
+    .annonce-card { background: var(--color-bg); padding: var(--space-4); border-radius: var(--radius-md); border-left: 4px solid var(--color-primary); margin-bottom: var(--space-4); }
+    .annonce-card h4 { margin: 0 0 var(--space-2) 0; font-size: var(--text-sm); font-weight: 600; }
+    .annonce-meta { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-2); }
+    .visite-card { background: var(--color-bg); padding: var(--space-4); border-radius: var(--radius-md); border-left: 4px solid var(--color-warning); margin-bottom: var(--space-4); }
+    .visite-status { display: inline-block; font-size: var(--text-xs); padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+    .status-attente { background: var(--color-warning-soft); color: var(--color-warning); }
+    .status-accepte { background: var(--color-success-soft); color: var(--color-success); }
+    .status-refuse { background: var(--color-danger-soft); color: var(--color-danger); }
   </style>
 </head>
 <body>
-<header class="header">
-  <div class="header-content">
-    <div class="logo"><strong>ALB</strong> Immobilier</div>
-    <div class="header-actions">
-      <span id="user-role-badge" style="color: var(--pourpre); font-weight: 600;"></span>
-      <button class="btn-logout" onclick="logout()">🔐 Déconnexion</button>
-    </div>
-  </div>
-</header>
-<div class="container">
-  <h1 class="page-title">👤 Mon Espace ALB</h1>
-  <div class="user-card">
-    <h3>Mes informations</h3>
-    <div class="user-info">
-      <div class="user-info-item">
-        <span class="user-info-label">Prénom</span>
-        <span class="user-info-value" id="prenom-display">-</span>
-      </div>
-      <div class="user-info-item">
-        <span class="user-info-label">Nom</span>
-        <span class="user-info-value" id="nom-display">-</span>
-      </div>
-      <div class="user-info-item">
-        <span class="user-info-label">Email</span>
-        <span class="user-info-value" id="email-display">-</span>
-      </div>
-      <div class="user-info-item">
-        <span class="user-info-label">Téléphone</span>
-        <span class="user-info-value" id="telephone-display">-</span>
-      </div>
-      <div class="user-info-item">
-        <span class="user-info-label">Rôle</span>
-        <span class="user-info-value" id="role-display">-</span>
-      </div>
-    </div>
-  </div>
-  <div class="main-tabs">
-    <button class="main-tab-button active" onclick="switchMainTab('tab-particuliers-acheteurs')">👤 Acheteur</button>
-    <button class="main-tab-button" onclick="switchMainTab('tab-particuliers-vendeurs')">🏠 Vendeur</button>
-    <button class="main-tab-button" onclick="switchMainTab('tab-courtiers')">💼 Courtier</button>
-    <button class="main-tab-button" onclick="switchMainTab('tab-artisans')">🔨 Artisan</button>
-    <button class="main-tab-button" onclick="switchMainTab('tab-agents')">🏢 Agent/Mandataire</button>
-    <button class="main-tab-button" onclick="switchMainTab('tab-messagerie')">💬 Messagerie</button>
-  </div>
-  <div id="tab-particuliers-acheteurs" class="main-tab-content active">
-    <div class="sub-tabs">
-      <button class="sub-tab-button active" onclick="switchSubTab('acheteur', 'financement')">📊 Projets Financement</button>
-      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'travaux')">🏗️ Projets Travaux</button>
-      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'visites')">📅 Organisation Visites</button>
-      <button class="sub-tab-button" onclick="switchSubTab('acheteur', 'contacts')">👥 Contacts Agents</button>
-    </div>
-    <div id="acheteur-financement" class="sub-tab-content active">
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Statut</th>
-              <th>Budget</th>
-              <th>Prêt</th>
-              <th>Endettement</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="acheteur-financement-tbody">
-            <tr><td colspan="6" class="loading">Chargement...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div id="acheteur-travaux" class="sub-tab-content">
-      <div class="empty-state">
-        <h3>🏗️ Projets Travaux</h3>
-        <p>Aucun projet travaux pour le moment</p>
-        <button class="btn btn-primary" onclick="alert('À développer post-launch')">+ Créer un projet</button>
-      </div>
-    </div>
-    <div id="acheteur-visites" class="sub-tab-content">
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Bien</th>
-              <th>Localisation</th>
-              <th>Prix</th>
-              <th>Date demandée</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="acheteur-visites-tbody">
-            <tr><td colspan="6" class="loading">Chargement...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div id="acheteur-contacts" class="sub-tab-content">
-      <div class="empty-state">
-        <h3>👥 Contacts Agents/Mandataires</h3>
-        <p>Aucun contact pour le moment</p>
-        <p style="font-size: 0.9rem; color: #999;">Les contacts apparaîtront après avoir pris un RDV avec un agent</p>
-      </div>
-    </div>
-  </div>
-  <div id="tab-particuliers-vendeurs" class="main-tab-content">
-    <div class="sub-tabs">
-      <button class="sub-tab-button active" onclick="switchSubTab('vendeur', 'annonces')">📋 Mes Annonces</button>
-      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'financement')">📊 Projets Financement</button>
-      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'travaux')">🏗️ Projets Travaux</button>
-      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'visites')">📅 Organisation Visites</button>
-      <button class="sub-tab-button" onclick="switchSubTab('vendeur', 'contacts')">👥 Contacts Agents</button>
-    </div>
-   <div id="vendeur-annonces" class="sub-tab-content active">
-      <div style="margin-bottom: 2rem; padding: 1rem; background: #f5f3ee; border-radius: 8px; text-align: center;">
-        <a href="formulaire-annonce.html" style="display: inline-block; padding: 12px 32px; background: #4B1A3E; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s;">
-          ➕ Créer une annonce
-        </a>
-      </div>
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Titre</th>
-              <th>Prix</th>
-              <th>Localisation</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="vendeur-annonces-tbody">
-            <tr><td colspan="5" class="loading">Chargement...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div id="vendeur-financement" class="sub-tab-content">
-      <div class="empty-state">
-        <h3>📊 Projets Financement</h3>
-        <p>Aucun projet financement pour le moment</p>
-      </div>
-    </div>
-    <div id="vendeur-travaux" class="sub-tab-content">
-      <div class="empty-state">
-        <h3>🏗️ Projets Travaux</h3>
-        <p>Aucun projet travaux pour le moment</p>
-      </div>
-    </div>
-    <div id="vendeur-visites" class="sub-tab-content">
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Bien</th>
-              <th>Acheteur</th>
-              <th>Email</th>
-              <th>Date demandée</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="vendeur-visites-tbody">
-            <tr><td colspan="6" class="loading">Chargement...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div id="vendeur-contacts" class="sub-tab-content">
-      <div class="empty-state">
-        <h3>👥 Contacts Agents/Mandataires</h3>
-        <p>Aucun contact pour le moment</p>
-      </div>
-    </div>
-  </div>
-  <div id="tab-courtiers" class="main-tab-content">
-    <div class="empty-state">
-      <h3>💼 Tableau de bord Courtier</h3>
-      <p>Accédez au dashboard courtier complet avec leads, profil et horaires</p>
-      <button class="btn btn-primary" onclick="window.location.href='dashboard-courtier.html'">📊 Ouvrir le Dashboard</button>
-    </div>
-  </div>
-  <div id="tab-artisans" class="main-tab-content">
-    <div class="empty-state">
-      <h3>🔨 Modifier votre profil Artisan</h3>
-      <p>Accédez à la vitrine des professionnels pour gérer vos informations</p>
-      <button class="btn btn-primary" onclick="window.location.href='vitrine-pros.html?role=artisan'">📝 Modifier mon profil</button>
-    </div>
-  </div>
-  <div id="tab-agents" class="main-tab-content">
-    <div class="empty-state">
-      <h3>🏢 Modifier votre profil Agent/Mandataire</h3>
-      <p>Accédez à la vitrine des professionnels pour gérer vos informations</p>
-      <button class="btn btn-primary" onclick="window.location.href='vitrine-pros.html?role=agent'">📝 Modifier mon profil</button>
-    </div>
-  </div>
 
-  <div id="tab-messagerie" class="main-tab-content">
-    <div class="messaging-wrapper">
-      <!-- SIDEBAR CONVERSATIONS -->
-      <div class="messaging-sidebar">
-        <div class="messaging-header">
-          <h3>Conversations</h3>
-          <div class="search-conv">
-            <span>🔍</span>
-            <input type="text" id="conv-search" placeholder="Chercher..." />
+<div class="dashboard">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div><h1>ALB</h1><p>Immobilier</p></div>
+    </div>
+    <nav class="nav-group" id="nav-container"></nav>
+    <div style="flex: 1;"></div>
+    <button class="btn-logout" onclick="logout()">🚪 Déconnexion</button>
+  </aside>
+
+  <header class="header">
+    <div class="header-title">
+      <h2 id="page-title">Espace ALB</h2>
+      <p id="page-desc">Gère tes données</p>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page">
+      <!-- RECHERCHE ANNONCES -->
+      <div id="tab-recherche" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">🔍 Rechercher une Annonce</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Budget (€)</label>
+              <input type="number" id="search-budget" placeholder="Max: 500000">
+            </div>
+            <div class="form-group">
+              <label>Surface (m²)</label>
+              <input type="number" id="search-surface" placeholder="Min: 50">
+            </div>
           </div>
-        </div>
-        <div class="conversations-list" id="conversations-list">
-          <div style="padding: 20px; color: #999; text-align: center;">Chargement...</div>
+          <button class="btn-primary" onclick="searchAnnonces()" style="width: 100%; margin-top: var(--space-4);">🔎 Rechercher</button>
+          <div id="annonces-list" style="margin-top: var(--space-6);"></div>
         </div>
       </div>
-      <!-- MESSAGES AREA -->
-      <div class="messaging-main">
-        <div class="messaging-chat-header">
-          <h3 id="chat-name">Sélectionner une conversation</h3>
+
+      <!-- MES ANNONCES (VENDEUR) -->
+      <div id="tab-mes-annonces" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">📋 Mes Annonces</h3>
+          <div id="annonce-form-container"></div>
         </div>
-        <div class="messages-box" id="messages-box">
-          <div style="text-align: center; color: #999; padding: 20px;">Sélectionnez une conversation</div>
+      </div>
+
+      <!-- DISPONIBILITÉS VENDEUR -->
+      <div id="tab-disponibilites" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">📅 Mes Disponibilités (Réception Acheteurs)</h3>
+          <div class="form-group">
+            <label>Horaires de réception</label>
+            <textarea id="dispo-horaires" placeholder="Ex: Lun-Ven: 14h-18h&#10;Sam: 10h-17h&#10;Dim: Sur RDV"></textarea>
+          </div>
+          <button class="btn-save" onclick="saveDisponibilites()">💾 Enregistrer</button>
         </div>
-        <div class="messaging-input-area">
-          <textarea class="message-input" id="message-input" placeholder="Écris un message..." rows="1"></textarea>
-          <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+
+      <!-- PLANNING VENDEUR -->
+      <div id="tab-planning-vendeur" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">📅 Mes Visites (Vendeur)</h3>
+          <div id="planning-vendeur-list"></div>
+        </div>
+      </div>
+
+      <!-- MES DEMANDES VISITE (ACHETEUR) -->
+      <div id="tab-mes-demandes" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">📩 Mes Demandes de Visite</h3>
+          <div id="demandes-list"></div>
+        </div>
+      </div>
+
+      <!-- PLANNING ACHETEUR -->
+      <div id="tab-planning-acheteur" class="tab-section">
+        <div class="panel">
+          <h3 class="section-title">📅 Mes Visites Confirmées (Acheteur)</h3>
+          <div id="planning-acheteur-list"></div>
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="supabase-client.js"></script>
 <script>
-let currentUserId = null;
-let userRole = null;
-let allConversations = [];
-let currentConversationId = null;
-let allMessages = [];
-let messagesSubscription = null;
-let conversationsSubscription = null;
+  let currentUser = null;
+  let userData = null;
+  let uploadedPhotos = [];
+  let toutesAnnonces = [];
 
-async function initPage() {
-  const userId = localStorage.getItem('alb_user');
-  if (!userId) {
-    window.location.href = 'login.html';
-    return;
+  async function init() {
+    const localUser = localStorage.getItem('alb_user');
+    if (localUser) {
+      currentUser = { id: localUser };
+    } else {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = '/login.html';
+        return;
+      }
+      currentUser = session.user;
+    }
+    await loadUserInfo();
   }
-  currentUserId = userId;
-  try {
+
+  async function loadUserInfo() {
     const { data, error } = await window.supabaseClient
       .from('profiles')
-      .select('email, nom, prenom, telephone, role, est_acquereur, est_vendeur')
-      .eq('id', userId)
+      .select('*')
+      .eq('id', currentUser.id)
       .single();
-    if (error || !data) {
-      console.error('Erreur chargement profil:', error);
-      alert('Erreur: impossible de charger le profil');
-      return;
-    }
-    userRole = data.role;
-    
-    document.getElementById('prenom-display').textContent = data.prenom || '-';
-    document.getElementById('nom-display').textContent = data.nom || '-';
-    document.getElementById('email-display').textContent = data.email || '-';
-    document.getElementById('telephone-display').textContent = data.telephone || '-';
-    document.getElementById('role-display').textContent = data.role || '-';
-    document.getElementById('user-role-badge').textContent = data.role?.toUpperCase() || '';
-    
-    if (data.est_acquereur) {
-      loadAcheteurData();
-    }
-    if (data.est_vendeur) {
-      loadVendeurData();
-    }
-    // Charger les conversations pour la messagerie
-    loadConversations();
-  } catch (error) {
-    console.error('Erreur init:', error);
-  }
-}
-
-function switchMainTab(tabId) {
-  document.querySelectorAll('.main-tab-content').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.main-tab-button').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  event.target.classList.add('active');
-}
-
-function switchSubTab(type, subTabId) {
-  const selector = type === 'acheteur' ? `#acheteur-${subTabId}` : `#vendeur-${subTabId}`;
-  const buttonSelector = `.sub-tab-button`;
-  
-  document.querySelectorAll(`[id^="${type}-"]`).forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll(buttonSelector).forEach(btn => btn.classList.remove('active'));
-  
-  document.querySelector(selector).classList.add('active');
-  event.target.classList.add('active');
-}
-
-async function loadAcheteurData() {
-  try {
-    const { data: demandes } = await window.supabaseClient
-      .from('demandes_financement')
-      .select('id, statut, budget_max, montant_emprunt, endettement_ratio, created_at')
-      .eq('acheteur_id', currentUserId);
-    const tbody = document.getElementById('acheteur-financement-tbody');
-    if (demandes && demandes.length > 0) {
-      tbody.innerHTML = demandes.map(d => `
-        <tr>
-          <td><span class="status-badge status-${d.statut}">${d.statut}</span></td>
-          <td>${d.budget_max?.toLocaleString()}€</td>
-          <td>${d.montant_emprunt?.toLocaleString()}€</td>
-          <td>${d.endettement_ratio}%</td>
-          <td>${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
-          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button></td>
-        </tr>
-      `).join('');
-    } else {
-      tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de financement</td></tr>';
-    }
-    const { data: visites } = await window.supabaseClient
-      .from('visites')
-      .select('id, bien_id, date_visite, statut, biens_immobiliers(titre, prix_vente, ville, code_postal)')
-      .eq('acheteur_id', currentUserId);
-    const visitesBody = document.getElementById('acheteur-visites-tbody');
-    if (visites && visites.length > 0) {
-      visitesBody.innerHTML = visites.map(v => `
-        <tr>
-          <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
-          <td>${v.biens_immobiliers?.code_postal} ${v.biens_immobiliers?.ville}</td>
-          <td>${v.biens_immobiliers?.prix_vente?.toLocaleString()}€</td>
-          <td>${new Date(v.date_visite).toLocaleDateString('fr-FR')}</td>
-          <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
-          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Détails</button></td>
-        </tr>
-      `).join('');
-    } else {
-      visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune visite demandée</td></tr>';
-    }
-  } catch (error) {
-    console.error('Erreur chargement acheteur:', error);
-  }
-}
-
-async function loadVendeurData() {
-  try {
-    const { data: annonces } = await window.supabaseClient
-      .from('biens_immobiliers')
-      .select('id, titre, prix_vente, ville, code_postal, statut')
-      .eq('vendeur_id', currentUserId);
-    const annoncesBody = document.getElementById('vendeur-annonces-tbody');
-    if (annonces && annonces.length > 0) {
-      annoncesBody.innerHTML = annonces.map(a => `
-        <tr>
-          <td>${a.titre || 'Sans titre'}</td>
-          <td>${a.prix_vente?.toLocaleString()}€</td>
-          <td>${a.code_postal} ${a.ville}</td>
-          <td><span class="status-badge status-${a.statut}">${a.statut}</span></td>
-          <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Gérer</button></td>
-        </tr>
-      `).join('');
-    } else {
-      annoncesBody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune annonce</td></tr>';
-    }
-    const { data: visites } = await window.supabaseClient
-      .from('visites')
-      .select('id, bien_id, date_visite, statut, biens_immobiliers(titre), profiles:acheteur_id(email, prenom, nom)')
-      .eq('vendeur_id', currentUserId);
-    const visitesBody = document.getElementById('vendeur-visites-tbody');
-    if (visites && visites.length > 0) {
-      visitesBody.innerHTML = visites.map(v => `
-        <tr>
-          <td>${v.biens_immobiliers?.titre || 'N/A'}</td>
-          <td>${v.profiles?.prenom} ${v.profiles?.nom}</td>
-          <td>${v.profiles?.email}</td>
-          <td>${new Date(v.date_visite).toLocaleDateString('fr-FR')}</td>
-          <td><span class="status-badge status-${v.statut}">${v.statut}</span></td>
-          <td>
-            ${v.statut === 'en_attente' ? `
-              <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #4caf50; color: white;">✅</button>
-              <button class="btn" style="padding: 5px 10px; font-size: 0.8rem; background: #d32f2f; color: white;">❌</button>
-            ` : `<button class="btn" style="padding: 5px 10px; font-size: 0.8rem;">Voir</button>`}
-          </td>
-        </tr>
-      `).join('');
-    } else {
-      visitesBody.innerHTML = '<tr><td colspan="6" class="no-data">Aucune demande de visite</td></tr>';
-    }
-  } catch (error) {
-    console.error('Erreur chargement vendeur:', error);
-  }
-}
-
-// ===== MESSAGERIE CODE =====
-async function loadConversations() {
-  try {
-    const { data: conversations, error } = await window.supabaseClient
-      .from('conversations')
-      .select(`
-        id,
-        contexte,
-        date_creation,
-        initiateur_id,
-        conversation_participants(profile_id)
-      `)
-      .or(`initiateur_id.eq.${currentUserId},conversation_participants.profile_id.eq.${currentUserId}`)
-      .order('date_creation', { ascending: false });
 
     if (error) {
-      console.error('Erreur chargement conversations:', error);
+      console.error('Erreur:', error);
       return;
     }
 
-    allConversations = conversations || [];
-    displayConversationsList();
-    subscribeToConversations();
-  } catch (error) {
-    console.error('Erreur:', error);
-  }
-}
-
-function displayConversationsList() {
-  const container = document.getElementById('conversations-list');
-  
-  if (allConversations.length === 0) {
-    container.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">Aucune conversation</div>';
-    return;
-  }
-
-  container.innerHTML = allConversations.map((conv, idx) => {
-    const initials = conv.contexte.substring(0, 2).toUpperCase();
+    userData = data;
     
-    return `
-      <button class="conversation-btn ${idx === 0 ? 'active' : ''}" 
-              onclick="selectConversation(this, '${conv.id}', '${conv.contexte}')">
-        <div class="conv-avatar">${initials}</div>
-        <div class="conv-content">
-          <p class="conv-name">${conv.contexte}</p>
-          <p class="conv-preview">${new Date(conv.date_creation).toLocaleDateString('fr-FR')}</p>
+    const isPro = ['courtier', 'artisan', 'agent', 'mandataire'].includes(userData.role);
+    if (isPro) {
+      window.location.href = '/alb-final/dashboard-courtier-complet.html';
+      return;
+    }
+
+    uploadedPhotos = userData.annonce_photos ? JSON.parse(userData.annonce_photos) : [];
+    
+    renderLayout();
+    renderNavigation();
+    if (userData.est_vendeur) renderAnnonceForm();
+    loadAnnoncesForSearch();
+    loadVisites();
+  }
+
+  function renderLayout() {
+    document.querySelector('.brand p').textContent = 'Particulier';
+  }
+
+  function renderNavigation() {
+    const container = document.getElementById('nav-container');
+    const items = [];
+
+    if (userData.est_acquereur) {
+      items.push('<button class="nav-item active" onclick="switchTab(\'recherche\')">🔍 Rechercher</button>');
+    }
+    
+    if (userData.est_vendeur) {
+      items.push('<button class="nav-item' + (!userData.est_acquereur ? ' active' : '') + '" onclick="switchTab(\'mes-annonces\')">📋 Mes Annonces</button>');
+      items.push('<button class="nav-item" onclick="switchTab(\'disponibilites\')">📅 Disponibilités</button>');
+      items.push('<button class="nav-item" onclick="switchTab(\'planning-vendeur\')">📅 Planning Vendeur</button>');
+    }
+
+    if (userData.est_acquereur) {
+      items.push('<button class="nav-item" onclick="switchTab(\'mes-demandes\')">📩 Mes Demandes</button>');
+      items.push('<button class="nav-item" onclick="switchTab(\'planning-acheteur\')">📅 Planning Acheteur</button>');
+    }
+
+    container.innerHTML = '<div class="nav-group">' + items.join('') + '</div>';
+    
+    const firstTab = userData.est_acquereur ? 'recherche' : 'mes-annonces';
+    switchTab(firstTab);
+  }
+
+  async function loadAnnoncesForSearch() {
+    const { data } = await window.supabaseClient
+      .from('profiles')
+      .select('id, prenom, nom, description, prix, surface_m2, dpe, ges, annonce_photos')
+      .eq('est_vendeur', true);
+    
+    toutesAnnonces = data || [];
+  }
+
+  async function searchAnnonces() {
+    const budget = document.getElementById('search-budget').value || 999999999;
+    const surface = document.getElementById('search-surface').value || 0;
+    
+    const filtered = toutesAnnonces.filter(a => 
+      parseInt(a.prix || 0) <= parseInt(budget) && 
+      parseInt(a.surface_m2 || 0) >= parseInt(surface)
+    );
+
+    const html = filtered.map(a => {
+      const photos = a.annonce_photos ? JSON.parse(a.annonce_photos) : [];
+      return `
+        <div class="annonce-card">
+          <h4>${a.prenom} ${a.nom}</h4>
+          <div class="annonce-meta">
+            💰 ${a.prix}€ | 📐 ${a.surface_m2}m² | DPE: ${a.dpe || '-'} | GES: ${a.ges || '-'}
+          </div>
+          <p style="margin: 0 0 var(--space-3) 0; font-size: var(--text-sm);">${a.description || 'Pas de description'}</p>
+          ${photos.length > 0 ? `<img src="${photos[0]}" style="width: 100%; height: 150px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: var(--space-3);">` : ''}
+          <button class="btn-primary" onclick="openDemande('${a.id}', '${a.prenom} ${a.nom}')" style="width: 100%;">📧 Demander Visite</button>
         </div>
-      </button>
-    `;
-  }).join('');
+      `;
+    }).join('');
 
-  if (allConversations.length > 0) {
-    selectConversation(container.querySelector('.conversation-btn'), allConversations[0].id, allConversations[0].contexte);
-  }
-}
-
-async function selectConversation(btn, convId, convName) {
-  document.querySelectorAll('.conversation-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  
-  currentConversationId = convId;
-  document.getElementById('chat-name').textContent = convName;
-  
-  await loadMessages(convId);
-  subscribeToMessages(convId);
-}
-
-async function loadMessages(convId) {
-  try {
-    const { data, error } = await window.supabaseClient
-      .from('messages')
-      .select(`
-        id,
-        conversation_id,
-        auteur_id,
-        contenu,
-        date_envoi,
-        lu,
-        profiles:auteur_id(prenom, nom)
-      `)
-      .eq('conversation_id', convId)
-      .order('date_envoi', { ascending: true });
-
-    if (error) throw error;
-
-    allMessages = data || [];
-    displayMessages();
-  } catch (error) {
-    console.error('Erreur chargement messages:', error);
-  }
-}
-
-function displayMessages() {
-  const messagesBox = document.getElementById('messages-box');
-  
-  if (allMessages.length === 0) {
-    messagesBox.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Aucun message</div>';
-    return;
+    document.getElementById('annonces-list').innerHTML = html || '<p class="empty-msg">Aucune annonce trouvée</p>';
   }
 
-  messagesBox.innerHTML = allMessages.map(msg => {
-    const isSent = msg.auteur_id === currentUserId;
-    const senderName = msg.profiles ? `${msg.profiles.prenom} ${msg.profiles.nom}` : 'Anonyme';
-    const initials = senderName.substring(0, 2).toUpperCase();
-    
-    return `
-      <div class="message ${isSent ? 'sent' : 'received'}">
-        ${!isSent ? `<div class="message-avatar">${initials}</div>` : ''}
-        <div class="message-bubble">${msg.contenu}</div>
+  function renderAnnonceForm() {
+    const form = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="description" placeholder="Décrivez votre bien...">${userData.description || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Prix (€)</label>
+          <input type="number" id="prix" value="${userData.prix || ''}" placeholder="250000">
+        </div>
+        <div class="form-group">
+          <label>Surface (m²)</label>
+          <input type="number" id="surface_m2" value="${userData.surface_m2 || ''}" placeholder="85">
+        </div>
+        <div class="form-group">
+          <label>DPE</label>
+          <select id="dpe">
+            <option value="">--</option>
+            <option value="A" ${userData.dpe === 'A' ? 'selected' : ''}>A</option>
+            <option value="B" ${userData.dpe === 'B' ? 'selected' : ''}>B</option>
+            <option value="C" ${userData.dpe === 'C' ? 'selected' : ''}>C</option>
+            <option value="D" ${userData.dpe === 'D' ? 'selected' : ''}>D</option>
+            <option value="E" ${userData.dpe === 'E' ? 'selected' : ''}>E</option>
+            <option value="F" ${userData.dpe === 'F' ? 'selected' : ''}>F</option>
+            <option value="G" ${userData.dpe === 'G' ? 'selected' : ''}>G</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>GES</label>
+          <select id="ges">
+            <option value="">--</option>
+            <option value="A" ${userData.ges === 'A' ? 'selected' : ''}>A</option>
+            <option value="B" ${userData.ges === 'B' ? 'selected' : ''}>B</option>
+            <option value="C" ${userData.ges === 'C' ? 'selected' : ''}>C</option>
+            <option value="D" ${userData.ges === 'D' ? 'selected' : ''}>D</option>
+            <option value="E" ${userData.ges === 'E' ? 'selected' : ''}>E</option>
+            <option value="F" ${userData.ges === 'F' ? 'selected' : ''}>F</option>
+            <option value="G" ${userData.ges === 'G' ? 'selected' : ''}>G</option>
+          </select>
+        </div>
       </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="sous_compromis" ${userData.sous_compromis ? 'checked' : ''}>
+        <label for="sous_compromis" style="margin: 0;">Sous compromis</label>
+      </div>
+
+      <h3 class="section-title">📸 Photos (max 10)</h3>
+      <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
+        <p>📤 Cliquer pour ajouter (${uploadedPhotos.length}/10)</p>
+        <input type="file" id="photo-input" multiple accept="image/*" onchange="handlePhotoUpload(event)">
+      </div>
+
+      <div class="photo-grid" id="photo-grid">
+        ${uploadedPhotos.map((url, idx) => `
+          <div class="photo-item">
+            <img src="${url}" alt="Photo">
+            <button class="photo-item-remove" onclick="removePhoto(${idx})">×</button>
+          </div>
+        `).join('')}
+      </div>
+
+      <button class="btn-save" onclick="saveAnnonce()">💾 Enregistrer</button>
     `;
-  }).join('');
+    document.getElementById('annonce-form-container').innerHTML = form;
+  }
 
-  messagesBox.scrollTop = messagesBox.scrollHeight;
-}
+  async function handlePhotoUpload(event) {
+    const files = Array.from(event.target.files);
+    if (uploadedPhotos.length + files.length > 10) {
+      alert('Max 10 photos!');
+      return;
+    }
 
-async function sendMessage() {
-  const input = document.getElementById('message-input');
-  const contenu = input.value.trim();
-  
-  if (!contenu || !currentConversationId) return;
+    for (let file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
+      const { error: uploadError } = await window.supabaseClient.storage.from('annonces').upload(fileName, file);
+      if (uploadError) continue;
+      const { data } = window.supabaseClient.storage.from('annonces').getPublicUrl(fileName);
+      uploadedPhotos.push(data.publicUrl);
+    }
+    renderPhotoGrid();
+  }
 
-  try {
-    const { error } = await window.supabaseClient
-      .from('messages')
-      .insert({
-        conversation_id: currentConversationId,
-        auteur_id: currentUserId,
-        contenu: contenu,
-        date_envoi: new Date().toISOString(),
-        lu: false,
-        topic: 'message'
-      });
+  function removePhoto(idx) {
+    uploadedPhotos.splice(idx, 1);
+    renderPhotoGrid();
+  }
 
-    if (error) throw error;
+  function renderPhotoGrid() {
+    const grid = document.getElementById('photo-grid');
+    if (!grid) return;
+    grid.innerHTML = uploadedPhotos.map((url, idx) => `
+      <div class="photo-item">
+        <img src="${url}" alt="Photo">
+        <button class="photo-item-remove" onclick="removePhoto(${idx})">×</button>
+      </div>
+    `).join('');
+  }
 
-    input.value = '';
-    input.style.height = 'auto';
+  async function saveAnnonce() {
+    const { error } = await window.supabaseClient.from('profiles').update({
+      description: document.getElementById('description').value,
+      prix: document.getElementById('prix').value,
+      surface_m2: document.getElementById('surface_m2').value,
+      dpe: document.getElementById('dpe').value,
+      ges: document.getElementById('ges').value,
+      sous_compromis: document.getElementById('sous_compromis').checked,
+      annonce_photos: JSON.stringify(uploadedPhotos),
+    }).eq('id', currentUser.id);
+
+    alert(error ? '❌ Erreur: ' + error.message : '✅ Annonce enregistrée!');
+  }
+
+  async function saveDisponibilites() {
+    const { error } = await window.supabaseClient.from('profiles').update({
+      disponibilites_vendeur: document.getElementById('dispo-horaires').value,
+    }).eq('id', currentUser.id);
+
+    alert(error ? '❌ Erreur: ' + error.message : '✅ Disponibilités enregistrées!');
+  }
+
+  function openDemande(vendeurId, vendeurNom) {
+    const date = prompt(`Quelle date pour visiter chez ${vendeurNom}? (YYYY-MM-DD)`);
+    if (!date) return;
+    const heure = prompt('Quelle heure? (HH:MM)');
+    if (!heure) return;
     
-    await loadMessages(currentConversationId);
-  } catch (error) {
-    console.error('Erreur envoi message:', error);
-    alert('❌ Erreur envoi message');
-  }
-}
-
-function subscribeToConversations() {
-  if (conversationsSubscription) {
-    conversationsSubscription.unsubscribe();
+    submitDemande(vendeurId, date, heure);
   }
 
-  conversationsSubscription = window.supabaseClient
-    .channel(`conversations:${currentUserId}`)
-    .on('postgres_changes', 
-      { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'conversations'
-      },
-      (payload) => {
-        console.log('🔄 Nouvelle conversation:', payload);
-        loadConversations();
-      }
-    )
-    .subscribe();
-}
+  async function submitDemande(vendeurId, date, heure) {
+    const { error } = await window.supabaseClient.from('visites_programmees').insert({
+      vendeur_id: vendeurId,
+      acheteur_id: currentUser.id,
+      date_visite: date,
+      heure_visite: heure,
+      statut: 'en_attente',
+    });
 
-function subscribeToMessages(convId) {
-  if (messagesSubscription) {
-    messagesSubscription.unsubscribe();
+    if (error) {
+      alert('❌ Erreur: ' + error.message);
+    } else {
+      alert('✅ Demande envoyée!');
+      loadVisites();
+    }
   }
 
-  messagesSubscription = window.supabaseClient
-    .channel(`messages:${convId}`)
-    .on('postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${convId}`
-      },
-      (payload) => {
-        console.log('💬 Nouveau message:', payload);
-        loadMessages(convId);
-      }
-    )
-    .subscribe();
-}
+  async function loadVisites() {
+    const { data: visites } = await window.supabaseClient
+      .from('visites_programmees')
+      .select('*, profiles!vendeur_id(prenom, nom), profiles!acheteur_id(prenom, nom)')
+      .or(`vendeur_id.eq.${currentUser.id},acheteur_id.eq.${currentUser.id}`);
 
-window.addEventListener('beforeunload', () => {
-  if (messagesSubscription) messagesSubscription.unsubscribe();
-  if (conversationsSubscription) conversationsSubscription.unsubscribe();
-});
+    if (userData.est_vendeur) {
+      const vendeur = visites?.filter(v => v.vendeur_id === currentUser.id) || [];
+      document.getElementById('planning-vendeur-list').innerHTML = vendeur.map(v => `
+        <div class="visite-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h4 style="margin: 0;">Visite: ${v.profiles[1]?.prenom} ${v.profiles[1]?.nom}</h4>
+              <p style="margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-sm);">${v.date_visite} à ${v.heure_visite}</p>
+            </div>
+            <div>
+              <span class="visite-status status-${v.statut}">${v.statut === 'en_attente' ? '⏳ En attente' : v.statut === 'acceptee' ? '✅ Acceptée' : '❌ Refusée'}</span>
+            </div>
+          </div>
+          ${v.statut === 'en_attente' ? `
+            <button class="btn-primary" onclick="acceptVisite('${v.id}')" style="margin-top: var(--space-2); margin-right: var(--space-2);">✅ Accepter</button>
+            <button class="btn-danger" onclick="refuseVisite('${v.id}')" style="margin-top: var(--space-2);">❌ Refuser</button>
+          ` : ''}
+        </div>
+      `).join('') || '<p class="empty-msg">Aucune visite</p>';
+    }
 
-document.getElementById('message-input')?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey && document.getElementById('message-input') === document.activeElement) {
-    e.preventDefault();
-    sendMessage();
+    if (userData.est_acquereur) {
+      const acheteur = visites?.filter(v => v.acheteur_id === currentUser.id) || [];
+      
+      document.getElementById('demandes-list').innerHTML = acheteur.map(v => `
+        <div class="visite-card">
+          <h4 style="margin: 0;">Demande chez ${v.profiles[0]?.prenom} ${v.profiles[0]?.nom}</h4>
+          <p style="margin: 4px 0; color: var(--color-text-muted); font-size: var(--text-sm);">${v.date_visite} à ${v.heure_visite}</p>
+          <span class="visite-status status-${v.statut}">${v.statut === 'en_attente' ? '⏳ En attente' : v.statut === 'acceptee' ? '✅ Acceptée' : '❌ Refusée'}</span>
+        </div>
+      `).join('') || '<p class="empty-msg">Aucune demande</p>';
+
+      const acceptees = visites?.filter(v => v.acheteur_id === currentUser.id && v.statut === 'acceptee') || [];
+      document.getElementById('planning-acheteur-list').innerHTML = acceptees.map(v => `
+        <div class="visite-card">
+          <h4 style="margin: 0;">Visite confirmée chez ${v.profiles[0]?.prenom} ${v.profiles[0]?.nom}</h4>
+          <p style="margin: 4px 0; color: var(--color-text-muted); font-size: var(--text-sm);">📅 ${v.date_visite} à ${v.heure_visite}</p>
+        </div>
+      `).join('') || '<p class="empty-msg">Aucune visite confirmée</p>';
+    }
   }
-});
 
-document.getElementById('message-input')?.addEventListener('input', function() {
-  this.style.height = 'auto';
-  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-});
+  async function acceptVisite(visteId) {
+    const { error } = await window.supabaseClient.from('visites_programmees').update({ statut: 'acceptee' }).eq('id', visteId);
+    if (!error) {
+      alert('✅ Visite acceptée!');
+      loadVisites();
+    }
+  }
 
-document.getElementById('conv-search')?.addEventListener('input', (e) => {
-  const query = e.target.value.toLowerCase();
-  document.querySelectorAll('.conversation-btn').forEach(btn => {
-    const name = btn.querySelector('.conv-name').textContent.toLowerCase();
-    btn.style.display = name.includes(query) || query === '' ? 'flex' : 'none';
-  });
-});
+  async function refuseVisite(visteId) {
+    const { error } = await window.supabaseClient.from('visites_programmees').update({ statut: 'refusee' }).eq('id', visteId);
+    if (!error) {
+      alert('❌ Visite refusée');
+      loadVisites();
+    }
+  }
 
-function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabId)?.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${tabId}')"]`)?.classList.add('active');
+  }
+
+  function toggleTheme() {
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  function logout() {
     localStorage.removeItem('alb_user');
-    window.location.href = 'index.html';
+    window.location.href = '/login.html';
   }
-}
 
-initPage();
+  init();
 </script>
+
 </body>
 </html>
