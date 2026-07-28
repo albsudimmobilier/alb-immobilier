@@ -18,7 +18,8 @@
       background: var(--creme);
       color: #2b2b2b;
     }
-    /* HEADER + NAV */
+    
+    /* HEADER */
     .header {
       background: white;
       border-bottom: 3px solid var(--dore);
@@ -84,6 +85,7 @@
     .btn-connexion:hover {
       background: #6b2d5f;
     }
+    
     .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
     .page-title {
       font-family: 'Playfair Display';
@@ -98,13 +100,110 @@
       margin-bottom: 40px;
       font-size: 1rem;
     }
+    
+    /* SECTION VENDEUR */
+    .section-vendeur {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 40px;
+      border-top: 4px solid var(--dore);
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--pourpre);
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      background: var(--dore);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+    .btn-primary:hover {
+      background: #9a7a32;
+      transform: translateY(-2px);
+    }
+    
+    /* TABLE ANNONCES */
+    .annonces-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .annonces-table th {
+      background: var(--light-bg);
+      color: var(--pourpre);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--dore);
+    }
+    .annonces-table td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .annonces-table tr:hover {
+      background: #fafafa;
+    }
+    .badge-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-attente {
+      background: #ffe8e8;
+      color: #c33;
+    }
+    .badge-disponible {
+      background: #e8ffe8;
+      color: #3c3;
+    }
+    .badge-vendu {
+      background: #e8e8e8;
+      color: #666;
+    }
+    .btn-edit, .btn-delete {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-right: 5px;
+      transition: all 0.3s;
+    }
+    .btn-edit {
+      background: var(--dore);
+      color: white;
+    }
+    .btn-edit:hover {
+      background: #9a7a32;
+    }
+    .btn-delete {
+      background: #fee;
+      color: #c33;
+    }
+    .btn-delete:hover {
+      background: #fcc;
+    }
+    
+    /* SECTION ACHETEUR */
     .main-content {
       display: grid;
       grid-template-columns: 250px 1fr;
       gap: 30px;
       margin-bottom: 40px;
     }
-    /* FILTRES */
     .filters-panel {
       background: white;
       border-radius: 8px;
@@ -119,7 +218,7 @@
       font-size: 1rem;
     }
     .filter-group {
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
     .filter-group label {
       display: block;
@@ -172,7 +271,8 @@
     .btn-reset:hover {
       background: #f0ebe3;
     }
-    /* ANNONCES */
+    
+    /* ANNONCES CONTAINER */
     .annonces-container {
       background: white;
       border-radius: 8px;
@@ -275,6 +375,7 @@
     .btn-voir:hover {
       background: #9a7a32;
     }
+    
     .empty-state {
       text-align: center;
       padding: 60px 20px;
@@ -284,56 +385,114 @@
       color: var(--pourpre);
       margin-bottom: 10px;
     }
-    /* CTA VENDRE */
-    .cta-vendre {
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
-      color: white;
+    
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
       border-radius: 8px;
-      padding: 40px;
-      text-align: center;
-      margin-top: 40px;
-      box-shadow: 0 4px 12px rgba(75, 26, 62, 0.2);
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
-    .cta-vendre h3 {
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-      font-family: 'Playfair Display';
-    }
-    .cta-vendre p {
-      font-size: 1rem;
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
-      opacity: 0.95;
     }
-    .cta-vendre ul {
-      list-style: none;
-      text-align: left;
-      display: inline-block;
-      margin-bottom: 25px;
-    }
-    .cta-vendre li {
-      margin: 8px 0;
-      font-size: 0.95rem;
-    }
-    .btn-cta {
-      background: var(--dore);
-      color: var(--pourpre);
-      padding: 12px 30px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    .modal-title {
+      font-size: 1.5rem;
       font-weight: 600;
-      font-size: 1rem;
-      transition: all 0.3s;
+      color: var(--pourpre);
     }
-    .btn-cta:hover {
-      background: #f0ebe3;
-      transform: translateY(-2px);
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
     }
+    .btn-close:hover {
+      color: var(--pourpre);
+    }
+    
+    /* FORMULAIRE */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--pourpre);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--dore);
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .message {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      display: none;
+    }
+    .message.success {
+      background: #efe;
+      color: #3c3;
+      border: 1px solid #3c3;
+    }
+    .message.error {
+      background: #fee;
+      color: #c33;
+      border: 1px solid #c33;
+    }
+    
     .loading {
       text-align: center;
       padding: 40px;
       color: #999;
     }
+    
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -344,11 +503,15 @@
       .nav-links {
         display: none;
       }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-<!-- HEADER + NAV -->
+
+<!-- HEADER -->
 <header class="header">
   <div class="header-content">
     <a href="index.html" class="logo"><strong>ALB</strong> Immobilier</a>
@@ -367,180 +530,414 @@
 
 <div class="container">
   <h1 class="page-title">🏠 Annonces Immobilières</h1>
-  <p class="page-subtitle">Trouvez votre bien ou diffusez le vôtre</p>
+  <p class="page-subtitle">Trouvez votre bien ou publiez le vôtre</p>
 
-  <div class="main-content">
-    <!-- FILTRES -->
-    <div class="filters-panel">
-      <div class="filter-title">🔍 Filtrer les annonces</div>
-      
-      <div class="filter-group">
-        <label>Prix max (€)</label>
-        <input type="number" id="prixMax" placeholder="Ex: 500000">
-      </div>
-
-      <div class="filter-group">
-        <label>Code postal / Ville</label>
-        <input type="text" id="localisation" placeholder="Ex: 83000">
-      </div>
-
-      <div class="filter-group">
-        <label>Type de bien</label>
-        <select id="types">
-          <option value="">Tous</option>
-          <option value="maison">Maison</option>
-          <option value="appartement">Appartement</option>
-        </select>
-      </div>
-
-      <div class="filter-buttons">
-        <button class="btn-filter btn-search" onclick="filterAnnonces()">🔍 Rechercher</button>
-        <button class="btn-filter btn-reset" onclick="resetFilters()">🔄 Réinitialiser</button>
-      </div>
+  <!-- SECTION VENDEUR (CACHÉ PAR DÉFAUT) -->
+  <div id="sectionVendeur" class="section-vendeur" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 class="section-title">📋 Mes Annonces</h2>
+      <button class="btn-primary" onclick="openCreateModal()">+ Créer annonce</button>
     </div>
-
-    <!-- ANNONCES -->
-    <div class="annonces-container">
-      <div class="annonces-count" id="annonces-count">Chargement...</div>
-      <div id="annonces-list">
-        <div class="loading">Chargement des annonces...</div>
-      </div>
-    </div>
+    <table class="annonces-table" id="mesAnnoncesTable">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Prix</th>
+          <th>Ville</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="mesAnnoncesBody">
+        <tr><td colspan="5" class="loading">Chargement...</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <!-- CTA VENDRE -->
-  <div class="cta-vendre">
-    <h3>🏠 Vous avez un bien à vendre?</h3>
-    <p>Publiez votre annonce gratuitement les 3 premiers mois</p>
-    <ul>
-      <li>✅ Annonce gratuite les 3 premiers mois</li>
-      <li>✅ Gestion des visites simplifiée</li>
-      <li>✅ Messagerie directe avec les acheteurs</li>
-      <li>✅ Courtiers et pros disponibles si besoin</li>
-    </ul>
-    <button class="btn-cta" onclick="window.location.href='formulaire-annonce.html'">+ Créer une annonce</button>
+  <!-- SECTION ACHETEUR -->
+  <div id="sectionAcheteur">
+    <div class="main-content">
+      <!-- FILTRES -->
+      <div class="filters-panel">
+        <div class="filter-title">🔍 Filtrer les annonces</div>
+        
+        <div class="filter-group">
+          <label>Prix max (€)</label>
+          <input type="number" id="prixMax" placeholder="Ex: 500000">
+        </div>
+        <div class="filter-group">
+          <label>Code postal / Ville</label>
+          <input type="text" id="localisation" placeholder="Ex: 83000">
+        </div>
+        <div class="filter-group">
+          <label>Type de bien</label>
+          <select id="types">
+            <option value="">Tous</option>
+            <option value="maison">Maison</option>
+            <option value="appartement">Appartement</option>
+          </select>
+        </div>
+        <div class="filter-buttons">
+          <button class="btn-filter btn-search" onclick="filterAnnonces()">🔍 Rechercher</button>
+          <button class="btn-filter btn-reset" onclick="resetFilters()">🔄 Réinitialiser</button>
+        </div>
+      </div>
+
+      <!-- ANNONCES -->
+      <div class="annonces-container">
+        <div class="annonces-count" id="annonces-count">Chargement...</div>
+        <div id="annonces-list">
+          <div class="loading">Chargement des annonces...</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<script>
-let allAnnonces = [];
-let filteredAnnonces = [];
+<!-- MODAL CRÉER/MODIFIER ANNONCE -->
+<div id="formulaireModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">+ Créer annonce</h2>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
 
-async function loadAnnonces() {
-  try {
-    const { data, error } = await window.supabaseClient
-      .from('biens_immobiliers')
-      .select('id, titre, description, prix_vente, ville, code_postal, type_bien, created_at')
-      .eq('statut', 'disponible')
-      .order('created_at', { ascending: false });
+    <div id="formulaireMessage" class="message"></div>
 
-    if (error) throw error;
-    
-    allAnnonces = data || [];
-    filteredAnnonces = [...allAnnonces];
-    displayAnnonces();
-  } catch (error) {
-    console.error('Erreur chargement annonces:', error);
-    document.getElementById('annonces-list').innerHTML = 
-      '<div class="empty-state"><h3>❌ Erreur</h3><p>Impossible de charger les annonces</p></div>';
-  }
-}
+    <form id="formulaireAnnonce" onsubmit="submitAnnonce(event)">
+      <div class="form-group">
+        <label>Titre *</label>
+        <input type="text" id="formTitre" required>
+      </div>
 
-function displayAnnonces() {
-  const container = document.getElementById('annonces-list');
-  const countEl = document.getElementById('annonces-count');
-
-  if (filteredAnnonces.length === 0) {
-    container.innerHTML = '<div class="empty-state"><h3>😔 Aucune annonce</h3><p>Aucun bien ne correspond à votre recherche</p></div>';
-    countEl.textContent = 'Aucune annonce trouvée';
-    return;
-  }
-
-  countEl.textContent = `${filteredAnnonces.length} annonce${filteredAnnonces.length > 1 ? 's' : ''} trouvée${filteredAnnonces.length > 1 ? 's' : ''}`;
-
-  container.innerHTML = filteredAnnonces.map(annonce => `
-    <div class="annonce-card">
-      <div class="annonce-image">🏘️</div>
-      <div class="annonce-content">
-        <div>
-          <div class="annonce-title">${annonce.titre || 'Sans titre'}</div>
-          <div class="annonce-meta">
-            <div class="annonce-meta-item">📍 ${annonce.code_postal} ${annonce.ville}</div>
-            <div class="annonce-meta-item">🏠 ${annonce.type_bien || 'Bien'}</div>
-          </div>
-          <div class="annonce-description">${annonce.description || 'Pas de description'}</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prix (€) *</label>
+          <input type="number" id="formPrix" required>
         </div>
-        <div class="annonce-footer">
-          <div>
-            <div class="annonce-price">${annonce.prix_vente?.toLocaleString('fr-FR')}€</div>
-            <div class="annonce-price-unit">Prix de vente</div>
-          </div>
-          <button class="btn-voir" onclick="window.location.href='annonce-detail.html?id=${annonce.id}'">Voir détails →</button>
+        <div class="form-group">
+          <label>Type *</label>
+          <select id="formType" required>
+            <option value="">Sélectionner...</option>
+            <option value="maison">Maison</option>
+            <option value="appartement">Appartement</option>
+          </select>
         </div>
       </div>
-    </div>
-  `).join('');
-}
 
-function filterAnnonces() {
-  const prixMax = document.getElementById('prixMax').value;
-  const localisation = document.getElementById('localisation').value.toLowerCase();
-  const types = document.getElementById('types').value;
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea id="formDescription" required></textarea>
+      </div>
 
-  filteredAnnonces = allAnnonces.filter(annonce => {
-    const matchPrix = !prixMax || annonce.prix_vente <= parseInt(prixMax);
-    const matchLocalisation = !localisation || 
-      annonce.code_postal.includes(localisation) || 
-      annonce.ville.toLowerCase().includes(localisation);
-    const matchType = !types || annonce.type_bien === types;
+      <div class="form-group">
+        <label>Adresse complète *</label>
+        <input type="text" id="formAdresse" required>
+      </div>
 
-    return matchPrix && matchLocalisation && matchType;
-  });
+      <div class="form-row">
+        <div class="form-group">
+          <label>Code postal *</label>
+          <input type="text" id="formCodePostal" required>
+        </div>
+        <div class="form-group">
+          <label>Ville *</label>
+          <input type="text" id="formVille" required>
+        </div>
+      </div>
 
-  displayAnnonces();
-}
+      <div class="form-row">
+        <div class="form-group">
+          <label>Surface (m²) *</label>
+          <input type="number" id="formSurface" required>
+        </div>
+        <div class="form-group">
+          <label>Pièces *</label>
+          <input type="number" id="formPieces" required>
+        </div>
+      </div>
 
-function resetFilters() {
-  document.getElementById('prixMax').value = '';
-  document.getElementById('localisation').value = '';
-  document.getElementById('types').value = '';
-  filteredAnnonces = [...allAnnonces];
-  displayAnnonces();
-}
+      <div class="form-row">
+        <div class="form-group">
+          <label>DPE *</label>
+          <select id="formDPE" required>
+            <option value="">Sélectionner...</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>GES *</label>
+          <select id="formGES" required>
+            <option value="">Sélectionner...</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+          </select>
+        </div>
+      </div>
 
-// Realtime subscriptions
-let annoncesSubscription = null;
+      <button type="submit" class="btn-primary" style="width: 100%;">✓ Sauvegarder annonce</button>
+    </form>
+  </div>
+</div>
 
-function subscribeToAnnonces() {
-  if (annoncesSubscription) {
-    annoncesSubscription.unsubscribe();
+<script src="/supabase-client.js"></script>
+<script>
+  let currentUser = null;
+  let isVendeur = false;
+  let allAnnonces = [];
+  let filteredAnnonces = [];
+  let editingId = null;
+
+  async function init() {
+    const { data: { user } } = await window.supabaseClient.auth.getUser();
+    currentUser = user;
+
+    if (currentUser) {
+      const { data: profile } = await window.supabaseClient
+        .from('profiles')
+        .select('est_vendeur')
+        .eq('id', currentUser.id)
+        .single();
+      
+      if (profile?.est_vendeur) {
+        isVendeur = true;
+        document.getElementById('sectionVendeur').style.display = 'block';
+        loadMesAnnonces();
+      }
+    }
+
+    loadAllAnnonces();
   }
 
-  annoncesSubscription = window.supabaseClient
-    .channel('realtime:biens_immobiliers')
-    .on('postgres_changes', 
-      { 
-        event: '*', 
-        schema: 'public', 
-        table: 'biens_immobiliers',
-        filter: 'statut=eq.disponible'
-      },
-      (payload) => {
-        console.log('🔄 Changement annonces:', payload);
-        loadAnnonces();
+  async function loadMesAnnonces() {
+    try {
+      const { data: annonces } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('vendeur_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('mesAnnoncesBody');
+      if (!annonces || annonces.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aucune annonce</td></tr>';
+        return;
       }
-    )
-    .subscribe();
-}
 
-window.addEventListener('beforeunload', () => {
-  if (annoncesSubscription) annoncesSubscription.unsubscribe();
-});
+      tbody.innerHTML = annonces.map(a => `
+        <tr>
+          <td><strong>${a.titre}</strong></td>
+          <td>${a.prix_vente?.toLocaleString('fr-FR')}€</td>
+          <td>${a.ville}</td>
+          <td><span class="badge-status badge-${a.statut}">${a.statut}</span></td>
+          <td>
+            <button class="btn-edit" onclick="openEditModal('${a.id}')">✏️ Modifier</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      console.error('Erreur:', e);
+    }
+  }
 
-loadAnnonces();
-subscribeToAnnonces();
+  async function loadAllAnnonces() {
+    try {
+      const { data: annonces } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('statut', 'disponible')
+        .order('created_at', { ascending: false });
+
+      allAnnonces = annonces || [];
+      filteredAnnonces = [...allAnnonces];
+      displayAnnonces();
+    } catch (e) {
+      console.error('Erreur:', e);
+    }
+  }
+
+  function displayAnnonces() {
+    const container = document.getElementById('annonces-list');
+    const countEl = document.getElementById('annonces-count');
+
+    if (filteredAnnonces.length === 0) {
+      container.innerHTML = '<div class="empty-state"><h3>😔 Aucune annonce</h3></div>';
+      countEl.textContent = 'Aucune annonce trouvée';
+      return;
+    }
+
+    countEl.textContent = `${filteredAnnonces.length} annonce${filteredAnnonces.length > 1 ? 's' : ''}`;
+    container.innerHTML = filteredAnnonces.map(a => `
+      <div class="annonce-card">
+        <div class="annonce-image">🏘️</div>
+        <div class="annonce-content">
+          <div>
+            <div class="annonce-title">${a.titre}</div>
+            <div class="annonce-meta">
+              <div class="annonce-meta-item">📍 ${a.code_postal} ${a.ville}</div>
+              <div class="annonce-meta-item">🏠 ${a.type_bien}</div>
+            </div>
+            <div class="annonce-description">${a.description}</div>
+          </div>
+          <div class="annonce-footer">
+            <div>
+              <div class="annonce-price">${a.prix_vente?.toLocaleString('fr-FR')}€</div>
+              <div class="annonce-price-unit">Prix de vente</div>
+            </div>
+            <button class="btn-voir" onclick="window.location.href='annonce-detail.html?id=${a.id}'">Voir détails →</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterAnnonces() {
+    const prixMax = document.getElementById('prixMax').value;
+    const localisation = document.getElementById('localisation').value.toLowerCase();
+    const types = document.getElementById('types').value;
+
+    filteredAnnonces = allAnnonces.filter(a => {
+      const matchPrix = !prixMax || a.prix_vente <= parseInt(prixMax);
+      const matchLocalisation = !localisation || 
+        a.code_postal.includes(localisation) || 
+        a.ville.toLowerCase().includes(localisation);
+      const matchType = !types || a.type_bien === types;
+      return matchPrix && matchLocalisation && matchType;
+    });
+
+    displayAnnonces();
+  }
+
+  function resetFilters() {
+    document.getElementById('prixMax').value = '';
+    document.getElementById('localisation').value = '';
+    document.getElementById('types').value = '';
+    filteredAnnonces = [...allAnnonces];
+    displayAnnonces();
+  }
+
+  function openCreateModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = '+ Créer annonce';
+    document.getElementById('formulaireAnnonce').reset();
+    document.getElementById('formulaireMessage').style.display = 'none';
+    document.getElementById('formulaireModal').classList.add('active');
+  }
+
+  async function openEditModal(annonceId) {
+    try {
+      const { data: annonce } = await window.supabaseClient
+        .from('biens_immobiliers')
+        .select('*')
+        .eq('id', annonceId)
+        .single();
+
+      editingId = annonceId;
+      document.getElementById('modalTitle').textContent = '✏️ Modifier annonce';
+      document.getElementById('formTitre').value = annonce.titre || '';
+      document.getElementById('formPrix').value = annonce.prix_vente || '';
+      document.getElementById('formType').value = annonce.type_bien || '';
+      document.getElementById('formDescription').value = annonce.description || '';
+      document.getElementById('formAdresse').value = annonce.adresse_complete || '';
+      document.getElementById('formCodePostal').value = annonce.code_postal || '';
+      document.getElementById('formVille').value = annonce.ville || '';
+      document.getElementById('formSurface').value = annonce.surface || '';
+      document.getElementById('formPieces').value = annonce.nb_pieces || '';
+      document.getElementById('formDPE').value = annonce.dpe || '';
+      document.getElementById('formGES').value = annonce.ges || '';
+      document.getElementById('formulaireMessage').style.display = 'none';
+      document.getElementById('formulaireModal').classList.add('active');
+    } catch (e) {
+      console.error('Erreur:', e);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('formulaireModal').classList.remove('active');
+  }
+
+  async function submitAnnonce(e) {
+    e.preventDefault();
+
+    const titre = document.getElementById('formTitre').value;
+    const prix = parseInt(document.getElementById('formPrix').value);
+    const type = document.getElementById('formType').value;
+    const description = document.getElementById('formDescription').value;
+    const adresse = document.getElementById('formAdresse').value;
+    const codePostal = document.getElementById('formCodePostal').value;
+    const ville = document.getElementById('formVille').value;
+    const surface = parseFloat(document.getElementById('formSurface').value);
+    const pieces = parseInt(document.getElementById('formPieces').value);
+    const dpe = document.getElementById('formDPE').value;
+    const ges = document.getElementById('formGES').value;
+
+    if (!titre || !prix || !type || !description || !adresse || !codePostal || !ville || !surface || !pieces || !dpe || !ges) {
+      showMessage('Remplissez tous les champs obligatoires', 'error');
+      return;
+    }
+
+    try {
+      if (editingId) {
+        // UPDATE
+        const { error } = await window.supabaseClient
+          .from('biens_immobiliers')
+          .update({
+            titre, prix_vente: prix, type_bien: type, description,
+            adresse_complete: adresse, code_postal: codePostal, ville,
+            surface, nb_pieces: pieces, dpe, ges
+          })
+          .eq('id', editingId);
+
+        if (error) throw error;
+        showMessage('✓ Annonce modifiée!', 'success');
+      } else {
+        // CREATE
+        const { data: annonce, error } = await window.supabaseClient
+          .from('biens_immobiliers')
+          .insert({
+            titre, prix_vente: prix, type_bien: type, description,
+            adresse_complete: adresse, code_postal: codePostal, ville,
+            surface, nb_pieces: pieces, dpe, ges,
+            vendeur_id: currentUser.id,
+            statut: 'en_attente'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        showMessage('✓ Annonce créée! En attente de validation.', 'success');
+      }
+
+      setTimeout(() => {
+        closeModal();
+        loadMesAnnonces();
+        loadAllAnnonces();
+      }, 1500);
+    } catch (e) {
+      console.error('Erreur:', e);
+      showMessage('Erreur lors de la sauvegarde', 'error');
+    }
+  }
+
+  function showMessage(msg, type) {
+    const el = document.getElementById('formulaireMessage');
+    el.textContent = msg;
+    el.className = `message ${type}`;
+    el.style.display = 'block';
+  }
+
+  init();
 </script>
+
 </body>
 </html>
