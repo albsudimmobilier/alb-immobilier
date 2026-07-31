@@ -212,24 +212,171 @@
 </head>
 <body>
   <!-- Navigation -->
-  <header>
-    <div class="container header-flex">
-      <a href="index.html" class="logo">
-        <img src="logo-alb-sud.png" alt="ALB Sud Immobilier" style="height: 50px; object-fit: contain;">
-      </a>
-      <nav>
-        <a href="index.html">Accueil</a>
-        <a href="annonces.html">Annonces</a>
-        <a href="vitrine-pros.html" class="active">Vitrine des pros</a>
-        <a href="projets-travaux.html">Projets Travaux</a>
-        <a href="financement_interactive.html">Projets Financement</a>
-        <a href="espace-alb.html" class="nav-btn">Espace ALB</a>
-      </nav>
-      <a href="index.html" class="logo-right">
-        <img src="logo-alb-new.png" alt="ALB" style="height: 50px; object-fit: contain;">
-      </a>
-    </div>
-  </header>
+  <!-- HEADER À COPIER - TOUT SUR UNE LIGNE -->
+
+<header class="alb-header">
+  <div class="header-container">
+    <!-- Logo gauche -->
+    <a href="index.html" class="header-logo">
+      <img src="logo-alb-sud.png" alt="ALB Sud Immobilier" />
+    </a>
+
+    <!-- Navigation (à la suite du logo) -->
+    <nav class="header-nav">
+      <a href="index.html" class="nav-link">Accueil</a>
+      <a href="annonces.html" class="nav-link">Annonces</a>
+      <a href="vitrine-pros.html" class="nav-link">Vitrine des pros</a>
+      <a href="projets-alb.html" class="nav-link">Projets ALB</a>
+      <a href="espace-alb.html" class="nav-link nav-link-cta">Mon espace ALB</a>
+    </nav>
+
+    <!-- Logo droite -->
+    <a href="index.html" class="header-logo-right">
+      <img src="logo-alb-new.png" alt="ALB" />
+    </a>
+  </div>
+</header>
+
+<style>
+  /* ========================================
+     HEADER - TOUT SUR UNE LIGNE
+     ============================
+  .alb-header {
+    background-color: #FFFFFF;
+    padding: 15px 0;
+    border-bottom: 1px solid #E8E6E0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 100%;
+  }
+
+  .header-container {
+    width: 100%;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 50px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  /* LOGOS */
+  .header-logo,
+  .header-logo-right {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .header-logo img,
+  .header-logo-right img {
+    height: 60px;
+    object-fit: contain;
+  }
+
+  .header-logo-right {
+    margin-left: auto;
+  }
+
+  /* NAVIGATION (à la suite du logo) */
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 45px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .nav-link {
+    color: #333333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-link:hover {
+    color: #B28E3D;
+    border-bottom-color: #B28E3D;
+  }
+
+  .nav-link.active {
+    color: #B28E3D;
+    border-bottom-color: #B28E3D;
+  }
+
+  /* BOUTON CTA */
+  .nav-link-cta {
+    background-color: #4B1A3E;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    border-bottom: none;
+    border: 1px solid #4B1A3E;
+    flex-shrink: 0;
+  }
+
+  .nav-link-cta:hover {
+    background-color: #B28E3D;
+    border-color: #B28E3D;
+    color: white;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1200px) {
+    .header-container {
+      gap: 30px;
+      padding: 0 30px;
+    }
+
+    .header-nav {
+      gap: 30px;
+    }
+
+    .nav-link {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .header-container {
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 15px;
+    }
+
+    .header-nav {
+      order: 3;
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+      white-space: normal;
+    }
+
+    .header-logo-right {
+      display: none;
+    }
+
+    .nav-link {
+      padding: 8px 15px;
+      border-bottom: none;
+      border-radius: 4px;
+    }
+
+    .nav-link-cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
 
   <!-- Main Content -->
   <section class="section">
