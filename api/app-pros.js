@@ -107,10 +107,14 @@ function createProCard(pro) {
     'mandataire_immobilier': '📋 Mandataire'
   }[pro.role] || pro.role;
 
+  // zone_intervention est un ARRAY Supabase
   const zones = pro.zone_intervention || [];
   const zonesHtml = zones.map(zone => `<span class="zone-tag">${zone}</span>`).join('');
 
   const initials = `${pro.prenom?.[0] || ''}${pro.nom?.[0] || ''}`.toUpperCase() || 'PRO';
+
+  // Localisation : ville + code_postal (colonnes réelles Supabase)
+  const localisation = `${pro.code_postal || ''} ${pro.ville || ''}`.trim() || 'Var/PACA';
 
   const card = document.createElement('div');
   card.className = 'pro-card';
@@ -128,9 +132,9 @@ function createProCard(pro) {
         ${pro.bio || pro.presentation || 'Professionnel vérifié ALB'}
       </p>
       <p style="font-size: 0.85rem; color: #999; margin-bottom: 10px;">
-        <strong>📍 ${pro.code_postal || ''} ${pro.ville || 'Var/PACA'}</strong>
+        <strong>📍 ${localisation}</strong>
       </p>
-      ${pro.temps_reponse_moyen ? `<p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;"><strong>⏱️ Réponse:</strong> ${pro.temps_reponse_moyen}</p>` : ''}
+      ${pro.temps_reponse_moyen ? `<p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;"><strong>⏱️ Réponse:</strong> ${pro.temps_reponse_moyen}h</p>` : ''}
       ${zonesHtml ? `<div class="pro-zones">${zonesHtml}</div>` : ''}
       <div class="pro-status disponible">Disponible</div>
       <div class="pro-action">
