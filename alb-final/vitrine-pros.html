@@ -2,17 +2,397 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Vitrine - ALB Immobilier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine des Pros - ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
   <style>
-    body { font-family: Arial; background: #f5f3ee; text-align: center; padding: 60px 20px; }
-    h1 { color: #4B1A3E; margin-bottom: 20px; }
-    p { color: #666; font-size: 1.1rem; }
+    .pros-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .filters-sidebar {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+      border: 1px solid #e8e6e0;
+      border-left: 4px solid #B28E3D;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-group {
+      margin-bottom: 25px;
+    }
+
+    .filter-group h4 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #4B1A3E;
+      border-bottom: 2px solid #B28E3D;
+      padding-bottom: 8px;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .filter-option input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .filter-option label {
+      margin: 0;
+      font-weight: 400;
+      color: #666;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .pros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .pro-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e8e6e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pro-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 16px rgba(75, 26, 62, 0.12);
+      border-color: #B28E3D;
+    }
+
+    .pro-header {
+      background: linear-gradient(135deg, #4B1A3E 0%, #6B2A5E 100%);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .pro-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #B28E3D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 32px;
+      font-weight: bold;
+      margin: 0 auto 15px;
+      object-fit: cover;
+    }
+
+    .pro-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+
+    .pro-name {
+      color: white;
+      font-size: 1.2rem;
+      margin: 10px 0 5px;
+      font-weight: 600;
+    }
+
+    .pro-role {
+      color: #B28E3D;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .pro-rating {
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .pro-rating .stars {
+      color: #FFD700;
+    }
+
+    .pro-body {
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pro-zones {
+      margin: 15px 0;
+      font-size: 0.85rem;
+    }
+
+    .zone-tag {
+      display: inline-block;
+      background: #F5F3F0;
+      color: #4B1A3E;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin: 3px 3px 3px 0;
+      font-weight: 500;
+    }
+
+    .pro-status {
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.9rem;
+      margin: 15px 0;
+      font-weight: 600;
+    }
+
+    .pro-status.disponible {
+      background: #D4EDDA;
+      color: #155724;
+    }
+
+    .pro-status.occupe {
+      background: #F8D7DA;
+      color: #721C24;
+    }
+
+    .pro-action {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .pro-action .btn {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .auth-modal.active {
+      display: flex;
+    }
+
+    .auth-modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 40px;
+    }
+
+    .pagination button {
+      padding: 10px 15px;
+      border: 1px solid #B28E3D;
+      background: white;
+      color: #4B1A3E;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+
+    .pagination button:hover,
+    .pagination button.active {
+      background: #4B1A3E;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .pros-container {
+        grid-template-columns: 1fr;
+      }
+
+      .filters-sidebar {
+        position: static;
+      }
+
+      .pros-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>🤝 Vitrine des Pros</h1>
-  <p>Bientôt disponible!</p>
-  <p>Accès à la liste complète des professionnels le 28 juillet.</p>
-  <a href="index.html" style="color: #4B1A3E; font-weight: bold;">← Retour à l'accueil</a>
+  <!-- Navigation -->
+  <header>
+    <div class="container header-flex">
+      <a href="index.html" class="logo">
+        <img src="logo-alb-sud.png" alt="ALB Sud Immobilier" style="height: 50px; object-fit: contain;">
+      </a>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="annonces.html">Annonces</a>
+        <a href="vitrine-pros.html" class="active">Vitrine des pros</a>
+        <a href="projets-travaux.html">Projets Travaux</a>
+        <a href="financement_interactive.html">Projets Financement</a>
+        <a href="espace-alb.html" class="nav-btn">Espace ALB</a>
+      </nav>
+      <a href="index.html" class="logo-right">
+        <img src="logo-alb-new.png" alt="ALB" style="height: 50px; object-fit: contain;">
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <section class="section">
+    <div class="container">
+      <h1>Vitrine des Professionnels</h1>
+      <p style="font-size: 1.1rem; color: #666; margin-bottom: 30px;">
+        Découvrez les experts locaux de votre région. Qualifiés, vérifiés, et à votre service.
+      </p>
+
+      <div class="pros-container">
+        <!-- Sidebar Filters -->
+        <aside class="filters-sidebar">
+          <h3 style="margin-top: 0;">Filtres</h3>
+
+          <!-- Role Filter -->
+          <div class="filter-group">
+            <h4>Par type</h4>
+            <div class="filter-option">
+              <input type="checkbox" id="role-artisan" value="artisan" class="role-filter">
+              <label for="role-artisan">Artisan</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="role-courtier" value="courtier" class="role-filter">
+              <label for="role-courtier">Courtier</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="role-agent" value="agent_immobilier" class="role-filter">
+              <label for="role-agent">Agent immobilier</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="role-mandataire" value="mandataire_immobilier" class="role-filter">
+              <label for="role-mandataire">Mandataire</label>
+            </div>
+          </div>
+
+          <!-- Zone Filter -->
+          <div class="filter-group">
+            <h4>Zones d'intervention</h4>
+            <div class="filter-option">
+              <input type="checkbox" id="zone-toulon" value="Toulon et environs" class="zone-filter">
+              <label for="zone-toulon">Toulon</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="zone-centre" value="Centre Var" class="zone-filter">
+              <label for="zone-centre">Centre Var</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="zone-est" value="Est Var/Golfe" class="zone-filter">
+              <label for="zone-est">Est Var/Golfe</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="zone-aix" value="Pays d'Aix" class="zone-filter">
+              <label for="zone-aix">Pays d'Aix</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" id="zone-dracenie" value="Dracénie" class="zone-filter">
+              <label for="zone-dracenie">Dracénie</label>
+            </div>
+          </div>
+
+          <!-- Clear Filters -->
+          <button class="btn btn-secondary btn-block" onclick="clearFilters()">
+            Effacer les filtres
+          </button>
+        </aside>
+
+        <!-- Pros Grid -->
+        <div>
+          <div id="pros-grid" class="pros-grid">
+            <!-- Loaded via JavaScript -->
+          </div>
+
+          <!-- Pagination -->
+          <div id="pagination" class="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h5>Annonces</h5>
+        <p>Chercher une annonce<br>Vendre mon bien</p>
+      </div>
+      <div class="footer-col">
+        <h5>Qui administre?</h5>
+        <p>Voir les infos<br>Nous contacter</p>
+      </div>
+      <div class="footer-col">
+        <h5>Quoi savoir?</h5>
+        <p><a href="cgu.html">CGU</a><br><a href="confidentialite.html">Confidentialité</a></p>
+      </div>
+      <div class="footer-col contact">
+        <h5>Contact</h5>
+        <p><strong>📧 contact@albimmobilier.fr</strong></p>
+        <p>📱 07 45 60 28 05</p>
+        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Joce</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • À la bien, toujours ✨</p>
+    </div>
+  </footer>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js" type="module"></script>
+
+  <!-- App Logic -->
+  <script type="module" src="../api/app-pros.js"></script>
+
+  <script>
+    // Mobile menu
+    document.querySelector('.menu-toggle')?.addEventListener('click', function() {
+      document.querySelector('nav').classList.toggle('active');
+    });
+
+    function clearFilters() {
+      document.querySelectorAll('.role-filter, .zone-filter').forEach(el => {
+        el.checked = false;
+      });
+      loadPros();
+    }
+  </script>
 </body>
 </html>
