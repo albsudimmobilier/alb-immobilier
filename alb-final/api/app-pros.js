@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPros() {
   try {
-    console.log('🔄 Requête Supabase: profiles avec statut_verifie=true');
+    console.log('🔄 Requête Supabase: .from('profiles_publics') avec statut_verifie=true');
     
     const { data, error } = await supabase
-      .from('profiles')
+      .from('.from('profiles_publics')')
       .select('*')
       .eq('statut_verifie', true)
       .in('role', ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier']);
