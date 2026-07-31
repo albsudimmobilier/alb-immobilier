@@ -105,12 +105,6 @@
       object-fit: cover;
     }
 
-    .pro-badge {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-    }
-
     .pro-name {
       color: white;
       font-size: 1.2rem;
@@ -162,16 +156,8 @@
       font-size: 0.9rem;
       margin: 15px 0;
       font-weight: 600;
-    }
-
-    .pro-status.disponible {
       background: #D4EDDA;
       color: #155724;
-    }
-
-    .pro-status.occupe {
-      background: #F8D7DA;
-      color: #721C24;
     }
 
     .pro-action {
@@ -184,31 +170,6 @@
       flex: 1;
       padding: 10px 12px;
       font-size: 0.85rem;
-    }
-
-    .auth-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-    }
-
-    .auth-modal.active {
-      display: flex;
-    }
-
-    .auth-modal-content {
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      max-width: 400px;
-      width: 90%;
     }
 
     .pagination {
@@ -375,18 +336,10 @@
     </div>
   </footer>
 
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/module/index.js" type="module"></script>
-
-  <!-- App Logic -->
-  <script type="module" src="../api/app-pros.js"></script>
+  <!-- App Logic - app-pros.js gère tout (Supabase inclus) -->
+  <script type="module" src="./api/app-pros.js"></script>
 
   <script>
-    // Mobile menu
-    document.querySelector('.menu-toggle')?.addEventListener('click', function() {
-      document.querySelector('nav').classList.toggle('active');
-    });
-
     function clearFilters() {
       document.querySelectorAll('.role-filter, .zone-filter').forEach(el => {
         el.checked = false;
@@ -394,6 +347,5 @@
       loadPros();
     }
   </script>
-  <script type="module" src="./api/app-pros.js"></script>
 </body>
 </html>
