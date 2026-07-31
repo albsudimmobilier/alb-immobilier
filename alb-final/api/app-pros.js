@@ -24,12 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPros() {
   try {
-    console.log('🔄 Requête Supabase: profiles (données sécurisées)');
+    console.log('🔄 Requête Supabase: profiles avec statut_verifie=true');
     
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .in('role', ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier']);
+      .eq('statut_verifie', true);
 
     if (error) {
       console.error('❌ ERREUR SUPABASE:', error);
@@ -37,8 +37,12 @@ async function loadPros() {
       return;
     }
 
-    allPros = data || [];
-    console.log(`✅ ${allPros.length} pros chargés depuis profiles_publics`);
+    // Filtrer les rôles en JavaScript (évite les problèmes RLS)
+    const validRoles = ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier'];
+    const prosVerifies = (data || []).filter(pro => validRoles.includes(pro.role));
+    
+    allPros = prosVerifies;
+    console.log(`✅ ${allPros.length} pros chargés (filtrage rôles en JS)`);
     applyFilters();
   } catch (err) {
     console.error('❌ ERREUR CATCH:', err);
