@@ -212,168 +212,147 @@
 </head>
 <body>
   <!-- Navigation -->
-  <!-- HEADER À COPIER - TOUT SUR UNE LIGNE -->
+ <!-- ========================================
+     HEADER AVEC LOGO.png
+     ======================================== -->
 
 <header class="alb-header">
-  <div class="header-container">
+  <div class="header-wrapper">
     <!-- Logo gauche -->
-    <a href="index.html" class="header-logo">
-      <img src="logo-alb-sud.png" alt="ALB Sud Immobilier" />
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
     </a>
 
-    <!-- Navigation (à la suite du logo) -->
-    <nav class="header-nav">
-      <a href="index.html" class="nav-link">Accueil</a>
-      <a href="annonces.html" class="nav-link">Annonces</a>
-      <a href="vitrine-pros.html" class="nav-link">Vitrine des pros</a>
-      <a href="projets-alb.html" class="nav-link">Projets ALB</a>
-      <a href="espace-alb.html" class="nav-link nav-link-cta">Mon espace ALB</a>
+    <!-- Navigation -->
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Vitrine des pros</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
     </nav>
 
     <!-- Logo droite -->
-    <a href="index.html" class="header-logo-right">
-      <img src="logo-alb-new.png" alt="ALB" />
-    </a>
+    <a href="index.html" class="logo-right">ALB</a>
   </div>
 </header>
 
 <style>
-  /* ========================================
-     HEADER - TOUT SUR UNE LIGNE
-     ============================
+  /* HEADER */
   .alb-header {
-    background-color: #FFFFFF;
-    padding: 15px 0;
+    background: white;
     border-bottom: 1px solid #E8E6E0;
+    padding: 15px 0;
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    width: 100%;
   }
 
-  .header-container {
-    width: 100%;
+  .header-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
     padding: 0 40px;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: 50px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    height: 70px;
   }
 
-  /* LOGOS */
-  .header-logo,
-  .header-logo-right {
+  /* LOGO GAUCHE */
+  .logo-left {
     display: flex;
     align-items: center;
-    text-decoration: none;
     flex-shrink: 0;
+    min-width: 150px;
   }
 
-  .header-logo img,
-  .header-logo-right img {
+  .logo-left img {
     height: 60px;
     object-fit: contain;
   }
 
-  .header-logo-right {
-    margin-left: auto;
-  }
-
-  /* NAVIGATION (à la suite du logo) */
-  .header-nav {
+  /* NAV */
+  .nav {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 45px;
-    flex-shrink: 0;
-    white-space: nowrap;
+    flex-grow: 1;
   }
 
-  .nav-link {
-    color: #333333;
+  .nav a {
+    color: #333;
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 500;
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 2px solid transparent;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     white-space: nowrap;
-    flex-shrink: 0;
   }
 
-  .nav-link:hover {
-    color: #B28E3D;
-    border-bottom-color: #B28E3D;
-  }
-
-  .nav-link.active {
+  .nav a:hover {
     color: #B28E3D;
     border-bottom-color: #B28E3D;
   }
 
   /* BOUTON CTA */
-  .nav-link-cta {
-    background-color: #4B1A3E;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 6px;
-    border-bottom: none;
-    border: 1px solid #4B1A3E;
-    flex-shrink: 0;
+  .btn-cta {
+    background: #4B1A3E !important;
+    color: white !important;
+    padding: 10px 22px !important;
+    border-radius: 4px;
+    border: none !important;
   }
 
-  .nav-link-cta:hover {
-    background-color: #B28E3D;
-    border-color: #B28E3D;
-    color: white;
+  .btn-cta:hover {
+    background: #B28E3D !important;
+  }
+
+  /* LOGO DROITE */
+  .logo-right {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4B1A3E;
+    text-decoration: none;
+    min-width: 80px;
+    text-align: right;
+    transition: color 0.3s;
+  }
+
+  .logo-right:hover {
+    color: #B28E3D;
   }
 
   /* RESPONSIVE */
-  @media (max-width: 1200px) {
-    .header-container {
-      gap: 30px;
-      padding: 0 30px;
-    }
-
-    .header-nav {
-      gap: 30px;
-    }
-
-    .nav-link {
-      font-size: 0.9rem;
-    }
-  }
-
   @media (max-width: 768px) {
-    .header-container {
+    .header-wrapper {
       flex-wrap: wrap;
       gap: 15px;
       padding: 15px;
+      height: auto;
     }
 
-    .header-nav {
+    .nav {
       order: 3;
       width: 100%;
       flex-direction: column;
       gap: 10px;
-      white-space: normal;
     }
 
-    .header-logo-right {
+    .logo-right {
       display: none;
     }
 
-    .nav-link {
+    .nav a {
       padding: 8px 15px;
-      border-bottom: none;
-      border-radius: 4px;
+      border: none;
     }
 
-    .nav-link-cta {
-      width: 100%;
-      text-align: center;
+    .btn-cta {
+      width: 100% !important;
+      text-align: center !important;
     }
   }
 </style>
