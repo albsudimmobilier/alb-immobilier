@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 // Configuration Supabase
-const SUPABASE_URL = 'https://kutbxyinpo**ke**bjdemlnq.supabase.co';
+const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9nZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjExOTA4NjksImV4cCI6MjAzNjc2NjA2OX0.uN6Bp-AEMmUdwdHpST7lKqqoZd5DnLfPHPpMIHJgWc4';
 
 console.log('🔧 App-pros.js chargé');
