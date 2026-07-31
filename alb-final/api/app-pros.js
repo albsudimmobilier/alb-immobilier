@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPros() {
   try {
-    console.log('🔄 Requête Supabase: profiles_publics (données sécurisées)');
+    console.log('🔄 Requête Supabase: profiles (données sécurisées)');
     
     const { data, error } = await supabase
-      .from('profiles_publics')
+      .from('profiles')
       .select('*')
       .in('role', ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier']);
 
