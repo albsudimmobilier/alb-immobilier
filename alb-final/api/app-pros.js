@@ -24,12 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPros() {
   try {
-    console.log('🔄 Requête Supabase: .from('profiles_publics') avec statut_verifie=true');
+    console.log('🔄 Requête Supabase: profiles_publics (données sécurisées)');
     
     const { data, error } = await supabase
-      .from('.from('profiles_publics')')
+      .from('profiles_publics')
       .select('*')
-      .eq('statut_verifie', true)
       .in('role', ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier']);
 
     if (error) {
@@ -39,7 +38,7 @@ async function loadPros() {
     }
 
     allPros = data || [];
-    console.log(`✅ ${allPros.length} pros chargés`);
+    console.log(`✅ ${allPros.length} pros chargés depuis profiles_publics`);
     applyFilters();
   } catch (err) {
     console.error('❌ ERREUR CATCH:', err);
