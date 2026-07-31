@@ -348,23 +348,150 @@
   </style>
 </head>
 <body>
-<!-- HEADER + NAV -->
-<header class="header">
-  <div class="header-content">
-    <a href="index.html" class="logo"><strong>ALB</strong> Immobilier</a>
-    <div class="nav-links">
+<!-- ========================================
+     HEADER AVEC LOGO.png
+     ======================================== -->
+
+<header class="alb-header">
+  <div class="header-wrapper">
+    <!-- Logo gauche -->
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+
+    <!-- Navigation -->
+    <nav class="nav">
       <a href="index.html">Accueil</a>
-      <a href="annonces.html" class="active">Annonces</a>
+      <a href="annonces.html">Annonces</a>
       <a href="vitrine-pros.html">Vitrine des pros</a>
-      <a href="financement_interactive.html">Financement</a>
-      <a href="projets-travaux.html">Travaux</a>
-    </div>
-    <div class="nav-right">
-      <button class="btn-connexion" onclick="window.location.href='login.html'">🔐 Connexion</button>
-    </div>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+
+    <!-- Logo droite -->
+    <a href="index.html" class="logo-right">ALB</a>
   </div>
 </header>
 
+<style>
+  /* HEADER */
+  .alb-header {
+    background: white;
+    border-bottom: 1px solid #E8E6E0;
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .header-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+    height: 70px;
+  }
+
+  /* LOGO GAUCHE */
+  .logo-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 150px;
+  }
+
+  .logo-left img {
+    height: 60px;
+    object-fit: contain;
+  }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 45px;
+    flex-grow: 1;
+  }
+
+  .nav a {
+    color: #333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  .nav a:hover {
+    color: #B28E3D;
+    border-bottom-color: #B28E3D;
+  }
+
+  /* BOUTON CTA */
+  .btn-cta {
+    background: #4B1A3E !important;
+    color: white !important;
+    padding: 10px 22px !important;
+    border-radius: 4px;
+    border: none !important;
+  }
+
+  .btn-cta:hover {
+    background: #B28E3D !important;
+  }
+
+  /* LOGO DROITE */
+  .logo-right {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4B1A3E;
+    text-decoration: none;
+    min-width: 80px;
+    text-align: right;
+    transition: color 0.3s;
+  }
+
+  .logo-right:hover {
+    color: #B28E3D;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .header-wrapper {
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 15px;
+      height: auto;
+    }
+
+    .nav {
+      order: 3;
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .logo-right {
+      display: none;
+    }
+
+    .nav a {
+      padding: 8px 15px;
+      border: none;
+    }
+
+    .btn-cta {
+      width: 100% !important;
+      text-align: center !important;
+    }
+  }
+</style>
 <div class="container">
   <h1 class="page-title">🏠 Annonces Immobilières</h1>
   <p class="page-subtitle">Trouvez votre bien ou diffusez le vôtre</p>
