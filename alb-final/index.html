@@ -160,6 +160,7 @@
       <div class="hero-inner">
         <h1>Quand <span class="accent">l'ancien</span><br>se met à la <span class="accent">bien</span>.</h1>
         <p>ALB Sud Immobilier vous accompagne à chaque étape de votre projet immobilier.</p>
+        <p>Vendre, acheter, financer rénover ou développer votre activité : ALB Sud Immobilier vous accompagne à chaque étape de votre projet, dans un environement simple, sécurisé et humain</p>
         <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=700&h=500&fit=crop" alt="Intérieur maison" class="hero-image">
       </div>
     </div>
@@ -190,7 +191,7 @@
           <span class="arrow">→</span>
         </a>
 
-        <a href="projets-travaux.html" class="role-card">
+  
           <a href="projets-alb.html" class="role-card">
           <div class="card-icon">💡</div>
           <h4>Projet ALB</h4>
@@ -254,35 +255,101 @@
     </div>
   </section>
 
-  <!-- Footer -->
-<!-- FOOTER - SECTION ANNONCES DÉTAILLÉES -->
+ <!-- FOOTER COMPLET -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-col">
+      <h5>Annonces</h5>
+      <p>
+        <a href="/annonces.html"><strong>Chercher une annonce</strong></a><br>
+        Trouvez le bien qui vous ressemble. Simulez votre financement. Organisez une visite. Un courtier vous contactera si besoin<br><br>
+        <a href="/inscription-particulier-vendeur.html"><strong>Vendre mon bien</strong></a><br>
+        Inscrivez-vous pour diffuser et modifier en temps réel votre annonce. Organisez vos visites. Les acheteurs simulent leur budget avant de vous contacter
+      </p>
+    </div>
+    
+    <div class="footer-col">
+      <h5>Qui administre?</h5>
+      <p>Voir les infos<br>Nous contacter</p>
+    </div>
+    
+    <div class="footer-col">
+      <h5>Quoi savoir?</h5>
+      <p><a href="cgu.html">CGU</a><br><a href="confidentialite.html">Confidentialité</a></p>
+    </div>
+    
+    <div class="footer-col contact">
+      <h5>Contact</h5>
+      <p><strong>📧 contact@albimmobilier.fr</strong></p>
+      <p>📱 07 45 60 28 05</p>
+      <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Joce</strong> répond à toutes vos questions</p>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>© 2026 ALB Sud Immobilier • À la bien, toujours ✨</p>
+  </div>
+</footer>
 
-<div class="footer-col">
-  <h5>Annonces</h5>
-  <p>
-    <a href="/annonces.html"><strong>Chercher une annonce</strong></a><br>
-    Trouvez le bien qui vous ressemble. Simulez votre financement. Organisez une visite. Un courtier vous contactera si besoin<br><br>
-    <a href="/inscription-particulier-vendeur.html"><strong>Vendre mon bien</strong></a><br>
-    Inscrivez-vous pour diffuser et modifier en temps réel votre annonce. Organisez vos visites. Les acheteurs simulent leur budget avant de vous contacter
-  </p>
-</div>
-        <h5>Qui administre?</h5>
-        <p>Voir les infos<br>Nous contacter</p>
-      </div>
-      <div class="footer-col">
-        <h5>Quoi savoir?</h5>
-        <p><a href="cgu.html">CGU</a><br><a href="confidentialite.html">Confidentialité</a></p>
-      </div>
-      <div class="footer-col contact">
-        <h5>Contact</h5>
-        <p><strong>📧 contact@albimmobilier.fr</strong></p>
-        <p>📱 07 45 60 28 05</p>
-        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Joce</strong> répond à toutes vos questions</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 ALB Sud Immobilier • À la bien, toujours ✨</p>
-    </div>
-  </footer>
-</body>
-</html>
+<style>
+  .footer {
+    background-color: #262626;
+    color: white;
+    padding: 60px 0 0 0;
+    width: 100%;
+  }
+
+  .footer-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 50px;
+    max-width: 100%;
+    padding: 60px 40px;
+  }
+
+  .footer-col h5 {
+    color: white;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .footer-col p {
+    color: #ccc;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  .footer-col a {
+    color: #B28E3D;
+    text-decoration: none;
+  }
+
+  .footer-col a:hover {
+    text-decoration: underline;
+  }
+
+  .footer-col a strong {
+    color: #B28E3D;
+  }
+
+  .footer-bottom {
+    background-color: #1a1a1a;
+    padding: 20px 40px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  @media (max-width: 768px) {
+    .footer-container {
+      gap: 30px;
+      padding: 40px 20px;
+    }
+
+    .footer-bottom {
+      padding: 15px 20px;
+    }
+  }
+</style>
