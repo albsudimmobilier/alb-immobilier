@@ -125,6 +125,21 @@
       text-decoration: none;
       font-size: 14px;
     }
+    .checkbox-metiers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+    }
+    .checkbox-metiers label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: normal;
+      margin-bottom: 0;
+    }
+    .checkbox-metiers input[type="checkbox"] {
+      width: auto;
+    }
   </style>
 </head>
 <body>
@@ -146,6 +161,22 @@
             <option value="agent">Agent immobilier</option>
             <option value="mandataire">Mandataire</option>
           </select>
+        </div>
+
+        <div class="form-group" id="metiers-group" style="display: none;">
+          <label>Métiers *</label>
+          <div class="checkbox-metiers">
+            <label><input type="checkbox" name="metier" value="Maçon"> Maçon</label>
+            <label><input type="checkbox" name="metier" value="Rénovation générale"> Rénovation générale</label>
+            <label><input type="checkbox" name="metier" value="Plombier"> Plombier</label>
+            <label><input type="checkbox" name="metier" value="Électricien"> Électricien</label>
+            <label><input type="checkbox" name="metier" value="Peintre"> Peintre</label>
+            <label><input type="checkbox" name="metier" value="Menuisier"> Menuisier</label>
+            <label><input type="checkbox" name="metier" value="Couvreur"> Couvreur</label>
+            <label><input type="checkbox" name="metier" value="Carreleur"> Carreleur</label>
+            <label><input type="checkbox" name="metier" value="Chauffagiste"> Chauffagiste</label>
+            <label><input type="checkbox" name="metier" value="Paysagiste"> Paysagiste</label>
+          </div>
         </div>
 
         <div class="form-group">
@@ -196,6 +227,12 @@
 
   <script>
     const form = document.getElementById('inscriptionForm');
+    const profilSelect = document.getElementById('profil');
+    const metiersGroup = document.getElementById('metiers-group');
+
+    profilSelect.addEventListener('change', () => {
+      metiersGroup.style.display = profilSelect.value === 'artisan' ? 'block' : 'none';
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -207,6 +244,7 @@
       const telephone = document.getElementById('telephone').value.trim();
       const siret = document.getElementById('siret').value.trim();
       const zones = document.getElementById('zones').value.trim();
+      const metiers = Array.from(document.querySelectorAll('input[name="metier"]:checked')).map((el) => el.value);
 
       if (!profil || !prenom || !nom || !email || !telephone || !siret) {
         showError('Veuillez remplir tous les champs obligatoires');
@@ -215,6 +253,11 @@
 
       if (siret.length !== 14 || isNaN(siret)) {
         showError('Le SIRET doit contenir 14 chiffres');
+        return;
+      }
+
+      if (profil === 'artisan' && metiers.length === 0) {
+        showError('Sélectionnez au moins un métier');
         return;
       }
 
@@ -228,7 +271,8 @@
             telephone,
             siret,
             zones: zones || null,
-            profil  // ← courtier, artisan, agent, mandataire
+            profil,  // ← courtier, artisan, agent, mandataire
+            profession: metiers.length ? metiers : null
           })
         });
 
@@ -239,11 +283,8 @@
         }
 localStorage.setItem('alb_user', result.userId);
 localStorage.setItem('profil', result.profil);
-        showSuccess('Compte créé ! Vérifiez votre email pour le questionnaire et votre PIN');
+        showSuccess('Compte créé ! Vérifiez votre email pour le questionnaire et votre PIN. Votre compte sera activé après validation par notre équipe.');
         form.reset();
-        setTimeout(() => {
-  window.location.href = '/dashboard-courtier.html';
-}, 2000);
       } catch (err) {
         showError(err.message);
       }
