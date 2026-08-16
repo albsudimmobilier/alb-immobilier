@@ -16,11 +16,24 @@ function isProProfile(profil) {
   return ['agent', 'courtier', 'artisan', 'mandataire'].includes(profil);
 }
 
+// La colonne profiles.role est un enum Postgres qui n'accepte que :
+// particulier, artisan, courtier, immo. "agent" et "mandataire" n'existent
+// pas comme valeurs de role — ils partagent le même alias email
+// (agent-immobilier@) donc on les regroupe sous "immo", et on garde le
+// détail dans profiles.sous_role_immo.
+function mapToDbRole(profil) {
+  if (profil === 'agent' || profil === 'mandataire') return 'immo';
+  if (profil === 'particulier_acquereur' || profil === 'particulier_acheteur' || profil === 'particulier_vendeur') {
+    return 'particulier';
+  }
+  return profil; // courtier, artisan : déjà des valeurs valides
+}
+
 function getFromEmail(profil) {
   if (profil === 'particulier_vendeur') {
     return 'particulier-vendeur@albimmobilier.fr';
   }
-  if (profil === 'particulier_acquereur') {
+  if (profil === 'particulier_acquereur' || profil === 'particulier_acheteur') {
     return 'particulier-acquereur@albimmobilier.fr';
   }
   if (profil === 'courtier') {
@@ -107,7 +120,7 @@ export default async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
-    const { prenom, nom, email, telephone, siret, zones, profil } = body;
+    const { prenom, nom, email, telephone, siret, zones, profil, profession } = body;
 
     console.log('📥 Body received:', { prenom, nom, siret, profil, email, telephone });
 
@@ -137,7 +150,8 @@ export default async (req) => {
 
     const pin = generatePin();
     const tempPassword = randomUUID();
-    const statut_verifie = profil === 'particulier_acquereur' ? true : false;
+    const isAcquereur = profil === 'particulier_acquereur' || profil === 'particulier_acheteur';
+    const statut_verifie = isAcquereur ? true : false;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -164,13 +178,21 @@ export default async (req) => {
       telephone: telephone || null,
       pin,
       siret: isPro ? siret : null,
-      role: profil,
+      role: mapToDbRole(profil),
       statut_verifie,
       zone_intervention: zones ? [zones] : null
     };
 
+    if (isPro && (profil === 'agent' || profil === 'mandataire')) {
+      profileData.sous_role_immo = profil;
+    }
+
+    if (isPro && profil === 'artisan' && Array.isArray(profession) && profession.length > 0) {
+      profileData.profession = profession;
+    }
+
     if (!isPro) {
-      profileData.est_acquereur = profil === 'particulier_acquereur';
+      profileData.est_acquereur = isAcquereur;
       profileData.est_vendeur = profil === 'particulier_vendeur';
     }
 
@@ -190,10 +212,11 @@ export default async (req) => {
     try {
       const fromEmail = getFromEmail(profil);
       if (isPro) {
-        // Fire and forget for pros - don't wait
-        sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey).catch(err => console.error('📧 Email 1 error:', err.message));
-        sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey).catch(err => console.error('📧 Email 2 error:', err.message));
-      } else if (profil === 'particulier_acquereur') {
+        // Attendu (await) : sur Netlify, la fonction peut se couper juste après avoir
+        // répondu au navigateur, avant qu'un envoi "fire and forget" soit terminé.
+        await sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey);
+        await sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey);
+      } else if (isAcquereur) {
         await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
       } else if (profil === 'particulier_vendeur') {
         await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
