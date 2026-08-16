@@ -22,10 +22,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupFilterListeners();
 });
 
+// La colonne profiles.role n'accepte que courtier/artisan/immo (enum Postgres).
+// Agent immobilier et mandataire partagent la valeur "immo" ; le détail est
+// dans profiles.sous_role_immo. Cette fonction reconstitue le rôle "affiché"
+// (agent_immobilier / mandataire_immobilier) utilisé par les filtres de la page.
+function getFilterRole(pro) {
+  if (pro.role === 'immo') {
+    return pro.sous_role_immo === 'mandataire' ? 'mandataire_immobilier' : 'agent_immobilier';
+  }
+  return pro.role;
+}
+
 async function loadPros() {
   try {
     console.log('🔄 Requête Supabase: profiles avec statut_verifie=true');
-    
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -38,9 +49,11 @@ async function loadPros() {
     }
 
     // Filtrer les rôles en JavaScript (évite les problèmes RLS)
-    const validRoles = ['courtier', 'artisan', 'agent_immobilier', 'mandataire_immobilier'];
+    // NB : les profils pros non "mis en ligne" (étape 3 non validée) sont déjà
+    // exclus en amont par la policy RLS "Voir les profils vérifiés (vitrine)".
+    const validRoles = ['courtier', 'artisan', 'immo'];
     const prosVerifies = (data || []).filter(pro => validRoles.includes(pro.role));
-    
+
     allPros = prosVerifies;
     console.log(`✅ ${allPros.length} pros chargés (filtrage rôles en JS)`);
     applyFilters();
@@ -55,7 +68,7 @@ function applyFilters() {
   const selectedZones = Array.from(document.querySelectorAll('.zone-filter:checked')).map(el => el.value);
 
   filteredPros = allPros.filter(pro => {
-    if (selectedRoles.length > 0 && !selectedRoles.includes(pro.role)) return false;
+    if (selectedRoles.length > 0 && !selectedRoles.includes(getFilterRole(pro))) return false;
     if (selectedZones.length > 0) {
       const proZones = pro.zone_intervention || [];
       const hasZone = selectedZones.some(zone => proZones.includes(zone));
@@ -94,7 +107,7 @@ function createProCard(pro) {
     'artisan': '🔨 Artisan',
     'agent_immobilier': '🏠 Agent immobilier',
     'mandataire_immobilier': '📋 Mandataire'
-  }[pro.role] || pro.role;
+  }[getFilterRole(pro)] || pro.role;
 
   const zones = pro.zone_intervention || [];
   const zonesHtml = zones.map(zone => `<span class="zone-tag">${zone}</span>`).join('');
