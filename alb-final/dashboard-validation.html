@@ -972,8 +972,8 @@
       try {
         const { data, error } = await window.supabaseClient
           .from('profiles')
-          .select('id, prenom, nom, email, nom_entreprise, siret, role, date_creation, statut_verifie')
-          .in('role', ['courtier', 'artisan', 'agent', 'mandataire'])
+        .select('id, prenom, nom, email, nom_entreprise, siret, role, sous_role_immo, date_creation, statut_verifie')
+          .in('role', ['courtier', 'artisan', 'immo'])
           .eq('statut_verifie', false)
           .order('date_creation', { ascending: false });
 
@@ -1003,7 +1003,7 @@
           <td>${p.email}</td>
           <td>${p.nom_entreprise || '-'}</td>
           <td>${p.siret || '-'}</td>
-          <td><span class="status-badge">${p.role}</span></td>
+          <td><span class="status-badge">${p.role === 'immo' ? (p.sous_role_immo === 'mandataire' ? 'Mandataire' : 'Agent immobilier') : p.role}</span></td>
           <td>${new Date(p.date_creation).toLocaleDateString('fr-FR')}</td>
           <td>
             <div class="actions">
