@@ -15,12 +15,14 @@ function getFromEmailByType(profile) {
   if (profile.est_acquereur === true) return 'particulier-acquereur@albimmobilier.fr';
   if (profile.role === 'courtier') return 'courtier@albimmobilier.fr';
   if (profile.role === 'artisan') return 'artisan@albimmobilier.fr';
-  if (profile.role === 'agent' || profile.role === 'mandataire') return 'agent-immobilier@albimmobilier.fr';
+  // "immo" regroupe agent immobilier + mandataire (même alias email pour les deux,
+  // le détail est dans profile.sous_role_immo)
+  if (profile.role === 'immo') return 'agent-immobilier@albimmobilier.fr';
   return 'contact@albimmobilier.fr';
 }
 
 function isProProfile(profile) {
-  return ['courtier', 'agent', 'artisan', 'mandataire'].includes(profile.role);
+  return ['courtier', 'artisan', 'immo'].includes(profile.role);
 }
 
 async function sendBrevoEmail(email, templateId, params, fromEmail) {
