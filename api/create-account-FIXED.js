@@ -16,39 +16,23 @@ function isProProfile(profil) {
   return ['agent', 'courtier', 'artisan', 'mandataire'].includes(profil);
 }
 
-// La colonne profiles.role est un enum Postgres qui n'accepte que :
-// particulier, artisan, courtier, immo. "agent" et "mandataire" n'existent
-// pas comme valeurs de role — ils partagent le même alias email
-// (agent-immobilier@) donc on les regroupe sous "immo", et on garde le
-// détail dans profiles.sous_role_immo.
 function mapToDbRole(profil) {
   if (profil === 'agent' || profil === 'mandataire') return 'immo';
   if (profil === 'particulier_acquereur' || profil === 'particulier_acheteur' || profil === 'particulier_vendeur') {
     return 'particulier';
   }
-  return profil; // courtier, artisan : déjà des valeurs valides
+  return profil; // courtier, artisan
 }
 
-function getFromEmail(profil) {
-  if (profil === 'particulier_vendeur') {
-    return 'particulier-vendeur@albimmobilier.fr';
-  }
-  if (profil === 'particulier_acquereur' || profil === 'particulier_acheteur') {
-    return 'particulier-acquereur@albimmobilier.fr';
-  }
-  if (profil === 'courtier') {
-    return 'courtier@albimmobilier.fr';
-  }
-  if (profil === 'artisan') {
-    return 'artisan@albimmobilier.fr';
-  }
-  if (profil === 'agent' || profil === 'mandataire') {
-    return 'agent-immobilier@albimmobilier.fr';
-  }
+// Toujours utiliser contact@albimmobilier.fr comme sender (seule adresse DKIM certifiée)
+function getFromEmail() {
   return 'contact@albimmobilier.fr';
 }
 
-async function sendWelcomeTemplate(email, pin, prenom, templateId, fromEmail, brevoApiKey) {
+// 🔧 CORRIGÉ : Variables minuscules pour correspondre aux templates Brevo
+async function sendWelcomeTemplate(email, pin, prenom, templateId, brevoApiKey) {
+  console.log(`[ALB DEBUG] Envoi template #${templateId} à ${email}`);
+
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -57,22 +41,29 @@ async function sendWelcomeTemplate(email, pin, prenom, templateId, fromEmail, br
     },
     body: JSON.stringify({
       to: [{ email, name: prenom }],
-      from: { email: fromEmail, name: 'ALB Immobilier' },
+      from: { email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' },
       templateId: templateId,
       params: {
-        PRENOM: prenom,
-        PIN: pin
+        prenom: prenom,
+        pin: pin
       }
     })
   });
+
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[ALB ERROR] Brevo template #${templateId} failed: ${errorText}`);
     throw new Error(`Brevo error: ${errorText}`);
   }
+
+  console.log(`[ALB DEBUG] Template #${templateId} envoyé avec succès à ${email}`);
   return response.json();
 }
 
+// 🔧 CORRIGÉ : Envoyer depuis contact@albimmobilier.fr + variables minuscules
 async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones, brevoApiKey) {
+  console.log(`[ALB DEBUG] Envoi template #2 (Nouveau PRO) à Joce pour ${nom} (${role})`);
+
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -84,19 +75,23 @@ async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones,
       from: { email: 'contact@albimmobilier.fr', name: 'ALB Immobilier' },
       templateId: 2,
       params: {
-        PRENOM: prenom,
-        NOM: nom,
-        EMAIL: email,
-        SIRET: siret || 'Non renseigné',
-        ROLE: role,
-        ZONES: zones || 'Non spécifiée'
+        prenom: prenom,
+        nom: nom,
+        email: email,
+        siret: siret || 'Non renseigné',
+        role: role,
+        zones: zones || 'Non spécifiée'
       }
     })
   });
+
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[ALB ERROR] Brevo template #2 failed: ${errorText}`);
     throw new Error(`Brevo error: ${errorText}`);
   }
+
+  console.log(`[ALB DEBUG] Template #2 envoyé à Joce`);
   return response.json();
 }
 
@@ -122,7 +117,7 @@ export default async (req) => {
     const body = await req.json();
     const { prenom, nom, email, telephone, siret, zones, profil, profession } = body;
 
-    console.log('📥 Body received:', { prenom, nom, siret, profil, email, telephone });
+    console.log('[ALB DEBUG] Inscription reçue:', { prenom, nom, siret, profil, email });
 
     if (!prenom || !nom || !email || !telephone || !profil) {
       return json({ error: 'Missing required fields' }, 400);
@@ -141,6 +136,7 @@ export default async (req) => {
       .maybeSingle();
 
     if (existingError) {
+      console.error('[ALB ERROR] Check existing profile failed:', existingError);
       return json({ error: existingError.message }, 500);
     }
 
@@ -165,10 +161,12 @@ export default async (req) => {
     });
 
     if (authError || !authData?.user?.id) {
+      console.error('[ALB ERROR] Auth creation failed:', authError);
       return json({ error: authError?.message || 'Failed to create auth user' }, 500);
     }
 
     const userId = authData.user.id;
+    console.log(`[ALB DEBUG] Auth user créé: ${userId}`);
 
     const profileData = {
       id: userId,
@@ -196,38 +194,44 @@ export default async (req) => {
       profileData.est_vendeur = profil === 'particulier_vendeur';
     }
 
-    console.log('📤 ProfileData to insert:', profileData);
+    console.log('[ALB DEBUG] Profil à insérer:', profileData);
 
-   const { error: profileInsertError } = await supabase
-  .from('profiles')
-  .upsert(profileData, { onConflict: 'id' });
+    const { error: profileInsertError } = await supabase
+      .from('profiles')
+      .upsert(profileData, { onConflict: 'id' });
 
     if (profileInsertError) {
-      console.error('❌ Insert error:', profileInsertError);
+      console.error('[ALB ERROR] Insert profile failed:', profileInsertError);
       return json({ error: profileInsertError.message || 'Failed to create profile' }, 500);
     }
 
-    console.log('✅ Profile inserted successfully');
+    console.log('[ALB DEBUG] Profil inséré avec succès');
 
+    // 🔧 Envoi d'emails avec gestion d'erreur améliorée
     try {
-      const fromEmail = getFromEmail(profil);
       if (isPro) {
-        // Attendu (await) : sur Netlify, la fonction peut se couper juste après avoir
-        // répondu au navigateur, avant qu'un envoi "fire and forget" soit terminé.
-        await sendWelcomeTemplate(email, pin, prenom, 1, fromEmail, brevoApiKey);
+        // Template #1 : Questionnaire PRO au pro
+        await sendWelcomeTemplate(email, pin, prenom, 1, brevoApiKey);
+
+        // Template #2 : Nouveau PRO À Valider à Joce
         await sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey);
       } else if (isAcquereur) {
-        await sendWelcomeTemplate(email, pin, prenom, 14, fromEmail, brevoApiKey);
+        // Template #14 : Bienvenue Acheteur
+        await sendWelcomeTemplate(email, pin, prenom, 14, brevoApiKey);
       } else if (profil === 'particulier_vendeur') {
-        await sendWelcomeTemplate(email, pin, prenom, 15, fromEmail, brevoApiKey);
+        // Template #15 : Inscription Vendeur
+        await sendWelcomeTemplate(email, pin, prenom, 15, brevoApiKey);
       }
+      console.log('[ALB DEBUG] Tous les emails envoyés avec succès');
     } catch (emailError) {
-      console.error('📧 Email sending error:', emailError);
+      console.error('[ALB ERROR] Email sending failed:', emailError.message);
+      // ⚠️ On continue même si l'email échoue (le profil est créé)
+      // Joce pourra renvoyer manuellement depuis Brevo si besoin
     }
 
-    return json({ success: true, message: 'Account created successfully', userId, email, profil }, 200);
+    return json({ success: true, message: 'Account created successfully', userId, email, profil, pin }, 200);
   } catch (error) {
-    console.error('💥 Fatal error:', error);
+    console.error('[ALB ERROR] Fatal error:', error);
     return json({ error: error.message || 'Failed to create account' }, 500);
   }
 };
