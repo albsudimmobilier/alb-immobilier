@@ -71,6 +71,7 @@
     }
     @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
     .error-message { color: var(--error); font-size: .9rem; font-weight: 600; }
+    .taux-source { font-size: .75rem; color: #999; font-style: italic; margin-top: .3rem; }
     @media (max-width: 920px) {
       .form-grid, .kpi-grid { grid-template-columns: 1fr 1fr; }
     }
@@ -125,7 +126,11 @@
           <option value="25" selected>25 ans</option>
         </select>
       </div>
-      <div class="field"><label for="taux">Taux estimatif (%)</label><input type="number" id="taux" value="3.60" min="0.1" max="10" step="0.01"></div>
+      <div class="field">
+        <label for="taux">Taux estimatif (%)</label>
+        <input type="number" id="taux" min="0.1" max="10" step="0.01">
+        <div class="taux-source" id="taux-source">Chargement du taux...</div>
+      </div>
       <div class="field"><label for="assurance">Assurance mensuelle (€)</label><input type="number" id="assurance" value="60" min="0" step="5"></div>
       <div class="field"><label for="travaux">Budget travaux (€)</label><input type="number" id="travaux" value="0" min="0" step="500"></div>
       <div class="field"><label for="epargneRestante">Épargne restante (€)</label><input type="number" id="epargneRestante" value="5000" min="0" step="500"></div>
@@ -205,8 +210,8 @@
       <label style="display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;">
         <input type="checkbox" id="consentementRecontact" required style="margin-top:.2rem;">
         <span>
-          <strong>J’accepte d’être recontacté</strong><br>
-          J’autorise les courtiers sélectionnés à me contacter dans le cadre de ma demande de financement.
+          <strong>J'accepte d'être recontacté</strong><br>
+          J'autorise les courtiers sélectionnés à me contacter dans le cadre de ma demande de financement.
         </span>
       </label>
     </div>
@@ -242,11 +247,123 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 let selectedCourtiers = [];
 let courtiersMode = 'direct';
 let formData = {};
 let courtiersList = [];
+
+// 🆕 STOCKAGE DES TAUX
+let tauxData = {
+  taux_15_ans: 3.33,
+  taux_20_ans: 3.44,
+  taux_25_ans: 3.52,
+  source: '',
+  mise_a_jour_le: ''
+};
+
+// 🆕 CHARGER LES TAUX ET LES INFOS UTILISATEUR
+async function initializeForm() {
+  console.log('[ALB DEBUG] Initialisation du formulaire');
+  
+  // 1. Charger les taux
+  await loadTauxAutomatique();
+  
+  // 2. Vérifier si utilisateur loggé et pré-remplir section 1
+  await prefillUserInfo();
+  
+  // 3. Charger les courtiers
+  await loadCourtiers();
+  
+  // 4. Initialiser le récapitulatif
+  setSummary();
+}
+
+// 🆕 CHARGER LES TAUX DEPUIS SUPABASE
+async function loadTauxAutomatique() {
+  try {
+    console.log('[ALB DEBUG] Chargement des taux...');
+    const { data, error } = await supabase
+      .from('parametres_taux_credit')
+      .select('taux_15_ans, taux_20_ans, taux_25_ans, source, mise_a_jour_le')
+      .limit(1);
+
+    if (error) {
+      console.error('[ALB ERROR] Erreur Supabase:', error);
+      throw error;
+    }
+    
+    if (data && data.length > 0) {
+      tauxData = data[0];
+      console.log('[ALB DEBUG] Taux chargés:', tauxData);
+    }
+    
+    // Afficher le taux pour la durée par défaut (25 ans)
+    updateTauxField();
+  } catch (err) {
+    console.error('[ALB ERROR] Erreur chargement taux:', err);
+    document.getElementById('taux-source').textContent = '⚠ Erreur chargement des taux';
+  }
+}
+
+// 🆕 METTRE À JOUR LE CHAMP TAUX SELON LA DURÉE
+function updateTauxField() {
+  const duree = document.getElementById('duree').value;
+  const tauxKey = `taux_${duree}_ans`;
+  const tauxValue = tauxData[tauxKey] || 3.60;
+  
+  document.getElementById('taux').value = tauxValue.toFixed(2);
+  
+  // Afficher la source en petit
+  const sourceText = tauxData.source || 'Source non disponible';
+  document.getElementById('taux-source').textContent = `✓ ${sourceText}`;
+  
+  console.log(`[ALB DEBUG] Taux mis à jour: ${tauxValue}% (${duree} ans)`);
+}
+
+// 🆕 PRÉ-REMPLIR LES INFOS SI UTILISATEUR LOGGÉ
+async function prefillUserInfo() {
+  try {
+    // Vérifier si utilisateur loggé (session Supabase)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log('[ALB DEBUG] Pas d\'utilisateur loggé');
+      return;
+    }
+    
+    const userId = session.user.id;
+    console.log('[ALB DEBUG] Utilisateur loggé:', userId);
+    
+    // Charger les infos depuis profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('nom, prenom, email, telephone')
+      .eq('id', userId)
+      .single();
+    
+    if (profileError) {
+      console.error('[ALB ERROR] Erreur chargement profil:', profileError);
+      return;
+    }
+    
+    if (profile) {
+      // Pré-remplir section 1
+      document.getElementById('nom').value = profile.nom || '';
+      document.getElementById('prenom').value = profile.prenom || '';
+      document.getElementById('email').value = profile.email || '';
+      document.getElementById('telephone').value = profile.telephone || '';
+      
+      console.log('[ALB DEBUG] Section 1 pré-remplie:', profile);
+    }
+  } catch (err) {
+    console.error('[ALB ERROR] Erreur prefillUserInfo:', err);
+  }
+}
 
 function setSummary() {
   document.getElementById('summaryNom').textContent = `${document.getElementById('nom').value || ''} ${document.getElementById('prenom').value || ''}`.trim() || '—';
@@ -379,7 +496,7 @@ function calculerBudget() {
     statusBadge.className = 'status-badge';
   }
 
-  if (endettement > 35) tips.push('Le taux d’endettement est trop élevé. Réduire les charges peut aider.');
+  if (endettement > 35) tips.push('Le taux d\'endettement est trop élevé. Réduire les charges peut aider.');
   if (apport < budgetBien * 0.1) tips.push('Un apport plus important renforcerait le dossier.');
   if (!tips.length) tips.push('Profil équilibré. Le courtier pourra affiner votre financement.');
 
@@ -398,6 +515,7 @@ async function loadCourtiers() {
     courtiersList = Array.isArray(json.courtiers) ? json.courtiers : [];
     renderCourtiers();
   } catch (e) {
+    console.error('[ALB ERROR] Erreur chargement courtiers:', e);
     tbody.innerHTML = `<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--error)">Impossible de charger les courtiers.</td></tr>`;
   }
 }
@@ -418,7 +536,7 @@ async function validateAndSubmit() {
   if (!cp) errors.push('Code postal requis');
   if (!consentement) errors.push('Consentement requis');
   if (courtiersMode === 'direct' && selectedCourtiers.length === 0) errors.push('Sélectionnez 1 ou 2 courtiers');
-  if (!formData.budget_max_declare) errors.push('Cliquez d’abord sur Calculer mon budget');
+  if (!formData.budget_max_declare) errors.push('Cliquez d\'abord sur Calculer mon budget');
 
   const alert = document.getElementById('errorAlert');
   if (errors.length) {
@@ -476,7 +594,7 @@ async function validateAndSubmit() {
 
     window.location.href = 'index.html';
   } catch (err) {
-    alert.textContent = err.message || 'Erreur lors de l’envoi';
+    alert.textContent = err.message || 'Erreur lors de l\'envoi';
     alert.classList.add('show');
   } finally {
     document.getElementById('loader').classList.remove('active');
@@ -484,14 +602,22 @@ async function validateAndSubmit() {
   }
 }
 
+// 🆕 EVENT LISTENERS
+document.getElementById('duree').addEventListener('change', function() {
+  updateTauxField();
+  if (document.getElementById('statusBadge').textContent !== 'En attente du calcul') {
+    calculerBudget();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', initializeForm);
 document.addEventListener('input', setSummary);
 document.addEventListener('change', () => {
   setSummary();
-  if (document.getElementById('statusBadge').textContent !== 'En attente du calcul') calculerBudget();
+  if (document.getElementById('statusBadge').textContent !== 'En attente du calcul') {
+    calculerBudget();
+  }
 });
-
-loadCourtiers();
-setSummary();
 </script>
 </body>
 </html>
