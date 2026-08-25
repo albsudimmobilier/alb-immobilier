@@ -1,174 +1,388 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projets Travaux - ALB Immobilier</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f5f3ee;
-            color: #333;
-        }
-
-        header {
-            background-color: #fff;
-            padding: 1rem 2rem;
-            border-bottom: 3px solid #B28E3D;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-text h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            color: #4B1A3E;
-            font-weight: 700;
-        }
-
-        .logo-text p {
-            font-size: 0.7rem;
-            color: #B28E3D;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        nav {
-            display: flex;
-            gap: 2rem;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: #333;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
-            padding-bottom: 0.25rem;
-            transition: all 0.3s ease;
-        }
-
-        nav a:hover,
-        nav a.active {
-            color: #4B1A3E;
-            border-bottom-color: #B28E3D;
-        }
-
-        .header-right {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .logout-btn {
-            background-color: #C23030;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn:hover {
-            background-color: #a01f1f;
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-        }
-
-        h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: #4B1A3E;
-            margin-bottom: 1rem;
-        }
-
-        p {
-            font-size: 1rem;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-
-        .coming-soon {
-            background-color: #fff;
-            padding: 3rem;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .coming-soon h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            color: #4B1A3E;
-            margin-bottom: 1rem;
-        }
-
-        .coming-soon p {
-            font-size: 1.1rem;
-            color: #666;
-        }
-
-        .icon-emoji {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projets Travaux - ALB Immobilier</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --primary: #4B1A3E;
+      --primary-2: #6b2d5f;
+      --success: #2E7D32;
+      --warning: #B28E3D;
+      --surface: #f5f5f5;
+      --border: #e0e0e0;
+      --text-secondary: #666;
+      --error: #D32F2F;
+    }
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; color: #333; background: var(--surface); line-height: 1.55; }
+    header {
+      background: #fff; padding: 1rem 1.5rem; border-bottom: 3px solid var(--warning);
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 20;
+    }
+    header h1 { margin: 0; font-size: 1.35rem; color: var(--primary); }
+    header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+    header a { text-decoration: none; color: #333; font-size: .9rem; }
+    header a.active { color: var(--primary); font-weight: 700; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .screen {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    h2 { color: var(--primary); margin: 0 0 1rem; font-size: 1.25rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .field { display: flex; flex-direction: column; gap: .35rem; }
+    .field.full { grid-column: 1/-1; }
+    label { font-size: .85rem; font-weight: 600; }
+    input, select, textarea {
+      width: 100%; min-height: 44px; padding: .7rem .8rem; border: 1px solid var(--border); border-radius: 8px; font-size: .95rem;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    .btn-primary {
+      width: 100%; border: 0; border-radius: 10px; padding: .95rem 1.1rem; margin-top: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-primary:disabled { opacity: .7; cursor: not-allowed; }
+    .alert { display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert.show { display: block; }
+    .alert.error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
+    .loader { display: none; text-align: center; padding: 1.2rem; }
+    .loader.active { display: block; }
+    .spinner {
+      border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%;
+      width: 38px; height: 38px; animation: spin 1s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .corps-metier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+    .corps-metier-btn {
+      padding: 1rem; border: 2px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer;
+      text-align: center; font-weight: 600; transition: .2s;
+    }
+    .corps-metier-btn:hover { border-color: var(--primary); }
+    .corps-metier-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer;
+      background: #fafafa; transition: .2s;
+    }
+    .upload-zone:hover { border-color: var(--primary); background: #f5f5f5; }
+    .upload-zone.dragover { border-color: var(--primary); background: #f0f0f0; }
+    .file-input { display: none; }
+    .files-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
+    .file-item {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.75rem;
+      background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem;
+    }
+    .file-remove { background: none; border: none; color: var(--error); cursor: pointer; font-weight: 700; }
+    .summary-card { background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+    .summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid var(--border); }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row span { color: var(--text-secondary); }
+    .summary-row strong { color: var(--primary); text-align: right; }
+    @media (max-width: 920px) {
+      .form-grid, .corps-metier-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <div class="logo-text">
-                <h1><span style="color: #B28E3D;">ALB</span> Immobilier</h1>
-                <p>ALB SUD IMMOBILIER</p>
-            </div>
-        </div>
+<header>
+  <h1><span style="color: var(--warning)">ALB</span> Immobilier</h1>
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="annonces.html">Annonces</a>
+    <a href="vitrine-pros.html">Vitrine des pros</a>
+    <a href="projets-travaux.html" class="active">Projets travaux</a>
+    <a href="financement_interactive.html">Projets financement</a>
+    <a href="espace-alb.html">Espace ALB</a>
+  </nav>
+</header>
 
-        <nav>
-            <a href="index.html">Accueil</a>
-            <a href="annonces.html">Annonces</a>
-            <a href="vitrine-pros.html">Vitrine des pros</a>
-            <a href="projets-travaux.html" class="active">Projets travaux</a>
-            <a href="financement_interactive.html">Projets financement</a>
-            <a href="espace-alb.html">Espace ALB</a>
-        </nav>
+<div class="container">
+  <section class="screen" id="section1">
+    <h2>1. Vos informations</h2>
+    <div class="form-grid">
+      <div class="field"><label for="nom">Nom *</label><input type="text" id="nom"></div>
+      <div class="field"><label for="prenom">Prénom *</label><input type="text" id="prenom"></div>
+      <div class="field"><label for="email">Email *</label><input type="email" id="email"></div>
+      <div class="field"><label for="telephone">Téléphone *</label><input type="tel" id="telephone"></div>
+      <div class="field full"><label for="localisation">Localisation du projet *</label><input type="text" id="localisation" placeholder="Rue, ville"></div>
+      <div class="field"><label for="codePostal">Code postal *</label><input type="text" id="codePostal"></div>
+    </div>
+  </section>
 
-        <div class="header-right">
-            <button class="logout-btn" onclick="window.location.href='login.html'">🚪 Déconnexion</button>
-        </div>
-    </header>
+  <section class="screen" id="section2">
+    <h2>2. Description & fichiers</h2>
+    <div class="form-grid">
+      <div class="field full"><label for="description">Description du projet *</label><textarea id="description" placeholder="Décrivez précisément vos travaux..."></textarea></div>
+      <div class="field"><label for="budget">Budget estimé (€) *</label><input type="number" id="budget" min="0" step="500" value="10000"></div>
+      <div class="field"><label for="delai">Délai souhaité *</label>
+        <select id="delai">
+          <option value="urgent">Urgent (< 2 semaines)</option>
+          <option value="court">Court terme (1-2 mois)</option>
+          <option value="moyen" selected>Moyen terme (2-3 mois)</option>
+          <option value="long">Long terme (> 3 mois)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="margin-top: 1.5rem;">
+      <label style="font-weight: 600; margin-bottom: 0.75rem; display: block;">Fichiers (photos, plans, vidéos)</label>
+      <div class="upload-zone" id="uploadZone">
+        📎 Glissez vos fichiers ici ou cliquez pour sélectionner<br>
+        <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">Max 50 Mo par fichier, 200 Mo au total</small>
+      </div>
+      <input type="file" id="fileInput" class="file-input" multiple>
+      <div class="files-list" id="filesList"></div>
+    </div>
+  </section>
 
-    <main>
-        <h2>Projets Travaux</h2>
-        <p>Trouvez et gérez vos projets de rénovation avec nos artisans partenaires.</p>
+  <section class="screen" id="section3">
+    <h2>3. Corps de métier</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Sélectionnez le type d'artisan dont vous avez besoin.</p>
+    <div class="corps-metier-grid" id="corpsMetierGrid"></div>
+  </section>
 
-        <div class="coming-soon">
-            <div class="icon-emoji">🔨</div>
-            <h3>Bientôt disponible</h3>
-            <p>Cette section sera opérationnelle très prochainement. Elle vous permettra de créer, suivre et financer vos projets de travaux dans le Var et la région PACA.</p>
-        </div>
-    </main>
+  <section class="screen" id="section4">
+    <h2>4. Récapitulatif</h2>
+    <div class="summary-card">
+      <div class="summary-row"><span>Nom / Prénom</span><strong id="summaryNom">—</strong></div>
+      <div class="summary-row"><span>Email</span><strong id="summaryEmail">—</strong></div>
+      <div class="summary-row"><span>Téléphone</span><strong id="summaryTel">—</strong></div>
+      <div class="summary-row"><span>Localisation</span><strong id="summaryLocalisation">—</strong></div>
+      <div class="summary-row"><span>Budget</span><strong id="summaryBudget">—</strong></div>
+      <div class="summary-row"><span>Délai</span><strong id="summaryDelai">—</strong></div>
+      <div class="summary-row"><span>Corps de métier</span><strong id="summaryCorpsMetier">—</strong></div>
+      <div class="summary-row"><span>Fichiers</span><strong id="summaryFichiers">0</strong></div>
+    </div>
+  </section>
+
+  <section class="screen" id="section5">
+    <h2>5. Envoyer la demande</h2>
+    <div class="alert error" id="errorAlert"></div>
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Envoi en cours...</p>
+    </div>
+    <div id="submitContent">
+      <button class="btn-primary" type="button" onclick="validateAndSubmit()">Envoyer ma demande aux artisans</button>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const CORPS_METIERS = [
+  { id: 'plomberie', label: 'Plomberie' },
+  { id: 'electricite', label: 'Électricité' },
+  { id: 'menuiserie', label: 'Menuiserie' },
+  { id: 'maconnerie', label: 'Maçonnerie' },
+  { id: 'toiture', label: 'Toiture' },
+  { id: 'chauffage', label: 'Chauffage' },
+  { id: 'isolation', label: 'Isolation' },
+  { id: 'peinture', label: 'Peinture' },
+  { id: 'carrelage', label: 'Carrelage' },
+  { id: 'decoration', label: 'Décoration' }
+];
+
+let selectedCorpsMetier = null;
+let selectedFiles = [];
+let totalFileSize = 0;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_TOTAL_SIZE = 200 * 1024 * 1024; // 200 MB
+
+function renderCorpsMetiers() {
+  const grid = document.getElementById('corpsMetierGrid');
+  grid.innerHTML = CORPS_METIERS.map(cm => `
+    <button type="button" class="corps-metier-btn" onclick="selectCorpsMetier('${cm.id}', '${cm.label}')">${cm.label}</button>
+  `).join('');
+}
+
+function selectCorpsMetier(id, label) {
+  selectedCorpsMetier = { id, label };
+  document.querySelectorAll('.corps-metier-btn').forEach(btn => btn.classList.remove('selected'));
+  event.target.classList.add('selected');
+  setSummary();
+}
+
+function setupUploadZone() {
+  const zone = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+
+  zone.addEventListener('click', () => input.click());
+  
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('dragover');
+  });
+  
+  zone.addEventListener('dragleave', () => {
+    zone.classList.remove('dragover');
+  });
+  
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  
+  input.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+  });
+}
+
+function handleFiles(fileList) {
+  const errors = [];
+  
+  for (let file of fileList) {
+    // Vérifier taille fichier
+    if (file.size > MAX_FILE_SIZE) {
+      errors.push(`${file.name}: fichier trop volumineux (max 50 Mo)`);
+      continue;
+    }
+    
+    // Vérifier taille totale
+    if (totalFileSize + file.size > MAX_TOTAL_SIZE) {
+      errors.push(`Dépassement de la limite totale (200 Mo)`);
+      break;
+    }
+    
+    // Ajouter fichier
+    selectedFiles.push(file);
+    totalFileSize += file.size;
+  }
+  
+  if (errors.length) {
+    const alert = document.getElementById('errorAlert');
+    alert.textContent = errors.join(' • ');
+    alert.classList.add('show');
+  }
+  
+  renderFiles();
+  setSummary();
+}
+
+function renderFiles() {
+  const list = document.getElementById('filesList');
+  list.innerHTML = selectedFiles.map((file, idx) => `
+    <div class="file-item">
+      <span>${file.name} (${(file.size / 1024 / 1024).toFixed(1)} Mo)</span>
+      <button type="button" class="file-remove" onclick="removeFile(${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFile(idx) {
+  totalFileSize -= selectedFiles[idx].size;
+  selectedFiles.splice(idx, 1);
+  renderFiles();
+  setSummary();
+}
+
+function setSummary() {
+  document.getElementById('summaryNom').textContent = `${document.getElementById('nom').value || ''} ${document.getElementById('prenom').value || ''}`.trim() || '—';
+  document.getElementById('summaryEmail').textContent = document.getElementById('email').value || '—';
+  document.getElementById('summaryTel').textContent = document.getElementById('telephone').value || '—';
+  document.getElementById('summaryLocalisation').textContent = document.getElementById('localisation').value || '—';
+  document.getElementById('summaryBudget').textContent = document.getElementById('budget').value ? euro.format(parseFloat(document.getElementById('budget').value)) : '—';
+  document.getElementById('summaryDelai').textContent = document.getElementById('delai').value || '—';
+  document.getElementById('summaryCorpsMetier').textContent = selectedCorpsMetier ? selectedCorpsMetier.label : '—';
+  document.getElementById('summaryFichiers').textContent = selectedFiles.length;
+}
+
+async function validateAndSubmit() {
+  const errors = [];
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const telephone = document.getElementById('telephone').value.trim();
+  const codePostal = document.getElementById('codePostal').value.trim();
+  const localisation = document.getElementById('localisation').value.trim();
+  const description = document.getElementById('description').value.trim();
+  const budget = parseFloat(document.getElementById('budget').value) || 0;
+  const delai = document.getElementById('delai').value;
+
+  if (!nom) errors.push('Nom requis');
+  if (!prenom) errors.push('Prénom requis');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email invalide');
+  if (!telephone) errors.push('Téléphone requis');
+  if (!codePostal) errors.push('Code postal requis');
+  if (!localisation) errors.push('Localisation requise');
+  if (!description) errors.push('Description requise');
+  if (budget <= 0) errors.push('Budget requis');
+  if (!selectedCorpsMetier) errors.push('Sélectionnez un corps de métier');
+
+  const alert = document.getElementById('errorAlert');
+  if (errors.length) {
+    alert.textContent = errors.join(' • ');
+    alert.classList.add('show');
+    return;
+  }
+
+  alert.classList.remove('show');
+  document.getElementById('loader').classList.add('active');
+  document.getElementById('submitContent').style.display = 'none';
+
+  try {
+    // Préparer FormData pour upload fichiers
+    const formData = new FormData();
+    formData.append('nom', nom);
+    formData.append('prenom', prenom);
+    formData.append('email', email);
+    formData.append('telephone', telephone);
+    formData.append('codePostal', codePostal);
+    formData.append('localisation', localisation);
+    formData.append('description', description);
+    formData.append('budget', budget);
+    formData.append('delai', delai);
+    formData.append('corps_metier', selectedCorpsMetier.id);
+    
+    selectedFiles.forEach((file, idx) => {
+      formData.append(`file_${idx}`, file);
+    });
+
+    const res = await fetch('/.netlify/functions/notify-artisans', {
+      method: 'POST',
+      body: formData
+    });
+
+    const raw = await res.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new Error(raw.slice(0, 200) || 'Réponse serveur invalide');
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `Erreur serveur (${res.status})`);
+    }
+
+    // Succès + bouton "Voir mes projets"
+    document.getElementById('loader').classList.remove('active');
+    document.getElementById('submitContent').innerHTML = `
+      <div style="background:#e8f5e9;border:1px solid var(--success);border-radius:10px;padding:1.5rem;text-align:center;">
+        <p style="color:var(--success);font-weight:700;font-size:1.1rem;margin:0 0 1rem;">✓ Demande envoyée avec succès !</p>
+        <p style="color:var(--text-secondary);margin:0 0 1.5rem;">Votre demande a été reçue. Les artisans vont prendre contact avec vous pour discuter de votre projet.</p>
+        <button type="button" onclick="window.location.href='espace-alb.html'" style="padding:.95rem 1.5rem;border:0;border-radius:10px;background:var(--primary);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">
+          Voir mes projets dans mon espace
+        </button>
+      </div>
+    `;
+  } catch (err) {
+    alert.textContent = err.message || 'Erreur lors de l\'envoi';
+    alert.classList.add('show');
+    document.getElementById('loader').classList.remove('active');
+    document.getElementById('submitContent').style.display = 'block';
+  }
+}
+
+document.addEventListener('input', setSummary);
+document.addEventListener('change', setSummary);
+setupUploadZone();
+renderCorpsMetiers();
+setSummary();
+</script>
 </body>
 </html>
