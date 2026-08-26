@@ -3,98 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Projets Travaux - ALB Immobilier</title>
+  <title>Projet Travaux - ALB Immobilier</title>
   <style>
     * { box-sizing: border-box; }
     :root {
-      --primary: #4B1A3E;
-      --primary-2: #6b2d5f;
+      --primary: #1e40af;
+      --primary-2: #1e3a8a;
       --success: #2E7D32;
       --warning: #B28E3D;
-      --surface: #f5f5f5;
-      --border: #e0e0e0;
-      --text-secondary: #666;
-      --error: #D32F2F;
+      --surface: #f9fafb;
+      --border: #e5e7eb;
+      --text-secondary: #6b7280;
+      --error: #dc2626;
     }
-    body { margin: 0; font-family: system-ui, Arial, sans-serif; color: #333; background: var(--surface); line-height: 1.55; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; color: #1f2937; background: var(--surface); line-height: 1.6; }
     header {
-      background: #fff; padding: 1rem 1.5rem; border-bottom: 3px solid var(--warning);
-      display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 20;
+      background: #fff; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; gap: 2rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 20;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    header h1 { margin: 0; font-size: 1.35rem; color: var(--primary); }
-    header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
-    header a { text-decoration: none; color: #333; font-size: .9rem; }
+    header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+    header nav { display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; }
+    header a { text-decoration: none; color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    header a:hover { color: var(--primary); }
     header a.active { color: var(--primary); font-weight: 700; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .container { max-width: 64rem; margin: 0 auto; padding: 2rem 1.5rem; }
     .screen {
-      background: #fff; border: 1px solid var(--border); border-radius: 12px;
-      padding: 1.5rem; margin-bottom: 1.5rem;
+      background: #fff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 2rem; margin-bottom: 2rem;
     }
-    h2 { color: var(--primary); margin: 0 0 1rem; font-size: 1.25rem; }
+    h2 { color: var(--primary); margin: 0 0 1.5rem; font-size: 1.25rem; font-weight: 600; }
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-    .field { display: flex; flex-direction: column; gap: .35rem; }
-    .field.full { grid-column: 1/-1; }
-    label { font-size: .85rem; font-weight: 600; }
+    .field { display: flex; flex-direction: column; gap: 0.35rem; }
+    label { font-size: 0.9rem; font-weight: 600; color: #111827; }
     input, select, textarea {
-      width: 100%; min-height: 44px; padding: .7rem .8rem; border: 1px solid var(--border); border-radius: 8px; font-size: .95rem;
+      width: 100%; min-height: 44px; padding: 0.7rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: inherit;
     }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+    input[type="checkbox"] { width: auto; margin-right: 0.5rem; cursor: pointer; }
     textarea { min-height: 100px; resize: vertical; }
-    .btn-primary {
-      width: 100%; border: 0; border-radius: 10px; padding: .95rem 1.1rem; margin-top: 1rem;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
+    .upload-zone {
+      border: 2px dashed var(--warning); border-radius: 8px; padding: 2rem; text-align: center;
+      background: #fafafa; cursor: pointer; transition: all 0.3s;
     }
-    .btn-primary:disabled { opacity: .7; cursor: not-allowed; }
-    .alert { display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .upload-zone:hover { border-color: var(--primary); background: #f5f5f5; }
+    .upload-zone.dragover { border-color: var(--primary); background: #efefef; }
+    .upload-zone p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+    #fileInput { display: none; }
+    .file-list { margin-top: 1rem; }
+    .file-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem; background: #fafafa; border-radius: 6px; margin-bottom: 0.5rem;
+      border: 1px solid var(--border);
+    }
+    .file-item span { font-size: 0.85rem; color: var(--text-secondary); }
+    .file-item button {
+      background: var(--error); color: #fff; border: 0; padding: 0.4rem 0.8rem;
+      border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600;
+    }
+    .file-item button:hover { background: #b91c1c; }
+    .btn-primary {
+      width: 100%; border: 0; border-radius: 6px; padding: 0.95rem 1.1rem; margin-top: 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .status-badge {
+      display: inline-block; padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem;
+      background: #fef3c7; color: #b45309;
+    }
+    .summary-card { background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row span { color: var(--text-secondary); font-weight: 500; }
+    .summary-row strong { color: var(--primary); text-align: right; font-weight: 600; }
+    .alert { display: none; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
     .alert.show { display: block; }
-    .alert.error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
-    .loader { display: none; text-align: center; padding: 1.2rem; }
+    .alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .loader { display: none; text-align: center; padding: 1.5rem; }
     .loader.active { display: block; }
     .spinner {
       border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%;
-      width: 38px; height: 38px; animation: spin 1s linear infinite; margin: 0 auto 1rem;
+      width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem;
     }
     @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
     .corps-metier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
     .corps-metier-btn {
-      padding: 1rem; border: 2px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer;
-      text-align: center; font-weight: 600; transition: .2s;
+      padding: 1rem; border: 2px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer;
+      text-align: center; font-weight: 600; transition: 0.2s; font-size: 0.95rem;
     }
-    .corps-metier-btn:hover { border-color: var(--primary); }
+    .corps-metier-btn:hover { border-color: var(--primary); background: #f0f9ff; }
     .corps-metier-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .upload-zone {
-      border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer;
-      background: #fafafa; transition: .2s;
-    }
-    .upload-zone:hover { border-color: var(--primary); background: #f5f5f5; }
-    .upload-zone.dragover { border-color: var(--primary); background: #f0f0f0; }
-    .file-input { display: none; }
-    .files-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
-    .file-item {
-      display: flex; justify-content: space-between; align-items: center; padding: 0.75rem;
-      background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem;
-    }
-    .file-remove { background: none; border: none; color: var(--error); cursor: pointer; font-weight: 700; }
-    .summary-card { background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
-    .summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid var(--border); }
-    .summary-row:last-child { border-bottom: 0; }
-    .summary-row span { color: var(--text-secondary); }
-    .summary-row strong { color: var(--primary); text-align: right; }
+    .field.full { grid-column: 1 / -1; }
+    .checkbox-row { display: flex; align-items: flex-start; gap: 0.75rem; margin: 1.5rem 0; padding: 1rem; background: #f0f9ff; border-radius: 6px; border: 1px solid #bfdbfe; }
+    .checkbox-row input[type="checkbox"] { flex-shrink: 0; margin-top: 0.35rem; width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-row label { margin: 0; font-weight: 500; color: #1f2937; font-size: 0.95rem; }
     @media (max-width: 920px) {
       .form-grid, .corps-metier-grid { grid-template-columns: 1fr; }
+      header { gap: 1rem; }
+      header nav { gap: 1rem; }
+    }
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      header { padding: 0.75rem 1rem; }
+      header h1 { font-size: 1.25rem; }
+      header nav { gap: 0.75rem; }
+      header a { font-size: 0.85rem; }
+      .screen { padding: 1.5rem 1rem; }
     }
   </style>
 </head>
 <body>
 <header>
-  <h1><span style="color: var(--warning)">ALB</span> Immobilier</h1>
+  <h1>ALB Immobilier</h1>
   <nav>
     <a href="index.html">Accueil</a>
-    <a href="annonces.html">Annonces</a>
-    <a href="vitrine-pros.html">Vitrine des pros</a>
-    <a href="projets-travaux.html" class="active">Projets travaux</a>
-    <a href="financement_interactive.html">Projets financement</a>
-    <a href="espace-alb.html">Espace ALB</a>
+    <a href="vitrine-pros.html">Professionnels</a>
+    <a href="projets-alb.html">Mes projets</a>
+    <a href="projets-travaux.html" class="active">Travaux</a>
+    <a href="financement_interactive.html">Financement</a>
+    <a href="espace-alb.html">Mon Espace</a>
   </nav>
 </header>
 
@@ -106,15 +138,15 @@
       <div class="field"><label for="prenom">Prénom *</label><input type="text" id="prenom"></div>
       <div class="field"><label for="email">Email *</label><input type="email" id="email"></div>
       <div class="field"><label for="telephone">Téléphone *</label><input type="tel" id="telephone"></div>
-      <div class="field full"><label for="localisation">Localisation du projet *</label><input type="text" id="localisation" placeholder="Rue, ville"></div>
-      <div class="field"><label for="codePostal">Code postal *</label><input type="text" id="codePostal"></div>
+      <div class="field"><label for="codePostal">Code postal (5 chiffres) *</label><input type="text" id="codePostal" placeholder="75001" maxlength="5"></div>
+      <div class="field"><label for="localisation">Localisation complète *</label><input type="text" id="localisation" placeholder="Rue, ville"></div>
     </div>
   </section>
 
   <section class="screen" id="section2">
-    <h2>2. Description & fichiers</h2>
+    <h2>2. Description de votre projet</h2>
     <div class="form-grid">
-      <div class="field full"><label for="description">Description du projet *</label><textarea id="description" placeholder="Décrivez précisément vos travaux..."></textarea></div>
+      <div class="field full"><label for="description">Description du projet *</label><textarea id="description" placeholder="Décrivez votre projet de travaux..."></textarea></div>
       <div class="field"><label for="budget">Budget estimé (€) *</label><input type="number" id="budget" min="0" step="500" value="10000"></div>
       <div class="field"><label for="delai">Délai souhaité *</label>
         <select id="delai">
@@ -124,22 +156,21 @@
           <option value="long">Long terme (> 3 mois)</option>
         </select>
       </div>
-    </div>
-    
-    <div style="margin-top: 1.5rem;">
-      <label style="font-weight: 600; margin-bottom: 0.75rem; display: block;">Fichiers (photos, plans, vidéos)</label>
-      <div class="upload-zone" id="uploadZone">
-        📎 Glissez vos fichiers ici ou cliquez pour sélectionner<br>
-        <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">Max 50 Mo par fichier, 200 Mo au total</small>
+      <div class="field full">
+        <label>Joindre photos, plans ou vidéos (max 50 MB par fichier, 200 MB total)</label>
+        <div class="upload-zone" id="uploadZone">
+          <p>📁 Glissez-déposez vos fichiers ou cliquez pour sélectionner</p>
+          <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf">
+        </div>
+        <div class="file-list" id="fileList"></div>
+        <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.5rem;">Total: <span id="totalSize">0 MB</span></div>
       </div>
-      <input type="file" id="fileInput" class="file-input" multiple>
-      <div class="files-list" id="filesList"></div>
     </div>
   </section>
 
   <section class="screen" id="section3">
-    <h2>3. Corps de métier</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Sélectionnez le type d'artisan dont vous avez besoin.</p>
+    <h2>3. Sélectionner le corps de métier</h2>
+    <p style="color:var(--text-secondary);margin-bottom:1.5rem;">Choisissez le type de travaux dont vous avez besoin.</p>
     <div class="corps-metier-grid" id="corpsMetierGrid"></div>
   </section>
 
@@ -149,11 +180,12 @@
       <div class="summary-row"><span>Nom / Prénom</span><strong id="summaryNom">—</strong></div>
       <div class="summary-row"><span>Email</span><strong id="summaryEmail">—</strong></div>
       <div class="summary-row"><span>Téléphone</span><strong id="summaryTel">—</strong></div>
+      <div class="summary-row"><span>Code postal</span><strong id="summaryCodePostal">—</strong></div>
       <div class="summary-row"><span>Localisation</span><strong id="summaryLocalisation">—</strong></div>
       <div class="summary-row"><span>Budget</span><strong id="summaryBudget">—</strong></div>
       <div class="summary-row"><span>Délai</span><strong id="summaryDelai">—</strong></div>
       <div class="summary-row"><span>Corps de métier</span><strong id="summaryCorpsMetier">—</strong></div>
-      <div class="summary-row"><span>Fichiers</span><strong id="summaryFichiers">0</strong></div>
+      <div class="summary-row"><span>Fichiers joints</span><strong id="summaryFileCount">0</strong></div>
     </div>
   </section>
 
@@ -165,6 +197,10 @@
       <p>Envoi en cours...</p>
     </div>
     <div id="submitContent">
+      <div class="checkbox-row">
+        <input type="checkbox" id="consentCheck">
+        <label for="consentCheck">J'accepte qu'ALB transmette les informations de mon projet aux professionnels sélectionnés afin qu'ils puissent me recontacter *</label>
+      </div>
       <button class="btn-primary" type="button" onclick="validateAndSubmit()">Envoyer ma demande aux artisans</button>
     </div>
   </section>
@@ -174,23 +210,75 @@
 <script>
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const CORPS_METIERS = [
+  { id: 'maçonnerie', label: 'Maçonnerie' },
+  { id: 'renovation_generale', label: 'Rénovation générale' },
   { id: 'plomberie', label: 'Plomberie' },
   { id: 'electricite', label: 'Électricité' },
-  { id: 'menuiserie', label: 'Menuiserie' },
-  { id: 'maconnerie', label: 'Maçonnerie' },
-  { id: 'toiture', label: 'Toiture' },
-  { id: 'chauffage', label: 'Chauffage' },
-  { id: 'isolation', label: 'Isolation' },
   { id: 'peinture', label: 'Peinture' },
+  { id: 'menuiserie', label: 'Menuiserie' },
+  { id: 'couverture', label: 'Couverture' },
   { id: 'carrelage', label: 'Carrelage' },
-  { id: 'decoration', label: 'Décoration' }
+  { id: 'chauffage', label: 'Chauffage' },
+  { id: 'paysagisme', label: 'Paysagisme' }
 ];
 
 let selectedCorpsMetier = null;
 let selectedFiles = [];
 let totalFileSize = 0;
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
-const MAX_TOTAL_SIZE = 200 * 1024 * 1024; // 200 MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB par fichier
+const MAX_TOTAL_SIZE = 200 * 1024 * 1024; // 200 MB total
+
+// ===== Gestion du glisser-déposer et sélection de fichiers =====
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`Le fichier ${file.name} dépasse 50 MB`);
+      continue;
+    }
+    if (totalFileSize + file.size > MAX_TOTAL_SIZE) {
+      alert('Taille totale dépasse 200 MB');
+      continue;
+    }
+    selectedFiles.push(file);
+    totalFileSize += file.size;
+  }
+  renderFiles();
+  setSummary();
+}
+
+function renderFiles() {
+  const fileList = document.getElementById('fileList');
+  fileList.innerHTML = selectedFiles.map((f, i) => `
+    <div class="file-item">
+      <span>📄 ${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB)</span>
+      <button type="button" onclick="removeFile(${i})">Supprimer</button>
+    </div>
+  `).join('');
+  document.getElementById('totalSize').textContent = (totalFileSize / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function removeFile(idx) {
+  totalFileSize -= selectedFiles[idx].size;
+  selectedFiles.splice(idx, 1);
+  renderFiles();
+  setSummary();
+}
 
 function renderCorpsMetiers() {
   const grid = document.getElementById('corpsMetierGrid');
@@ -206,89 +294,16 @@ function selectCorpsMetier(id, label) {
   setSummary();
 }
 
-function setupUploadZone() {
-  const zone = document.getElementById('uploadZone');
-  const input = document.getElementById('fileInput');
-
-  zone.addEventListener('click', () => input.click());
-  
-  zone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    zone.classList.add('dragover');
-  });
-  
-  zone.addEventListener('dragleave', () => {
-    zone.classList.remove('dragover');
-  });
-  
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.classList.remove('dragover');
-    handleFiles(e.dataTransfer.files);
-  });
-  
-  input.addEventListener('change', (e) => {
-    handleFiles(e.target.files);
-  });
-}
-
-function handleFiles(fileList) {
-  const errors = [];
-  
-  for (let file of fileList) {
-    // Vérifier taille fichier
-    if (file.size > MAX_FILE_SIZE) {
-      errors.push(`${file.name}: fichier trop volumineux (max 50 Mo)`);
-      continue;
-    }
-    
-    // Vérifier taille totale
-    if (totalFileSize + file.size > MAX_TOTAL_SIZE) {
-      errors.push(`Dépassement de la limite totale (200 Mo)`);
-      break;
-    }
-    
-    // Ajouter fichier
-    selectedFiles.push(file);
-    totalFileSize += file.size;
-  }
-  
-  if (errors.length) {
-    const alert = document.getElementById('errorAlert');
-    alert.textContent = errors.join(' • ');
-    alert.classList.add('show');
-  }
-  
-  renderFiles();
-  setSummary();
-}
-
-function renderFiles() {
-  const list = document.getElementById('filesList');
-  list.innerHTML = selectedFiles.map((file, idx) => `
-    <div class="file-item">
-      <span>${file.name} (${(file.size / 1024 / 1024).toFixed(1)} Mo)</span>
-      <button type="button" class="file-remove" onclick="removeFile(${idx})">✕</button>
-    </div>
-  `).join('');
-}
-
-function removeFile(idx) {
-  totalFileSize -= selectedFiles[idx].size;
-  selectedFiles.splice(idx, 1);
-  renderFiles();
-  setSummary();
-}
-
 function setSummary() {
   document.getElementById('summaryNom').textContent = `${document.getElementById('nom').value || ''} ${document.getElementById('prenom').value || ''}`.trim() || '—';
   document.getElementById('summaryEmail').textContent = document.getElementById('email').value || '—';
   document.getElementById('summaryTel').textContent = document.getElementById('telephone').value || '—';
+  document.getElementById('summaryCodePostal').textContent = document.getElementById('codePostal').value || '—';
   document.getElementById('summaryLocalisation').textContent = document.getElementById('localisation').value || '—';
   document.getElementById('summaryBudget').textContent = document.getElementById('budget').value ? euro.format(parseFloat(document.getElementById('budget').value)) : '—';
   document.getElementById('summaryDelai').textContent = document.getElementById('delai').value || '—';
   document.getElementById('summaryCorpsMetier').textContent = selectedCorpsMetier ? selectedCorpsMetier.label : '—';
-  document.getElementById('summaryFichiers').textContent = selectedFiles.length;
+  document.getElementById('summaryFileCount').textContent = selectedFiles.length;
 }
 
 async function validateAndSubmit() {
@@ -302,16 +317,18 @@ async function validateAndSubmit() {
   const description = document.getElementById('description').value.trim();
   const budget = parseFloat(document.getElementById('budget').value) || 0;
   const delai = document.getElementById('delai').value;
+  const consentCheck = document.getElementById('consentCheck').checked;
 
   if (!nom) errors.push('Nom requis');
   if (!prenom) errors.push('Prénom requis');
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email invalide');
   if (!telephone) errors.push('Téléphone requis');
-  if (!codePostal) errors.push('Code postal requis');
+  if (!codePostal || !/^\d{5}$/.test(codePostal)) errors.push('Code postal invalide (5 chiffres)');
   if (!localisation) errors.push('Localisation requise');
   if (!description) errors.push('Description requise');
   if (budget <= 0) errors.push('Budget requis');
   if (!selectedCorpsMetier) errors.push('Sélectionnez un corps de métier');
+  if (!consentCheck) errors.push('Acceptez l\'autorisation de recontact');
 
   const alert = document.getElementById('errorAlert');
   if (errors.length) {
@@ -325,7 +342,6 @@ async function validateAndSubmit() {
   document.getElementById('submitContent').style.display = 'none';
 
   try {
-    // Préparer FormData pour upload fichiers
     const formData = new FormData();
     formData.append('nom', nom);
     formData.append('prenom', prenom);
@@ -337,9 +353,9 @@ async function validateAndSubmit() {
     formData.append('budget', budget);
     formData.append('delai', delai);
     formData.append('corps_metier', selectedCorpsMetier.id);
-    
-    selectedFiles.forEach((file, idx) => {
-      formData.append(`file_${idx}`, file);
+
+    selectedFiles.forEach((file, i) => {
+      formData.append(`file_${i}`, file);
     });
 
     const res = await fetch('/.netlify/functions/notify-artisans', {
@@ -359,14 +375,14 @@ async function validateAndSubmit() {
       throw new Error(data.error || data.message || `Erreur serveur (${res.status})`);
     }
 
-    // Succès + bouton "Voir mes projets"
+    // ===== Succès + Bouton "Voir mon projet" =====
     document.getElementById('loader').classList.remove('active');
     document.getElementById('submitContent').innerHTML = `
-      <div style="background:#e8f5e9;border:1px solid var(--success);border-radius:10px;padding:1.5rem;text-align:center;">
+      <div style="background:#dcfce7;border:1px solid var(--success);border-radius:8px;padding:1.5rem;text-align:center;">
         <p style="color:var(--success);font-weight:700;font-size:1.1rem;margin:0 0 1rem;">✓ Demande envoyée avec succès !</p>
         <p style="color:var(--text-secondary);margin:0 0 1.5rem;">Votre demande a été reçue. Les artisans vont prendre contact avec vous pour discuter de votre projet.</p>
-        <button type="button" onclick="window.location.href='espace-alb.html'" style="padding:.95rem 1.5rem;border:0;border-radius:10px;background:var(--primary);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">
-          Voir mes projets dans mon espace
+        <button type="button" onclick="window.location.href='espace-alb.html'" style="padding:0.95rem 1.5rem;border:0;border-radius:6px;background:var(--primary);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">
+          Voir mon projet dans mon espace
         </button>
       </div>
     `;
@@ -380,7 +396,6 @@ async function validateAndSubmit() {
 
 document.addEventListener('input', setSummary);
 document.addEventListener('change', setSummary);
-setupUploadZone();
 renderCorpsMetiers();
 setSummary();
 </script>
