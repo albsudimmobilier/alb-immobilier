@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Projets ALB - Triage et accompagnement</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 64rem;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #6b7280;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #1e40af;
+        }
+
+        .container {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .intro-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .intro-section h1 {
+            font-size: 1.875rem;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        .intro-section p {
+            font-size: 1.125rem;
+            color: #6b7280;
+            line-height: 1.8;
+        }
+
+        .question-group {
+            margin-bottom: 2.5rem;
+            display: none;
+        }
+
+        .question-group.active {
+            display: block;
+        }
+
+        .question-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #111827;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .choice-btn {
+            padding: 1.25rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 1rem;
+            color: #1f2937;
+        }
+
+        .choice-btn:hover {
+            border-color: #1e40af;
+            background-color: #f0f9ff;
+        }
+
+        .choice-btn.selected {
+            border-color: #1e40af;
+            background-color: #dbeafe;
+            font-weight: 600;
+        }
+
+        .choice-emoji {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            vertical-align: middle;
+        }
+
+        .choice-text {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #1e40af;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e3a8a;
+        }
+
+        .btn-primary:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        footer {
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 2rem 1.5rem;
+            margin-top: 4rem;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        .progress-indicator {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .progress-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background-color: #d1d5db;
+            transition: background-color 0.2s;
+        }
+
+        .progress-dot.active {
+            background-color: #1e40af;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+
+            .intro-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .intro-section p {
+                font-size: 1rem;
+            }
+
+            .choice-btn {
+                padding: 1rem 1.25rem;
+                font-size: 0.95rem;
+            }
+
+            .choice-emoji {
+                font-size: 1.25rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">ALB</a>
+            <nav class="nav-links">
+                <a href="index.html">Accueil</a>
+                <a href="vitrine-pros.html">Nos Professionnels</a>
+                <a href="espace-alb.html">Mon Espace</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="intro-section">
+            <h1>Mes Projets ALB</h1>
+            <p>Vous avez un projet en tête mais vous ne savez pas trop par où commencer ? C'est normal. Dites-nous ce qui vous préoccupe, on vous guide.</p>
+        </div>
+
+        <div class="progress-indicator">
+            <div class="progress-dot active" id="progress0"></div>
+            <div class="progress-dot" id="progress1"></div>
+            <div class="progress-dot" id="progress2"></div>
+        </div>
+
+        <!-- Q1: Qu'est-ce qui vous ressemble le plus ? -->
+        <div class="question-group active" id="q1-group">
+            <div class="question-title">Qu'est-ce qui vous ressemble le plus en ce moment ?</div>
+            <div class="choices" id="q1-choices">
+                <button class="choice-btn" data-value="financement">
+                    <span class="choice-emoji">🏠</span>
+                    <span class="choice-text">Je veux acheter, mais je ne sais pas si j'en ai les moyens</span>
+                </button>
+                <button class="choice-btn" data-value="travaux">
+                    <span class="choice-emoji">🔧</span>
+                    <span class="choice-text">J'ai des travaux à faire (fuite, toiture, imprévu...) mais je ne sais pas par où commencer</span>
+                </button>
+                <button class="choice-btn" data-value="accompagnement">
+                    <span class="choice-emoji">🤝</span>
+                    <span class="choice-text">Je veux vendre ou acheter, mais je préfère être accompagné(e) par un professionnel</span>
+                </button>
+                <button class="choice-btn" data-value="undefined">
+                    <span class="choice-emoji">🤔</span>
+                    <span class="choice-text">Je ne sais pas encore, je regarde juste</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Branche "Je ne sais pas encore" - Sous-Q1 -->
+        <div class="question-group" id="subq1-group">
+            <div class="question-title">Votre besoin concerne plutôt...</div>
+            <div class="choices" id="subq1-choices">
+                <button class="choice-btn" data-value="logement">
+                    <span class="choice-emoji">🏚️</span>
+                    <span class="choice-text">Un logement que vous avez déjà (travaux, amélioration...)</span>
+                </button>
+                <button class="choice-btn" data-value="achatovente">
+                    <span class="choice-emoji">🔑</span>
+                    <span class="choice-text">Un bien que vous voulez acheter ou vendre</span>
+                </button>
+                <button class="choice-btn" data-value="unclear">
+                    <span class="choice-emoji">🤷</span>
+                    <span class="choice-text">Je ne sais pas encore</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Branche "Je ne sais pas encore" - Sous-Q2 (si achat/vente choisi) -->
+        <div class="question-group" id="subq2-group">
+            <div class="question-title">Vous préférez...</div>
+            <div class="choices" id="subq2-choices">
+                <button class="choice-btn" data-value="accompagnement">
+                    <span class="choice-emoji">🤝</span>
+                    <span class="choice-text">Être accompagné(e) par un professionnel</span>
+                </button>
+                <button class="choice-btn" data-value="financement">
+                    <span class="choice-emoji">💶</span>
+                    <span class="choice-text">D'abord savoir ce que vous pouvez vous permettre</span>
+                </button>
+                <button class="choice-btn" data-value="both">
+                    <span class="choice-emoji">🤷</span>
+                    <span class="choice-text">Les deux, ou je ne sais pas encore</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Q2: Ce projet concerne -->
+        <div class="question-group" id="q2-group">
+            <div class="question-title">Ce projet concerne</div>
+            <div class="choices" id="q2-choices">
+                <button class="choice-btn" data-value="achat">
+                    <span class="choice-text">Un bien que vous voulez acheter</span>
+                </button>
+                <button class="choice-btn" data-value="vente">
+                    <span class="choice-text">Un bien que vous voulez vendre</span>
+                </button>
+                <button class="choice-btn" data-value="investissement">
+                    <span class="choice-text">Un investissement locatif</span>
+                </button>
+                <button class="choice-btn" data-value="logement-actuel">
+                    <span class="choice-text">Votre logement actuel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Q3: Code postal -->
+        <div class="question-group" id="q3-group">
+            <div class="question-title">Code postal du bien concerné</div>
+            <input 
+                type="text" 
+                id="codePostal" 
+                placeholder="Ex: 75001" 
+                maxlength="5"
+                style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.375rem; font-size: 1rem; margin-bottom: 1rem;"
+            >
+        </div>
+
+        <!-- Affichage des modules (branche "Je ne sais pas") -->
+        <div class="question-group" id="modules-display">
+            <div class="question-title">Modules disponibles</div>
+            <div class="choices" id="modules-choices">
+                <button class="choice-btn" data-module="financement">
+                    <span class="choice-emoji">💶</span>
+                    <span class="choice-text">Financement - Simulez votre budget</span>
+                </button>
+                <button class="choice-btn" data-module="travaux">
+                    <span class="choice-emoji">🔧</span>
+                    <span class="choice-text">Travaux - Trouvez les bons artisans</span>
+                </button>
+                <button class="choice-btn" data-module="accompagnement">
+                    <span class="choice-emoji">🤝</span>
+                    <span class="choice-text">Accompagnement - Soyez guidé par un professionnel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="prevBtn" style="display: none;">← Retour</button>
+            <button class="btn btn-primary" id="nextBtn">Continuer</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 ALB Sud Immobilier. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        // [ALB DEBUG] État du formulaire
+        const state = {
+            q1: null,           // financement, travaux, accompagnement, undefined
+            subq1: null,        // logement, achatovente, unclear
+            subq2: null,        // accompagnement, financement, both
+            q2: null,           // achat, vente, investissement, logement-actuel
+            q3: null,           // code postal
+            step: 1             // 1, 2, 3, 4, 5
+        };
+
+        const routes = {
+            financement: 'financement_interactive.html',
+            travaux: 'projets-travaux.html',
+            accompagnement: 'accompagnement_vente_achat.html'
+        };
+
+        // [ALB DEBUG] Initialisation des event listeners Q1
+        document.querySelectorAll('#q1-choices .choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#q1-choices .choice-btn').forEach(b => b.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                state.q1 = e.currentTarget.dataset.value;
+                
+                if (state.q1 === 'undefined') {
+                    console.log('[ALB DEBUG] Q1 = undefined → affiche Sous-Q1');
+                    showQuestion('subq1');
+                } else {
+                    console.log('[ALB DEBUG] Q1 = ' + state.q1 + ' → affiche Q2/Q3');
+                    showQuestion('q2');
+                }
+            });
+        });
+
+        // [ALB DEBUG] Initialisation des event listeners Sous-Q1
+        document.querySelectorAll('#subq1-choices .choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#subq1-choices .choice-btn').forEach(b => b.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                state.subq1 = e.currentTarget.dataset.value;
+                
+                if (state.subq1 === 'logement') {
+                    state.q1 = 'travaux';
+                    console.log('[ALB DEBUG] Sous-Q1 = logement → définit q1=travaux → affiche Q2/Q3');
+                    showQuestion('q2');
+                } else if (state.subq1 === 'achatovente') {
+                    console.log('[ALB DEBUG] Sous-Q1 = achatovente → affiche Sous-Q2');
+                    showQuestion('subq2');
+                } else if (state.subq1 === 'unclear') {
+                    console.log('[ALB DEBUG] Sous-Q1 = unclear → affiche modules');
+                    showQuestion('modules');
+                }
+            });
+        });
+
+        // [ALB DEBUG] Initialisation des event listeners Sous-Q2
+        document.querySelectorAll('#subq2-choices .choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#subq2-choices .choice-btn').forEach(b => b.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                state.subq2 = e.currentTarget.dataset.value;
+                
+                if (state.subq2 === 'both') {
+                    console.log('[ALB DEBUG] Sous-Q2 = both → affiche Q2/Q3 (reroute vers modules)');
+                    showQuestion('modules');
+                } else {
+                    state.q1 = state.subq2;
+                    console.log('[ALB DEBUG] Sous-Q2 = ' + state.subq2 + ' → définit q1, affiche Q2/Q3');
+                    showQuestion('q2');
+                }
+            });
+        });
+
+        // [ALB DEBUG] Initialisation des event listeners Q2
+        document.querySelectorAll('#q2-choices .choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#q2-choices .choice-btn').forEach(b => b.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                state.q2 = e.currentTarget.dataset.value;
+                console.log('[ALB DEBUG] Q2 = ' + state.q2 + ' → affiche Q3');
+                showQuestion('q3');
+            });
+        });
+
+        // [ALB DEBUG] Initialisation des event listeners modules
+        document.querySelectorAll('#modules-choices .choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const module = e.currentTarget.dataset.module;
+                state.q1 = module;
+                console.log('[ALB DEBUG] Module sélectionné = ' + module);
+                navigateToModule(module);
+            });
+        });
+
+        // [ALB DEBUG] Event listener Q3 code postal
+        document.getElementById('codePostal').addEventListener('input', (e) => {
+            state.q3 = e.target.value;
+        });
+
+        // [ALB DEBUG] Boutons de navigation
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (state.q1 && state.q2 && state.q3) {
+                navigateToModule(state.q1);
+            } else if (document.getElementById('codePostal').style.display !== 'none' && !state.q3) {
+                alert('Veuillez entrer un code postal');
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (state.step > 1) goBackQuestion();
+        });
+
+        // [ALB DEBUG] Fonctions de navigation
+        function showQuestion(questionId) {
+            document.querySelectorAll('.question-group').forEach(g => g.classList.remove('active'));
+            document.getElementById(questionId + '-group').classList.add('active');
+            updateProgressAndButtons(questionId);
+        }
+
+        function showQuestion(questionId) {
+            document.querySelectorAll('.question-group').forEach(g => g.classList.remove('active'));
+            const groupId = questionId === 'modules' ? 'modules-display' : questionId + '-group';
+            document.getElementById(groupId).classList.add('active');
+            updateProgressAndButtons(questionId);
+        }
+
+        function updateProgressAndButtons(questionId) {
+            const stepMap = { q1: 1, subq1: 1, subq2: 2, q2: 2, q3: 3, modules: 4 };
+            state.step = stepMap[questionId] || 1;
+            
+            // Mise à jour progress dots
+            document.querySelectorAll('.progress-dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx < Math.min(state.step, 3));
+            });
+
+            // Bouton retour
+            const prevBtn = document.getElementById('prevBtn');
+            prevBtn.style.display = (state.step > 1 && !['modules', 'q1', 'subq1'].includes(questionId)) ? 'block' : 'none';
+
+            // Bouton suivant
+            const nextBtn = document.getElementById('nextBtn');
+            if (questionId === 'q3') {
+                nextBtn.textContent = 'Continuer →';
+                nextBtn.disabled = !state.q3;
+            } else if (questionId === 'modules') {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.textContent = 'Continuer →';
+                nextBtn.disabled = false;
+            }
+        }
+
+        function goBackQuestion() {
+            const questionOrder = ['q1', 'q2', 'q3'];
+            if (state.q1 === 'undefined') questionOrder.unshift('subq1');
+            
+            let currentIdx = questionOrder.indexOf(state.step === 1 ? 'q1' : state.step === 2 ? 'q2' : 'q3');
+            if (currentIdx > 0) {
+                showQuestion(questionOrder[currentIdx - 1]);
+            }
+        }
+
+        function navigateToModule(module) {
+            if (routes[module]) {
+                console.log('[ALB DEBUG] Navigation vers ' + routes[module]);
+                window.location.href = routes[module];
+            }
+        }
+
+        // [ALB DEBUG] Init
+        console.log('[ALB DEBUG] projets-alb.html chargé');
+        updateProgressAndButtons('q1');
+    </script>
+</body>
+</html>
