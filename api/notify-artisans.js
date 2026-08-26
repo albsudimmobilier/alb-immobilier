@@ -63,7 +63,7 @@ async function findOrCreateParticulier({ nom, prenom, email, telephone, codePost
 
 /**
  * Valider et uploader fichiers vers Supabase Storage
- * Retourne array: [{ name, path, size, signedUrl }]
+ * Retourne array: [{ name, path, size, signedUrl, expiresAt }]
  */
 async function uploadFilesToStorage(files, particulierId) {
   const uploadedFiles = [];
@@ -118,11 +118,15 @@ async function uploadFilesToStorage(files, particulierId) {
       throw new Error(`Échec génération URL fichier: ${file.name}`);
     }
 
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
     uploadedFiles.push({
       name: file.name,
       path: filePath,
       size: file.size,
-      signedUrl: signedUrl.signedUrl
+      mimeType: file.type,
+      signedUrl: signedUrl.signedUrl,
+      expiresAt
     });
 
     console.log(`[ALB DEBUG] Fichier uploadé: ${file.name} (${file.size} bytes) -> ${filePath}`);
@@ -132,17 +136,48 @@ async function uploadFilesToStorage(files, particulierId) {
 }
 
 /**
+ * Insérer références fichiers dans projets_travaux_files table
+ */
+async function insertFileReferences(projectId, particulierId, uploadedFiles) {
+  if (!uploadedFiles || uploadedFiles.length === 0) return [];
+
+  const fileRecords = uploadedFiles.map(f => ({
+    projet_id: projectId,
+    particulier_id: particulierId,
+    file_path: f.path,
+    file_name: f.name,
+    file_size: f.size,
+    mime_type: f.mimeType,
+    signed_url: f.signedUrl,
+    signed_url_expires_at: f.expiresAt
+  }));
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('projets_travaux_files')
+    .insert(fileRecords)
+    .select('*');
+
+  if (insertError) {
+    console.error('[ALB ERROR] Insert file references error:', insertError);
+    throw new Error(`Échec sauvegarde références fichiers: ${insertError.message}`);
+  }
+
+  console.log(`[ALB DEBUG] ${inserted.length} références fichiers insérées`);
+  return inserted;
+}
+
+/**
  * Envoyer alerte aux artisans (template #9)
  */
-async function sendAlertToArtisans(artisans, particulier, infos, files) {
+async function sendAlertToArtisans(artisans, particulier, infos, uploadedFiles) {
   try {
     for (const artisan of artisans || []) {
       if (!artisan?.email) continue;
 
       // Description tronquée + note fichiers
       let description = infos.description.substring(0, 200);
-      if (files && files.length > 0) {
-        description += `\n\nFichiers joints: ${files.length} (${files.map(f => f.name).join(', ')})`;
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        description += `\n\nFichiers joints: ${uploadedFiles.length}`;
       }
 
       await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -168,7 +203,7 @@ async function sendAlertToArtisans(artisans, particulier, infos, files) {
             BUDGET: infos.budget.toLocaleString('fr-FR'),
             DESCRIPTION: description,
             DELAI: infos.delai,
-            FICHIERS_COUNT: files ? files.length : 0,
+            FICHIERS_COUNT: uploadedFiles ? uploadedFiles.length : 0,
             SENDER: 'ALB Sud Immobilier'
           }
         })
@@ -182,7 +217,7 @@ async function sendAlertToArtisans(artisans, particulier, infos, files) {
 }
 
 /**
- * Handler principal: créer demande travaux + upload fichiers
+ * Handler principal: créer demande travaux + upload fichiers + RLS
  */
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -234,7 +269,7 @@ export default async (req) => {
       console.log(`[ALB DEBUG] ${uploadedFiles.length} fichiers uploadés`);
     }
 
-    // Préparer infos demande
+    // Préparer infos demande (sans les URLs signées — elles sont dans projets_travaux_files)
     const infos = {
       nom,
       prenom,
@@ -247,12 +282,7 @@ export default async (req) => {
       delai,
       corps_metier: corpsMetier,
       consentement_recontact: true,
-      files: uploadedFiles.map(f => ({
-        name: f.name,
-        path: f.path,
-        size: f.size,
-        signedUrl: f.signedUrl
-      }))
+      file_count: uploadedFiles.length
     };
 
     // Créer demande travaux
@@ -263,7 +293,7 @@ export default async (req) => {
         origine: 'formulaire_interactif',
         infos,
         statut: 'nouvelle',
-        corps_metier: corpsMetier,
+        corps_metier_recherches: [corpsMetier],
       }])
       .select('*');
 
@@ -275,7 +305,12 @@ export default async (req) => {
     const projetCreated = insertedRows?.[0];
     console.log(`[ALB DEBUG] Demande travaux créée: ${projetCreated?.id}`);
 
-    // Récupérer artisans du corps de métier sélectionné
+    // Insérer références fichiers dans projets_travaux_files (RLS protégé)
+    if (uploadedFiles.length > 0) {
+      await insertFileReferences(projetCreated.id, particulierId, uploadedFiles);
+    }
+
+    // Récupérer artisans avec ce corps_metier (version abstraite)
     const { data: artisans, error: artisansError } = await supabase
       .from('profiles')
       .select('id, email, prenom, nom')
