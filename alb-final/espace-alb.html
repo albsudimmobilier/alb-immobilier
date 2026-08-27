@@ -11,190 +11,1136 @@
   <style>
     :root{--bg:#f6f1ea;--surface:#fff;--soft:#fbf8f4;--primary:#5b2a4c;--accent:#c9a35f;--text:#241821;--muted:#7a6d76;--border:#eadfd3;--success:#2f7d57;--danger:#a44646;--radius:18px;--shadow:0 16px 42px rgba(91,42,76,.09)}
     *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:'Montserrat',sans-serif;background:linear-gradient(180deg,#fcfaf7 0%,#f4ede5 100%);color:var(--text)}
-    a{color:inherit} .wrap{max-width:1440px;margin:0 auto;padding:24px}
-    .topbar{position:sticky;top:0;z-index:20;background:rgba(252,250,247,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-    .topbar-inner{max-width:1440px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:14px}
-    .brand{display:flex;align-items:center;gap:14px}.brand-mark{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:grid;place-items:center;font-weight:800;letter-spacing:.02em}.brand h1{margin:0;font-size:1.15rem}.brand p{margin:3px 0 0;color:var(--muted);font-size:.92rem}
+    a{color:inherit} .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    .alb-header{background:white;border-bottom:1px solid #E8E6E0;padding:0;position:sticky;top:0;z-index:1000;height:70px}
+    .header-wrapper{width:100%;padding:0 40px;display:flex;align-items:center;justify-content:space-between;gap:50px;height:100%}
+    .logo-left{display:flex;align-items:center;flex-shrink:0;height:100%}
+    .logo-left img{height:100%;object-fit:contain;max-width:200px}
+    .nav{display:flex;align-items:center;justify-content:center;gap:45px;flex-grow:1}
+    .nav a{color:#333;text-decoration:none;font-size:0.95rem;font-weight:500;padding:6px 0;border-bottom:2px solid transparent;transition:all 0.3s;white-space:nowrap}
+    .nav a:hover{color:#B28E3D;border-bottom-color:#B28E3D}
     .btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;text-decoration:none;transition:.2s transform,.2s opacity}.btn:hover{transform:translateY(-1px)}
     .btn-primary{background:var(--primary);color:#fff}.btn-secondary{background:#fff;color:var(--primary);border:1px solid var(--border)}
-    .grid{display:grid;gap:20px}.hero-grid{grid-template-columns:1.4fr .9fr}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .btn-cta{background:#4B1A3E !important;color:white !important;padding:10px 22px !important;border-radius:4px;border:none !important;cursor:pointer}
+    .btn-cta:hover{background:#B28E3D !important}
     .panel,.feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
     .panel{padding:22px}.hero{padding:26px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(91,42,76,.08);color:var(--primary);font-weight:700;font-size:.8rem;margin-bottom:14px}
-    h2,h3{font-family:'Playfair Display',serif;margin:0;color:var(--primary)} h2{font-size:2.15rem;line-height:1.1} h3{font-size:1.3rem}
+    h2,h3{font-family:'Playfair Display',serif;margin:0;color:var(--primary)} h2{font-size:2.15rem;line-height:1.1} h3{font-size:1.3rem} h4{font-size:1rem;margin:16px 0 8px 0}
     p{line-height:1.6} .muted{color:var(--muted)} .section-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
     .kpi{padding:18px;background:var(--soft);border:1px solid var(--border);border-radius:16px}.kpi strong{display:block;font-size:1.45rem;color:var(--primary)}
-    .feature{padding:18px;border-radius:16px}.feature strong{display:block;margin-bottom:6px;color:var(--primary)}
-    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.tabs button{padding:11px 14px;border:1px solid var(--border);background:#fff;border-radius:12px;font-weight:700;cursor:pointer}.tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .tab{display:none}.tab.active{display:block}
     .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:grid;gap:8px}.field.full{grid-column:1/-1}
-    label{font-size:.9rem;font-weight:700;color:var(--primary)} input,textarea{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font:inherit;outline:none} textarea{min-height:120px;resize:vertical}
+    label{font-size:.9rem;font-weight:700;color:var(--primary)} input,textarea,select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font:inherit;outline:none} textarea{min-height:120px;resize:vertical}
     .status{margin-top:14px;padding:12px 14px;border-radius:12px;font-weight:700;display:none}.status.loading{background:#fff7e6;color:#9c6d00}.status.error{background:#fff0f0;color:var(--danger)}.status.success{background:#edf8f2;color:var(--success)}
-    .list-grid{display:grid;gap:14px}.lead{padding:18px;border-radius:16px;border:1px solid var(--border);background:#fff}.badge{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:800}.warn{background:rgba(183,128,31,.14);color:#b7801f}.ok{background:rgba(47,125,87,.12);color:var(--success)}
-    table{width:100%;border-collapse:collapse} th,td{padding:12px 10px;border-bottom:1px solid #efe7dd;text-align:left;font-size:.92rem} th{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--primary);background:#faf6f1}
-    .messages{display:grid;grid-template-columns:300px 1fr;gap:16px}.thread,.chat{border:1px solid var(--border);border-radius:16px;background:#fff}.thread{padding:14px}.chat{padding:16px;min-height:360px}.bubble{max-width:80%;padding:12px 14px;border-radius:16px;background:#f5eee8;margin-bottom:10px}.bubble.me{margin-left:auto;background:rgba(91,42,76,.08)}
-    .small{font-size:.92rem}.center{text-align:center}.spacer{height:8px}
-    @media (max-width:1100px){.hero-grid,.three,.two,.form-grid,.messages{grid-template-columns:1fr}.topbar-inner{padding:14px 16px}.wrap{padding:16px}}
+    .list-grid{display:grid;gap:14px}
+    .card{padding:16px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:12px;cursor:pointer;transition:.2s}
+    .card:hover{box-shadow:var(--shadow)}
+    .card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .card-title{font-weight:700;color:var(--primary);font-size:1rem}
+    .card-meta{font-size:.85rem;color:var(--muted);margin-top:4px}
+    .card-status{display:inline-block;padding:6px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
+    .status-badge{display:inline-block;padding:6px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
+    .status-accepte{background:rgba(47,125,87,.2);color:#2f7d57}
+    .status-refuse{background:rgba(164,70,70,.2);color:#a44646}
+    .status-en-attente{background:rgba(70,130,180,.2);color:#4682b4}
+    .status-remporte{background:rgba(47,125,87,.2);color:#2f7d57}
+    .status-perdu{background:rgba(183,128,31,.2);color:#b7801f}
+    .status-nouvelle{background:rgba(212,175,55,.2);color:#d4af37}
+    .badge{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:800}
+    .warn{background:rgba(183,128,31,.14);color:#b7801f}.ok{background:rgba(47,125,87,.12);color:var(--success)}
+    .zone{display:none}.zone.active{display:block}
+    .section{margin-bottom:22px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .tabs button{padding:10px 16px;border:1px solid var(--border);background:#fff;border-radius:12px;font-weight:700;cursor:pointer;font-size:.9rem}
+    .tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .footer{background-color:#262626;color:white;padding:60px 0 0 0;width:100%;margin-top:60px}
+    .footer-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:50px;max-width:100%;padding:60px 40px}
+    .footer-col h5{color:white;margin-bottom:20px;font-weight:600;font-size:1rem}
+    .footer-col p{color:#ccc;font-size:0.9rem;line-height:1.8;margin:0}
+    .footer-col a{color:#B28E3D;text-decoration:none;cursor:pointer}
+    .footer-col a:hover{text-decoration:underline}
+    .footer-bottom{background-color:#1a1a1a;padding:20px 40px;text-align:center;font-size:0.85rem;color:#999}
+    .footer-slogan{color:#B28E3D}
+    .modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);overflow:auto}
+    .modal.active{display:flex;align-items:center;justify-content:center}
+    .modal-content{background-color:#fff;padding:40px;border-radius:8px;max-width:600px;width:90%;position:relative;max-height:80vh;overflow-y:auto}
+    .modal-close{position:absolute;right:20px;top:20px;font-size:28px;font-weight:bold;color:#999;cursor:pointer}
+    .modal-close:hover{color:#333}
+    .modal-slogan{font-size:1.5rem;color:#B28E3D;margin-bottom:20px}
+    .slogan-word-1,.slogan-word-2{font-weight:700}
+    .slogan-word-1{color:#333}
+    @media (max-width:1100px){.wrap{padding:16px}.header-wrapper{padding:0 16px;gap:20px}.nav{gap:20px;font-size:0.85rem}.footer-container{padding:40px 16px}.footer-bottom{padding:15px 16px;font-size:0.8rem}}
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-mark">ALB</div>
-        <div>
-          <h1>Espace ALB</h1>
-          <p>Connexion simple pour tous les profils ayant un email et son code PIN</p>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn-secondary" href="https://reliable-crumble-6e286a.netlify.app/questionnaire-inscription">Questionnaire d'inscription</a>
-      </div>
+  <header class="alb-header">
+    <div class="header-wrapper">
+      <a href="index.html" class="logo-left">
+        <img src="LOGO.png" alt="ALB Sud Immobilier" />
+      </a>
+      <nav class="nav">
+        <a href="index.html">Accueil</a>
+        <a href="annonces.html">Annonces</a>
+        <a href="vitrine-pros.html">Vitrine des pros</a>
+        <a href="projets-alb.html">Projets ALB</a>
+        <a href="espace-alb.html" class="btn-cta" id="nav-espace-alb">Mon espace ALB</a>
+      </nav>
+      <button class="btn-cta" onclick="logout()" id="btn-logout" style="display:none;">Déconnexion</button>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="panel hero" style="margin-bottom:22px;">
-      <div class="grid hero-grid">
-        <div>
-          <div class="eyebrow">ALB Immobilier</div>
-          <h2>Un espace clair pour avancer sans se compliquer la vie.</h2>
-          <p class="muted">Si l'email existe dans <strong>profiles</strong> et que le PIN correspond, la connexion est autorisée puis l'utilisateur est dirigé vers son espace.</p>
-          <div class="spacer"></div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <a class="btn btn-primary" href="#connexion-card">Commencer mon espace</a>
-            <a class="btn btn-secondary" href="#particulier-zone">Voir l'espace particulier</a>
-          </div>
-        </div>
-        <div class="grid two">
-          <div class="kpi"><span class="muted">Connexion</span><strong>Email + PIN</strong><div class="small muted">Vérification sur la table profiles uniquement.</div></div>
-          <div class="kpi"><span class="muted">Accès</span><strong>Selon le profil</strong><div class="small muted">Courtier, particulier ou autre profil présent.</div></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="grid three" style="margin-bottom:22px;">
-      <div class="feature"><strong>Simple</strong><div class="muted">Un seul critère d’accès : le compte existe avec votre email et votre code PIN.</div></div>
-      <div class="feature"><strong>Humain</strong><div class="muted">Le parcours reste lisible pour chaque utilisateur.</div></div>
-      <div class="feature"><strong>Pro</strong><div class="muted">Le code évite les champs inexistants .</div></div>
-    </section>
-
-    <section class="panel" id="connexion-card" style="margin-bottom:22px;">
+    <!-- ===== CONNEXION ===== -->
+    <section id="connexion-section" class="panel section">
       <div class="section-title">
         <div>
           <h3>Connexion</h3>
-          <p class="muted">Entrez votre email et votre code PIN .</p>
+          <p class="muted">Entrez votre email et code PIN</p>
         </div>
       </div>
-      <form id="connexion-form" onsubmit="handleLogin(event)">
+      <form onsubmit="handleLogin(event)">
         <div class="form-grid">
           <div class="field">
-            <label for="email-connexion">Email</label>
-            <input type="email" id="email-connexion" placeholder="vous@example.fr" required>
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="vous@example.fr" required>
           </div>
           <div class="field">
-            <label for="pin-connexion">Code PIN (4 chiffres)</label>
-            <input type="text" id="pin-connexion" placeholder="0000" maxlength="4" pattern="[0-9]{4}" required>
+            <label for="pin">Code PIN</label>
+            <input type="text" id="pin" placeholder="0000" maxlength="4" pattern="[0-9]{4}" required>
           </div>
         </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center;">
-          <button type="submit" class="btn btn-primary" id="btn-login">Se connecter</button>
-          <a class="btn btn-secondary" href="https://d2z0o16i8xm8ak.cloudfront.net/web/direct-files/5cc067fda209bd9ffc6d4423b811fd72/67ffb21b-2e05-4e2f-a6b9-8c8be5290fc7/pin-oublie.html">PIN oublié ?</a>
-          <a class="btn btn-secondary" href="https://reliable-crumble-6e286a.netlify.app/questionnaire-inscription">Je suis nouveau</a>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+          <button type="submit" class="btn btn-primary">Se connecter</button>
         </div>
       </form>
-      <div id="loading-connexion" class="status loading">Vérification en cours...</div>
-      <div id="error-connexion" class="status error"></div>
-      <div id="success-connexion" class="status success">Connexion réussie, redirection...</div>
+      <div id="login-status" class="status"></div>
     </section>
 
-    <section class="panel" style="margin-bottom:22px;">
-      <div class="section-title">
-        <div>
-          <h3>Pourquoi c’est utile</h3>
-          <p class="muted">Trois arguments efficaces aux utilisateurs.</p>
+    <!-- ===== PARTICULIER ZONE ===== -->
+    <section id="particulier-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Mes demandes</h2>
+        <p class="muted">Suivi en temps réel de vos projets</p>
+      </div>
+
+      <!-- TAB : Financement -->
+      <div class="section">
+        <h4>💰 Demandes de financement</h4>
+        <div id="p-fin-actives" class="list-grid"></div>
+      </div>
+
+      <!-- TAB : Travaux -->
+      <div class="section">
+        <h4>🔨 Projets de travaux</h4>
+        <div id="p-trav-actives" class="list-grid"></div>
+      </div>
+
+      <!-- TAB : Accompagnement -->
+      <div class="section">
+        <h4>🏠 Demandes accompagnement</h4>
+        <div id="p-agent-actives" class="list-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== COURTIER ZONE ===== -->
+    <section id="courtier-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Financement</h2>
+        <p class="muted">Demandes de financement à traiter</p>
+      </div>
+
+      <!-- À traiter -->
+      <div class="section">
+        <h4>📨 À traiter</h4>
+        <p class="muted" style="margin-bottom:12px;">Nouvelles demandes qui demandent votre réponse</p>
+        <div id="c-fin-traiter" class="list-grid"></div>
+      </div>
+
+      <!-- Mes réponses -->
+      <div class="section">
+        <h4>✅ Mes réponses</h4>
+        <p class="muted" style="margin-bottom:12px;">Suivi de mes acceptations et refusals</p>
+        <div id="c-fin-reponses" class="list-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== ARTISAN ZONE ===== -->
+    <section id="artisan-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Travaux</h2>
+        <p class="muted">Projets de travaux à traiter</p>
+      </div>
+
+      <!-- À traiter -->
+      <div class="section">
+        <h4>📨 À traiter</h4>
+        <p class="muted" style="margin-bottom:12px;">Nouvelles demandes qui demandent votre réponse</p>
+        <div id="a-trav-traiter" class="list-grid"></div>
+      </div>
+
+      <!-- Mes réponses -->
+      <div class="section">
+        <h4>✅ Mes réponses</h4>
+        <p class="muted" style="margin-bottom:12px;">Suivi de mes acceptations et refusals</p>
+        <div id="a-trav-reponses" class="list-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== AGENT/MANDATAIRE ZONE ===== -->
+    <section id="agent-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Accompagnement immobilier</h2>
+        <p class="muted">Demandes d'accompagnement à traiter</p>
+      </div>
+
+      <!-- À traiter -->
+      <div class="section">
+        <h4>📨 À traiter</h4>
+        <p class="muted" style="margin-bottom:12px;">Nouvelles demandes qui demandent votre réponse</p>
+        <div id="ag-acc-traiter" class="list-grid"></div>
+      </div>
+
+      <!-- Mes réponses -->
+      <div class="section">
+        <h4>✅ Mes réponses</h4>
+        <p class="muted" style="margin-bottom:12px;">Suivi de mes acceptations et refusals</p>
+        <div id="ag-acc-reponses" class="list-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== VENDEUR ZONE ===== -->
+    <section id="vendeur-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Mes annonces immobilières</h2>
+        <p class="muted">Gérez vos annonces, photos, vidéos et disponibilités</p>
+      </div>
+
+      <!-- Mes annonces -->
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <h4>🏠 Mes annonces</h4>
+            <p class="muted">Vos biens à la vente</p>
+          </div>
+          <button class="btn btn-primary" onclick="showCreateAnnounce()">+ Nouvelle annonce</button>
         </div>
+        <div id="v-annonces-list" class="list-grid"></div>
       </div>
-      <div class="grid three">
-        <div class="feature"><strong>Gagner du temps</strong><div class="muted">Le bon espace s’ouvre directement si le profil existe.</div></div>
-        <div class="feature"><strong>Avancer sereinement</strong><div class="muted">Aucune dépendance à des colonnes non créées.</div></div>
-        <div class="feature"><strong>Créer la bonne rencontre</strong><div class="muted">Chaque profil garde son parcours propre.</div></div>
+
+      <!-- Demandes de visite -->
+      <div class="section">
+        <h4>📅 Demandes de visite</h4>
+        <p class="muted" style="margin-bottom:12px;">Acheteurs qui souhaitent visiter vos biens</p>
+        <div id="v-visites-list" class="list-grid"></div>
       </div>
     </section>
 
-    <section id="particulier-zone" class="panel" style="margin-bottom:22px;">
-      <div class="section-title">
-        <div>
-          <h3>Particulier</h3>
-          <p class="muted">Zone d’exemple pour les utilisateurs.</p>
+    <!-- ===== PRO PROJECTS ZONE (Agents, Mandataires, Courtiers, Artisans) ===== -->
+    <section id="pro-projects-zone" class="zone">
+      <div style="margin-bottom:20px;">
+        <h2>Mes projets professionnels</h2>
+        <p class="muted">Gérez vos annonces de projets et clients</p>
+      </div>
+
+      <!-- Mes projets -->
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <h4>📊 Mes projets</h4>
+            <p class="muted">Vos projets actifs</p>
+          </div>
+          <button class="btn btn-primary" onclick="showCreateProProject()">+ Nouveau projet</button>
         </div>
+        <div id="pro-projects-list" class="list-grid"></div>
       </div>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="p-visites">Visites</button>
-        <button class="tab-btn" data-tab="p-annonces">Annonce vendeur</button>
-        <button class="tab-btn" data-tab="p-financement">Projet financement</button>
-        <button class="tab-btn" data-tab="p-travaux">Projet travaux</button>
-        <button class="tab-btn" data-tab="p-messagerie">Messagerie</button>
-        <button class="tab-btn" data-tab="p-profil">Profil & dispos</button>
-      </div>
-
-      <div id="p-visites" class="tab active"><div class="muted">.</div></div>
-      <div id="p-annonces" class="tab"><div class="muted">.</div></div>
-      <div id="p-financement" class="tab"><div class="muted">.</div></div>
-      <div id="p-travaux" class="tab"><div class="muted">.</div></div>
-      <div id="p-messagerie" class="tab"><div class="muted">.</div></div>
-      <div id="p-profil" class="tab"><div class="muted">.</div></div>
     </section>
 
-    <section class="panel" id="courtier-zone" style="margin-bottom:22px;">
-      <div class="section-title">
-        <div>
-          <h3>Courtier</h3>
-          <p class="muted">Le courtier peut aussi se connecter si son email et son PIN sont correctes.</p>
+    <!-- ===== MODAL: Éditer annonce ===== -->
+    <div id="modal-announce" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;overflow-y:auto;padding:20px;">
+      <div class="panel" style="max-width:700px;margin:50px auto;padding:30px;max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 id="modal-title">Nouvelle annonce</h3>
+          <button onclick="closeModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
         </div>
+
+        <form id="form-annonce" onsubmit="handleSaveAnnounce(event)">
+          <div class="field" style="margin-bottom:16px;">
+            <label>Titre *</label>
+            <input type="text" id="ann-titre" placeholder="ex: Appartement 3 pièces proche Métro" required>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Prix (€) *</label>
+              <input type="number" id="ann-prix" placeholder="250000" required>
+            </div>
+            <div class="field">
+              <label>Surface (m²)</label>
+              <input type="number" id="ann-surface" placeholder="75">
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Ville *</label>
+              <input type="text" id="ann-ville" required>
+            </div>
+            <div class="field">
+              <label>Code postal *</label>
+              <input type="text" id="ann-cp" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:16px;">
+            <label>Adresse complète</label>
+            <input type="text" id="ann-adresse" placeholder="123 Rue de la Paix">
+          </div>
+
+          <div class="field full" style="margin-bottom:16px;">
+            <label>Description *</label>
+            <textarea id="ann-description" placeholder="Décrivez votre bien..." required></textarea>
+          </div>
+
+          <div class="field full" style="margin-bottom:16px;">
+            <label>📸 Photos</label>
+            <input type="file" id="ann-photos" multiple accept="image/*" style="display:none;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('ann-photos').click()">Ajouter photos</button>
+            <div id="ann-photos-preview" style="margin-top:12px;display:grid;gap:8px;grid-template-columns:repeat(3,1fr);"></div>
+          </div>
+
+          <div class="field full" style="margin-bottom:16px;">
+            <label>🎥 Vidéo</label>
+            <input type="file" id="ann-video" accept="video/*" style="display:none;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('ann-video').click()">Ajouter vidéo</button>
+            <div id="ann-video-preview" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="field full" style="margin-bottom:16px;">
+            <label>📅 Disponibilités pour les visites</label>
+            <p class="muted" style="font-size:.85rem;margin:8px 0;">Exemple: Lundi 14h-18h, Samedi 10h-13h</p>
+            <textarea id="ann-dispo" placeholder="Lundi 14h-18h&#10;Mardi 14h-18h&#10;Samedi 10h-13h" style="min-height:100px;"></textarea>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+          </div>
+        </form>
       </div>
-      <div class="grid two">
-        <div class="kpi"><span class="muted">Connexion</span><strong>Autorisé</strong><div class="small muted">Si l’email est le bon.</div></div>
-        <div class="kpi"><span class="muted">Redirection</span><strong>Selon le profil</strong><div class="small muted">Aucune colonne inventée n’est utilisée.</div></div>
+    </div>
+
+    <!-- ===== MODAL: Éditer projet pro ===== -->
+    <div id="modal-pro-project" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;overflow-y:auto;padding:20px;">
+      <div class="panel" style="max-width:600px;margin:50px auto;padding:30px;max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 id="modal-pro-title">Nouveau projet</h3>
+          <button onclick="closeProModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+
+        <form id="form-pro-project" onsubmit="handleSaveProProject(event)">
+          <div class="field" style="margin-bottom:16px;">
+            <label>Titre du projet *</label>
+            <input type="text" id="pro-titre" placeholder="ex: Projet Résidence Grand Parc" required>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Type *</label>
+              <select id="pro-type" required>
+                <option value="acquisition">Acquisition</option>
+                <option value="vente">Vente</option>
+                <option value="renovation">Rénovation</option>
+                <option value="developpement">Développement</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Budget (€)</label>
+              <input type="number" id="pro-budget" placeholder="500000">
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Localisation *</label>
+              <input type="text" id="pro-localisation" placeholder="ex: Lyon, Rhône" required>
+            </div>
+            <div class="field">
+              <label>Code postal</label>
+              <input type="text" id="pro-code-postal">
+            </div>
+          </div>
+
+          <div class="field full" style="margin-bottom:16px;">
+            <label>Description</label>
+            <textarea id="pro-description" placeholder="Détails du projet..." style="min-height:100px;"></textarea>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <button type="button" class="btn btn-secondary" onclick="closeProModal()">Annuler</button>
+          </div>
+        </form>
       </div>
-    </section>
+    </div>
   </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>Nos services</h5>
+        <p><a href="annonces.html">Chercher une annonce</a></p>
+        <p><a href="inscription-particulier-vendeur.html">Vendre mon bien</a></p>
+        <p><a href="espace-alb.html">Espace ALB</a></p>
+      </div>
+      <div class="footer-col">
+        <h5>Professionnels</h5>
+        <p><a href="vitrine-pros.html">Rejoindre ALB</a></p>
+        <p><a href="projets-alb.html">Projets ALB</a></p>
+      </div>
+      <div class="footer-col">
+        <h5>Légal</h5>
+        <p><a href="cgu.html">CGU</a></p>
+        <p><a href="confidentialite.html">Confidentialité</a></p>
+      </div>
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p><a onclick="openFooterModal('apropos-modal')">À propos d'ALB Immobilier</a></p>
+        <p><a onclick="openFooterModal('jocelyne-modal')">Le mot de la fondatrice</a></p>
+      </div>
+      <div class="footer-col contact">
+        <h5>Contact</h5>
+        <p><strong>📧 contact@albimmobilier.fr</strong></p>
+        <p>📱 07 45 60 28 05</p>
+        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </footer>
+
+  <!-- FOOTER MODALS -->
+  <div id="apropos-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeFooterModal('apropos-modal')">&times;</span>
+      <p class="modal-slogan"><span class="slogan-word-1">Quand</span> <span class="slogan-word-2">l'ancien</span> <span class="slogan-word-1">se met</span> <span class="slogan-word-2">à la bien.</span></p>
+      <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+      <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+      <p>À la bien, toujours.</p>
+    </div>
+  </div>
+  <div id="jocelyne-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeFooterModal('jocelyne-modal')">&times;</span>
+      <h2>Le mot de la fondatrice</h2>
+      <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier.</p>
+      <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+      <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+      <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    </div>
+  </div>
 
   <script>
     const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const tabs = document.querySelectorAll('.tab-btn');
-    tabs.forEach(btn => btn.addEventListener('click', () => {
-      tabs.forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
-    }));
+    let currentUser = null;
 
-    async function handleLogin(event){
+    async function handleLogin(event) {
       event.preventDefault();
-      const loading = document.getElementById('loading-connexion');
-      const error = document.getElementById('error-connexion');
-      const success = document.getElementById('success-connexion');
-      const email = document.getElementById('email-connexion').value.trim().toLowerCase();
-      const pin = document.getElementById('pin-connexion').value.trim();
-      loading.style.display = 'block'; error.style.display = 'none'; success.style.display = 'none';
-      try{
-        const { data, error: qError } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
-        if(qError) throw qError;
-        if(!data) throw new Error('Aucun profil trouvé pour cet email');
-        if(String(data.pin || '').trim() !== pin) throw new Error('PIN incorrect');
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const pin = document.getElementById('pin').value.trim();
+      const statusEl = document.getElementById('login-status');
+
+      statusEl.style.display = 'block';
+      statusEl.className = 'status loading';
+      statusEl.textContent = 'Vérification...';
+
+      try {
+        const { data, error } = await supabaseClient.from('profiles').select('*').eq('email', email).maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Email non trouvé');
+        if (String(data.pin || '').trim() !== pin) throw new Error('PIN incorrect');
+
+        currentUser = data;
         localStorage.setItem('albuser', data.id);
-        success.style.display = 'block';
-        window.location.href = data.role === 'courtier' ? 'dashboard-courtier.html' : 'espace-perso.html';
-      } catch(err){
-        error.textContent = err.message || 'Connexion impossible';
-        error.style.display = 'block';
-      } finally {
-        loading.style.display = 'none';
+        statusEl.className = 'status success';
+        statusEl.textContent = 'Connexion réussie...';
+
+        setTimeout(() => {
+          showUserZone();
+          loadData();
+        }, 500);
+      } catch (err) {
+        statusEl.className = 'status error';
+        statusEl.textContent = err.message;
       }
     }
+
+    function showUserZone() {
+      document.getElementById('connexion-section').style.display = 'none';
+      updateAuthButtons();
+
+      if (currentUser.role === 'courtier') {
+        document.getElementById('courtier-zone').classList.add('active');
+        if (currentUser.est_pro_projects) {
+          document.getElementById('pro-projects-zone').classList.add('active');
+        }
+      } else if (currentUser.role === 'artisan') {
+        document.getElementById('artisan-zone').classList.add('active');
+        if (currentUser.est_pro_projects) {
+          document.getElementById('pro-projects-zone').classList.add('active');
+        }
+      } else if (currentUser.role === 'agent' || currentUser.role === 'mandataire' || currentUser.role === 'immo') {
+        document.getElementById('agent-zone').classList.add('active');
+        if (currentUser.est_pro_projects) {
+          document.getElementById('pro-projects-zone').classList.add('active');
+        }
+      } else if (currentUser.est_vendeur) {
+        document.getElementById('vendeur-zone').classList.add('active');
+      } else {
+        document.getElementById('particulier-zone').classList.add('active');
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('albuser');
+      location.reload();
+    }
+
+    function updateAuthButtons() {
+      const btnLogout = document.getElementById('btn-logout');
+      const navEspaceAlb = document.getElementById('nav-espace-alb');
+      if (currentUser) {
+        btnLogout.style.display = 'inline-flex';
+        navEspaceAlb.style.display = 'none';
+      } else {
+        btnLogout.style.display = 'none';
+        navEspaceAlb.style.display = 'inline-block';
+      }
+    }
+
+    // Footer modals
+    function openFooterModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+    function closeFooterModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+    window.onclick = function(event) {
+      if (event.target.classList && event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+
+    // ===== PARTICULIER =====
+    async function loadDemandesFinancement() {
+      if (!currentUser) return [];
+      const { data, error } = await supabaseClient
+        .from('demandes_financement')
+        .select('*')
+        .eq('particulier_id', currentUser.id);
+      return error ? [] : (data || []);
+    }
+
+    async function loadProjetsTravaux() {
+      if (!currentUser) return [];
+      const { data, error } = await supabaseClient
+        .from('projets_travaux')
+        .select('*')
+        .eq('particulier_id', currentUser.id);
+      return error ? [] : (data || []);
+    }
+
+    async function loadAgentRequests() {
+      if (!currentUser) return [];
+      const { data, error } = await supabaseClient
+        .from('demandes_accompagnement')
+        .select('*')
+        .eq('particulier_id', currentUser.id);
+      return error ? [] : (data || []);
+    }
+
+    // Afficher les demandes des particuliers
+    async function displayParticulierDemands() {
+      const financement = await loadDemandesFinancement();
+      const travaux = await loadProjetsTravaux();
+      const agent = await loadAgentRequests();
+
+      document.getElementById('p-fin-actives').innerHTML = financement.length
+        ? financement.map(d => createParticulierCard(d, 'financement')).join('')
+        : '<div class="muted">Aucune demande de financement</div>';
+
+      document.getElementById('p-trav-actives').innerHTML = travaux.length
+        ? travaux.map(d => createParticulierCard(d, 'travaux')).join('')
+        : '<div class="muted">Aucun projet de travaux</div>';
+
+      document.getElementById('p-agent-actives').innerHTML = agent.length
+        ? agent.map(d => createParticulierCard(d, 'accompagnement')).join('')
+        : '<div class="muted">Aucune demande accompagnement</div>';
+    }
+
+    function createParticulierCard(demand, type) {
+      const date = new Date(demand.created_at).toLocaleDateString('fr-FR');
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div style="flex:1">
+              <div class="card-title">Demande du ${date}</div>
+              <div class="card-meta">Statut: ${demand.statut || 'nouvelle'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== COURTIER / ARTISAN / AGENT =====
+    async function loadDemandesForPro(table, field) {
+      if (!currentUser) return [];
+      const { data, error } = await supabaseClient
+        .from(table)
+        .select('*')
+        .eq(field, currentUser.id);
+      return error ? [] : (data || []);
+    }
+
+    async function loadResponses(demandType) {
+      if (!currentUser) return [];
+      const { data, error } = await supabaseClient
+        .from('demandes_responses')
+        .select('*')
+        .eq('pro_id', currentUser.id)
+        .eq('demande_type', demandType)
+        .order('created_at', { ascending: false });
+      return error ? [] : (data || []);
+    }
+
+    async function displayProfessionalContent() {
+      if (currentUser.role === 'courtier') {
+        const demandes = await loadDemandesForPro('demandes_financement', 'courtier_assigne_id');
+        const responses = await loadResponses('financement');
+
+        document.getElementById('c-fin-traiter').innerHTML = demandes
+          .filter(d => d.statut === 'nouvelle')
+          .map(d => createProCard(d, 'courtier')).join('') || '<div class="muted">Aucune demande à traiter</div>';
+
+        document.getElementById('c-fin-reponses').innerHTML = responses.length
+          ? await Promise.all(responses.map(r => createResponseCard(r, 'financement'))).then(arr => arr.join(''))
+          : '<div class="muted">Aucune réponse enregistrée</div>';
+      } else if (currentUser.role === 'artisan') {
+        const demandes = await loadDemandesForPro('projets_travaux', 'artisan_assigne_id');
+        const responses = await loadResponses('travaux');
+
+        document.getElementById('a-trav-traiter').innerHTML = demandes
+          .filter(d => d.statut === 'nouvelle')
+          .map(d => createProCard(d, 'artisan')).join('') || '<div class="muted">Aucune demande à traiter</div>';
+
+        document.getElementById('a-trav-reponses').innerHTML = responses.length
+          ? await Promise.all(responses.map(r => createResponseCard(r, 'travaux'))).then(arr => arr.join(''))
+          : '<div class="muted">Aucune réponse enregistrée</div>';
+      } else if (currentUser.role === 'agent' || currentUser.role === 'mandataire' || currentUser.role === 'immo') {
+        const demandes = await loadDemandesForPro('demandes_accompagnement', 'agent_assigne_id');
+        const responses = await loadResponses('accompagnement');
+
+        document.getElementById('ag-acc-traiter').innerHTML = demandes
+          .filter(d => d.statut === 'nouvelle')
+          .map(d => createProCard(d, 'agent')).join('') || '<div class="muted">Aucune demande à traiter</div>';
+
+        document.getElementById('ag-acc-reponses').innerHTML = responses.length
+          ? await Promise.all(responses.map(r => createResponseCard(r, 'accompagnement'))).then(arr => arr.join(''))
+          : '<div class="muted">Aucune réponse enregistrée</div>';
+      }
+    }
+
+    function createProCard(demand, role) {
+      const nom = demand.nom || '';
+      const date = new Date(demand.created_at).toLocaleDateString('fr-FR');
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div style="flex:1">
+              <div class="card-title">${nom}</div>
+              <div class="card-meta">${date}</div>
+            </div>
+            <span class="status-badge status-nouvelle">Nouvelle</span>
+          </div>
+        </div>
+      `;
+    }
+
+    async function createResponseCard(response, demandType) {
+      const table = demandType === 'financement' ? 'demandes_financement'
+                  : demandType === 'travaux' ? 'projets_travaux'
+                  : 'demandes_accompagnement';
+
+      const { data: demand } = await supabaseClient
+        .from(table)
+        .select('nom, created_at')
+        .eq('id', response.demande_id)
+        .single();
+
+      if (!demand) return '';
+
+      const nom = demand.nom || '';
+      const date = new Date(response.created_at).toLocaleDateString('fr-FR');
+      let status = response.action === 'refuse' ? 'Refusé' : 'Accepté';
+      let statusClass = response.action === 'refuse' ? 'status-refuse' : 'status-accepte';
+
+      if (response.action === 'accepte') {
+        const { data: allAccepts } = await supabaseClient
+          .from('demandes_responses')
+          .select('*')
+          .eq('demande_id', response.demande_id)
+          .eq('demande_type', demandType)
+          .eq('action', 'accepte');
+
+        const count = allAccepts ? allAccepts.length : 0;
+        if (count >= 3) {
+          const { data: winners } = await supabaseClient
+            .from('demandes_responses')
+            .select('pro_id')
+            .eq('demande_id', response.demande_id)
+            .eq('demande_type', demandType)
+            .eq('action', 'accepte')
+            .order('created_at', { ascending: true })
+            .limit(3);
+
+          const isWinner = winners && winners.some(w => w.pro_id === currentUser.id);
+          status = isWinner ? 'Remporté ✅' : 'Perdu';
+          statusClass = isWinner ? 'status-remporte' : 'status-perdu';
+        } else {
+          status = `En attente (${count}/3)`;
+          statusClass = 'status-en-attente';
+        }
+      }
+
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div style="flex:1">
+              <div class="card-title">${nom}</div>
+              <div class="card-meta">${date}</div>
+            </div>
+            <span class="status-badge ${statusClass}">${status}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== REALTIME SUBSCRIPTIONS =====
+    function subscribeToChanges() {
+      if (currentUser.role === 'particulier') {
+        supabaseClient.channel('demandes-particulier').on('postgres_changes',
+          { event: '*', schema: 'public', table: 'demandes_financement' },
+          () => displayParticulierDemands()
+        ).subscribe();
+
+        supabaseClient.channel('travaux-particulier').on('postgres_changes',
+          { event: '*', schema: 'public', table: 'projets_travaux' },
+          () => displayParticulierDemands()
+        ).subscribe();
+
+        supabaseClient.channel('agent-particulier').on('postgres_changes',
+          { event: '*', schema: 'public', table: 'demandes_accompagnement' },
+          () => displayParticulierDemands()
+        ).subscribe();
+      } else {
+        supabaseClient.channel('responses-pro').on('postgres_changes',
+          { event: '*', schema: 'public', table: 'demandes_responses' },
+          () => displayProfessionalContent()
+        ).subscribe();
+      }
+
+      // Subscribe to pro projects if applicable
+      if (currentUser.est_pro_projects) {
+        subscribeToProProjectsChanges();
+      }
+
+      // Subscribe to vendor changes if applicable
+      if (currentUser.est_vendeur) {
+        subscribeToVendeurChanges();
+      }
+    }
+
+    // ===== INIT =====
+    async function loadData() {
+      if (currentUser.role === 'particulier') {
+        await displayParticulierDemands();
+      } else {
+        await displayProfessionalContent();
+      }
+
+      // Load pro projects if applicable
+      if (currentUser.est_pro_projects) {
+        await displayProProjects();
+      }
+
+      // Load vendor content if applicable
+      if (currentUser.est_vendeur) {
+        await displayVendeurContent();
+      }
+
+      subscribeToChanges();
+    }
+
+    // ===== VENDEUR : Charger les annonces =====
+    async function loadAnnonces() {
+      if (!currentUser || !currentUser.est_vendeur) return [];
+      const { data, error } = await supabaseClient
+        .from('annonces')
+        .select('*')
+        .eq('vendeur_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      return error ? [] : (data || []);
+    }
+
+    // ===== VENDEUR : Afficher les annonces =====
+    async function displayVendeurAnnonces() {
+      const annonces = await loadAnnonces();
+      const container = document.getElementById('v-annonces-list');
+
+      container.innerHTML = annonces.length
+        ? annonces.map(a => `
+          <div class="card">
+            <div class="card-header">
+              <div style="flex:1;">
+                <div class="card-title">${a.titre}</div>
+                <div class="card-meta">${a.prix.toLocaleString('fr-FR')} € • ${a.ville}</div>
+              </div>
+              <button class="btn btn-secondary" style="white-space:nowrap;" onclick="showEditAnnounce('${a.id}')">✏️ Éditer</button>
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">Aucune annonce. Créez la première !</div>';
+    }
+
+    // ===== VENDEUR : Charger les demandes de visite =====
+    async function loadVisites() {
+      if (!currentUser || !currentUser.est_vendeur) return [];
+      const { data, error } = await supabaseClient
+        .from('visites_programmees')
+        .select('*')
+        .eq('vendeur_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      return error ? [] : (data || []);
+    }
+
+    // ===== VENDEUR : Afficher les demandes de visite =====
+    async function displayVendeurVisites() {
+      const visites = await loadVisites();
+      const container = document.getElementById('v-visites-list');
+
+      container.innerHTML = visites.length
+        ? visites.map(v => `
+          <div class="card">
+            <div class="card-header">
+              <div style="flex:1;">
+                <div class="card-title">${v.date_visite} à ${v.heure_visite || '—'}</div>
+                <div class="card-meta">Acheteur: ${v.nom_acheteur || 'N/A'}</div>
+              </div>
+              <span class="status-badge status-${v.statut_vendeur || 'en-attente'}">${v.statut_vendeur || 'en attente'}</span>
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">Aucune demande de visite</div>';
+    }
+
+    // ===== VENDEUR : Afficher le formulaire d'édition =====
+    function showCreateAnnounce() {
+      document.getElementById('modal-title').textContent = 'Nouvelle annonce';
+      document.getElementById('form-annonce').reset();
+      document.getElementById('modal-announce').style.display = 'block';
+      document.getElementById('form-annonce').dataset.annonceid = '';
+    }
+
+    async function showEditAnnounce(annonceid) {
+      const { data: annonce } = await supabaseClient
+        .from('annonces')
+        .select('*')
+        .eq('id', annonceid)
+        .single();
+
+      if (!annonce) return;
+
+      document.getElementById('modal-title').textContent = 'Éditer annonce';
+      document.getElementById('ann-titre').value = annonce.titre || '';
+      document.getElementById('ann-prix').value = annonce.prix || '';
+      document.getElementById('ann-surface').value = annonce.surface_m2 || '';
+      document.getElementById('ann-ville').value = annonce.ville || '';
+      document.getElementById('ann-cp').value = annonce.code_postal || '';
+      document.getElementById('ann-adresse').value = annonce.adresse_complete || '';
+      document.getElementById('ann-description').value = annonce.description || '';
+      document.getElementById('ann-dispo').value = annonce.disponibilites_visite ? JSON.stringify(annonce.disponibilites_visite).replace(/,/g, ', ') : '';
+      document.getElementById('form-annonce').dataset.annonceid = annonceid;
+      document.getElementById('modal-announce').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-announce').style.display = 'none';
+    }
+
+    // ===== VENDEUR : Sauvegarder une annonce =====
+    async function handleSaveAnnounce(event) {
+      event.preventDefault();
+
+      const annonceid = document.getElementById('form-annonce').dataset.annonceid;
+      const photosInput = document.getElementById('ann-photos');
+      const videoInput = document.getElementById('ann-video');
+
+      const data = {
+        titre: document.getElementById('ann-titre').value,
+        prix: parseFloat(document.getElementById('ann-prix').value),
+        surface_m2: parseFloat(document.getElementById('ann-surface').value) || null,
+        ville: document.getElementById('ann-ville').value,
+        code_postal: document.getElementById('ann-cp').value,
+        adresse_complete: document.getElementById('ann-adresse').value,
+        description: document.getElementById('ann-description').value,
+        disponibilites_visite: parseDisponibilites(document.getElementById('ann-dispo').value),
+        statut: 'disponible'
+      };
+
+      try {
+        // Uploader les photos
+        const photoUrls = [];
+        if (photosInput.files && photosInput.files.length > 0) {
+          for (let i = 0; i < photosInput.files.length; i++) {
+            const file = photosInput.files[i];
+            const fileName = `${Date.now()}-${i}-${file.name}`;
+            const { data: uploadData, error: uploadErr } = await supabaseClient.storage
+              .from('annonces-photos')
+              .upload(`${currentUser.id}/${fileName}`, file);
+
+            if (uploadErr) throw uploadErr;
+
+            const { data: publicUrl } = supabaseClient.storage
+              .from('annonces-photos')
+              .getPublicUrl(`${currentUser.id}/${fileName}`);
+
+            photoUrls.push(publicUrl.publicUrl);
+          }
+          data.photos_urls = photoUrls;
+        }
+
+        // Uploader la vidéo
+        if (videoInput.files && videoInput.files.length > 0) {
+          const videoFile = videoInput.files[0];
+          const videoFileName = `${Date.now()}-${videoFile.name}`;
+          const { data: uploadData, error: uploadErr } = await supabaseClient.storage
+            .from('annonces-videos')
+            .upload(`${currentUser.id}/${videoFileName}`, videoFile);
+
+          if (uploadErr) throw uploadErr;
+
+          const { data: publicUrl } = supabaseClient.storage
+            .from('annonces-videos')
+            .getPublicUrl(`${currentUser.id}/${videoFileName}`);
+
+          data.video_url = publicUrl.publicUrl;
+        }
+
+        if (annonceid) {
+          await supabaseClient.from('annonces').update(data).eq('id', annonceid);
+        } else {
+          data.vendeur_id = currentUser.id;
+          await supabaseClient.from('annonces').insert([data]);
+        }
+
+        closeModal();
+        displayVendeurAnnonces();
+        alert('Annonce enregistrée avec succès !');
+      } catch (err) {
+        alert('Erreur: ' + err.message);
+      }
+    }
+
+    function parseDisponibilites(text) {
+      return text.split('\n').filter(l => l.trim()).map(l => l.trim());
+    }
+
+    // ===== VENDEUR : Afficher tout =====
+    async function displayVendeurContent() {
+      if (currentUser && currentUser.est_vendeur) {
+        await displayVendeurAnnonces();
+        await displayVendeurVisites();
+        subscribeToVendeurChanges();
+      }
+    }
+
+    function subscribeToVendeurChanges() {
+      supabaseClient.channel('annonces-vendeur').on('postgres_changes',
+        { event: '*', schema: 'public', table: 'annonces' },
+        () => displayVendeurAnnonces()
+      ).subscribe();
+
+      supabaseClient.channel('visites-vendeur').on('postgres_changes',
+        { event: '*', schema: 'public', table: 'visites_programmees' },
+        () => displayVendeurVisites()
+      ).subscribe();
+    }
+
+    // ===== PHOTO/VIDEO PREVIEW =====
+    document.addEventListener('DOMContentLoaded', () => {
+      // Photo preview
+      const photosInput = document.getElementById('ann-photos');
+      if (photosInput) {
+        photosInput.addEventListener('change', () => {
+          const preview = document.getElementById('ann-photos-preview');
+          preview.innerHTML = '';
+          for (let file of photosInput.files) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.style.width = '100%';
+              img.style.height = '120px';
+              img.style.objectFit = 'cover';
+              img.style.borderRadius = '8px';
+              preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      // Video preview
+      const videoInput = document.getElementById('ann-video');
+      if (videoInput) {
+        videoInput.addEventListener('change', () => {
+          const preview = document.getElementById('ann-video-preview');
+          preview.innerHTML = '';
+          if (videoInput.files && videoInput.files.length > 0) {
+            const file = videoInput.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const video = document.createElement('video');
+              video.src = e.target.result;
+              video.style.width = '100%';
+              video.style.maxHeight = '150px';
+              video.style.borderRadius = '8px';
+              video.controls = true;
+              preview.appendChild(video);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    });
+
+    // ===== PRO PROJECTS =====
+    async function loadProProjects() {
+      if (!currentUser || !currentUser.est_pro_projects) return [];
+      const { data, error } = await supabaseClient
+        .from('pro_projects')
+        .select('*')
+        .eq('pro_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      return error ? [] : (data || []);
+    }
+
+    async function displayProProjects() {
+      const projects = await loadProProjects();
+      const container = document.getElementById('pro-projects-list');
+
+      container.innerHTML = projects.length
+        ? projects.map(p => `
+          <div class="card">
+            <div class="card-header">
+              <div style="flex:1;">
+                <div class="card-title">${p.titre}</div>
+                <div class="card-meta">${p.localisation} • ${p.type}</div>
+              </div>
+              <button class="btn btn-secondary" style="white-space:nowrap;" onclick="showEditProProject('${p.id}')">✏️ Éditer</button>
+            </div>
+          </div>
+        `).join('')
+        : '<div class="muted">Aucun projet. Créez le premier !</div>';
+    }
+
+    function showCreateProProject() {
+      document.getElementById('modal-pro-title').textContent = 'Nouveau projet';
+      document.getElementById('form-pro-project').reset();
+      document.getElementById('form-pro-project').dataset.projectid = '';
+      document.getElementById('modal-pro-project').style.display = 'block';
+    }
+
+    async function showEditProProject(projectid) {
+      const { data: project } = await supabaseClient
+        .from('pro_projects')
+        .select('*')
+        .eq('id', projectid)
+        .single();
+
+      if (!project) return;
+
+      document.getElementById('modal-pro-title').textContent = 'Éditer projet';
+      document.getElementById('pro-titre').value = project.titre || '';
+      document.getElementById('pro-type').value = project.type || 'autre';
+      document.getElementById('pro-budget').value = project.budget || '';
+      document.getElementById('pro-localisation').value = project.localisation || '';
+      document.getElementById('pro-code-postal').value = project.code_postal || '';
+      document.getElementById('pro-description').value = project.description || '';
+      document.getElementById('form-pro-project').dataset.projectid = projectid;
+      document.getElementById('modal-pro-project').style.display = 'block';
+    }
+
+    function closeProModal() {
+      document.getElementById('modal-pro-project').style.display = 'none';
+    }
+
+    async function handleSaveProProject(event) {
+      event.preventDefault();
+
+      const projectid = document.getElementById('form-pro-project').dataset.projectid;
+      const data = {
+        titre: document.getElementById('pro-titre').value,
+        type: document.getElementById('pro-type').value,
+        budget: parseFloat(document.getElementById('pro-budget').value) || null,
+        localisation: document.getElementById('pro-localisation').value,
+        code_postal: document.getElementById('pro-code-postal').value,
+        description: document.getElementById('pro-description').value,
+        statut: 'actif'
+      };
+
+      try {
+        if (projectid) {
+          await supabaseClient.from('pro_projects').update(data).eq('id', projectid);
+        } else {
+          data.pro_id = currentUser.id;
+          await supabaseClient.from('pro_projects').insert([data]);
+        }
+
+        closeProModal();
+        displayProProjects();
+        alert('Projet enregistré !');
+      } catch (err) {
+        alert('Erreur: ' + err.message);
+      }
+    }
+
+    function subscribeToProProjectsChanges() {
+      supabaseClient.channel('pro-projects-pro').on('postgres_changes',
+        { event: '*', schema: 'public', table: 'pro_projects' },
+        () => displayProProjects()
+      ).subscribe();
+    }
+
+    // Check if already logged in
+    window.addEventListener('load', () => {
+      const userId = localStorage.getItem('albuser');
+      if (userId) {
+        supabaseClient.from('profiles').select('*').eq('id', userId).single().then(({ data }) => {
+          if (data) {
+            currentUser = data;
+            showUserZone();
+            loadData();
+          }
+        });
+      } else {
+        updateAuthButtons();
+      }
+    });
   </script>
 </body>
 </html>
