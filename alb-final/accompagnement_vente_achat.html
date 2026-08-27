@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALB — Accompagnement vente / achat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f5f3ee;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* [ALB DEBUG] Sections du formulaire */
+    .form-page {
+      display: none;
+      padding: 60px 40px;
+      background: white;
+      min-height: calc(100vh - 70px);
+      margin-bottom: 60px;
+    }
+    .form-page.active {
+      display: block;
+    }
+    .form-section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: #4B1A3E;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .form-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #D0C8C0;
+      border-radius: 4px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+    }
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #B28E3D;
+      box-shadow: 0 0 0 3px rgba(178, 142, 61, 0.1);
+    }
+    .error-message {
+      color: #c94444;
+      font-size: 0.85rem;
+      margin-top: 5px;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+    }
+    .mandate-alert {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 30px;
+      color: #856404;
+      display: none;
+    }
+    .mandate-alert.show {
+      display: block;
+    }
+    .mandate-alert strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+    }
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border: 2px solid #E8E6E0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .radio-option:hover {
+      border-color: #B28E3D;
+      background: rgba(178, 142, 61, 0.05);
+    }
+    .radio-option input[type="radio"] {
+      width: auto;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+    .radio-label {
+      flex-grow: 1;
+    }
+    .radio-label strong {
+      display: block;
+      color: #4B1A3E;
+    }
+    .radio-label span {
+      display: block;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* Récapitulatif */
+    .summary-card {
+      background: #f9f7f2;
+      border: 1px solid #E8E6E0;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E8E6E0;
+    }
+    .summary-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .summary-label {
+      font-weight: 600;
+      color: #4B1A3E;
+    }
+    .summary-value {
+      color: #666;
+      text-align: right;
+    }
+
+    /* Boutons */
+    .form-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+    .btn-primary {
+      background: #4B1A3E;
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #B28E3D;
+    }
+    .btn-primary:disabled {
+      background: #c9c9c9;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: white;
+      color: #4B1A3E;
+      border: 2px solid #4B1A3E;
+    }
+    .btn-secondary:hover {
+      background: #f5f3ee;
+    }
+
+    /* Consentement */
+    .consent-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 30px;
+      padding: 15px;
+      background: #f9f7f2;
+      border-radius: 4px;
+    }
+    .consent-group input[type="checkbox"] {
+      width: auto;
+      margin-top: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .consent-text {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.6;
+    }
+    .consent-text .required {
+      color: #c94444;
+      font-weight: 700;
+    }
+
+    /* Alerte et loader */
+    .alert {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .alert.show {
+      display: block;
+    }
+    .alert-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .alert-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .loader {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(75, 26, 62, 0.3);
+      border-top-color: #4B1A3E;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 10px auto;
+    }
+    .loader.show {
+      display: block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    .footer {
+      background-color: #262626;
+      color: white;
+      padding: 60px 0 0 0;
+      width: 100%;
+    }
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 50px;
+      max-width: 100%;
+      padding: 60px 40px;
+    }
+    .footer-col h5 {
+      color: white;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .footer-col p {
+      color: #ccc;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      margin: 0;
+    }
+    .footer-col a {
+      color: #B28E3D;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .footer-col a:hover {
+      text-decoration: underline;
+    }
+    .footer-bottom {
+      background-color: #1a1a1a;
+      padding: 20px 40px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #999;
+    }
+    .footer-slogan {
+      color: #B28E3D;
+    }
+
+    /* Modals */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      overflow: auto;
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 40px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-close {
+      color: #999;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .modal-close:hover {
+      color: #333;
+    }
+    .modal h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      margin-top: 20px;
+    }
+    .modal p {
+      color: #666;
+      line-height: 1.8;
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    .modal-btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background-color: #4B1A3E;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .modal-btn:hover {
+      background-color: #B28E3D;
+    }
+
+    @media (max-width: 768px) {
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 15px;
+        height: auto;
+      }
+      .nav {
+        order: 3;
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .form-page {
+        padding: 40px 20px;
+      }
+      .form-section-title {
+        font-size: 1.5rem;
+      }
+      .form-buttons {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+      .footer-container {
+        gap: 30px;
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="alb-header">
+    <div class="header-wrapper">
+      <a href="index.html" class="logo-left">
+        <img src="LOGO.png" alt="ALB Sud Immobilier" />
+      </a>
+      <nav class="nav">
+        <a href="index.html">Accueil</a>
+        <a href="annonces.html">Annonces</a>
+        <a href="vitrine-pros.html">Vitrine des pros</a>
+        <a href="projets-alb.html">Projets ALB</a>
+        <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PAGE 1 : Type de mission -->
+  <div class="form-page active" id="page-1">
+    <div class="form-content">
+      <h2 class="form-section-title">Quel type d'accompagnement ?</h2>
+      <div class="form-group">
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="type_mission" value="achat" onchange="selectMission('achat')">
+            <div class="radio-label">
+              <strong>Accompagnement achat</strong>
+              <span>Je cherche à acquérir un bien et j'aimerais être accompagné dans le processus</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="type_mission" value="vente" onchange="selectMission('vente')">
+            <div class="radio-label">
+              <strong>Accompagnement vente</strong>
+              <span>Je souhaite vendre mon bien avec l'aide d'un mandataire ou d'un agent immobilier</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="type_mission" value="expertise" onchange="selectMission('expertise')">
+            <div class="radio-label">
+              <strong>Expertise / Conseil</strong>
+              <span>J'ai besoin d'un avis d'expert ou d'une évaluation de mon bien</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="type_mission" value="autre" onchange="selectMission('autre')">
+            <div class="radio-label">
+              <strong>Autre demande</strong>
+              <span>J'ai une question spécifique ou un besoin particulier</span>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="form-buttons">
+        <button class="btn btn-primary" onclick="goToPage(2)">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 : Profil -->
+  <div class="form-page" id="page-2">
+    <div class="form-content">
+      <h2 class="form-section-title">Vos coordonnées</h2>
+      
+      <div id="mandate-alert" class="mandate-alert">
+        <strong>⚠️ Mandat exclusif détecté</strong>
+        <p id="mandate-text"></p>
+      </div>
+
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" id="nom" placeholder="Votre nom" />
+      </div>
+      <div class="form-group">
+        <label>Prénom *</label>
+        <input type="text" id="prenom" placeholder="Votre prénom" />
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="email" placeholder="votre.email@exemple.fr" />
+      </div>
+      <div class="form-group">
+        <label>Téléphone *</label>
+        <input type="tel" id="telephone" placeholder="07 XX XX XX XX" />
+      </div>
+      <div class="form-group">
+        <label id="postal-label">Code postal (vendeurs) / Zone géographique (acheteurs) *</label>
+        <input type="text" id="localisation" placeholder="Code postal ou zone" maxlength="5" />
+        <div class="error-message" id="postal-error">Code postal doit contenir exactement 5 chiffres</div>
+      </div>
+
+      <div class="form-buttons">
+        <button class="btn btn-secondary" onclick="goToPage(1)">Retour</button>
+        <button class="btn btn-primary" onclick="validateAndGoToPage(3)">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3 : Description -->
+  <div class="form-page" id="page-3">
+    <div class="form-content">
+      <h2 class="form-section-title">Décrivez votre projet</h2>
+      <div class="form-group">
+        <label>Description détaillée *</label>
+        <textarea id="description" placeholder="Décrivez votre situation, vos besoins, vos contraintes..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Budget estimé (€)</label>
+        <input type="number" id="budget" placeholder="Exemple: 250000" />
+      </div>
+      <div class="form-group">
+        <label>Délai souhaité</label>
+        <select id="delai">
+          <option value="">-- Sélectionner --</option>
+          <option value="urgent">Urgent (moins de 1 mois)</option>
+          <option value="court">Court terme (1 à 3 mois)</option>
+          <option value="moyen">Moyen terme (3 à 6 mois)</option>
+          <option value="flexible">Flexible</option>
+        </select>
+      </div>
+      <div class="form-buttons">
+        <button class="btn btn-secondary" onclick="goToPage(2)">Retour</button>
+        <button class="btn btn-primary" onclick="goToPage(4)">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4 : Récapitulatif -->
+  <div class="form-page" id="page-4">
+    <div class="form-content">
+      <h2 class="form-section-title">Récapitulatif de votre demande</h2>
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-label">Type de mission</span>
+          <span class="summary-value" id="summary-mission">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Nom</span>
+          <span class="summary-value" id="summary-nom">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Prénom</span>
+          <span class="summary-value" id="summary-prenom">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Email</span>
+          <span class="summary-value" id="summary-email">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Téléphone</span>
+          <span class="summary-value" id="summary-telephone">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Localisation</span>
+          <span class="summary-value" id="summary-localisation">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Budget</span>
+          <span class="summary-value" id="summary-budget">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Délai</span>
+          <span class="summary-value" id="summary-delai">-</span>
+        </div>
+      </div>
+      <div class="form-buttons">
+        <button class="btn btn-secondary" onclick="goToPage(3)">Retour</button>
+        <button class="btn btn-primary" onclick="goToPage(5)">Envoyer ma demande</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 5 : Consentement et envoi -->
+  <div class="form-page" id="page-5">
+    <div class="form-content">
+      <h2 class="form-section-title">Confirmez et envoyez</h2>
+
+      <div id="alert-error" class="alert alert-error"></div>
+
+      <div class="consent-group">
+        <input type="checkbox" id="consent-check" />
+        <div class="consent-text">
+          J'accepte qu'ALB transmette mes informations de demande aux professionnels sélectionnés afin qu'ils puissent me recontacter pour traiter mon projet <span class="required">*</span>
+        </div>
+      </div>
+
+      <div class="loader" id="loader"></div>
+
+      <div class="form-buttons">
+        <button class="btn btn-secondary" onclick="goToPage(4)">Retour</button>
+        <button class="btn btn-primary" id="submit-btn" onclick="submitForm()">Envoyer ma demande</button>
+      </div>
+
+      <div id="alert-success" class="alert alert-success" style="margin-top: 30px; text-align: center;">
+        <strong>✓ Demande envoyée avec succès !</strong>
+        <p style="margin-top: 12px;">Les professionnels sélectionnés vous contactront dans les prochaines heures.</p>
+        <a href="espace-alb.html" class="btn btn-primary" style="margin-top: 20px; display: inline-block; text-decoration: none;">Accéder à mon espace ALB</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>Annonces</h5>
+        <p>
+          <a onclick="openModal('chercher-modal')"><strong>Chercher une annonce</strong></a><br>
+          <br>
+          <a onclick="openModal('vendre-modal')"><strong>Vendre mon bien</strong></a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p><a onclick="openModal('apropos-modal')">À propos d'ALB Immobilier</a></p>
+      </div>
+      <div class="footer-col">
+        <h5>Fondatrice</h5>
+        <p><a onclick="openModal('jocelyne-modal')">Le mot de la fondatrice</a></p>
+      </div>
+      <div class="footer-col contact">
+        <h5>Contact</h5>
+        <p><strong>📧 contact@albimmobilier.fr</strong></p>
+        <p>📱 07 45 60 28 05</p>
+        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </footer>
+
+  <!-- MODALS -->
+  <div id="chercher-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('chercher-modal')">&times;</span>
+      <h2>Chercher une annonce</h2>
+      <p>Trouvez le bien qui vous ressemble. Simulez votre financement. Organisez une visite. Un courtier vous contactera si besoin.</p>
+      <div class="modal-buttons">
+        <a href="/annonces.html" class="modal-btn">Accéder aux annonces</a>
+      </div>
+    </div>
+  </div>
+  <div id="vendre-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('vendre-modal')">&times;</span>
+      <h2>Vendre mon bien</h2>
+      <p>Inscrivez-vous pour diffuser et modifier en temps réel votre annonce. Organisez vos visites. Les acheteurs simulent leur budget avant de vous contacter.</p>
+      <div class="modal-buttons">
+        <a href="/inscription-particulier-vendeur.html" class="modal-btn">Commencer à vendre</a>
+      </div>
+    </div>
+  </div>
+  <div id="apropos-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+      <h2>À propos d'ALB Immobilier</h2>
+      <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+      <div class="modal-buttons">
+        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
+      </div>
+    </div>
+  </div>
+  <div id="jocelyne-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+      <h2>Le mot de la fondatrice</h2>
+      <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+      <div class="modal-buttons">
+        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    // [ALB DEBUG] État global du formulaire
+    let formState = {
+      type_mission: null,
+      nom: '',
+      prenom: '',
+      email: '',
+      telephone: '',
+      localisation: '',
+      description: '',
+      budget: '',
+      delai: ''
+    };
+
+    const MISSION_LABELS = {
+      achat: 'Accompagnement achat',
+      vente: 'Accompagnement vente',
+      expertise: 'Expertise / Conseil',
+      autre: 'Autre demande'
+    };
+
+    // Navigation entre pages
+    function goToPage(pageNum) {
+      document.querySelectorAll('.form-page').forEach(page => page.classList.remove('active'));
+      document.getElementById(`page-${pageNum}`).classList.add('active');
+      window.scrollTo(0, 0);
+      if (pageNum === 4) updateSummary();
+    }
+
+    function selectMission(mission) {
+      formState.type_mission = mission;
+      // Mettre à jour le label du code postal selon la mission
+      const label = document.getElementById('postal-label');
+      if (mission === 'vente') {
+        label.textContent = 'Code postal du bien (vendeurs) *';
+      } else if (mission === 'achat') {
+        label.textContent = 'Zone géographique recherchée (acheteurs) *';
+      } else {
+        label.textContent = 'Code postal / Zone géographique *';
+      }
+    }
+
+    // Validation et navigation vers page 3
+    async function validateAndGoToPage(pageNum) {
+      const nom = document.getElementById('nom').value.trim();
+      const prenom = document.getElementById('prenom').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const telephone = document.getElementById('telephone').value.trim();
+      const localisation = document.getElementById('localisation').value.trim();
+
+      // Validation basique
+      if (!nom || !prenom || !email || !telephone || !localisation) {
+        alert('Veuillez remplir tous les champs marqués d\'un *');
+        return;
+      }
+
+      // Validation code postal (exactement 5 chiffres)
+      if (!/^\d{5}$/.test(localisation)) {
+        document.getElementById('postal-error').classList.add('show');
+        return;
+      } else {
+        document.getElementById('postal-error').classList.remove('show');
+      }
+
+      // Stocker l'état
+      formState.nom = nom;
+      formState.prenom = prenom;
+      formState.email = email;
+      formState.telephone = telephone;
+      formState.localisation = localisation;
+
+      // Si mission = vente, vérifier mandat exclusif
+      if (formState.type_mission === 'vente') {
+        const mandate = await checkMandateExclusive(nom, prenom, email, telephone);
+        if (mandate) {
+          const alert = document.getElementById('mandate-alert');
+          const text = document.getElementById('mandate-text');
+          const dateEnd = new Date(mandate.date_fin_mandat);
+          text.innerHTML = `Vous êtes actuellement en mandat exclusif jusqu'au <strong>${dateEnd.toLocaleDateString('fr-FR')}</strong>. Veuillez contacter votre mandataire avant de poursuivre.`;
+          alert.classList.add('show');
+          return;
+        }
+      }
+
+      goToPage(pageNum);
+    }
+
+    // [ALB DEBUG] Vérification mandat exclusif en Supabase
+    async function checkMandateExclusive(nom, prenom, email, telephone) {
+      if (!window.supabaseClient) {
+        console.warn('[ALB DEBUG] Supabase client non disponible');
+        return null;
+      }
+
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('agent_requests')
+          .select('id, type_mandat, date_fin_mandat')
+          .eq('type_mandat', 'exclusif')
+          .or(`nom.eq.${nom},prenom.eq.${prenom},email.eq.${email},telephone.eq.${telephone}`)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('[ALB DEBUG] Erreur Supabase:', error);
+          return null;
+        }
+
+        // Si mandat existe ET date_fin > now
+        if (data && data.date_fin_mandat) {
+          const dateEnd = new Date(data.date_fin_mandat);
+          if (dateEnd > new Date()) {
+            return data;
+          }
+        }
+
+        return null;
+      } catch (err) {
+        console.error('[ALB DEBUG] Exception mandat:', err);
+        return null;
+      }
+    }
+
+    // Mise à jour du récapitulatif
+    function updateSummary() {
+      document.getElementById('summary-mission').textContent = MISSION_LABELS[formState.type_mission] || '-';
+      document.getElementById('summary-nom').textContent = formState.nom || '-';
+      document.getElementById('summary-prenom').textContent = formState.prenom || '-';
+      document.getElementById('summary-email').textContent = formState.email || '-';
+      document.getElementById('summary-telephone').textContent = formState.telephone || '-';
+      document.getElementById('summary-localisation').textContent = formState.localisation || '-';
+      document.getElementById('summary-budget').textContent = formState.budget ? `${formState.budget} €` : '(non renseigné)';
+      document.getElementById('summary-delai').textContent = formState.delai || '(non renseigné)';
+    }
+
+    // Soumission du formulaire
+    async function submitForm() {
+      // Récupérer les valeurs finales
+      formState.description = document.getElementById('description').value.trim();
+      formState.budget = document.getElementById('budget').value.trim();
+      formState.delai = document.getElementById('delai').value.trim();
+
+      // Vérification consentement obligatoire
+      const consentCheck = document.getElementById('consent-check').checked;
+      if (!consentCheck) {
+        alert('Vous devez accepter les conditions pour envoyer votre demande');
+        return;
+      }
+
+      // Vérification description
+      if (!formState.description) {
+        alert('Veuillez décrire votre projet');
+        return;
+      }
+
+      // Afficher loader et désactiver bouton
+      const loader = document.getElementById('loader');
+      const submitBtn = document.getElementById('submit-btn');
+      const alertError = document.getElementById('alert-error');
+      loader.classList.add('show');
+      submitBtn.disabled = true;
+      alertError.classList.remove('show');
+
+      try {
+        // Préparer FormData
+        const formData = new FormData();
+        formData.append('type_mission', formState.type_mission);
+        formData.append('nom', formState.nom);
+        formData.append('prenom', formState.prenom);
+        formData.append('email', formState.email);
+        formData.append('telephone', formState.telephone);
+        formData.append('localisation', formState.localisation);
+        formData.append('description', formState.description);
+        formData.append('budget', formState.budget);
+        formData.append('delai', formState.delai);
+
+        // [ALB DEBUG] POST vers fonction Netlify
+        const response = await fetch('/.netlify/functions/notify-courtiers', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erreur lors de l\'envoi');
+        }
+
+        // Succès: afficher message et lier espace-alb.html
+        loader.classList.remove('show');
+        submitBtn.style.display = 'none';
+        document.getElementById('alert-success').classList.add('show');
+      } catch (err) {
+        console.error('[ALB DEBUG] Erreur envoi:', err);
+        alertError.textContent = `Erreur : ${err.message}. Veuillez réessayer.`;
+        alertError.classList.add('show');
+        loader.classList.remove('show');
+        submitBtn.disabled = false;
+      }
+    }
+
+    // Modals
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
