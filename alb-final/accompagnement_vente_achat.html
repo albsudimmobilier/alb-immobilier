@@ -670,7 +670,7 @@
 
       <div id="alert-success" class="alert alert-success" style="margin-top: 30px; text-align: center;">
         <strong>✓ Demande envoyée avec succès !</strong>
-        <p style="margin-top: 12px;">Les professionnels sélectionnés vous contactront dans les prochaines heures.</p>
+        <p style="margin-top: 12px;">Les professionnels sélectionnés vous contacteront dans les prochaines heures.</p>
         <a href="espace-alb.html" class="btn btn-primary" style="margin-top: 20px; display: inline-block; text-decoration: none;">Accéder à mon espace ALB</a>
       </div>
     </div>
@@ -761,7 +761,9 @@
       localisation: '',
       description: '',
       budget: '',
-      delai: ''
+      delai: '',
+      mandat_exclusif_existant: false,
+      date_fin_mandat_existant: null
     };
 
     const MISSION_LABELS = {
@@ -821,7 +823,7 @@
       formState.telephone = telephone;
       formState.localisation = localisation;
 
-      // Si mission = vente, vérifier mandat exclusif
+      // [ALB DEBUG] Si mission = vente, vérifier mandat exclusif UNIQUEMENT si vente
       if (formState.type_mission === 'vente') {
         const mandate = await checkMandateExclusive(nom, prenom, email, telephone);
         if (mandate) {
@@ -830,14 +832,21 @@
           const dateEnd = new Date(mandate.date_fin_mandat);
           text.innerHTML = `Vous êtes actuellement en mandat exclusif jusqu'au <strong>${dateEnd.toLocaleDateString('fr-FR')}</strong>. Veuillez contacter votre mandataire avant de poursuivre.`;
           alert.classList.add('show');
+          
+          // Stocker les infos mandat dans formState
+          formState.mandat_exclusif_existant = true;
+          formState.date_fin_mandat_existant = mandate.date_fin_mandat;
           return;
+        } else {
+          formState.mandat_exclusif_existant = false;
+          formState.date_fin_mandat_existant = null;
         }
       }
 
       goToPage(pageNum);
     }
 
-    // [ALB DEBUG] Vérification mandat exclusif en Supabase
+    // [ALB DEBUG] Vérification mandat exclusif en Supabase (DEUX REQUÊTES)
     async function checkMandateExclusive(nom, prenom, email, telephone) {
       if (!window.supabaseClient) {
         console.warn('[ALB DEBUG] Supabase client non disponible');
@@ -845,26 +854,46 @@
       }
 
       try {
-        const { data, error } = await window.supabaseClient
-          .from('agent_requests')
-          .select('id, type_mandat, date_fin_mandat')
-          .eq('type_mandat', 'exclusif')
-          .or(`nom.eq.${nom},prenom.eq.${prenom},email.eq.${email},telephone.eq.${telephone}`)
+        // REQUÊTE 1 : Chercher le profil par email ou telephone dans profiles
+        const { data: profile, error: profileError } = await window.supabaseClient
+          .from('profiles')
+          .select('id, nom, prenom, email, telephone')
+          .or(`email.eq.${email},telephone.eq.${telephone}`)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('[ALB DEBUG] Erreur Supabase:', error);
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('[ALB DEBUG] Erreur recherche profil:', profileError);
+          return null;
+        }
+
+        if (!profile) {
+          console.log('[ALB DEBUG] Aucun profil trouvé');
+          return null;
+        }
+
+        // REQUÊTE 2 : Chercher mandat exclusif pour ce profil
+        const { data: mandate, error: mandateError } = await window.supabaseClient
+          .from('agent_requests')
+          .select('id, type_mandat, date_fin_mandat, vendeur_id')
+          .eq('vendeur_id', profile.id)
+          .eq('type_mandat', 'exclusif')
+          .single();
+
+        if (mandateError && mandateError.code !== 'PGRST116') {
+          console.error('[ALB DEBUG] Erreur recherche mandat:', mandateError);
           return null;
         }
 
         // Si mandat existe ET date_fin > now
-        if (data && data.date_fin_mandat) {
-          const dateEnd = new Date(data.date_fin_mandat);
+        if (mandate && mandate.date_fin_mandat) {
+          const dateEnd = new Date(mandate.date_fin_mandat);
           if (dateEnd > new Date()) {
-            return data;
+            console.log('[ALB DEBUG] Mandat exclusif actif détecté jusqu\'au', dateEnd);
+            return mandate;
           }
         }
 
+        console.log('[ALB DEBUG] Aucun mandat exclusif actif');
         return null;
       } catch (err) {
         console.error('[ALB DEBUG] Exception mandat:', err);
@@ -913,7 +942,7 @@
       alertError.classList.remove('show');
 
       try {
-        // Préparer FormData
+        // Préparer FormData avec mandat exclusif
         const formData = new FormData();
         formData.append('type_mission', formState.type_mission);
         formData.append('nom', formState.nom);
@@ -924,9 +953,11 @@
         formData.append('description', formState.description);
         formData.append('budget', formState.budget);
         formData.append('delai', formState.delai);
+        formData.append('mandat_exclusif_existant', formState.mandat_exclusif_existant);
+        formData.append('date_fin_mandat_existant', formState.date_fin_mandat_existant || '');
 
-        // [ALB DEBUG] POST vers fonction Netlify
-        const response = await fetch('/.netlify/functions/notify-courtiers', {
+        // [ALB DEBUG] POST vers fonction Netlify notify-agents-mandataires
+        const response = await fetch('/.netlify/functions/notify-agents-mandataires', {
           method: 'POST',
           body: formData
         });
@@ -936,7 +967,7 @@
           throw new Error(error.message || 'Erreur lors de l\'envoi');
         }
 
-        // Succès: afficher message et lier espace-alb.html
+        // Succès: afficher message et lien espace-alb.html
         loader.classList.remove('show');
         submitBtn.style.display = 'none';
         document.getElementById('alert-success').classList.add('show');
