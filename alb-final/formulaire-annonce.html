@@ -255,6 +255,33 @@
     <div id="error-message" class="error-message"></div>
 
     <form id="annonce-form">
+      <!-- SECTION VENDEUR (NOUVEAU) -->
+      <div class="form-section">
+        <h2 class="section-title">👤 Vos Informations</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prenom">Prénom *</label>
+            <input type="text" id="prenom" placeholder="Jean" required>
+          </div>
+          <div class="form-group">
+            <label for="nom">Nom *</label>
+            <input type="text" id="nom" placeholder="Dupont" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Adresse mail *</label>
+            <input type="email" id="email" placeholder="jean@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="telephone">Téléphone *</label>
+            <input type="tel" id="telephone" placeholder="06 12 34 56 78" required>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION TITRE & PRIX -->
       <div class="form-section">
         <h2 class="section-title">📝 Informations principales</h2>
@@ -395,7 +422,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.0/supabase.umd.js"></script>
 <script src="supabase-client.js"></script>
 
 <script>
@@ -423,7 +450,13 @@
     errorMessage.classList.remove('active');
     errorMessage.textContent = '';
 
-    // Récupère tous les champs
+    // Récupère les infos vendeur
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+
+    // Récupère tous les champs bien
     const titre = document.getElementById('titre').value.trim();
     const prix = parseFloat(document.getElementById('prix').value);
     const type = document.getElementById('type').value;
@@ -438,7 +471,18 @@
     const ges = document.getElementById('ges').value;
     const videoUrl = document.getElementById('video-url').value.trim();
 
-    // Validation
+    // Validation vendeur
+    if (!prenom || !nom || !email || !telephone) {
+      showError('⚠️ Veuillez remplir vos informations de contact');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('⚠️ Veuillez entrer un email valide');
+      return;
+    }
+
+    // Validation bien
     if (!titre || !prix || !type || !description || !adresse || !codePostal || !ville || !surface || !pieces || !dpe || !ges) {
       showError('⚠️ Veuillez remplir tous les champs obligatoires');
       return;
