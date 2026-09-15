@@ -60,9 +60,12 @@ async function sendWelcomeTemplate(email, pin, prenom, templateId, brevoApiKey) 
   return response.json();
 }
 
-// 🔧 CORRIGÉ : Envoyer depuis contact@albimmobilier.fr + variables minuscules
-async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones, brevoApiKey) {
+// 🔧 CORRIGÉ : Ajouter telephone + lien Supabase
+async function sendProNotificationToJoce(prenom, nom, email, telephone, siret, role, zones, brevoApiKey) {
   console.log(`[ALB DEBUG] Envoi template #2 (Nouveau PRO) à Joce pour ${nom} (${role})`);
+
+  const supabaseProjectId = 'kutbxyinpokebjdemlnq';
+  const supabaseLink = `https://supabase.com/projects/${supabaseProjectId}/editor/profiles?search=${email}`;
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -78,9 +81,11 @@ async function sendProNotificationToJoce(prenom, nom, email, siret, role, zones,
         prenom: prenom,
         nom: nom,
         email: email,
+        telephone: telephone || 'Non renseigné',
         siret: siret || 'Non renseigné',
         role: role,
-        zones: zones || 'Non spécifiée'
+        zones: zones || 'Non spécifiée',
+        supabaseLink: supabaseLink
       }
     })
   });
@@ -214,7 +219,7 @@ export default async (req) => {
         await sendWelcomeTemplate(email, pin, prenom, 1, brevoApiKey);
 
         // Template #2 : Nouveau PRO À Valider à Joce
-        await sendProNotificationToJoce(prenom, nom, email, siret, profil, zones, brevoApiKey);
+        await sendProNotificationToJoce(prenom, nom, email, telephone, siret, profil, zones, brevoApiKey);
       } else if (isAcquereur) {
         // Template #14 : Bienvenue Acheteur
         await sendWelcomeTemplate(email, pin, prenom, 14, brevoApiKey);
