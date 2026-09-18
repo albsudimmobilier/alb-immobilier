@@ -92,10 +92,15 @@
     .hero-tag {
       font-size: 1.5rem;
       letter-spacing: 2px;
-      color: #B28E3D;
       text-transform: uppercase;
       margin-bottom: 20px;
       font-weight: 700;
+    }
+    .hero-tag .tag-purple {
+      color: #4B1A3E;
+    }
+    .hero-tag .tag-gold {
+      color: #B28E3D;
     }
     .hero-slogan {
       font-size: 1.3rem;
@@ -240,49 +245,83 @@
       height: auto;
       border-radius: 4px;
     }
+
+    /* FOOTER STYLES */
     .footer {
-      background-color: #262626;
+      background: #1a1a1a;
       color: white;
-      padding: 60px 0 0 0;
-      width: 100%;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
     }
+
     .footer-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 50px;
-      max-width: 100%;
-      padding: 60px 40px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      max-width: 1200px;
+      margin: 0 auto;
     }
+
     .footer-col h5 {
-      color: white;
-      margin-bottom: 20px;
+      font-size: 0.95rem;
       font-weight: 600;
-      font-size: 1rem;
-    }
-    .footer-col p {
-      color: #ccc;
-      font-size: 0.9rem;
-      line-height: 1.8;
-      margin: 0;
-    }
-    .footer-col a {
+      margin-bottom: 18px;
       color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
       text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
       cursor: pointer;
     }
+
     .footer-col a:hover {
+      color: #B28E3D;
       text-decoration: underline;
     }
-    .footer-bottom {
-      background-color: #1a1a1a;
-      padding: 20px 40px;
-      text-align: center;
-      font-size: 0.85rem;
-      color: #999;
+
+    .footer-col.legal a {
+      color: #ffffff;
     }
-    .footer-slogan {
+
+    .footer-col.legal a:hover {
       color: #B28E3D;
     }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
     .modal {
       display: none;
       position: fixed;
@@ -291,77 +330,109 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      overflow: auto;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
     }
+
     .modal.active {
       display: flex;
       align-items: center;
       justify-content: center;
     }
+
     .modal-content {
-      background-color: white;
+      background: white;
       padding: 40px;
       border-radius: 8px;
+      max-width: 600px;
       width: 90%;
-      max-width: 700px;
       max-height: 80vh;
       overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
     }
+
     .modal-close {
-      color: #999;
-      float: right;
+      position: absolute;
+      right: 20px;
+      top: 15px;
       font-size: 28px;
       font-weight: bold;
+      color: #999;
       cursor: pointer;
+      transition: color 0.2s;
     }
+
     .modal-close:hover {
       color: #333;
     }
-    .modal h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
+
+    .modal-content h2 {
       color: #4B1A3E;
       margin-bottom: 20px;
-      margin-top: 20px;
+      font-size: 1.8rem;
     }
-    .modal p {
-      color: #666;
+
+    .modal-content p {
       line-height: 1.8;
+      color: #333333;
       margin-bottom: 15px;
-      font-size: 0.95rem;
+      text-align: justify;
     }
+
     .modal-slogan {
       color: #4B1A3E;
       font-weight: 600;
       margin-bottom: 20px;
     }
+
     .modal-buttons {
-      display: flex;
-      gap: 15px;
+      text-align: center;
       margin-top: 30px;
     }
+
     .modal-btn {
       display: inline-block;
-      padding: 12px 25px;
-      background-color: #4B1A3E;
+      background: #4B1A3E;
       color: white;
+      padding: 12px 30px;
       text-decoration: none;
       border-radius: 4px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      border: none;
+      transition: background 0.3s;
       cursor: pointer;
+      border: none;
+      font-size: 1rem;
+      margin-right: 10px;
     }
+
     .modal-btn:hover {
-      background-color: #B28E3D;
+      background: #B28E3D;
     }
+
     .modal-btn-secondary {
-      background-color: #B28E3D;
+      background: #B28E3D;
     }
+
     .modal-btn-secondary:hover {
-      background-color: #4B1A3E;
+      background: #4B1A3E;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     @media (max-width: 768px) {
       .header-wrapper {
         flex-wrap: wrap;
@@ -399,8 +470,8 @@
         gap: 30px;
       }
       .footer-container {
-        gap: 30px;
-        padding: 40px 20px;
+        grid-template-columns: 1fr;
+        gap: 25px;
       }
       .modal-content {
         width: 95%;
@@ -418,17 +489,19 @@
       </a>
       <nav class="nav">
         <a href="index.html">Accueil</a>
-        <a href="annonces.html">Annonces</a>
-        <a href="vitrine-pros.html">Vitrine des pros</a>
+        <a href="vitrine-pros.html">Nos pros ALB</a>
         <a href="projets-alb.html">Projets ALB</a>
         <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
       </nav>
     </div>
   </header>
+
   <!-- HERO -->
   <section class="hero">
     <div class="container">
-      <p class="hero-tag">VAR • PACA • IMMOBILIER ANCIEN</p>
+      <p class="hero-tag">
+        <span class="tag-purple">VAR</span> • <span class="tag-gold">BOUCHES-DU-RHÔNE</span> • <span class="tag-purple">PACA</span> • <span class="tag-gold">IMMOBILIER ANCIEN</span>
+      </p>
       <p class="hero-slogan">
         <span class="slogan-word-1">Quand</span>
         <span class="slogan-word-2">l'ancien</span>
@@ -438,56 +511,50 @@
       <h1>Vendre, acheter, financer, rénover ou développer votre activité : ALB Immobilier vous accompagne à chaque étape de votre projet dans un environnement simple, sécurisé et humain.</h1>
     </div>
   </section>
+
   <!-- ROLE CARDS -->
   <section class="section">
     <div class="container">
       <div class="roles-grid">
-
-        <!-- Carte 1 : Je vends à la bien -->
         <a href="/inscription-particulier-vendeur.html" class="role-card">
           <div class="card-icon">🏠</div>
           <h4>Je vends À La Bien</h4>
           <p>Déposez votre annonce et organisez facilement les demandes de visites en toute simplicité</p>
         </a>
 
-        <!-- Carte 2 : Je recherche à la bien (inchangée) -->
         <a href="annonces.html" class="role-card">
           <div class="card-icon">🔍</div>
           <h4>Je recherche À La Bien</h4>
           <p>Trouvez la maison ou l'appartement ancien qui vous correspond et demandez une visite en passant par notre simulateur budget</p>
         </a>
 
-        <!-- Carte 3 : J'ai des projets à la bien → mène au triage (projets-alb.html) -->
         <a href="projets-alb.html" class="role-card">
           <div class="card-icon">💡</div>
           <h4>J'ai des projets À La Bien</h4>
           <p>Travaux ? Financement ? Besoin d'un accompagnement pour vendre ou acheter un bien ancien? Construisons votre projet avec les bons professionnels</p>
         </a>
 
-        <!-- Carte 4 : Je suis un pro à la bien → inscription-pro.html -->
         <a href="inscription-pro.html" class="role-card">
           <div class="card-icon">👷</div>
           <h4>Je suis un pro À La Bien</h4>
           <p>Développez votre activité auprès de particuliers qualifiés et de projets ciblés</p>
         </a>
 
-        <!-- Carte 5 : Nos pros à la bien (NOUVELLE) → vitrine-pros.html -->
         <a href="vitrine-pros.html" class="role-card">
           <div class="card-icon">🤝</div>
           <h4>Nos Pros À La Bien</h4>
           <p>Consultez, choisissez et contactez nos professionnels à la bien</p>
         </a>
 
-        <!-- Carte 6 : J'ai un espace à la bien -->
         <a href="espace-alb.html" class="role-card">
           <div class="card-icon">👤</div>
           <h4>J'ai un espace À La Bien</h4>
           <p>Retrouvez tous vos projets, vos échanges et votre activité en un seul endroit</p>
         </a>
-
       </div>
     </div>
   </section>
+
   <!-- BADGES -->
   <section class="badges-section">
     <div class="container">
@@ -500,7 +567,7 @@
         <div class="badge">
           <div class="badge-icon">🏡</div>
           <h5>Contrôle</h5>
-          <p>Vous restez maître de votre annonce et de vos informations à tout moment.</p>
+          <p>Vous restez maître de vos projets et de vos informations à tout moment.</p>
         </div>
         <div class="badge">
           <div class="badge-icon">🤝</div>
@@ -510,12 +577,13 @@
       </div>
     </div>
   </section>
+
   <!-- PLATFORM SECTION -->
   <section class="platform-section">
     <div class="platform-content">
       <div class="platform-text">
-        <h2>Une plateforme en cours de construction</h2>
-        <p>ALB Immobilier évolue chaque jour pour vous offrir la meilleure expérience. Nous construisons ensemble une plateforme qui vous correspond, simple et transparente.</p>
+        <h2>Construire l'immobilier ancien autrement</h2>
+        <p>ALB Immobilier n'est pas une plateforme de plus. Nous bâtissons une plateforme pour que chacun y trouve son compte, simplement et humainement. Et c'est gratuit jusqu'à fin 2026. Rejoignez-nous dans cette belle aventure à la bien.</p>
         <a href="https://bit.ly/4ewy8Ah" class="btn" target="_blank" rel="noopener">Découvrir</a>
       </div>
       <div class="platform-image">
@@ -523,81 +591,26 @@
       </div>
     </div>
   </section>
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-col">
-        <h5>Annonces</h5>
-        <p>
-          <a onclick="openModal('chercher-modal')"><strong>Chercher une annonce</strong></a><br>
-          <br>
-          <a onclick="openModal('vendre-modal')"><strong>Vendre mon bien</strong></a>
-        </p>
-      </div>
-      <div class="footer-col">
-        <h5>À propos</h5>
-        <p><a onclick="openModal('apropos-modal')">À propos d'ALB Immobilier</a></p>
-      </div>
-      <div class="footer-col">
-        <h5>Fondatrice</h5>
-        <p><a onclick="openModal('jocelyne-modal')">Le mot de la fondatrice</a></p>
-      </div>
-      <div class="footer-col contact">
-        <h5>Contact</h5>
-        <p><strong>📧 contact@albimmobilier.fr</strong></p>
-        <p>📱 07 45 60 28 05</p>
-        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
-    </div>
-  </footer>
-  <!-- MODALS -->
-  <div id="chercher-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('chercher-modal')">&times;</span>
-      <h2>Chercher une annonce</h2>
-      <p>Trouvez le bien qui vous ressemble. Simulez votre financement. Organisez une visite. Un courtier vous contactera si besoin.</p>
-      <div class="modal-buttons">
-        <a href="/annonces.html" class="modal-btn">Accéder aux annonces</a>
-        <a href="index.html" class="modal-btn modal-btn-secondary">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
-  <div id="vendre-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('vendre-modal')">&times;</span>
-      <h2>Vendre mon bien</h2>
-      <p>Inscrivez-vous pour diffuser et modifier en temps réel votre annonce. Organisez vos visites. Les acheteurs simulent leur budget avant de vous contacter.</p>
-      <div class="modal-buttons">
-        <a href="/inscription-particulier-vendeur.html" class="modal-btn">Commencer à vendre</a>
-        <a href="index.html" class="modal-btn modal-btn-secondary">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
+
+  <!-- MODALES -->
   <div id="apropos-modal" class="modal">
     <div class="modal-content">
       <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
-      <p class="modal-slogan"><span class="slogan-word-1">Quand</span> <span class="slogan-word-2">l'ancien</span> <span class="slogan-word-1">se met</span> <span class="slogan-word-2">à la bien.</span></p>
+      <h2>À propos d'ALB Immobilier</h2>
       <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
       <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
       <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
       <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
-      <p>Ce n'est pas seulement un service en ligne.</p>
-      <p>C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
-      <p>Parce que la technologie ne doit jamais remplacer la relation humaine.</p>
-      <p>Elle doit simplement la rendre plus fluide.</p>
-      <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien.</p>
-      <p>Une façon où chaque projet compte.</p>
-      <p>Où chaque utilisateur est écouté.</p>
-      <p>Et où la confiance retrouve naturellement sa place.</p>
-      <p>À la bien, toujours.</p>
+      <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+      <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+      <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+      <p><strong>À la bien, toujours.</strong></p>
       <div class="modal-buttons">
-        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
+        <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
       </div>
     </div>
   </div>
+
   <div id="jocelyne-modal" class="modal">
     <div class="modal-content">
       <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
@@ -614,10 +627,41 @@
       <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
       <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
       <div class="modal-buttons">
-        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
+        <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
       </div>
     </div>
   </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </footer>
+
   <script>
     function openModal(modalId) {
       document.getElementById(modalId).classList.add('active');
