@@ -433,18 +433,50 @@
       }
     }
 
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
     @media (max-width: 768px) {
-      .header-wrapper {
-        flex-wrap: wrap;
-        gap: 15px;
-        padding: 15px;
+      .alb-header {
         height: auto;
       }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
       .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
         order: 3;
-        width: 100%;
-        flex-direction: column;
-        gap: 10px;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
       }
       .hero {
         padding: 60px 20px;
@@ -517,7 +549,7 @@
   <section class="section">
     <div class="container">
       <div class="roles-grid">
-        <a href="/inscription-particulier-vendeur.html" class="role-card">
+        <a href="espace-alb.html" class="role-card">
           <div class="card-icon">🏠</div>
           <h4>Je vends À La Bien</h4>
           <p>Déposez votre annonce et organisez facilement les demandes de visites en toute simplicité</p>
@@ -535,7 +567,7 @@
           <p>Travaux ? Financement ? Besoin d'un accompagnement pour vendre ou acheter un bien ancien? Construisons votre projet avec les bons professionnels</p>
         </a>
 
-        <a href="inscription-pro.html" class="role-card">
+        <a href="espace-alb.html" class="role-card">
           <div class="card-icon">👷</div>
           <h4>Je suis un pro À La Bien</h4>
           <p>Développez votre activité auprès de particuliers qualifiés et de projets ciblés</p>
