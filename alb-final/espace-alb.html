@@ -561,18 +561,31 @@
             <label class="case"><input type="checkbox" id="insc-acheteur"> Je cherche un bien à acheter</label>
             <label class="case"><input type="checkbox" id="insc-vendeur"> J'ai un bien à vendre</label>
             <label class="case"><input type="checkbox" id="insc-pro" onchange="afficherBlocPro()"> Je suis un professionnel de l'immobilier</label>
+            <label class="case"><input type="checkbox" id="insc-autre" onchange="afficherBlocAutre()"> Autre</label>
+          </div>
+
+          <div class="bloc-pro" id="bloc-autre">
+            <div class="champ">
+              <label for="insc-besoin-autre">Dites-nous en quelques mots ce qui vous amène</label>
+              <input type="text" id="insc-besoin-autre" maxlength="300">
+            </div>
           </div>
 
           <div class="bloc-pro" id="bloc-pro">
             <div class="champ">
               <label for="insc-metier">Votre métier</label>
-              <select id="insc-metier">
+              <select id="insc-metier" onchange="afficherMetierAutre()">
                 <option value="">— Choisissez —</option>
                 <option value="courtier">Courtier</option>
                 <option value="artisan">Artisan</option>
                 <option value="agent">Agent immobilier</option>
                 <option value="mandataire">Mandataire immobilier</option>
+                <option value="autre">Autre métier</option>
               </select>
+            </div>
+            <div class="champ cache" id="champ-metier-autre">
+              <label for="insc-metier-autre">Quel est votre métier ?</label>
+              <input type="text" id="insc-metier-autre" maxlength="100">
             </div>
             <div class="champ">
               <label for="insc-entreprise">Nom de votre entreprise</label>
@@ -772,6 +785,16 @@
     document.getElementById('bloc-pro').classList.toggle('visible', estPro);
   }
 
+  function afficherBlocAutre() {
+    const autre = document.getElementById('insc-autre').checked;
+    document.getElementById('bloc-autre').classList.toggle('visible', autre);
+  }
+
+  function afficherMetierAutre() {
+    const metierAutre = document.getElementById('insc-metier').value === 'autre';
+    document.getElementById('champ-metier-autre').classList.toggle('cache', !metierAutre);
+  }
+
   // ---------- Connexion ----------
   async function gererConnexion(event) {
     event.preventDefault();
@@ -805,6 +828,9 @@
     const confirmation = document.getElementById('insc-pin-confirmation').value.trim();
     const estPro = document.getElementById('insc-pro').checked;
     const metier = document.getElementById('insc-metier').value;
+    const autreCoche = document.getElementById('insc-autre').checked;
+    const besoinAutre = document.getElementById('insc-besoin-autre').value.trim();
+    const metierAutre = document.getElementById('insc-metier-autre').value.trim();
 
     if (pin !== confirmation) {
       afficherMessage('message-inscription', 'erreur', 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?');
@@ -812,6 +838,14 @@
     }
     if (estPro && !metier) {
       afficherMessage('message-inscription', 'erreur', 'Choisissez votre métier dans la liste.');
+      return;
+    }
+    if (estPro && metier === 'autre' && !metierAutre) {
+      afficherMessage('message-inscription', 'erreur', 'Dites-nous quel est votre métier.');
+      return;
+    }
+    if (autreCoche && !besoinAutre) {
+      afficherMessage('message-inscription', 'erreur', 'Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.');
       return;
     }
 
@@ -828,6 +862,9 @@
       est_acquereur: document.getElementById('insc-acheteur').checked,
       est_vendeur: document.getElementById('insc-vendeur').checked,
       metier_pro: estPro ? metier : '',
+      metier_autre: estPro && metier === 'autre' ? metierAutre : '',
+      autre_coche: autreCoche,
+      besoin_autre: autreCoche ? besoinAutre : '',
       nom_entreprise: estPro ? document.getElementById('insc-entreprise').value : '',
       siret: estPro ? document.getElementById('insc-siret').value : '',
       cgu_acceptees: document.getElementById('insc-cgu').checked
@@ -865,11 +902,16 @@
     }
 
     const casquettes = albCasquettes(profil);
-    const estPro = ['courtier', 'artisan', 'agent', 'mandataire'].some(function (c) { return casquettes.includes(c); });
+    const estPro = !!profil.metier_autre || ['courtier', 'artisan', 'agent', 'mandataire'].some(function (c) { return casquettes.includes(c); });
+
+    // Étiquettes : les casquettes classiques + les choix « Autre »
+    const etiquettes = casquettes.map(function (c) { return LIBELLES_CASQUETTES[c] || c; });
+    if (profil.metier_autre) etiquettes.push('🤝 ' + profil.metier_autre);
+    if (profil.besoin_autre) etiquettes.push('✨ Autre');
 
     document.getElementById('titre-bienvenue').textContent = 'Bonjour ' + (profil.prenom || '') + ' !';
-    document.getElementById('etiquettes-casquettes').innerHTML = casquettes
-      .map(function (c) { return '<span class="etiquette">' + albEchapper(LIBELLES_CASQUETTES[c] || c) + '</span>'; })
+    document.getElementById('etiquettes-casquettes').innerHTML = etiquettes
+      .map(function (texte) { return '<span class="etiquette">' + albEchapper(texte) + '</span>'; })
       .join('');
 
     document.getElementById('rubrique-acheteur').classList.toggle('cache', !casquettes.includes('acheteur'));
