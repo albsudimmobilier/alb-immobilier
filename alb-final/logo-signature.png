@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature e-mail ALB</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #F5F3F0; color: #4A4A47; margin: 0; padding: 24px 16px; }
+  .page { max-width: 720px; margin: 0 auto; }
+  h1 { color: #5A3A6A; font-size: 22px; margin: 0 0 6px; }
+  .aide { font-size: 14px; margin: 0 0 20px; }
+  .cadre { background: #ffffff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 24px; margin-bottom: 18px; }
+  button { background: #B28E3D; color: #fff; border: none; border-radius: 6px; padding: 12px 22px; font-size: 16px; font-weight: bold; cursor: pointer; }
+  button:hover { background: #5A3A6A; }
+  #confirmation { display: none; margin-left: 12px; color: #2E6B34; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Signature e-mail — ALB Sud Immobilier</h1>
+  <p class="aide">Clique sur « Copier la signature », puis colle-la dans Zimbra (Préférences → Signatures).</p>
+
+  <div class="cadre">
+    <!-- ===== SIGNATURE (tout ce qui est dans ce bloc est copié) ===== -->
+    <div id="signature">
+      <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="padding:0 18px 0 0;vertical-align:middle;">
+            <a href="https://albimmobilier.fr" style="text-decoration:none;">
+              <img src="https://albimmobilier.fr/logo-signature.png" alt="ALB Sud Immobilier" width="140" height="77" style="display:block;border:0;width:140px;height:77px;">
+            </a>
+          </td>
+          <td style="border-left:2px solid #B28E3D;padding:2px 0 2px 18px;vertical-align:middle;">
+            <div style="font-size:17px;font-weight:bold;color:#5A3A6A;line-height:22px;">Jocelyne Rimlinger</div>
+            <div style="font-size:13px;color:#4A4A47;line-height:20px;">Fondatrice · <strong style="color:#5A3A6A;">ALB Sud Immobilier</strong></div>
+            <div style="font-size:13px;line-height:20px;padding-top:6px;">
+              <a href="tel:+33745602805" style="color:#4A4A47;text-decoration:none;">📱 07 45 60 28 05</a>
+            </div>
+            <div style="font-size:13px;line-height:20px;">
+              <a href="mailto:contact@albimmobilier.fr" style="color:#4A4A47;text-decoration:none;">✉️ contact@albimmobilier.fr</a>
+            </div>
+            <div style="font-size:13px;line-height:20px;">
+              <a href="https://albimmobilier.fr" style="color:#B28E3D;text-decoration:none;font-weight:bold;">🌐 albimmobilier.fr</a>
+            </div>
+            <div style="font-size:12px;color:#B28E3D;font-style:italic;line-height:18px;padding-top:6px;">Quand l'ancien se met à la bien · À la bien, toujours ✨</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <!-- ===== FIN DE LA SIGNATURE ===== -->
+  </div>
+
+  <button type="button" onclick="copierSignature()">📋 Copier la signature</button>
+  <span id="confirmation">Copiée ! Tu peux la coller dans Zimbra.</span>
+</div>
+
+<script>
+  // Copie la signature avec sa mise en forme (logo, couleurs, liens)
+  async function copierSignature() {
+    const bloc = document.getElementById('signature');
+    try {
+      const html = new Blob([bloc.innerHTML], { type: 'text/html' });
+      const texte = new Blob([bloc.innerText], { type: 'text/plain' });
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': html, 'text/plain': texte })]);
+    } catch (erreur) {
+      // Solution de secours : sélection + copie classique
+      const selection = window.getSelection();
+      const plage = document.createRange();
+      plage.selectNodeContents(bloc);
+      selection.removeAllRanges();
+      selection.addRange(plage);
+      document.execCommand('copy');
+      selection.removeAllRanges();
+    }
+    document.getElementById('confirmation').style.display = 'inline';
+  }
+</script>
+</body>
+</html>
