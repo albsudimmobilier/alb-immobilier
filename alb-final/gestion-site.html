@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Gestion du site — ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    /* ========== BASE (mobile d'abord) ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.5; }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    a { color: #5A3A6A; }
+    .cache { display: none !important; }
+
+    /* Bandeau de Gestion du site (pas le menu public) */
+    .bandeau {
+      background: #4B1A3E;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
+    .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
+    .bandeau-titre { font-weight: 700; font-size: 1rem; }
+    .bandeau-droite { display: flex; gap: 8px; align-items: center; }
+    .bandeau a, .bandeau button {
+      color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px; padding: 7px 10px; font-family: inherit; font-size: 0.8rem; cursor: pointer; text-decoration: none;
+    }
+    .bandeau a:hover, .bandeau button:hover { background: #B28E3D; border-color: #B28E3D; }
+
+    .contenu { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+    .carte { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+
+    /* Onglets */
+    .onglets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 16px; }
+    .onglet {
+      flex: 0 0 auto; border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 20px;
+      padding: 8px 14px; font-family: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .onglet.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
+    .pastille { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: #B28E3D; color: #fff; font-size: 0.75rem; text-align: center; }
+    .panneau { display: none; }
+    .panneau.actif { display: block; }
+
+    /* Tableau de bord */
+    .compteurs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .compteur { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 14px; }
+    .compteur .valeur { font-size: 1.8rem; font-weight: 700; color: #5A3A6A; line-height: 1.1; }
+    .compteur .libelle { font-size: 0.82rem; margin-top: 4px; }
+    .compteur.alerte { border-color: #B28E3D; background: #FBF3E4; }
+    .compteur.alerte .valeur { color: #8A6A1F; }
+    .titre-section { font-size: 1.2rem; margin: 22px 0 10px; }
+
+    /* Fiches */
+    .fiche h3 { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; margin-bottom: 4px; }
+    .ligne-info { font-size: 0.9rem; margin: 3px 0; word-break: break-word; }
+    .etiquettes { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .etiquette { background: #F4EEF6; color: #5A3A6A; font-size: 0.76rem; font-weight: 600; padding: 3px 10px; border-radius: 14px; }
+    .etiquette.or { background: #FBF3E4; color: #8A6A1F; }
+    .etiquette.vert { background: #EEF6EE; color: #2E6B34; }
+    .etiquette.rouge { background: #FBECEC; color: #8A2D2D; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: flex-end; }
+    .petit-champ { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; }
+
+    input, select, textarea {
+      font-family: inherit; font-size: 0.95rem; padding: 9px 10px; border: 1px solid #D8D5CE; border-radius: 6px; background: #fff; width: 100%;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+
+    .bouton { border: none; border-radius: 6px; padding: 10px 14px; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: #5A3A6A; color: #fff; }
+    .bouton:hover { background: #B28E3D; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .bouton.vert { background: #2E6B34; }
+    .bouton.rouge { background: #fff; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .bouton.rouge:hover { background: #FBECEC; }
+    .bouton.discret { background: #fff; color: #5A3A6A; border: 1px solid #D8D5CE; }
+    .bouton.discret:hover { background: #F5F3F0; }
+
+    .vide { text-align: center; padding: 26px 10px; color: #7a7a75; font-size: 0.92rem; }
+    .recherche { margin-bottom: 12px; }
+
+    /* Formulaire de fiche */
+    .formulaire-fiche { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #D8D5CE; }
+    .grille { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .champ label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
+    .cases { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cases label { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 0.88rem; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 6px; padding: 6px 10px; }
+    .cases input { width: auto; accent-color: #5A3A6A; }
+    .aide { font-size: 0.78rem; color: #7a7a75; margin-top: 3px; }
+
+    /* Messages */
+    .message { display: none; padding: 10px 12px; border-radius: 6px; margin-bottom: 14px; font-size: 0.9rem; }
+    .message.visible { display: block; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border: 1px solid #CBE3CD; }
+    .message.info { background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+
+    /* Connexion */
+    .connexion { max-width: 420px; margin: 40px auto; }
+    .connexion h1 { font-size: 1.6rem; margin-bottom: 6px; }
+    .connexion p { font-size: 0.9rem; margin-bottom: 16px; }
+    .connexion .champ { margin-bottom: 12px; }
+    .connexion .bouton { width: 100%; padding: 12px; }
+
+    /* Liste des membres */
+    .membre { border-bottom: 1px solid #F0EEE9; padding: 12px 0; }
+    .membre:last-child { border-bottom: none; }
+    .membre-nom { font-weight: 700; color: #5A3A6A; }
+
+    @media (min-width: 700px) {
+      .bandeau { padding: 10px 28px; }
+      .bandeau-titre { font-size: 1.1rem; }
+      .contenu { padding: 28px 28px 60px; }
+      .compteurs { grid-template-columns: repeat(4, 1fr); }
+      .grille { grid-template-columns: 1fr 1fr; }
+      .grille .large { grid-column: 1 / -1; }
+      .liste-fiches { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .liste-fiches .carte { margin-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== BANDEAU ========== -->
+<header class="bandeau">
+  <div class="bandeau-gauche">
+    <img src="logo-signature.png" alt="ALB Sud Immobilier">
+    <span class="bandeau-titre">Gestion du site</span>
+  </div>
+  <div class="bandeau-droite">
+    <a href="index.html" target="_blank">Voir le site</a>
+    <button type="button" id="bouton-deconnexion" class="cache" onclick="seDeconnecter()">Me déconnecter</button>
+  </div>
+</header>
+
+<main class="contenu">
+
+  <!-- ========== CONNEXION ========== -->
+  <section id="zone-connexion" class="connexion carte cache">
+    <h1>Bonjour Jocelyne 👋</h1>
+    <p>Connecte-toi avec ton e-mail et ton code PIN d'ALB Immobilier.</p>
+    <div class="message" id="message-connexion"></div>
+    <form onsubmit="seConnecter(event)">
+      <div class="champ">
+        <label for="connexion-email">E-mail</label>
+        <input type="email" id="connexion-email" autocomplete="email" required>
+      </div>
+      <div class="champ">
+        <label for="connexion-pin">Code PIN</label>
+        <input type="password" id="connexion-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="bouton" id="bouton-connexion">Me connecter</button>
+    </form>
+  </section>
+
+  <!-- ========== ACCÈS REFUSÉ ========== -->
+  <section id="zone-refus" class="connexion carte cache">
+    <h1>Accès réservé</h1>
+    <p>Cette page est réservée à l'équipe ALB Sud Immobilier.</p>
+    <a class="bouton" href="espace-alb.html">Aller à Mon espace ALB</a>
+  </section>
+
+  <!-- ========== GESTION ========== -->
+  <section id="zone-gestion" class="cache">
+    <div class="message" id="message-general"></div>
+
+    <nav class="onglets">
+      <button type="button" class="onglet actif" data-onglet="accueil" onclick="afficherOnglet('accueil')">📊 Tableau de bord</button>
+      <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
+      <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
+      <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
+      <button type="button" class="onglet" data-onglet="bientot" onclick="afficherOnglet('bientot')">🔜 À venir</button>
+    </nav>
+
+    <!-- Tableau de bord -->
+    <div class="panneau actif" id="panneau-accueil">
+      <h2 class="titre-section">Aujourd'hui</h2>
+      <div class="compteurs">
+        <div class="compteur alerte"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
+        <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
+        <div class="compteur"><div class="valeur" id="c-membres">–</div><div class="libelle">Membres au total</div></div>
+        <div class="compteur"><div class="valeur" id="c-nouveaux">–</div><div class="libelle">Nouveaux sur 7 jours</div></div>
+      </div>
+
+      <h2 class="titre-section">Particuliers</h2>
+      <div class="compteurs">
+        <div class="compteur"><div class="valeur" id="c-acheteurs">–</div><div class="libelle">🔎 Acheteurs</div></div>
+        <div class="compteur"><div class="valeur" id="c-vendeurs">–</div><div class="libelle">🏡 Vendeurs</div></div>
+        <div class="compteur"><div class="valeur" id="c-clients-pro">–</div><div class="libelle">🛠️ Clients pro</div></div>
+        <div class="compteur"><div class="valeur" id="c-autres">–</div><div class="libelle">✨ « Autre »</div></div>
+      </div>
+
+      <h2 class="titre-section">Professionnels</h2>
+      <div class="compteurs">
+        <div class="compteur"><div class="valeur" id="c-courtiers">–</div><div class="libelle">🏦 Courtiers</div></div>
+        <div class="compteur"><div class="valeur" id="c-artisans">–</div><div class="libelle">🔨 Artisans</div></div>
+        <div class="compteur"><div class="valeur" id="c-agents">–</div><div class="libelle">🏠 Agents</div></div>
+        <div class="compteur"><div class="valeur" id="c-mandataires">–</div><div class="libelle">📋 Mandataires</div></div>
+        <div class="compteur"><div class="valeur" id="c-autres-metiers">–</div><div class="libelle">🤝 Autres métiers</div></div>
+        <div class="compteur"><div class="valeur" id="c-valides">–</div><div class="libelle">✅ Pros validés</div></div>
+      </div>
+    </div>
+
+    <!-- Pros à valider -->
+    <div class="panneau" id="panneau-a-valider">
+      <p class="aide">Les pros qui ont rejoint ALB et attendent ton appel. Une fois l'appel fait, valide-les (le SIRET est obligatoire) : ils reçoivent alors leur e-mail de bienvenue.</p>
+      <div class="liste-fiches" id="liste-a-valider"></div>
+    </div>
+
+    <!-- Pros validés -->
+    <div class="panneau" id="panneau-valides">
+      <p class="aide">Complète la fiche de chaque pro, puis mets-le en ligne pour qu'il apparaisse sur « Nos pros ALB ».</p>
+      <div class="liste-fiches" id="liste-valides"></div>
+    </div>
+
+    <!-- Membres -->
+    <div class="panneau" id="panneau-membres">
+      <input type="search" class="recherche" id="recherche-membres" placeholder="Rechercher un nom, un e-mail, une ville…" oninput="afficherMembres()">
+      <div class="carte" id="liste-membres"></div>
+    </div>
+
+    <!-- À venir -->
+    <div class="panneau" id="panneau-bientot">
+      <div class="carte">
+        <h2>Bientôt dans Gestion du site</h2>
+        <p class="ligne-info">🏡 <strong>Annonces</strong> : valider les nouvelles annonces et leurs modifications.</p>
+        <p class="ligne-info">📅 <strong>Visites</strong> : demandées, confirmées, repoussées, refusées, à venir.</p>
+        <p class="ligne-info">⭐ <strong>Avis</strong> : valider ou refuser les avis laissés sur les pros.</p>
+        <p class="ligne-info">🤝 <strong>Demandes aux pros</strong> : qui a reçu quoi, qui a répondu.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ============================================================
+  // Gestion du site — réservée à Jocelyne
+  // Toutes les données passent par des fonctions Supabase qui
+  // vérifient d'abord que la personne connectée est administratrice.
+  // ============================================================
+
+  // Zones proposées (les filtres de « Nos pros ALB » se construisent tout seuls
+  // à partir des zones des pros en ligne, y compris les « autres zones »)
+  const ZONES_PAR_DEPARTEMENT = {
+    'Var': ['Toulon et environs', 'Centre Var', 'Est Var/Golfe', 'Dracénie', 'Haut Var/Verdon'],
+    'Bouches-du-Rhône': ['Marseille et environs', "Pays d'Aix", 'Aubagne/La Ciotat', 'Étang de Berre/Martigues', 'Salon/Pays d\'Arles']
+  };
+  const ZONES = [].concat.apply([], Object.values(ZONES_PAR_DEPARTEMENT));
+  const METIERS = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', agent: '🏠 Agent immobilier', mandataire: '📋 Mandataire immobilier', autre: '🤝 Autre métier' };
+  const ERREURS = {
+    ACCES_REFUSE: "Accès refusé : cette action est réservée à l'équipe ALB.",
+    SIRET_MANQUANT: 'Indique le SIRET (14 chiffres) avant de valider.',
+    SIRET_INVALIDE: 'Le SIRET doit contenir exactement 14 chiffres.',
+    METIER_A_CHOISIR: "Choisis d'abord le métier de ce pro.",
+    METIER_AUTRE_MANQUANT: 'Écris le nom du métier (il apparaîtra dans les filtres de « Nos pros ALB »).',
+    PRO_NON_VALIDE: "Ce pro doit d'abord être validé.",
+    PROFIL_INTROUVABLE: 'Ce profil est introuvable.'
+  };
+
+  let membres = [];
+
+  function afficherMessage(id, type, texte) {
+    const zone = document.getElementById(id);
+    zone.className = 'message visible ' + type;
+    zone.textContent = texte;
+    if (id === 'message-general') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function effacerMessage(id) { document.getElementById(id).className = 'message'; }
+
+  function messageErreur(erreur) {
+    const texte = String(erreur?.message || erreur || '');
+    const code = Object.keys(ERREURS).find(function (c) { return texte.includes(c); });
+    return code ? ERREURS[code] : 'Un souci est survenu : ' + texte;
+  }
+
+  function dateLisible(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function metierDe(m) {
+    if (m.role === 'courtier') return 'courtier';
+    if (m.role === 'artisan') return 'artisan';
+    if (m.role === 'immo') return m.sous_role_immo === 'mandataire' ? 'mandataire' : 'agent';
+    if (m.role === 'autre') return 'autre';
+    return null;
+  }
+
+  function etiquettesDe(m) {
+    const liste = [];
+    if (m.est_acquereur) liste.push('<span class="etiquette">🔎 Acheteur</span>');
+    if (m.est_vendeur) liste.push('<span class="etiquette">🏡 Vendeur</span>');
+    if (m.est_client_pro) liste.push('<span class="etiquette">🛠️ Client pro</span>');
+    const metier = metierDe(m);
+    if (metier && metier !== 'autre') liste.push('<span class="etiquette or">' + METIERS[metier] + '</span>');
+    if (m.metier_autre) liste.push('<span class="etiquette or">🤝 ' + albEchapper(m.metier_autre) + '</span>');
+    if (m.besoin_autre) liste.push('<span class="etiquette">✨ Autre</span>');
+    if (m.statut_verifie) liste.push('<span class="etiquette vert">✅ Validé</span>');
+    if (m.profil_mis_en_ligne) liste.push('<span class="etiquette vert">🌐 En ligne</span>');
+    if (m.statut === 'refuse') liste.push('<span class="etiquette rouge">Refusé</span>');
+    if (m.est_admin) liste.push('<span class="etiquette">👑 Gestion du site</span>');
+    return '<div class="etiquettes">' + liste.join('') + '</div>';
+  }
+
+  function coordonnees(m) {
+    const tel = (m.telephone || '').replace(/[^0-9+]/g, '');
+    return (tel ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(tel) + '">' + albEchapper(m.telephone) + '</a></p>' : '') +
+      '<p class="ligne-info">✉️ <a href="mailto:' + albEchapper(m.email) + '">' + albEchapper(m.email) + '</a></p>';
+  }
+
+  // ---------- Onglets ----------
+  function afficherOnglet(nom) {
+    document.querySelectorAll('.onglet').forEach(function (b) { b.classList.toggle('actif', b.dataset.onglet === nom); });
+    document.querySelectorAll('.panneau').forEach(function (p) { p.classList.toggle('actif', p.id === 'panneau-' + nom); });
+    effacerMessage('message-general');
+  }
+
+  // ---------- Connexion ----------
+  async function seConnecter(event) {
+    event.preventDefault();
+    effacerMessage('message-connexion');
+    const bouton = document.getElementById('bouton-connexion');
+    bouton.disabled = true;
+    const resultat = await albSeConnecter(document.getElementById('connexion-email').value, document.getElementById('connexion-pin').value);
+    bouton.disabled = false;
+    if (!resultat.ok) { afficherMessage('message-connexion', 'erreur', resultat.message); return; }
+    demarrer();
+  }
+
+  async function seDeconnecter() {
+    await albSeDeconnecter();
+    location.reload();
+  }
+
+  function montrer(zone) {
+    ['zone-connexion', 'zone-refus', 'zone-gestion'].forEach(function (id) {
+      document.getElementById(id).classList.toggle('cache', id !== zone);
+    });
+    document.getElementById('bouton-deconnexion').classList.toggle('cache', zone === 'zone-connexion');
+  }
+
+  async function demarrer() {
+    const { data: session } = await albSupabase.auth.getSession();
+    if (!session?.session) { montrer('zone-connexion'); return; }
+    const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
+    if (estAdmin !== true) { montrer('zone-refus'); return; }
+    montrer('zone-gestion');
+    await toutRecharger();
+  }
+
+  // ---------- Données ----------
+  async function toutRecharger() {
+    const [compteurs, liste] = await Promise.all([
+      albSupabase.rpc('alb_gestion_compteurs'),
+      albSupabase.rpc('alb_gestion_membres')
+    ]);
+    if (compteurs.error || liste.error) {
+      afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
+      return;
+    }
+    membres = liste.data || [];
+    afficherCompteurs(compteurs.data || {});
+    afficherAValider();
+    afficherValides();
+    afficherMembres();
+  }
+
+  function afficherCompteurs(c) {
+    const valeurs = {
+      'c-a-valider': c.pros_a_valider, 'c-en-ligne': c.pros_en_ligne, 'c-membres': c.membres, 'c-nouveaux': c.nouveaux_7_jours,
+      'c-acheteurs': c.acheteurs, 'c-vendeurs': c.vendeurs, 'c-clients-pro': c.clients_pro, 'c-autres': c.autres,
+      'c-courtiers': c.courtiers, 'c-artisans': c.artisans, 'c-agents': c.agents, 'c-mandataires': c.mandataires,
+      'c-autres-metiers': c.autres_metiers, 'c-valides': c.pros_valides
+    };
+    Object.keys(valeurs).forEach(function (id) { document.getElementById(id).textContent = valeurs[id] ?? 0; });
+    document.getElementById('pastille-a-valider').textContent = c.pros_a_valider ?? 0;
+  }
+
+  // ---------- Pros à valider ----------
+  function afficherAValider() {
+    const liste = membres.filter(function (m) {
+      return (metierDe(m) || m.metier_autre) && !m.statut_verifie && m.statut !== 'refuse';
+    });
+    const zone = document.getElementById('liste-a-valider');
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucun pro en attente pour le moment. 🌿</div>'; return; }
+
+    zone.innerHTML = liste.map(function (m) {
+      const metier = metierDe(m);
+      const selectMetier = metier ? '' :
+        '<label class="petit-champ">Métier à attribuer' +
+        '<select id="metier-' + m.id + '" onchange="afficherNomMetier(\'' + m.id + '\')"><option value="">— Choisir —</option>' +
+        Object.keys(METIERS).map(function (k) { return '<option value="' + k + '"' + (k === 'autre' && m.metier_autre ? ' selected' : '') + '>' + METIERS[k] + '</option>'; }).join('') +
+        '</select></label>';
+      // Nom du métier « autre » : c'est ce libellé qui apparaîtra dans les filtres
+      const nomVisible = metier === 'autre' || (!metier && m.metier_autre);
+      const nomMetier =
+        '<label class="petit-champ' + (nomVisible ? '' : ' cache') + '" id="bloc-nom-metier-' + m.id + '">Nom du métier (affiché dans les filtres)' +
+        '<input id="nom-metier-' + m.id + '" maxlength="60" value="' + albEchapper(m.metier_autre || '') + '"></label>';
+      const choixMetier = selectMetier + nomMetier;
+      return '<div class="carte fiche">' +
+        '<h3>' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + '</h3>' +
+        (m.nom_entreprise ? '<p class="ligne-info">🏢 ' + albEchapper(m.nom_entreprise) + '</p>' : '') +
+        etiquettesDe(m) + coordonnees(m) +
+        '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
+        '<div class="actions">' + choixMetier +
+          '<label class="petit-champ">SIRET (14 chiffres)<input id="siret-' + m.id + '" inputmode="numeric" maxlength="17" value="' + albEchapper(m.siret || '') + '"></label>' +
+          '<button class="bouton vert" onclick="validerPro(\'' + m.id + '\', this)">✓ Valider</button>' +
+          '<button class="bouton rouge" onclick="refuserPro(\'' + m.id + '\', this)">✗ Refuser</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function afficherNomMetier(id) {
+    const autre = document.getElementById('metier-' + id).value === 'autre';
+    document.getElementById('bloc-nom-metier-' + id).classList.toggle('cache', !autre);
+  }
+
+  async function validerPro(id, bouton) {
+    bouton.disabled = true;
+    const membre = membres.find(function (m) { return m.id === id; }) || {};
+    const choix = document.getElementById('metier-' + id);
+    const metierChoisi = choix ? choix.value : metierDe(membre);
+    const nomMetier = document.getElementById('nom-metier-' + id).value.trim();
+    if (!metierChoisi) { afficherMessage('message-general', 'erreur', ERREURS.METIER_A_CHOISIR); bouton.disabled = false; return; }
+    if (metierChoisi === 'autre' && !nomMetier) { afficherMessage('message-general', 'erreur', ERREURS.METIER_AUTRE_MANQUANT); bouton.disabled = false; return; }
+    // On enregistre le métier s'il vient d'être choisi, ou si le nom du métier « autre » a été retouché
+    if (choix || (metierChoisi === 'autre' && nomMetier !== (membre.metier_autre || ''))) {
+      const { error } = await albSupabase.rpc('alb_gestion_definir_metier', {
+        p_id: id, p_metier: metierChoisi, p_metier_autre: metierChoisi === 'autre' ? nomMetier : null
+      });
+      if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); bouton.disabled = false; return; }
+    }
+    const siret = document.getElementById('siret-' + id).value;
+    const { error } = await albSupabase.rpc('alb_gestion_valider_pro', { p_id: id, p_siret: siret || null });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', 'succes', 'Pro validé 🎉 Son e-mail de bienvenue est parti. Complète sa fiche dans « Pros validés », puis mets-le en ligne.');
+    await toutRecharger();
+  }
+
+  async function refuserPro(id, bouton) {
+    if (!confirm('Refuser ce professionnel ? Il ne pourra pas apparaître sur « Nos pros ALB ».')) return;
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_refuser_pro', { p_id: id });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', 'info', 'Pro refusé. Il reste visible dans « Membres ».');
+    await toutRecharger();
+  }
+
+  // ---------- Pros validés ----------
+  function afficherValides() {
+    const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie; });
+    const zone = document.getElementById('liste-valides');
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucun pro validé pour le moment.</div>'; return; }
+
+    zone.innerHTML = liste.map(function (m) {
+      const metier = metierDe(m);
+      const zones = m.zone_intervention || [];
+      const ficheIncomplete = !m.presentation || !m.ville || !zones.length;
+      return '<div class="carte fiche">' +
+        '<h3>' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '</h3>' +
+        '<p class="ligne-info">👤 ' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + '</p>' +
+        etiquettesDe(m) + coordonnees(m) +
+        (ficheIncomplete ? '<p class="ligne-info">⚠️ Fiche à compléter (présentation, ville, zones) avant la mise en ligne.</p>' : '') +
+        '<div class="actions">' +
+          (m.profil_mis_en_ligne
+            ? '<button class="bouton rouge" onclick="mettreEnLigne(\'' + m.id + '\', false, this)">Retirer de Nos pros ALB</button>'
+            : '<button class="bouton vert" onclick="mettreEnLigne(\'' + m.id + '\', true, this)">🌐 Mettre en ligne</button>') +
+          '<button class="bouton discret" onclick="basculerFiche(\'' + m.id + '\')">✏️ Compléter la fiche</button>' +
+        '</div>' +
+        formulaireFiche(m, metier) +
+        '</div>';
+    }).join('');
+  }
+
+  function formulaireFiche(m, metier) {
+    const zones = m.zone_intervention || [];
+    const dispo = m.status_disponibilite || 'joignable';
+    const option = function (valeur, libelle) { return '<option value="' + valeur + '"' + (dispo === valeur ? ' selected' : '') + '>' + libelle + '</option>'; };
+    return '<form class="formulaire-fiche cache" id="fiche-' + m.id + '" onsubmit="enregistrerFiche(event, \'' + m.id + '\')">' +
+      '<div class="grille">' +
+        '<div class="champ"><label>Nom de l\'entreprise</label><input name="nom_entreprise" value="' + albEchapper(m.nom_entreprise || '') + '"></div>' +
+        '<div class="champ"><label>Disponibilité</label><select name="status_disponibilite">' +
+          option('joignable', 'Disponible') + option('occupé', 'Occupé en ce moment') + option('non_disponible', 'Indisponible') +
+        '</select></div>' +
+        '<div class="champ large"><label>Présentation (500 caractères maximum)</label><textarea name="presentation" maxlength="500">' + albEchapper(m.presentation || m.bio || '') + '</textarea></div>' +
+        '<div class="champ"><label>Ville</label><input name="ville" value="' + albEchapper(m.ville || '') + '"></div>' +
+        '<div class="champ"><label>Code postal</label><input name="code_postal" inputmode="numeric" maxlength="5" value="' + albEchapper(m.code_postal || '') + '"></div>' +
+        (metier === 'autre' ? '<div class="champ"><label>Nom du métier (affiché dans les filtres)</label><input name="metier_autre" maxlength="60" value="' + albEchapper(m.metier_autre || '') + '"></div>' : '') +
+        Object.keys(ZONES_PAR_DEPARTEMENT).map(function (dep) {
+          return '<div class="champ large"><label>Zones d\'intervention — ' + dep + '</label><div class="cases">' +
+            ZONES_PAR_DEPARTEMENT[dep].map(function (z) {
+              return '<label><input type="checkbox" name="zone" value="' + albEchapper(z) + '"' + (zones.includes(z) ? ' checked' : '') + '> ' + albEchapper(z) + '</label>';
+            }).join('') +
+          '</div></div>';
+        }).join('') +
+        '<div class="champ large"><label>Autres zones (séparées par une virgule)</label><input name="autres_zones" maxlength="200" placeholder="Ex. : Sainte-Maxime, Avignon" value="' + albEchapper(zones.filter(function (z) { return !ZONES.includes(z); }).join(', ')) + '"><div class="aide">Elles apparaîtront aussi dans les filtres de « Nos pros ALB ».</div></div>' +
+        '<div class="champ"><label>Photo ou logo (adresse de l\'image)</label><input name="photo_url" value="' + albEchapper(m.photo_url || '') + '"><div class="aide">Facultatif — l\'envoi de photo depuis le site arrive bientôt.</div></div>' +
+        (metier === 'courtier' ? '<div class="champ"><label>Numéro ORIAS</label><input name="numero_orias" value="' + albEchapper(m.numero_orias || '') + '"></div>' : '') +
+        (metier === 'agent' || metier === 'mandataire' ? '<div class="champ"><label>Numéro de carte T</label><input name="numero_carte_t" value="' + albEchapper(m.numero_carte_t || '') + '"></div>' : '') +
+        (metier === 'artisan' ? '<div class="champ"><label>&nbsp;</label><div class="cases"><label><input type="checkbox" name="label_rge"' + (m.label_rge ? ' checked' : '') + '> Label RGE</label></div></div>' : '') +
+      '</div>' +
+      '<div class="actions"><button type="submit" class="bouton">💾 Enregistrer la fiche</button></div>' +
+    '</form>';
+  }
+
+  function basculerFiche(id) {
+    document.getElementById('fiche-' + id).classList.toggle('cache');
+  }
+
+  async function enregistrerFiche(event, id) {
+    event.preventDefault();
+    const f = event.target;
+    const valeur = function (nom) { return f.elements[nom] ? f.elements[nom].value : ''; };
+    const fiche = {
+      nom_entreprise: valeur('nom_entreprise'),
+      presentation: valeur('presentation'),
+      ville: valeur('ville'),
+      code_postal: valeur('code_postal'),
+      metier_autre: valeur('metier_autre'),
+      zone_intervention: Array.from(f.querySelectorAll('input[name="zone"]:checked')).map(function (c) { return c.value; })
+        .concat(valeur('autres_zones').split(',').map(function (z) { return z.trim(); }).filter(Boolean)),
+      status_disponibilite: valeur('status_disponibilite'),
+      photo_url: valeur('photo_url'),
+      numero_orias: valeur('numero_orias'),
+      numero_carte_t: valeur('numero_carte_t'),
+      label_rge: f.elements['label_rge'] ? f.elements['label_rge'].checked : false
+    };
+    const bouton = f.querySelector('button[type="submit"]');
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_modifier_fiche', { p_id: id, p_fiche: fiche });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', 'succes', 'Fiche enregistrée ✓');
+    await toutRecharger();
+  }
+
+  async function mettreEnLigne(id, enLigne, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_mettre_en_ligne', { p_id: id, p_en_ligne: enLigne });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', 'succes', enLigne ? 'Le pro est maintenant visible sur « Nos pros ALB » 🌐' : 'Le pro a été retiré de « Nos pros ALB ».');
+    await toutRecharger();
+  }
+
+  // ---------- Membres ----------
+  function afficherMembres() {
+    const recherche = (document.getElementById('recherche-membres').value || '').toLowerCase().trim();
+    const liste = membres.filter(function (m) {
+      if (!recherche) return true;
+      return [m.prenom, m.nom, m.email, m.telephone, m.nom_entreprise, m.ville, m.besoin_autre, m.metier_autre]
+        .some(function (v) { return String(v || '').toLowerCase().includes(recherche); });
+    });
+    const zone = document.getElementById('liste-membres');
+    if (!liste.length) { zone.innerHTML = '<div class="vide">Aucun membre trouvé.</div>'; return; }
+    zone.innerHTML = liste.map(function (m) {
+      return '<div class="membre">' +
+        '<div class="membre-nom">' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + (m.nom_entreprise ? ' · ' + albEchapper(m.nom_entreprise) : '') + '</div>' +
+        etiquettesDe(m) + coordonnees(m) +
+        (m.besoin_autre ? '<p class="ligne-info">✨ Ce qui l\'amène : ' + albEchapper(m.besoin_autre) + '</p>' : '') +
+        '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
+      '</div>';
+    }).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>
