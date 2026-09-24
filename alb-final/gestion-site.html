@@ -74,6 +74,7 @@
     .etiquette.vert { background: #EEF6EE; color: #2E6B34; }
     .etiquette.rouge { background: #FBECEC; color: #8A2D2D; }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: flex-end; }
+    .mot { background: #F4EEF6; border-left: 3px solid #5A3A6A; border-radius: 4px; padding: 8px 10px; margin: 8px 0; white-space: pre-line; }
     .petit-champ { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; }
 
     input, select, textarea {
@@ -317,6 +318,12 @@
     return '<div class="etiquettes">' + liste.join('') + '</div>';
   }
 
+  // Le petit mot laissé à l'inscription (ou l'ancien champ « Autre »)
+  function messageDe(m) {
+    const texte = m.message_inscription || m.besoin_autre;
+    return texte ? '<p class="ligne-info mot">💬 « ' + albEchapper(texte) + ' »</p>' : '';
+  }
+
   function coordonnees(m) {
     const tel = (m.telephone || '').replace(/[^0-9+]/g, '');
     return (tel ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(tel) + '">' + albEchapper(m.telephone) + '</a></p>' : '') +
@@ -415,7 +422,7 @@
       return '<div class="carte fiche">' +
         '<h3>' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + '</h3>' +
         (m.nom_entreprise ? '<p class="ligne-info">🏢 ' + albEchapper(m.nom_entreprise) + '</p>' : '') +
-        etiquettesDe(m) + coordonnees(m) +
+        etiquettesDe(m) + messageDe(m) + coordonnees(m) +
         '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
         '<div class="actions">' + choixMetier +
           '<label class="petit-champ">SIRET (14 chiffres)<input id="siret-' + m.id + '" inputmode="numeric" maxlength="17" value="' + albEchapper(m.siret || '') + '"></label>' +
@@ -476,7 +483,7 @@
       return '<div class="carte fiche">' +
         '<h3>' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '</h3>' +
         '<p class="ligne-info">👤 ' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + '</p>' +
-        etiquettesDe(m) + coordonnees(m) +
+        etiquettesDe(m) + messageDe(m) + coordonnees(m) +
         (ficheIncomplete ? '<p class="ligne-info">⚠️ Fiche à compléter (présentation, ville, zones) avant la mise en ligne.</p>' : '') +
         '<div class="actions">' +
           (m.profil_mis_en_ligne
@@ -565,7 +572,7 @@
     const recherche = (document.getElementById('recherche-membres').value || '').toLowerCase().trim();
     const liste = membres.filter(function (m) {
       if (!recherche) return true;
-      return [m.prenom, m.nom, m.email, m.telephone, m.nom_entreprise, m.ville, m.besoin_autre, m.metier_autre]
+      return [m.prenom, m.nom, m.email, m.telephone, m.nom_entreprise, m.ville, m.besoin_autre, m.message_inscription, m.metier_autre]
         .some(function (v) { return String(v || '').toLowerCase().includes(recherche); });
     });
     const zone = document.getElementById('liste-membres');
@@ -573,8 +580,7 @@
     zone.innerHTML = liste.map(function (m) {
       return '<div class="membre">' +
         '<div class="membre-nom">' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + (m.nom_entreprise ? ' · ' + albEchapper(m.nom_entreprise) : '') + '</div>' +
-        etiquettesDe(m) + coordonnees(m) +
-        (m.besoin_autre ? '<p class="ligne-info">✨ Ce qui l\'amène : ' + albEchapper(m.besoin_autre) + '</p>' : '') +
+        etiquettesDe(m) + messageDe(m) + coordonnees(m) +
         '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
       '</div>';
     }).join('');
