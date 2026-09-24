@@ -169,7 +169,7 @@
     .champ { margin-bottom: 16px; }
     .champ label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
     .champ .aide { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
-    .champ input, .champ select {
+    .champ input, .champ select, .champ textarea {
       width: 100%;
       padding: 12px;
       border: 1px solid #D8D5CE;
@@ -178,7 +178,8 @@
       font-size: 1rem;
       background: white;
     }
-    .champ input:focus, .champ select:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .champ textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+    .champ input:focus, .champ select:focus, .champ textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
     .deux-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
 
     .choix { display: grid; gap: 10px; margin-bottom: 16px; }
@@ -571,13 +572,6 @@
             <label class="case"><input type="checkbox" id="insc-autre" onchange="afficherBlocAutre()"> Autre</label>
           </div>
 
-          <div class="bloc-pro" id="bloc-autre">
-            <div class="champ">
-              <label for="insc-besoin-autre">Dites-nous en quelques mots ce qui vous amène</label>
-              <input type="text" id="insc-besoin-autre" maxlength="300">
-            </div>
-          </div>
-
           <div class="bloc-pro" id="bloc-pro">
             <div class="champ">
               <label for="insc-metier">Votre métier</label>
@@ -603,6 +597,12 @@
               <input type="text" id="insc-siret" inputmode="numeric" maxlength="17">
               <div class="aide">Jocelyne vous appellera pour faire connaissance avant de vous faire apparaître sur « Nos pros ALB ».</div>
             </div>
+          </div>
+
+          <div class="champ">
+            <label for="insc-message" id="titre-message">Un petit mot pour Jocelyne ? <span class="leger">(facultatif)</span></label>
+            <textarea id="insc-message" maxlength="1000" rows="4" placeholder="Votre projet, ce qui vous amène, le meilleur moment pour vous rappeler…"></textarea>
+            <div class="aide">Jocelyne lit chaque message et vous recontacte personnellement.</div>
           </div>
 
           <div class="deux-colonnes">
@@ -829,9 +829,13 @@
     document.getElementById('bloc-pro').classList.toggle('visible', estPro);
   }
 
+  // Si « Autre » est coché, le petit mot devient obligatoire
   function afficherBlocAutre() {
     const autre = document.getElementById('insc-autre').checked;
-    document.getElementById('bloc-autre').classList.toggle('visible', autre);
+    document.getElementById('titre-message').innerHTML = autre
+      ? 'Dites-nous en quelques mots ce qui vous amène'
+      : 'Un petit mot pour Jocelyne ? <span class="leger">(facultatif)</span>';
+    if (autre) document.getElementById('insc-message').focus();
   }
 
   function afficherMetierAutre() {
@@ -873,7 +877,7 @@
     const estPro = document.getElementById('insc-pro').checked;
     const metier = document.getElementById('insc-metier').value;
     const autreCoche = document.getElementById('insc-autre').checked;
-    const besoinAutre = document.getElementById('insc-besoin-autre').value.trim();
+    const message = document.getElementById('insc-message').value.trim();
     const metierAutre = document.getElementById('insc-metier-autre').value.trim();
 
     if (pin !== confirmation) {
@@ -888,7 +892,7 @@
       afficherMessage('message-inscription', 'erreur', 'Dites-nous quel est votre métier.');
       return;
     }
-    if (autreCoche && !besoinAutre) {
+    if (autreCoche && !message) {
       afficherMessage('message-inscription', 'erreur', 'Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.');
       return;
     }
@@ -917,7 +921,8 @@
       metier_pro: estPro ? metier : '',
       metier_autre: estPro && metier === 'autre' ? metierAutre : '',
       autre_coche: autreCoche,
-      besoin_autre: autreCoche ? besoinAutre : '',
+      besoin_autre: autreCoche ? message.slice(0, 300) : '',
+      message: message,
       nom_entreprise: estPro ? document.getElementById('insc-entreprise').value : '',
       siret: estPro ? document.getElementById('insc-siret').value : '',
       cgu_acceptees: document.getElementById('insc-cgu').checked,
