@@ -560,6 +560,7 @@
           <div class="choix">
             <label class="case"><input type="checkbox" id="insc-acheteur"> Je cherche un bien à acheter</label>
             <label class="case"><input type="checkbox" id="insc-vendeur"> J'ai un bien à vendre</label>
+            <label class="case"><input type="checkbox" id="insc-client-pro"> J'ai besoin d'un professionnel pour un projet</label>
             <label class="case"><input type="checkbox" id="insc-pro" onchange="afficherBlocPro()"> Je suis un professionnel de l'immobilier</label>
             <label class="case"><input type="checkbox" id="insc-autre" onchange="afficherBlocAutre()"> Autre</label>
           </div>
@@ -594,7 +595,7 @@
             <div class="champ">
               <label for="insc-siret">Numéro SIRET <span class="leger">(facultatif pour l'instant)</span></label>
               <input type="text" id="insc-siret" inputmode="numeric" maxlength="17">
-              <div class="aide">Jocelyne vous appellera pour faire connaissance avant de vous ouvrir la vitrine ALB.</div>
+              <div class="aide">Jocelyne vous appellera pour faire connaissance avant de vous faire apparaître sur « Nos pros ALB ».</div>
             </div>
           </div>
 
@@ -648,7 +649,7 @@
 
     <div class="carte rubrique cache" id="rubrique-pro">
       <h2>🤝 Mon activité pro</h2>
-      <p>Les projets qui vous sont confiés, vos réponses et votre profil sur la vitrine.</p>
+      <p>Les projets qui vous sont confiés, vos réponses et votre profil sur « Nos pros ALB ».</p>
       <span class="bientot">Bientôt disponible ici</span>
     </div>
 
@@ -861,6 +862,7 @@
       pin: pin,
       est_acquereur: document.getElementById('insc-acheteur').checked,
       est_vendeur: document.getElementById('insc-vendeur').checked,
+      est_client_pro: document.getElementById('insc-client-pro').checked,
       metier_pro: estPro ? metier : '',
       metier_autre: estPro && metier === 'autre' ? metierAutre : '',
       autre_coche: autreCoche,
@@ -906,6 +908,7 @@
 
     // Étiquettes : les casquettes classiques + les choix « Autre »
     const etiquettes = casquettes.map(function (c) { return LIBELLES_CASQUETTES[c] || c; });
+    if (profil.est_client_pro) etiquettes.push('🛠️ Client pro');
     if (profil.metier_autre) etiquettes.push('🤝 ' + profil.metier_autre);
     if (profil.besoin_autre) etiquettes.push('✨ Autre');
 
@@ -922,9 +925,9 @@
     if (vientDeRejoindre) {
       afficherMessage('message-espace', 'succes', 'Bienvenue chez ALB, c\'est parti ! Merci de votre confiance. 💜');
     } else if (estPro && !profil.statut_verifie) {
-      afficherMessage('message-espace', 'info', 'Votre profil pro est entre de bonnes mains : Jocelyne vous appellera pour faire connaissance, puis vous ouvrira la vitrine ALB.');
+      afficherMessage('message-espace', 'info', 'Votre profil pro est entre de bonnes mains : Jocelyne vous appellera pour faire connaissance, puis vous fera apparaître sur « Nos pros ALB ».');
     } else if (estPro && profil.statut_verifie && !profil.profil_mis_en_ligne) {
-      afficherMessage('message-espace', 'info', 'Votre profil pro est validé ! Il sera bientôt visible sur la vitrine ALB.');
+      afficherMessage('message-espace', 'info', 'Votre profil pro est validé ! Il sera bientôt visible sur « Nos pros ALB ».');
     } else {
       effacerMessage('message-espace');
     }
