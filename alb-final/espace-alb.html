@@ -247,6 +247,12 @@
     .lien-pourpre { color: #5A3A6A; }
     .message-espace { margin-top: 18px; }
 
+    /* Fenêtre de lecture des CGU / confidentialité */
+    .modal-document .modal-content { max-width: 860px; width: 94%; height: 88vh; max-height: 88vh; padding: 24px 18px 18px; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-document h2 { font-size: 1.3rem; margin-bottom: 12px; padding-right: 30px; }
+    .modal-document iframe { flex: 1; width: 100%; border: 1px solid #E8E6E1; border-radius: 6px; background: white; }
+    .modal-document .modal-buttons { margin-top: 14px; }
+
     @media (min-width: 700px) {
       .espace { padding: 50px 24px 20px; }
       .carte { padding: 32px; }
@@ -613,7 +619,12 @@
 
           <label class="case case-cgu">
             <input type="checkbox" id="insc-cgu">
-            <span>J'ai lu et j'accepte les <a href="https://albimmobilier.fr/cgu" target="_blank" class="lien-pourpre">conditions générales</a> et la <a href="https://albimmobilier.fr/confidentialite" target="_blank" class="lien-pourpre">politique de confidentialité</a>.</span>
+            <span>J'ai lu et j'accepte les <a href="cgu.html" class="lien-pourpre" onclick="ouvrirDocument('cgu.html', 'Conditions générales'); return false;">conditions générales</a> et la <a href="confidentialite.html" class="lien-pourpre" onclick="ouvrirDocument('confidentialite.html', 'Politique de confidentialité'); return false;">politique de confidentialité</a>.</span>
+          </label>
+
+          <label class="case case-cgu">
+            <input type="checkbox" id="insc-recontact">
+            <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de mon projet.</span>
           </label>
 
           <button type="submit" class="bouton" id="bouton-inscription">Rejoindre ALB</button>
@@ -661,6 +672,18 @@
   </section>
 
 </main>
+
+<!-- ========== LECTURE DES CGU / CONFIDENTIALITÉ SANS QUITTER LE FORMULAIRE ========== -->
+<div id="document-modal" class="modal modal-document">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('document-modal')">&times;</span>
+    <h2 id="document-titre">Conditions générales</h2>
+    <iframe id="document-cadre" title="Document ALB Immobilier"></iframe>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('document-modal'); return false;">Revenir à mon inscription</a>
+    </div>
+  </div>
+</div>
 
 <!-- ========== MODALES OFFICIELLES ========== -->
 <div id="apropos-modal" class="modal">
@@ -764,6 +787,8 @@
     const zone = document.getElementById(idMessage);
     zone.className = 'message visible ' + type;
     zone.textContent = texte;
+    // Le message s'affiche en haut du formulaire : on y ramène la personne
+    if (type === 'erreur') zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   function effacerMessage(idMessage) {
@@ -775,6 +800,24 @@
       document.getElementById('onglet-' + onglet).classList.toggle('actif', onglet === nom);
       document.getElementById('panneau-' + onglet).classList.toggle('actif', onglet === nom);
     });
+    // On garde l'onglet dans l'adresse : en revenant sur la page, on retombe au même endroit
+    history.replaceState(null, '', nom === 'inscription' ? '#inscription' : location.pathname + location.search);
+  }
+
+  // Ouvre les CGU ou la confidentialité dans une fenêtre, sans quitter le formulaire
+  function ouvrirDocument(adresse, titre) {
+    document.getElementById('document-titre').textContent = titre;
+    const cadre = document.getElementById('document-cadre');
+    // Dans la fenêtre, on n'affiche que le texte (pas le menu ni le pied de page du site)
+    cadre.onload = function () {
+      try {
+        const style = cadre.contentDocument.createElement('style');
+        style.textContent = 'header, footer, nav, .alb-header, .footer, .modal { display: none !important; } body { padding-top: 0 !important; }';
+        cadre.contentDocument.head.appendChild(style);
+      } catch (e) { /* la page s'affiche telle quelle */ }
+    };
+    cadre.src = adresse;
+    openModal('document-modal');
   }
 
   function afficherAidePin() {
@@ -849,6 +892,14 @@
       afficherMessage('message-inscription', 'erreur', 'Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.');
       return;
     }
+    if (!document.getElementById('insc-cgu').checked) {
+      afficherMessage('message-inscription', 'erreur', 'Pour rejoindre ALB, merci d\'accepter les conditions générales.');
+      return;
+    }
+    if (!document.getElementById('insc-recontact').checked) {
+      afficherMessage('message-inscription', 'erreur', 'Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case « J\'accepte d\'être recontacté(e) par ALB Sud Immobilier ».');
+      return;
+    }
 
     const bouton = document.getElementById('bouton-inscription');
     bouton.disabled = true;
@@ -869,7 +920,8 @@
       besoin_autre: autreCoche ? besoinAutre : '',
       nom_entreprise: estPro ? document.getElementById('insc-entreprise').value : '',
       siret: estPro ? document.getElementById('insc-siret').value : '',
-      cgu_acceptees: document.getElementById('insc-cgu').checked
+      cgu_acceptees: document.getElementById('insc-cgu').checked,
+      accepte_recontact: document.getElementById('insc-recontact').checked
     });
 
     bouton.disabled = false;
@@ -877,7 +929,6 @@
 
     if (!resultat.ok) {
       afficherMessage('message-inscription', 'erreur', resultat.message);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     document.getElementById('formulaire-inscription').reset();
@@ -939,6 +990,7 @@
 
   // Au chargement : si la personne est déjà connectée, on ouvre directement son espace
   document.addEventListener('DOMContentLoaded', function () {
+    if (location.hash === '#inscription') afficherOnglet('inscription');
     afficherEspace(false);
   });
 </script>
