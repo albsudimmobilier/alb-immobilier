@@ -1,31 +1,37 @@
+// ============================================================
+// api/app-pros.js — Page "Nos pros ALB"
+// ------------------------------------------------------------
+// Les pros sont lus via la fonction sécurisée alb_pros_publics() :
+// elle ne renvoie QUE les infos publiques (jamais e-mail, téléphone,
+// SIRET ni code PIN), et uniquement les pros validés ET mis en ligne.
+// ============================================================
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// Configuration Supabase
 const SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ';
 
-console.log('🔧 App-pros.js chargé');
-console.log('📍 SUPABASE_URL:', SUPABASE_URL);
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// State
 let allPros = [];
 let filteredPros = [];
 let currentPage = 1;
 const ITEMS_PER_PAGE = 9;
 
-// Load on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('📄 DOM Loaded - Chargement des pros...');
   await loadPros();
   setupFilterListeners();
 });
 
-// La colonne profiles.role n'accepte que courtier/artisan/immo (enum Postgres).
-// Agent immobilier et mandataire partagent la valeur "immo" ; le détail est
-// dans profiles.sous_role_immo. Cette fonction reconstitue le rôle "affiché"
-// (agent_immobilier / mandataire_immobilier) utilisé par les filtres de la page.
+// Protège le texte écrit par les pros avant de l'afficher
+function echapper(texte) {
+  return String(texte ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// profiles.role vaut courtier / artisan / immo. Agent et mandataire partagent
+// "immo" : le détail est dans sous_role_immo. On reconstitue le rôle "affiché"
+// utilisé par les filtres de la page.
 function getFilterRole(pro) {
   if (pro.role === 'immo') {
     return pro.sous_role_immo === 'mandataire' ? 'mandataire_immobilier' : 'agent_immobilier';
@@ -34,33 +40,17 @@ function getFilterRole(pro) {
 }
 
 async function loadPros() {
-  try {
-    console.log('🔄 Requête Supabase: profiles avec statut_verifie=true');
+  const { data, error } = await supabase.rpc('alb_pros_publics');
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('statut_verifie', true);
-
-    if (error) {
-      console.error('❌ ERREUR SUPABASE:', error);
-      showError(`Erreur: ${error.message || JSON.stringify(error)}`);
-      return;
-    }
-
-    // Filtrer les rôles en JavaScript (évite les problèmes RLS)
-    // NB : les profils pros non "mis en ligne" (étape 3 non validée) sont déjà
-    // exclus en amont par la policy RLS "Voir les profils vérifiés (vitrine)".
-    const validRoles = ['courtier', 'artisan', 'immo'];
-    const prosVerifies = (data || []).filter(pro => validRoles.includes(pro.role));
-
-    allPros = prosVerifies;
-    console.log(`✅ ${allPros.length} pros chargés (filtrage rôles en JS)`);
-    applyFilters();
-  } catch (err) {
-    console.error('❌ ERREUR CATCH:', err);
-    showError('Erreur lors du chargement');
+  if (error) {
+    console.error('[ALB DEBUG] Nos pros ALB :', error);
+    showError('Un petit souci nous empêche d\'afficher nos pros. Réessayez dans un instant.');
+    return;
   }
+
+  allPros = data || [];
+  console.log(`[ALB DEBUG] ${allPros.length} pros affichés sur Nos pros ALB`);
+  applyFilters();
 }
 
 function applyFilters() {
@@ -71,8 +61,7 @@ function applyFilters() {
     if (selectedRoles.length > 0 && !selectedRoles.includes(getFilterRole(pro))) return false;
     if (selectedZones.length > 0) {
       const proZones = pro.zone_intervention || [];
-      const hasZone = selectedZones.some(zone => proZones.includes(zone));
-      if (!hasZone) return false;
+      if (!selectedZones.some(zone => proZones.includes(zone))) return false;
     }
     return true;
   });
@@ -87,55 +76,56 @@ function renderPros() {
   grid.innerHTML = '';
 
   const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const end = start + ITEMS_PER_PAGE;
-  const pagePros = filteredPros.slice(start, end);
+  const pagePros = filteredPros.slice(start, start + ITEMS_PER_PAGE);
 
   if (pagePros.length === 0) {
-    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Aucun professionnel trouvé.</p>';
+    grid.innerHTML = '<p class="vitrine-vide">Nos professionnels arrivent très bientôt. Revenez nous voir !</p>';
     return;
   }
 
-  pagePros.forEach(pro => {
-    const card = createProCard(pro);
-    grid.appendChild(card);
-  });
+  pagePros.forEach(pro => grid.appendChild(createProCard(pro)));
 }
+
+const LIBELLES_DISPONIBILITE = {
+  joignable: 'Disponible',
+  'occupé': 'Occupé en ce moment',
+  non_disponible: 'Indisponible pour le moment'
+};
 
 function createProCard(pro) {
   const roleLabel = {
-    'courtier': '🏦 Courtier',
-    'artisan': '🔨 Artisan',
-    'agent_immobilier': '🏠 Agent immobilier',
-    'mandataire_immobilier': '📋 Mandataire'
+    courtier: '🏦 Courtier',
+    artisan: '🔨 Artisan',
+    agent_immobilier: '🏠 Agent immobilier',
+    mandataire_immobilier: '📋 Mandataire'
   }[getFilterRole(pro)] || pro.role;
 
-  const zones = pro.zone_intervention || [];
-  const zonesHtml = zones.map(zone => `<span class="zone-tag">${zone}</span>`).join('');
-  const initials = `${pro.prenom?.[0] || ''}${pro.nom?.[0] || ''}`.toUpperCase() || 'PRO';
-  const localisation = `${pro.code_postal || ''} ${pro.ville || ''}`.trim() || 'Var/PACA';
+  const zonesHtml = (pro.zone_intervention || [])
+    .map(zone => `<span class="zone-tag">${echapper(zone)}</span>`).join('');
+  const initiales = `${pro.prenom?.[0] || ''}${pro.nom?.[0] || ''}`.toUpperCase() || 'PRO';
+  const localisation = `${pro.code_postal || ''} ${pro.ville || ''}`.trim() || 'Var / PACA';
+  const nomAffiche = pro.nom_entreprise || `${pro.prenom || ''} ${pro.nom || ''}`.trim();
+  const disponibilite = LIBELLES_DISPONIBILITE[pro.status_disponibilite] || 'Disponible';
+  const classeDispo = pro.status_disponibilite && pro.status_disponibilite !== 'joignable' ? 'occupe' : 'disponible';
 
   const card = document.createElement('div');
   card.className = 'pro-card';
   card.innerHTML = `
     <div class="pro-header">
-      <div class="pro-avatar">${initials}</div>
-      <div class="pro-name">${pro.nom_entreprise || `${pro.prenom} ${pro.nom}`}</div>
+      <div class="pro-avatar">${echapper(initiales)}</div>
+      <div class="pro-name">${echapper(nomAffiche)}</div>
       <div class="pro-role">${roleLabel}</div>
-      <div class="pro-rating"><span class="stars">★★★★★</span> Vérifié ✓</div>
+      <div class="pro-rating">Validé ALB ✓</div>
     </div>
     <div class="pro-body">
-      <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
-        ${pro.bio || pro.presentation || 'Professionnel vérifié ALB'}
-      </p>
-      <p style="font-size: 0.85rem; color: #999; margin-bottom: 10px;">
-        <strong>📍 ${localisation}</strong>
-      </p>
-      ${pro.temps_reponse_moyen ? `<p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;"><strong>⏱️ Réponse:</strong> ${pro.temps_reponse_moyen}h</p>` : ''}
+      <p class="pro-presentation">${echapper(pro.bio || pro.presentation || 'Professionnel validé par ALB')}</p>
+      <p class="pro-localisation"><strong>📍 ${echapper(localisation)}</strong></p>
+      ${pro.temps_reponse_moyen ? `<p class="pro-reponse"><strong>⏱️ Répond en moyenne en</strong> ${echapper(pro.temps_reponse_moyen)} h</p>` : ''}
       ${zonesHtml ? `<div class="pro-zones">${zonesHtml}</div>` : ''}
-      <div class="pro-status disponible">Disponible</div>
+      <div class="pro-status ${classeDispo}">${echapper(disponibilite)}</div>
       <div class="pro-action">
-        <a href="mailto:${pro.email}" class="btn btn-primary" style="text-decoration: none; text-align: center;">📧 Contacter</a>
-        <button class="btn btn-secondary" onclick="viewProfile('${pro.id}')">📋 Profil</button>
+        <a href="espace-alb.html?contacter=${encodeURIComponent(pro.id)}" class="btn btn-primary">💬 Contacter via ALB</a>
+        <button class="btn btn-secondary" onclick="viewProfile('${encodeURIComponent(pro.id)}')">📋 Profil</button>
       </div>
     </div>
   `;
@@ -148,10 +138,17 @@ function renderPagination() {
   const totalPages = Math.ceil(filteredPros.length / ITEMS_PER_PAGE);
   if (totalPages <= 1) return;
 
+  const allerPage = (page) => {
+    currentPage = page;
+    renderPros();
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (currentPage > 1) {
     const prevBtn = document.createElement('button');
     prevBtn.textContent = '← Précédent';
-    prevBtn.onclick = () => { currentPage--; renderPros(); renderPagination(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    prevBtn.onclick = () => allerPage(currentPage - 1);
     container.appendChild(prevBtn);
   }
 
@@ -159,14 +156,14 @@ function renderPagination() {
     const btn = document.createElement('button');
     btn.textContent = i;
     if (i === currentPage) btn.classList.add('active');
-    btn.onclick = () => { currentPage = i; renderPros(); renderPagination(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    btn.onclick = () => allerPage(i);
     container.appendChild(btn);
   }
 
   if (currentPage < totalPages) {
     const nextBtn = document.createElement('button');
     nextBtn.textContent = 'Suivant →';
-    nextBtn.onclick = () => { currentPage++; renderPros(); renderPagination(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    nextBtn.onclick = () => allerPage(currentPage + 1);
     container.appendChild(nextBtn);
   }
 }
@@ -177,20 +174,23 @@ function setupFilterListeners() {
   });
 }
 
-function viewProfile(proId) {
+// Fiche détaillée : prévue à l'étape "Profils modifiables + Nos pros ALB"
+function viewProfile(proIdEncode) {
+  const proId = decodeURIComponent(proIdEncode);
   const pro = allPros.find(p => p.id === proId);
   if (!pro) return;
-  alert(`Profil de ${pro.nom_entreprise || pro.nom}`);
+  alert(`${pro.nom_entreprise || pro.nom}\n\n${pro.presentation || pro.bio || ''}`);
 }
 
 function showError(message) {
-  const grid = document.getElementById('pros-grid');
-  grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #d32f2f;">${message}</p>`;
+  document.getElementById('pros-grid').innerHTML = `<p class="vitrine-erreur">${echapper(message)}</p>`;
 }
 
 window.clearFilters = () => {
-  document.querySelectorAll('.role-filter, .zone-filter').forEach(el => el.checked = false);
+  document.querySelectorAll('.role-filter, .zone-filter').forEach(el => { el.checked = false; });
   applyFilters();
 };
 
+// Rendues accessibles aux boutons de la page (le fichier est un "module")
+window.viewProfile = viewProfile;
 window.loadPros = loadPros;
