@@ -1,0 +1,25 @@
+# ALB Immobilier — consignes pour les robots des moteurs de recherche et des IA
+# Tout le site public est ouvert (Google, Bing, ChatGPT, Claude, Perplexity…).
+# Les pages privées (espaces membres, gestion, connexion) ne doivent pas être indexées.
+
+User-agent: *
+Allow: /
+Disallow: /gestion-site.html
+Disallow: /espace-alb.html
+Disallow: /espace-perso.html
+Disallow: /nouveau-code.html
+Disallow: /pin-oublie.html
+Disallow: /verify-code.html
+Disallow: /connexion.html
+Disallow: /login.html
+Disallow: /login-pro.html
+Disallow: /dashboard-courtier.html
+Disallow: /dashboard-validation.html
+Disallow: /formulaire-annonce.html
+Disallow: /questionnaire-inscription.html
+Disallow: /inscription-particulier-acheteur.html
+Disallow: /inscription-particulier-vendeur.html
+Disallow: /inscription-pro.html
+Disallow: /api/
+
+Sitemap: https://albimmobilier.fr/sitemap.xml
