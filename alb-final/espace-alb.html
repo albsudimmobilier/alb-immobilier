@@ -248,6 +248,15 @@
     .lien-pourpre { color: #5A3A6A; }
     .message-espace { margin-top: 18px; }
 
+    /* Accès au compte */
+    .alerte-oubli { background: #FBF3E4; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 14px; margin-top: 16px; }
+    .alerte-oubli p { font-size: 0.92rem; margin-bottom: 10px; }
+    .titre-panneau { font-size: 1.35rem; margin-bottom: 8px; }
+    .sous-bloc { border-top: 1px dashed #D8D5CE; margin-top: 20px; padding-top: 18px; }
+    .sous-bloc h3 { font-size: 1.05rem; margin-bottom: 10px; }
+    .sous-bloc p { margin-bottom: 8px; }
+    .aide-bloc { font-size: 0.85rem; color: #7a7a75; }
+
     /* Fenêtre de lecture des CGU / confidentialité */
     .modal-document .modal-content { max-width: 860px; width: 94%; height: 88vh; max-height: 88vh; padding: 24px 18px 18px; display: flex; flex-direction: column; overflow: hidden; }
     .modal-document h2 { font-size: 1.3rem; margin-bottom: 12px; padding-right: 30px; }
@@ -528,10 +537,68 @@
             <input type="password" id="connexion-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="current-password" required>
           </div>
           <button type="submit" class="bouton" id="bouton-connexion">Me connecter</button>
-          <button type="button" class="lien-aide" onclick="afficherAidePin()">J'ai oublié mon code PIN</button>
-          <div class="message info" id="aide-pin">
-            Pas de souci, ça arrive ! Écrivez-nous à <strong>contact@albimmobilier.fr</strong> depuis l'adresse e-mail de votre compte, et on vous aide à retrouver l'accès.
+          <!-- Après 3 essais ratés, on propose clairement de l'aide -->
+          <div class="alerte-oubli cache" id="alerte-oubli">
+            <p><strong>Vous ne retrouvez plus votre code ?</strong> Ça arrive à tout le monde. Recevez un lien par e-mail pour en choisir un nouveau.</p>
+            <button type="button" class="bouton" onclick="afficherOnglet('oubli')">J'ai oublié mon code PIN</button>
           </div>
+          <button type="button" class="lien-aide" onclick="afficherOnglet('oubli')">J'ai oublié mon code PIN</button>
+        </form>
+      </div>
+
+      <!-- Code PIN oublié -->
+      <div class="panneau" id="panneau-oubli">
+        <form class="formulaire" id="formulaire-oubli" onsubmit="gererOubli(event)">
+          <h2 class="titre-panneau">J'ai oublié mon code PIN</h2>
+          <p class="texte-intro">Pas de souci ! Indiquez l'adresse e-mail de votre espace ALB : vous allez recevoir un lien pour choisir un nouveau code PIN.</p>
+          <div class="message" id="message-oubli"></div>
+          <div class="champ">
+            <label for="oubli-email">Votre e-mail</label>
+            <input type="email" id="oubli-email" autocomplete="email" required>
+          </div>
+          <button type="submit" class="bouton" id="bouton-oubli">Recevoir mon lien</button>
+          <button type="button" class="lien-aide" onclick="afficherOnglet('demande')">Je n'ai plus accès à cette adresse, ou je veux en changer</button>
+          <button type="button" class="lien-aide" onclick="afficherOnglet('connexion')">← Revenir à la connexion</button>
+        </form>
+      </div>
+
+      <!-- Changer d'adresse / je n'ai plus accès -->
+      <div class="panneau" id="panneau-demande">
+        <form class="formulaire" id="formulaire-demande" onsubmit="gererDemande(event)">
+          <h2 class="titre-panneau">Changer mon adresse e-mail</h2>
+          <p class="texte-intro">Pour votre sécurité, Jocelyne vous rappelle pour vérifier que c'est bien vous. Ensuite, vous recevez un lien pour enregistrer votre nouvelle adresse et un nouveau code PIN.</p>
+          <div class="message" id="message-demande"></div>
+          <div class="deux-colonnes">
+            <div class="champ">
+              <label for="demande-prenom">Prénom</label>
+              <input type="text" id="demande-prenom" autocomplete="given-name" required>
+            </div>
+            <div class="champ">
+              <label for="demande-nom">Nom</label>
+              <input type="text" id="demande-nom" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="champ">
+            <label for="demande-telephone">Votre téléphone</label>
+            <input type="tel" id="demande-telephone" autocomplete="tel" required>
+            <div class="aide">C'est à ce numéro que Jocelyne vous rappelle.</div>
+          </div>
+          <div class="deux-colonnes">
+            <div class="champ">
+              <label for="demande-ancien">Votre adresse e-mail actuelle <span class="leger">(si vous vous en souvenez)</span></label>
+              <input type="email" id="demande-ancien" autocomplete="email">
+            </div>
+            <div class="champ">
+              <label for="demande-nouveau">Votre nouvelle adresse e-mail</label>
+              <input type="email" id="demande-nouveau">
+            </div>
+          </div>
+          <div class="champ">
+            <label for="demande-message">Un petit mot <span class="leger">(facultatif)</span></label>
+            <textarea id="demande-message" maxlength="1000" rows="3" placeholder="Le meilleur moment pour vous rappeler, ce qui s'est passé…"></textarea>
+          </div>
+          <button type="submit" class="bouton" id="bouton-demande">Envoyer ma demande</button>
+          <button type="button" class="lien-aide" onclick="afficherOnglet('connexion')">← Revenir à la connexion</button>
         </form>
       </div>
 
@@ -668,6 +735,40 @@
       <h2>👤 Mon profil</h2>
       <p>Vos coordonnées, votre photo et votre présentation.</p>
       <span class="bientot">Bientôt disponible ici</span>
+
+      <!-- Changer son code PIN (pas besoin de l'ancien : la personne est déjà connectée) -->
+      <form class="sous-bloc formulaire" id="formulaire-pin" onsubmit="gererChangementPin(event)">
+        <h3>🔑 Mon code PIN</h3>
+        <div class="message" id="message-pin"></div>
+        <div class="deux-colonnes">
+          <div class="champ">
+            <label for="profil-pin">Nouveau code PIN</label>
+            <input type="password" id="profil-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required>
+          </div>
+          <div class="champ">
+            <label for="profil-pin-confirmation">Confirmez-le</label>
+            <input type="password" id="profil-pin-confirmation" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required>
+          </div>
+        </div>
+        <button type="submit" class="bouton bouton-discret" id="bouton-pin">Changer mon code PIN</button>
+      </form>
+
+      <!-- Demander à changer d'adresse e-mail -->
+      <form class="sous-bloc formulaire" id="formulaire-email" onsubmit="gererChangementEmail(event)">
+        <h3>✉️ Mon adresse e-mail</h3>
+        <p>Adresse actuelle : <strong id="profil-email-actuel"></strong></p>
+        <p class="aide-bloc">Pour votre sécurité, Jocelyne vous rappelle pour vérifier que c'est bien vous, puis vous envoie un lien pour valider la nouvelle adresse.</p>
+        <div class="message" id="message-email"></div>
+        <div class="champ">
+          <label for="profil-nouvel-email">Nouvelle adresse e-mail</label>
+          <input type="email" id="profil-nouvel-email" required>
+        </div>
+        <div class="champ">
+          <label for="profil-email-message">Un petit mot <span class="leger">(facultatif)</span></label>
+          <textarea id="profil-email-message" maxlength="1000" rows="2" placeholder="Le meilleur moment pour vous rappeler…"></textarea>
+        </div>
+        <button type="submit" class="bouton bouton-discret" id="bouton-email">Demander le changement</button>
+      </form>
     </div>
   </section>
 
@@ -796,12 +897,17 @@
   }
 
   function afficherOnglet(nom) {
-    ['connexion', 'inscription'].forEach(function (onglet) {
-      document.getElementById('onglet-' + onglet).classList.toggle('actif', onglet === nom);
-      document.getElementById('panneau-' + onglet).classList.toggle('actif', onglet === nom);
+    ['connexion', 'inscription', 'oubli', 'demande'].forEach(function (panneau) {
+      document.getElementById('panneau-' + panneau).classList.toggle('actif', panneau === nom);
     });
+    ['connexion', 'inscription'].forEach(function (onglet) {
+      document.getElementById('onglet-' + onglet).classList.toggle('actif', onglet === nom || (onglet === 'connexion' && (nom === 'oubli' || nom === 'demande')));
+    });
+    if (nom === 'oubli' && !document.getElementById('oubli-email').value) {
+      document.getElementById('oubli-email').value = document.getElementById('connexion-email').value;
+    }
     // On garde l'onglet dans l'adresse : en revenant sur la page, on retombe au même endroit
-    history.replaceState(null, '', nom === 'inscription' ? '#inscription' : location.pathname + location.search);
+    history.replaceState(null, '', nom === 'connexion' ? location.pathname + location.search : '#' + nom);
   }
 
   // Ouvre les CGU ou la confidentialité dans une fenêtre, sans quitter le formulaire
@@ -820,8 +926,70 @@
     openModal('document-modal');
   }
 
-  function afficherAidePin() {
-    document.getElementById('aide-pin').classList.add('visible');
+  // ---------- Accès au compte ----------
+  let echecsConnexion = 0;
+
+  async function gererOubli(event) {
+    event.preventDefault();
+    const bouton = document.getElementById('bouton-oubli');
+    bouton.disabled = true;
+    bouton.textContent = 'Un instant…';
+    const resultat = await albPinOublie(document.getElementById('oubli-email').value);
+    bouton.disabled = false;
+    bouton.textContent = 'Recevoir mon lien';
+    if (!resultat.ok) { afficherMessage('message-oubli', 'erreur', resultat.message); return; }
+    afficherMessage('message-oubli', 'succes', "C'est parti ! Si cette adresse fait partie d'ALB, un e-mail vient de vous être envoyé. Le lien est valable 30 minutes. Pensez à regarder dans vos courriers indésirables.");
+  }
+
+  async function gererDemande(event) {
+    event.preventDefault();
+    const bouton = document.getElementById('bouton-demande');
+    bouton.disabled = true;
+    bouton.textContent = 'Un instant…';
+    const resultat = await albDemandeAcces({
+      prenom: document.getElementById('demande-prenom').value,
+      nom: document.getElementById('demande-nom').value,
+      telephone: document.getElementById('demande-telephone').value,
+      email_actuel: document.getElementById('demande-ancien').value,
+      nouvel_email: document.getElementById('demande-nouveau').value,
+      message: document.getElementById('demande-message').value
+    });
+    bouton.disabled = false;
+    bouton.textContent = 'Envoyer ma demande';
+    if (!resultat.ok) { afficherMessage('message-demande', 'erreur', resultat.message); return; }
+    document.getElementById('formulaire-demande').reset();
+    afficherMessage('message-demande', 'succes', 'Votre demande est bien arrivée. Jocelyne vous rappelle très vite pour vérifier que c\'est bien vous, puis vous envoie votre lien. 💜');
+  }
+
+  async function gererChangementPin(event) {
+    event.preventDefault();
+    const pin = document.getElementById('profil-pin').value.trim();
+    if (!/^[0-9]{4}$/.test(pin)) { afficherMessage('message-pin', 'erreur', 'Votre code PIN doit contenir exactement 4 chiffres.'); return; }
+    if (pin !== document.getElementById('profil-pin-confirmation').value.trim()) {
+      afficherMessage('message-pin', 'erreur', 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?');
+      return;
+    }
+    const bouton = document.getElementById('bouton-pin');
+    bouton.disabled = true;
+    const resultat = await albChangerPin(pin);
+    bouton.disabled = false;
+    if (!resultat.ok) { afficherMessage('message-pin', 'erreur', resultat.message); return; }
+    document.getElementById('formulaire-pin').reset();
+    afficherMessage('message-pin', 'succes', "C'est enregistré ! Votre nouveau code PIN servira dès votre prochaine connexion.");
+  }
+
+  async function gererChangementEmail(event) {
+    event.preventDefault();
+    const bouton = document.getElementById('bouton-email');
+    bouton.disabled = true;
+    const resultat = await albDemandeAcces({
+      nouvel_email: document.getElementById('profil-nouvel-email').value,
+      message: document.getElementById('profil-email-message').value
+    });
+    bouton.disabled = false;
+    if (!resultat.ok) { afficherMessage('message-email', 'erreur', resultat.message); return; }
+    document.getElementById('formulaire-email').reset();
+    afficherMessage('message-email', 'succes', 'Votre demande est bien arrivée. Jocelyne vous rappelle très vite, puis vous envoie le lien pour valider votre nouvelle adresse. 💜');
   }
 
   function afficherBlocPro() {
@@ -861,8 +1029,15 @@
 
     if (!resultat.ok) {
       afficherMessage('message-connexion', 'erreur', resultat.message);
+      if (['IDENTIFIANTS_INCORRECTS', 'BLOQUE', 'BLOQUE_LONG'].indexOf(resultat.code) !== -1) echecsConnexion++;
+      // Dès le 3e essai raté (ou si le compte est en pause), on propose « code oublié »
+      if (echecsConnexion >= 3 || resultat.code === 'BLOQUE' || resultat.code === 'BLOQUE_LONG') {
+        document.getElementById('alerte-oubli').classList.remove('cache');
+      }
       return;
     }
+    echecsConnexion = 0;
+    document.getElementById('alerte-oubli').classList.add('cache');
     document.getElementById('formulaire-connexion').reset();
     await afficherEspace();
   }
@@ -969,6 +1144,7 @@
     if (profil.besoin_autre) etiquettes.push('✨ Autre');
 
     document.getElementById('titre-bienvenue').textContent = 'Bonjour ' + (profil.prenom || '') + ' !';
+    document.getElementById('profil-email-actuel').textContent = profil.email || '';
     document.getElementById('etiquettes-casquettes').innerHTML = etiquettes
       .map(function (texte) { return '<span class="etiquette">' + albEchapper(texte) + '</span>'; })
       .join('');
@@ -995,7 +1171,8 @@
 
   // Au chargement : si la personne est déjà connectée, on ouvre directement son espace
   document.addEventListener('DOMContentLoaded', function () {
-    if (location.hash === '#inscription') afficherOnglet('inscription');
+    const vue = location.hash.slice(1);
+    if (['inscription', 'oubli', 'demande'].indexOf(vue) !== -1) afficherOnglet(vue);
     afficherEspace(false);
   });
 </script>
