@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nouveau code PIN — ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #F5F3F0;
+      color: #4A4A47;
+      line-height: 1.6;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+
+    /* ========== CONTENU DE L'ESPACE (mobile d'abord) ========== */
+    .espace {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 30px 16px 10px;
+    }
+    .carte {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #E8E6E1;
+      padding: 24px 18px;
+      margin-bottom: 20px;
+    }
+    .intro { text-align: center; margin-bottom: 24px; }
+    .intro h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    .intro p { font-size: 0.95rem; }
+
+    /* Onglets Se connecter / Rejoindre ALB */
+    .onglets { display: flex; gap: 8px; margin-bottom: 20px; }
+    .onglet {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #E8E6E1;
+      background: #FBF8F3;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #4A4A47;
+      cursor: pointer;
+    }
+    .onglet.actif { border-color: #5A3A6A; background: #5A3A6A; color: white; }
+    .panneau { display: none; }
+    .panneau.actif { display: block; }
+
+    /* Champs */
+    .champ { margin-bottom: 16px; }
+    .champ label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+    .champ .aide { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
+    .champ input, .champ select, .champ textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #D8D5CE;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 1rem;
+      background: white;
+    }
+    .champ textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+    .champ input:focus, .champ select:focus, .champ textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .deux-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+
+    .choix { display: grid; gap: 10px; margin-bottom: 16px; }
+    .case {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #E8E6E1;
+      border-radius: 8px;
+      background: #FBF8F3;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .case input { margin-top: 4px; width: 18px; height: 18px; accent-color: #5A3A6A; }
+    .bloc-pro { display: none; padding: 16px; border-left: 3px solid #B28E3D; background: #FBF8F3; border-radius: 6px; margin-bottom: 16px; }
+    .bloc-pro.visible { display: block; }
+
+    .bouton {
+      display: inline-block;
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #B28E3D;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .bouton-discret {
+      background: none;
+      border: 1px solid #D8D5CE;
+      color: #4A4A47;
+      width: auto;
+      padding: 10px 18px;
+    }
+    .bouton-discret:hover { background: #F5F3F0; color: #5A3A6A; }
+
+    .message { display: none; padding: 12px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 0.92rem; }
+    .message.visible { display: block; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border: 1px solid #CBE3CD; }
+    .message.info { background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+
+    .lien-aide { display: block; text-align: center; margin-top: 14px; font-size: 0.88rem; color: #5A3A6A; cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; width: 100%; }
+
+    /* Espace connecté */
+    .bandeau-bienvenue { display: flex; flex-direction: column; gap: 14px; }
+    .bandeau-bienvenue h1 { font-size: 1.6rem; }
+    .etiquettes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .etiquette { background: #F4EEF6; color: #5A3A6A; font-size: 0.82rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .rubrique h2 { font-size: 1.25rem; margin-bottom: 8px; }
+    .rubrique p { font-size: 0.93rem; }
+    .bientot { display: inline-block; margin-top: 10px; font-size: 0.8rem; color: #B28E3D; font-weight: 600; }
+    .cache { display: none !important; }
+    .texte-intro { margin-bottom: 18px; font-size: 0.93rem; }
+    .titre-choix { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
+    .leger { font-weight: 400; }
+    .case-cgu { margin-bottom: 18px; }
+    .lien-pourpre { color: #5A3A6A; }
+    .message-espace { margin-top: 18px; }
+
+    /* Fenêtre de lecture des CGU / confidentialité */
+    .modal-document .modal-content { max-width: 860px; width: 94%; height: 88vh; max-height: 88vh; padding: 24px 18px 18px; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-document h2 { font-size: 1.3rem; margin-bottom: 12px; padding-right: 30px; }
+    .modal-document iframe { flex: 1; width: 100%; border: 1px solid #E8E6E1; border-radius: 6px; background: white; }
+    .modal-document .modal-buttons { margin-top: 14px; }
+
+    @media (min-width: 700px) {
+      .espace { padding: 50px 24px 20px; }
+      .carte { padding: 32px; }
+      .deux-colonnes { grid-template-columns: 1fr 1fr; }
+      .bandeau-bienvenue { flex-direction: row; justify-content: space-between; align-items: flex-start; }
+      .bouton { width: auto; min-width: 240px; }
+      .formulaire .bouton { width: 100%; }
+    }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<main class="espace">
+  <div class="intro">
+    <h1>Votre nouveau code PIN</h1>
+    <p>Encore une petite étape et vous retrouvez votre espace ALB.</p>
+  </div>
+
+  <div class="carte">
+    <!-- Pendant la vérification du lien -->
+    <p id="zone-chargement">Un instant, on vérifie votre lien…</p>
+
+    <!-- Lien plus valable -->
+    <div id="zone-invalide" class="cache">
+      <div class="message erreur visible">Ce lien n'est plus valable : il a peut-être déjà servi, ou son délai est dépassé. Pas de souci, vous pouvez en demander un nouveau.</div>
+      <a class="bouton" href="espace-alb.html#oubli">Recevoir un nouveau lien</a>
+      <p class="texte-intro" style="margin-top:16px;">Besoin d'aide ? Jocelyne est joignable au <a class="lien-pourpre" href="tel:+33745602805">07 45 60 28 05</a>.</p>
+    </div>
+
+    <!-- Formulaire -->
+    <form id="zone-formulaire" class="formulaire cache" onsubmit="enregistrer(event)">
+      <p class="texte-intro" id="texte-bonjour">Bonjour !</p>
+      <div class="message info" id="bloc-nouvel-email"></div>
+      <div class="message" id="message-code"></div>
+      <div class="deux-colonnes">
+        <div class="champ">
+          <label for="nouveau-pin">Choisissez votre nouveau code PIN</label>
+          <input type="password" id="nouveau-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required>
+          <div class="aide">4 chiffres, que vous utiliserez pour vous connecter.</div>
+        </div>
+        <div class="champ">
+          <label for="nouveau-pin-confirmation">Confirmez votre code PIN</label>
+          <input type="password" id="nouveau-pin-confirmation" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required>
+        </div>
+      </div>
+      <button type="submit" class="bouton" id="bouton-enregistrer">J'enregistre mon nouveau code</button>
+    </form>
+
+    <!-- C'est fait -->
+    <div id="zone-succes" class="cache">
+      <div class="message succes visible" id="texte-succes">C'est tout bon ! Votre nouveau code PIN est enregistré. 💜</div>
+      <a class="bouton" href="espace-alb.html">Aller à mon espace ALB</a>
+    </div>
+  </div>
+</main>
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
+    }
+  }
+
+
+  // ========== NOUVEAU CODE PIN ==========
+  // Le lien arrive sous la forme nouveau-code.html#jeton=XXXX
+  const jeton = new URLSearchParams(location.hash.slice(1)).get('jeton') || '';
+  // On retire le jeton de la barre d'adresse (il ne doit pas traîner à l'écran ni dans l'historique)
+  if (location.hash) history.replaceState(null, '', location.pathname);
+
+  function montrer(zone) {
+    ['zone-chargement', 'zone-invalide', 'zone-formulaire', 'zone-succes'].forEach(function (id) {
+      document.getElementById(id).classList.toggle('cache', id !== zone);
+    });
+  }
+
+  function afficherMessage(id, type, texte) {
+    const zone = document.getElementById(id);
+    zone.className = 'message visible ' + type;
+    zone.textContent = texte;
+  }
+
+  let nouvelEmail = '';
+
+  async function demarrer() {
+    if (!/^[0-9a-f]{20,}$/.test(jeton)) { montrer('zone-invalide'); return; }
+    const lien = await albLireLien(jeton);
+    if (!lien.ok) { montrer('zone-invalide'); return; }
+    document.getElementById('texte-bonjour').textContent =
+      'Bonjour ' + (lien.prenom || '') + ', choisissez votre nouveau code PIN : 4 chiffres faciles à retenir pour vous, mais difficiles à deviner pour les autres.';
+    const bloc = document.getElementById('bloc-nouvel-email');
+    if (lien.type === 'changement_email' && lien.nouvel_email) {
+      nouvelEmail = lien.nouvel_email;
+      bloc.textContent = '✉️ Votre nouvelle adresse e-mail sera : ' + lien.nouvel_email + '. C\'est avec elle que vous vous connecterez désormais.';
+      bloc.classList.add('visible');
+    }
+    montrer('zone-formulaire');
+  }
+
+  async function enregistrer(event) {
+    event.preventDefault();
+    const pin = document.getElementById('nouveau-pin').value.trim();
+    const confirmation = document.getElementById('nouveau-pin-confirmation').value.trim();
+    if (!/^[0-9]{4}$/.test(pin)) { afficherMessage('message-code', 'erreur', 'Votre code PIN doit contenir exactement 4 chiffres.'); return; }
+    if (pin !== confirmation) { afficherMessage('message-code', 'erreur', 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?'); return; }
+
+    const bouton = document.getElementById('bouton-enregistrer');
+    bouton.disabled = true;
+    bouton.textContent = 'Un instant…';
+    const resultat = await albUtiliserLien(jeton, pin);
+    bouton.disabled = false;
+    bouton.textContent = "J'enregistre mon nouveau code";
+
+    if (!resultat.ok) {
+      if ((resultat.message || '').indexOf("n'est plus valable") !== -1) { montrer('zone-invalide'); return; }
+      afficherMessage('message-code', 'erreur', resultat.message);
+      return;
+    }
+    if (nouvelEmail) {
+      document.getElementById('texte-succes').textContent =
+        'C\'est tout bon ! Votre nouvelle adresse (' + nouvelEmail + ') et votre nouveau code PIN sont enregistrés. 💜';
+    }
+    montrer('zone-succes');
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>
