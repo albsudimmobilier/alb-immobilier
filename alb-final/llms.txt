@@ -1,0 +1,27 @@
+# ALB Immobilier
+
+> ALB Immobilier (albimmobilier.fr) est la plateforme d'ALB Sud Immobilier, une entreprise du Var (Le Val, 83) qui accompagne les particuliers dans leurs projets en immobilier ancien — vendre, acheter, financer, rénover — et les met en relation avec des professionnels vérifiés : courtiers, artisans, agents et mandataires immobiliers. Zone couverte : le Var et les Bouches-du-Rhône. Inscription gratuite jusqu'au 31 décembre 2026.
+
+ALB Sud Immobilier a été fondée par Jocelyne Rimlinger. Sa devise : « Quand l'ancien se met à la bien » — « À la bien, toujours ».
+
+## Ce que propose ALB Immobilier
+
+- **Vendre entre particuliers** : le vendeur publie l'annonce de sa maison ou de son appartement ancien ; chaque annonce est relue et validée par ALB Sud Immobilier avant d'être en ligne.
+- **Acheter** : l'acheteur consulte les annonces et demande une visite après être passé par le simulateur budget.
+- **Financer et rénover** : ALB Sud Immobilier oriente les particuliers vers des courtiers et des artisans vérifiés, selon leur projet.
+- **Nos pros ALB** : un annuaire de professionnels rencontrés et validés un par un (appel obligatoire avant validation, numéros officiels vérifiés : ORIAS, carte T, RGE…).
+- **Pas de démarchage** : les professionnels ne contactent jamais un particulier de leur propre initiative ; c'est toujours le particulier qui choisit de les contacter, en passant par ALB.
+
+## Pages principales
+
+- [Accueil](https://albimmobilier.fr/) : présentation d'ALB Immobilier et des différents parcours
+- [Nos pros ALB](https://albimmobilier.fr/vitrine-pros.html) : les professionnels validés dans le Var et les Bouches-du-Rhône
+- [Annonces](https://albimmobilier.fr/annonces.html) : maisons et appartements anciens à vendre
+- [Projets ALB](https://albimmobilier.fr/projets-alb.html) : financement, travaux, accompagnement vente ou achat
+
+## Informations pratiques
+
+- Entreprise : ALB Sud Immobilier (SASU), Le Val (83), Var
+- Contact : contact@albimmobilier.fr — 07 45 60 28 05 (du lundi au vendredi)
+- [Conditions générales](https://albimmobilier.fr/cgu.html)
+- [Politique de confidentialité](https://albimmobilier.fr/confidentialite.html)
