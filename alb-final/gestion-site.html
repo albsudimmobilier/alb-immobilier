@@ -78,6 +78,7 @@
     .bloc-acces { margin-top: 12px; padding: 12px; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 8px; }
     .bloc-acces .actions { margin-top: 8px; }
     .texte-pret { width: 100%; min-height: 110px; font-size: 0.85rem; margin-top: 6px; }
+    .separation { margin-top: 14px !important; padding-top: 12px; border-top: 1px dashed #D8D5CE; }
     .historique { margin-top: 8px; font-size: 0.8rem; color: #7a7a75; }
     .historique li { margin-left: 16px; }
     .petit-champ { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; }
@@ -629,7 +630,37 @@
       '<input id="acces-email-' + id + '" type="email" value="' + albEchapper(emailPropose || '') + '"></label>' +
       '<div class="actions"><button class="bouton" onclick="preparerLien(\'' + id + '\', this)">✅ C\'est bien lui : préparer le lien</button></div>' +
       '<div id="acces-resultat-' + id + '"></div>' +
+      '<p class="ligne-info separation"><strong>📞 Il est au téléphone ?</strong> Tape directement le nouveau code PIN qu\'il te donne : il pourra se connecter tout de suite.</p>' +
+      '<div class="actions">' +
+        '<label class="petit-champ">Nouveau code PIN<input type="password" inputmode="numeric" maxlength="4" class="pin-direct"></label>' +
+        '<label class="petit-champ">Confirme-le<input type="password" inputmode="numeric" maxlength="4" class="pin-direct-confirmation"></label>' +
+        '<button class="bouton vert" onclick="mettrePinDirect(\'' + id + '\', this)">🔑 Enregistrer ce code</button>' +
+      '</div>' +
+      '<div class="resultat-pin"></div>' +
     '</div>';
+  }
+
+  // Jocelyne enregistre elle-même le nouveau code (membre au téléphone)
+  async function mettrePinDirect(id, bouton) {
+    const bloc = bouton.closest('.bloc-acces');
+    const pin = bloc.querySelector('.pin-direct').value.trim();
+    const confirmation = bloc.querySelector('.pin-direct-confirmation').value.trim();
+    const zone = bloc.querySelector('.resultat-pin');
+    if (!/^[0-9]{4}$/.test(pin)) { zone.innerHTML = '<p class="ligne-info" style="color:#8A2D2D;">Le code PIN doit contenir exactement 4 chiffres.</p>'; return; }
+    if (pin !== confirmation) { zone.innerHTML = '<p class="ligne-info" style="color:#8A2D2D;">Les deux codes ne sont pas identiques.</p>'; return; }
+    bouton.disabled = true;
+    const resultat = await albAppelerGuichet({ action: 'admin_definir_pin', profile_id: id, pin: pin });
+    bouton.disabled = false;
+    if (!resultat.ok) {
+      zone.innerHTML = '<p class="ligne-info" style="color:#8A2D2D;">' + albEchapper(ERREURS[resultat.code] || albMessageErreur(resultat.code)) + '</p>';
+      return;
+    }
+    const m = membres.find(function (x) { return x.id === id; }) || {};
+    bloc.querySelector('.pin-direct').value = '';
+    bloc.querySelector('.pin-direct-confirmation').value = '';
+    await toutRecharger();
+    afficherMessage('message-general', 'succes', '✅ C\'est enregistré ! ' + (m.prenom || 'Le membre') +
+      ' peut se connecter tout de suite avec ' + (m.email || 'son adresse') + ' et ce nouveau code. Son compte est débloqué, et il reçoit un e-mail de confirmation.');
   }
 
   function basculerAcces(id) {
