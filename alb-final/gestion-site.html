@@ -75,6 +75,11 @@
     .etiquette.rouge { background: #FBECEC; color: #8A2D2D; }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: flex-end; }
     .mot { background: #F4EEF6; border-left: 3px solid #5A3A6A; border-radius: 4px; padding: 8px 10px; margin: 8px 0; white-space: pre-line; }
+    .bloc-acces { margin-top: 12px; padding: 12px; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 8px; }
+    .bloc-acces .actions { margin-top: 8px; }
+    .texte-pret { width: 100%; min-height: 110px; font-size: 0.85rem; margin-top: 6px; }
+    .historique { margin-top: 8px; font-size: 0.8rem; color: #7a7a75; }
+    .historique li { margin-left: 16px; }
     .petit-champ { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; }
 
     input, select, textarea {
@@ -85,6 +90,7 @@
 
     .bouton { border: none; border-radius: 6px; padding: 10px 14px; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: #5A3A6A; color: #fff; }
     .bouton:hover { background: #B28E3D; }
+    a.bouton { display: inline-block; text-decoration: none; }
     .bouton:disabled { opacity: 0.6; cursor: wait; }
     .bouton.vert { background: #2E6B34; }
     .bouton.rouge { background: #fff; color: #8A2D2D; border: 1px solid #F0CACA; }
@@ -185,6 +191,7 @@
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
+      <button type="button" class="onglet" data-onglet="acces" onclick="afficherOnglet('acces')">🔑 Accès<span class="pastille" id="pastille-acces">0</span></button>
       <button type="button" class="onglet" data-onglet="bientot" onclick="afficherOnglet('bientot')">🔜 À venir</button>
     </nav>
 
@@ -235,6 +242,12 @@
       <div class="carte" id="liste-membres"></div>
     </div>
 
+    <!-- Accès : demandes de changement d'adresse / d'accès -->
+    <div class="panneau" id="panneau-acces">
+      <p class="aide">Les membres qui veulent changer d'adresse e-mail ou qui n'ont plus accès à leur compte. Rappelle-les pour vérifier que c'est bien eux, puis prépare leur lien. Pour un simple nouveau code PIN, laisse l'adresse vide. Tu peux aussi le faire depuis « Membres », bouton 🔑 Accès.</p>
+      <div class="liste-fiches" id="liste-acces"></div>
+    </div>
+
     <!-- À venir -->
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
@@ -270,10 +283,13 @@
     METIER_A_CHOISIR: "Choisis d'abord le métier de ce pro.",
     METIER_AUTRE_MANQUANT: 'Écris le nom du métier (il apparaîtra dans les filtres de « Nos pros ALB »).',
     PRO_NON_VALIDE: "Ce pro doit d'abord être validé.",
-    PROFIL_INTROUVABLE: 'Ce profil est introuvable.'
+    PROFIL_INTROUVABLE: 'Ce profil est introuvable.',
+    EMAIL_INVALIDE: "Cette adresse e-mail ne semble pas complète.",
+    EMAIL_DEJA_UTILISE: "Cette adresse e-mail est déjà utilisée par un autre membre."
   };
 
   let membres = [];
+  let demandesAcces = [];
 
   function afficherMessage(id, type, texte) {
     const zone = document.getElementById(id);
@@ -372,15 +388,18 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste] = await Promise.all([
+    const [compteurs, liste, acces] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
-      albSupabase.rpc('alb_gestion_membres')
+      albSupabase.rpc('alb_gestion_membres'),
+      albSupabase.rpc('alb_gestion_demandes_acces')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
       return;
     }
     membres = liste.data || [];
+    demandesAcces = acces.data || [];
+    afficherDemandesAcces();
     afficherCompteurs(compteurs.data || {});
     afficherAValider();
     afficherValides();
@@ -582,8 +601,135 @@
         '<div class="membre-nom">' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + (m.nom_entreprise ? ' · ' + albEchapper(m.nom_entreprise) : '') + '</div>' +
         etiquettesDe(m) + messageDe(m) + coordonnees(m) +
         '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
+        (m.compte_bloque ? '<p class="ligne-info">⛔ <strong>Compte en pause</strong> (trop de codes PIN faux)</p>' : '') +
+        '<div class="actions">' +
+          '<button class="bouton discret" onclick="basculerAcces(\'' + m.id + '\')">🔑 Accès</button>' +
+          (m.compte_bloque ? '<button class="bouton discret" onclick="debloquer(\'' + m.id + '\', this)">🔓 Débloquer</button>' : '') +
+        '</div>' +
+        blocAcces(m.id, '') +
+        historiqueDe(m) +
       '</div>';
     }).join('');
+  }
+
+  // ---------- Accès au compte ----------
+  function historiqueDe(m) {
+    const h = m.historique || [];
+    if (!h.length) return '';
+    return '<details class="historique"><summary>🕘 Historique du compte</summary><ul>' +
+      h.map(function (e) {
+        return '<li>' + dateLisible(e.le) + ' : ' + albEchapper(e.evenement) + (e.detail ? ' (' + albEchapper(e.detail) + ')' : '') + '</li>';
+      }).join('') + '</ul></details>';
+  }
+
+  // Petit bloc « préparer le lien » (nouvelle adresse facultative)
+  function blocAcces(id, emailPropose) {
+    return '<div class="bloc-acces cache" id="acces-' + id + '">' +
+      '<label class="petit-champ">Nouvelle adresse e-mail <span style="font-weight:400">(laisse vide pour un simple nouveau code PIN)</span>' +
+      '<input id="acces-email-' + id + '" type="email" value="' + albEchapper(emailPropose || '') + '"></label>' +
+      '<div class="actions"><button class="bouton" onclick="preparerLien(\'' + id + '\', this)">✅ C\'est bien lui : préparer le lien</button></div>' +
+      '<div id="acces-resultat-' + id + '"></div>' +
+    '</div>';
+  }
+
+  function basculerAcces(id) {
+    document.querySelectorAll('[id="acces-' + id + '"]').forEach(function (b) { b.classList.toggle('cache'); });
+  }
+
+  function afficherDemandesAcces() {
+    document.getElementById('pastille-acces').textContent = demandesAcces.length;
+    const zone = document.getElementById('liste-acces');
+    if (!demandesAcces.length) { zone.innerHTML = '<div class="carte vide">Aucune demande en attente. 🌿</div>'; return; }
+    zone.innerHTML = demandesAcces.map(function (d) {
+      const membre = membres.find(function (m) { return m.id === d.profile_id; });
+      const tel = (d.telephone || '').replace(/[^0-9+]/g, '');
+      return '<div class="carte fiche">' +
+        '<h3>' + albEchapper((d.prenom || '') + ' ' + (d.nom || '')) + '</h3>' +
+        '<p class="ligne-info">🗓️ Demande du ' + dateLisible(d.cree_le) + '</p>' +
+        (tel ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(tel) + '">' + albEchapper(d.telephone) + '</a></p>' : '') +
+        (d.email_actuel ? '<p class="ligne-info">✉️ Adresse actuelle : ' + albEchapper(d.email_actuel) + '</p>' : '') +
+        (d.nouvel_email ? '<p class="ligne-info">➡️ Nouvelle adresse souhaitée : <strong>' + albEchapper(d.nouvel_email) + '</strong></p>' : '') +
+        (d.message ? '<p class="ligne-info mot">💬 « ' + albEchapper(d.message) + ' »</p>' : '') +
+        (membre
+          ? '<p class="ligne-info">👤 Membre retrouvé : <strong>' + albEchapper((membre.prenom || '') + ' ' + (membre.nom || '')) + '</strong> (' + albEchapper(membre.email) + ')</p>' +
+            '<div class="actions"><button class="bouton discret" onclick="basculerAcces(\'' + membre.id + '\')">🔑 Préparer son lien</button>' +
+            '<button class="bouton discret" onclick="demandeTraitee(\'' + d.id + '\', this)">✓ Marquer comme traitée</button></div>' +
+            blocAcces(membre.id, d.nouvel_email)
+          : '<p class="ligne-info">⚠️ Aucun membre retrouvé avec cette adresse ou ce téléphone : appelle cette personne pour comprendre.</p>' +
+            '<div class="actions"><button class="bouton discret" onclick="demandeTraitee(\'' + d.id + '\', this)">✓ Marquer comme traitée</button></div>') +
+      '</div>';
+    }).join('');
+  }
+
+  async function demandeTraitee(id, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_demande_traitee', { p_id: id });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    await toutRecharger();
+  }
+
+  async function debloquer(id, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_debloquer', { p_id: id });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', 'succes', 'Compte débloqué ✓');
+    await toutRecharger();
+  }
+
+  // Prépare le lien, puis les messages tout rédigés à envoyer depuis TA messagerie / TON téléphone
+  async function preparerLien(id, bouton) {
+    const bloc = bouton.closest('.bloc-acces');
+    const nouvelEmail = bloc.querySelector('input[type="email"]').value.trim();
+    bouton.disabled = true;
+    const { data, error } = await albSupabase.rpc('alb_gestion_preparer_lien', { p_id: id, p_nouvel_email: nouvelEmail || null });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+
+    const m = membres.find(function (x) { return x.id === id; }) || {};
+    const lien = location.origin + '/nouveau-code.html#jeton=' + data.jeton;
+    const changement = data.type === 'changement_email';
+    const sujet = changement ? 'Votre nouvelle adresse sur ALB Immobilier' : 'Votre nouveau code PIN ALB';
+    const texteEmail =
+      'Bonjour ' + (m.prenom || '') + ',\n\n' +
+      (changement
+        ? 'Comme convenu au téléphone, voici votre lien pour enregistrer votre nouvelle adresse e-mail (' + data.email_envoi + ') et choisir un nouveau code PIN :'
+        : 'Comme convenu au téléphone, voici votre lien pour choisir un nouveau code PIN :') +
+      '\n\n' + lien + '\n\n' +
+      'Ce lien est valable 48 heures et ne sert qu\'une seule fois.\n\n' +
+      'À la bien, toujours ✨\nJocelyne\nALB Sud Immobilier · 07 45 60 28 05';
+    const texteSms = 'Bonjour ' + (m.prenom || '') + ', c\'est Jocelyne d\'ALB. ' +
+      (changement ? 'Je viens de vous envoyer par e-mail (' + data.email_envoi + ') le lien pour valider votre nouvelle adresse. ' : 'Voici votre lien pour choisir un nouveau code PIN : ' + lien + ' ') +
+      'Valable 48 h. À la bien !';
+    const tel = (m.telephone || '').replace(/[^0-9+]/g, '');
+
+    const zone = document.getElementById('acces-resultat-' + id + '') ;
+    const cible = bloc.querySelector('[id^="acces-resultat-"]') || zone;
+    cible.innerHTML =
+      '<p class="ligne-info" style="margin-top:10px;">✅ Lien prêt (valable 48 h). Envoie-le depuis chez toi :</p>' +
+      '<p class="ligne-info"><strong>✉️ E-mail à envoyer à ' + albEchapper(data.email_envoi) + '</strong></p>' +
+      '<textarea class="texte-pret" readonly>' + albEchapper(texteEmail) + '</textarea>' +
+      '<div class="actions">' +
+        '<a class="bouton" href="mailto:' + encodeURIComponent(data.email_envoi) + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(texteEmail) + '">Ouvrir ma messagerie</a>' +
+        '<button class="bouton discret" type="button" onclick="copier(this)">📋 Copier l\'e-mail</button>' +
+      '</div>' +
+      '<p class="ligne-info" style="margin-top:12px;"><strong>📱 SMS pour le prévenir</strong>' + (tel ? ' (' + albEchapper(m.telephone) + ')' : '') + '</p>' +
+      '<textarea class="texte-pret" readonly>' + albEchapper(texteSms) + '</textarea>' +
+      '<div class="actions">' +
+        (tel ? '<a class="bouton" href="sms:' + albEchapper(tel) + '?body=' + encodeURIComponent(texteSms) + '">Ouvrir mes SMS</a>' : '') +
+        '<button class="bouton discret" type="button" onclick="copier(this)">📋 Copier le SMS</button>' +
+      '</div>';
+  }
+
+  // Copie le texte juste au-dessus du bouton
+  async function copier(bouton) {
+    const texte = bouton.closest('.actions').previousElementSibling.value;
+    try { await navigator.clipboard.writeText(texte); }
+    catch (e) { const t = bouton.closest('.actions').previousElementSibling; t.select(); document.execCommand('copy'); }
+    const avant = bouton.textContent;
+    bouton.textContent = '✓ Copié';
+    setTimeout(function () { bouton.textContent = avant; }, 1500);
   }
 
   document.addEventListener('DOMContentLoaded', demarrer);
