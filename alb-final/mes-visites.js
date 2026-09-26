@@ -64,7 +64,7 @@
     corps += '<p class="mv-budget">Budget estimé : <strong>' + e(euros(d.budget_estime)) + '</strong>' + (d.dans_budget ? ' ✅' : '') +
       (d.courtier_souhaite ? ' · Rappel courtier demandé' : '') + '</p>';
 
-    let boutons = '';
+    let boutons = '<button type="button" class="mv-btn" data-action="ecrire" data-demande="' + e(d.id) + '">💬 Écrire ' + (d.type_vente === 'accompagnee' ? 'au professionnel' : 'au vendeur') + '</button>';
     if (!passee) {
       if (d.statut === 'autre_moment') {
         boutons += '<button type="button" class="mv-btn mv-btn-oui" data-action="accepter" data-demande="' + e(d.id) + '">✅ Ça me va</button>';
@@ -159,7 +159,9 @@
       zone.dataset.branche = '1';
       zone.addEventListener('click', function (ev) {
         const b = ev.target.closest('.mv-btn');
-        if (b && !b.disabled) agir(b);
+        if (!b || b.disabled) return;
+        if (b.dataset.action === 'ecrire') { if (window.albMessagerieOuvrir) window.albMessagerieOuvrir({ demande: b.dataset.demande }); return; }
+        agir(b);
       });
     }
     try {
