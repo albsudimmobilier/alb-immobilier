@@ -233,6 +233,7 @@
       <button type="button" class="onglet actif" data-onglet="accueil" onclick="afficherOnglet('accueil')">📊 Tableau de bord</button>
       <button type="button" class="onglet" data-onglet="annonces" onclick="afficherOnglet('annonces')">🏡 Annonces<span class="pastille" id="pastille-annonces">0</span></button>
       <button type="button" class="onglet" data-onglet="visites" onclick="afficherOnglet('visites')">📅 Visites<span class="pastille" id="pastille-visites">0</span></button>
+      <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
@@ -311,6 +312,13 @@
       <div id="liste-visites"></div>
     </div>
 
+    <!-- Messages -->
+    <div class="panneau" id="panneau-messages">
+      <p class="aide">Toutes les conversations entre membres, en lecture seule, les plus récentes en premier. Rappel : un pro ne peut jamais écrire en premier à un particulier, le site le bloque.</p>
+      <input type="search" class="recherche" id="recherche-messages" placeholder="Rechercher un nom, un sujet, un mot…" oninput="afficherMessages()">
+      <div id="liste-messages"></div>
+    </div>
+
     <!-- Pros à valider -->
     <div class="panneau" id="panneau-a-valider">
       <p class="aide">Les pros qui ont rejoint ALB et attendent ton appel. Une fois l'appel fait, valide-les (le SIRET est obligatoire) : ils reçoivent alors leur e-mail de bienvenue.</p>
@@ -383,6 +391,7 @@
   let annonces = [];
   let rappelsMandat = [];
   let visites = [];
+  let conversations = [];
   let filtreVisites = null;
   let filtreStatut = 'a_etudier';
   let filtreType = 'tous';
@@ -484,13 +493,14 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
       albSupabase.rpc('alb_gestion_annonces'),
       albSupabase.rpc('alb_gestion_rappels_mandat'),
-      albSupabase.rpc('alb_gestion_visites')
+      albSupabase.rpc('alb_gestion_visites'),
+      albSupabase.rpc('alb_gestion_conversations')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -501,7 +511,9 @@
     annonces = lesAnnonces.data || [];
     rappelsMandat = lesMandats.data || [];
     visites = lesVisites.data || [];
+    conversations = lesConversations.data || [];
     afficherDemandesAcces();
+    afficherMessages();
     afficherVisites();
     afficherAnnonces();
     afficherRappelsMandat();
@@ -895,6 +907,42 @@
       '<textarea class="texte-pret" readonly>' + albEchapper(texte) + '</textarea>' +
       '<div class="actions"><a class="bouton" href="sms:' + albEchapper(num) + '?&body=' + encodeURIComponent(texte) + '">📱 Ouvrir le SMS</a>' +
       '<button type="button" class="bouton discret" onclick="copier(this)">📋 Copier le texte</button></div></div>';
+  }
+
+  // ---------- Messages entre membres (lecture seule) ----------
+  function personneMessage(p) {
+    p = p || {};
+    return badgeQuiLarge(p) + ' <strong>' + albEchapper(((p.prenom || '') + ' ' + (p.nom || '')).trim()) + '</strong>' +
+      (p.nom_entreprise && p.role !== 'particulier' ? ' <span class="etiquette or">' + albEchapper(p.nom_entreprise) + '</span>' : '');
+  }
+  function badgeQuiLarge(p) {
+    if (p.role === 'immo' || p.role === 'particulier') return badgeQui(p);
+    const metiers = { courtier: '🏦 Courtier', artisan: '🔨 Artisan' };
+    return '<span class="badge-qui agent">' + (metiers[p.role] || '🤝 Pro') + '</span>';
+  }
+  function afficherMessages() {
+    const zone = document.getElementById('liste-messages');
+    const recherche = (document.getElementById('recherche-messages').value || '').trim().toLowerCase();
+    const liste = conversations.filter(function (c) {
+      if (!recherche) return true;
+      const i = c.initiateur || {}, d = c.destinataire || {};
+      return [c.sujet, i.prenom, i.nom, i.nom_entreprise, d.prenom, d.nom, d.nom_entreprise].concat((c.messages || []).map(function (m) { return m.texte; }))
+        .some(function (v) { return String(v || '').toLowerCase().includes(recherche); });
+    });
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucune conversation pour le moment. 🌿</div>'; return; }
+    zone.innerHTML = liste.map(function (c) {
+      const i = c.initiateur || {}, d = c.destinataire || {};
+      const noms = {}; noms[i.id] = i.prenom || 'Initiateur'; noms[d.id] = d.prenom || 'Destinataire';
+      return '<div class="carte fiche">' +
+        '<p class="ligne-info">' + personneMessage(i) + ' <span style="color:#7a7a75;">a écrit à</span> ' + personneMessage(d) + '</p>' +
+        '<p class="ligne-info">📌 ' + albEchapper(c.sujet) + ' · ' + (c.messages || []).length + ' message' + ((c.messages || []).length > 1 ? 's' : '') + ' · dernier le ' + dateLisible(c.dernier_message_le) + '</p>' +
+        '<details class="historique"><summary>Lire la conversation</summary>' +
+          (c.messages || []).map(function (m) {
+            return '<p class="ligne-info mot"><strong>' + albEchapper(noms[m.auteur_id] || '?') + '</strong> · ' + dateLisible(m.le) + ' : ' + albEchapper(m.texte) + '</p>';
+          }).join('') +
+        '</details>' +
+      '</div>';
+    }).join('');
   }
 
   // ---------- Vendeurs sous mandat exclusif ----------
