@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="alb-connexion.js"></script>
+  <script src="mes-annonces.js"></script>
 
   <style>
     /* ========== BASE DE LA PAGE ========== */
@@ -721,8 +722,8 @@
 
     <div class="carte rubrique cache" id="rubrique-vendeur">
       <h2>🏡 Mes annonces</h2>
-      <p>Vendez À La Bien : racontez votre bien, ajoutez vos photos et suivez vos demandes de visite.</p>
-      <span class="bientot">Bientôt disponible ici</span>
+      <p>Vos biens à vendre : suivez leur statut, modifiez-les, gérez vos photos et vos disponibilités de visite.</p>
+      <div id="mes-annonces"></div>
     </div>
 
     <div class="carte rubrique cache" id="rubrique-pro">
@@ -1150,7 +1151,15 @@
       .join('');
 
     document.getElementById('rubrique-acheteur').classList.toggle('cache', !casquettes.includes('acheteur'));
-    document.getElementById('rubrique-vendeur').classList.toggle('cache', !casquettes.includes('vendeur'));
+    // « Mes annonces » : vendeurs, agents et mandataires… et toute personne qui a déjà une annonce
+    const rubriqueVendeur = document.getElementById('rubrique-vendeur');
+    const vendeurOuImmo = casquettes.includes('vendeur') || profil.role === 'immo';
+    rubriqueVendeur.classList.toggle('cache', !vendeurOuImmo);
+    if (window.albMesAnnonces) {
+      window.albMesAnnonces(profil).then(function (aDesAnnonces) {
+        if (aDesAnnonces) rubriqueVendeur.classList.remove('cache');
+      });
+    }
     document.getElementById('rubrique-pro').classList.toggle('cache', !estPro);
 
     // Message d'accueil selon la situation
