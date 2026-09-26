@@ -163,7 +163,7 @@
       }
     }
 
-    const aTraiter = x.visites.filter(function (d) { return d.statut === 'en_attente' && d.type_vente === 'particulier'; }).length;
+    const aTraiter = x.visites.filter(function (d) { return d.statut === 'en_attente'; }).length;
     if (x.visites.length) {
       boutons += '<button type="button" class="ma-btn ma-btn-visites' + (ouvert[a.id] === 'visites' ? ' actif' : '') + (aTraiter ? ' ma-a-traiter' : '') + '" data-action="ouvrir" data-panneau="visites" data-id="' + e(a.id) + '">📬 Demandes de visite (' + x.visites.length + ')' + (aTraiter ? ' · ' + aTraiter + ' à traiter' : '') + '</button>';
     }
@@ -464,7 +464,9 @@
         '<div class="ma-visite-tete"><strong>' + e(((d.acheteur_prenom || '') + ' ' + (d.acheteur_nom || '')).trim() || 'Un acheteur') + '</strong>' +
         '<span class="ma-visite-statut">' + e(passee ? 'Visite passée' : (STATUTS_VISITE[d.statut] || d.statut)) + '</span></div>';
       if (d.type_vente === 'accompagnee') {
-        html += '<div class="ma-petit">Demande du ' + e(dateCourte(d.cree_le)) + '. Il a accepté que vous l’appeliez pour fixer la visite.</div>';
+        html += d.statut === 'acceptee' && d.creneau_date
+          ? '<div class="ma-visite-quand">📅 ' + e(moment(d.creneau_date, d.creneau_heure)) + '</div>'
+          : '<div class="ma-petit">Demande du ' + e(dateCourte(d.cree_le)) + '. Il a accepté que vous l’appeliez pour fixer la visite.</div>';
       } else {
         const quand = d.statut === 'autre_moment' ? moment(d.nouveau_creneau_date, d.nouveau_creneau_heure) : moment(d.creneau_date, d.creneau_heure);
         html += '<div class="ma-visite-quand">' + (quand ? '📅 ' + e(quand) : 'Aucun de vos créneaux ne lui convenait : proposez-lui un moment.') + '</div>';
@@ -473,6 +475,19 @@
       if (d.budget_ok === true) html += '<div class="ma-petit">✅ Budget vérifié avec le simulateur ALB : ce bien entre dans son budget.</div>';
       if (d.message) html += '<div class="ma-visite-mot">💬 ' + e(d.message) + '</div>';
 
+      // Vente accompagnée : le pro indique la date fixée au téléphone (rappels la veille pour tous)
+      if (d.type_vente === 'accompagnee' && !passee && (d.statut === 'en_attente' || d.statut === 'acceptee')) {
+        html += '<div class="ma-boutons"><button type="button" class="ma-btn ma-btn-oui" data-action="visite-autre" data-demande="' + e(d.id) + '">📅 ' + (d.statut === 'acceptee' ? 'Changer la date' : 'J’ai fixé la visite') + '</button>' +
+          '<button type="button" class="ma-btn" data-action="visite" data-decision="annuler" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Annuler</button></div>' +
+          '<div class="ma-autre cache" id="ma-autre-' + e(d.id) + '">' +
+            '<div class="ma-nouveau-dispo">' +
+              '<div class="champ"><label for="va-date-' + e(d.id) + '">Jour de la visite</label><input type="date" id="va-date-' + e(d.id) + '" min="' + aujourdhui() + '" value="' + e(d.creneau_date || '') + '"></div>' +
+              '<div class="champ"><label for="va-heure-' + e(d.id) + '">Heure</label><input type="time" id="va-heure-' + e(d.id) + '" step="900" value="' + e(d.creneau_heure || '14:00') + '"></div>' +
+            '</div>' +
+            '<button type="button" class="bouton" data-action="visite" data-decision="fixer" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Enregistrer la date</button>' +
+            '<div class="ma-petit" style="margin-top:8px;">L’acheteur reçoit la confirmation avec la fiche du bien, et vous recevez tous les deux un rappel la veille.</div>' +
+          '</div>';
+      }
       if (d.type_vente === 'particulier' && !passee) {
         if (d.statut === 'en_attente') {
           html += '<div class="ma-boutons">' +
@@ -500,14 +515,14 @@
     return '<div class="ma-panneau"><h3>📬 Demandes de visite</h3>' +
       (x.a.type_vente === 'particulier'
         ? '<p class="ma-petit">Vous voyez le prénom et le moment demandé. Dès que vous acceptez, vous recevez tous les deux les coordonnées par e-mail, et un rappel la veille.</p>'
-        : '<p class="ma-petit">Chaque acheteur a accepté que vous l’appeliez pour fixer la visite. Vous avez reçu ses coordonnées par e-mail.</p>') +
+        : '<p class="ma-petit">Chaque acheteur a accepté que vous l’appeliez pour fixer la visite. Une fois la date convenue, cliquez sur « J’ai fixé la visite » : il reçoit la confirmation, et vous recevez tous les deux un rappel la veille.</p>') +
       lignes + '</div>';
   }
 
   async function repondreVisite(bouton) {
     const id = bouton.dataset.id, demande = bouton.dataset.demande, decision = bouton.dataset.decision;
     const corps = { action: 'reponse_visite', demande_id: demande, decision: decision };
-    if (decision === 'autre_moment') {
+    if (decision === 'autre_moment' || decision === 'fixer') {
       corps.date = texte('va-date-' + demande); corps.heure = texte('va-heure-' + demande); corps.message = texte('va-mot-' + demande);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(corps.date) || corps.date < aujourdhui() || !/^\d{2}:\d{2}$/.test(corps.heure)) {
         montrerMessage('ma-msg-' + id, 'erreur', 'Choisissez un jour à venir et une heure.');
@@ -528,6 +543,7 @@
     montrerMessage('ma-msg-' + id, 'succes', {
       accepter: 'Visite confirmée ✅ Vous recevez tous les deux un e-mail avec les coordonnées.',
       autre_moment: 'Votre proposition est partie 📅 Il vous répondra depuis son espace.',
+      fixer: 'Date enregistrée ✅ L’acheteur reçoit la confirmation, et un rappel partira la veille.',
       refuser: 'C’est noté. L’acheteur est prévenu.',
       annuler: 'Visite annulée. Le visiteur est prévenu.',
     }[decision]);
