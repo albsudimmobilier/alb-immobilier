@@ -156,6 +156,32 @@
       .liste-fiches { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
       .liste-fiches .carte { margin-bottom: 0; }
     }
+    /* Rangement par personne */
+    .proprio { background: #fff; border: 1px solid #E8E6E1; border-left: 5px solid #5A3A6A; border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+    .proprio.pro { border-left-color: #B28E3D; }
+    .proprio-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #D8D5CE; }
+    .proprio-nom { font-size: 1.08rem; font-weight: 700; color: #2a2a28; }
+    .proprio-coord { font-size: 0.86rem; display: flex; flex-wrap: wrap; gap: 4px 14px; width: 100%; }
+    .proprio-coord a { color: #5A3A6A; }
+    .badge-qui { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 3px 11px; border-radius: 14px; }
+    .badge-qui.particulier { background: #F4EEF6; color: #5A3A6A; }
+    .badge-qui.agent { background: #FBF3E4; color: #8A6A1F; }
+    .badge-qui.mandataire { background: #E9F1F7; color: #2F5A7A; }
+    .badge-qui.acheteur { background: #EEF6EE; color: #2E6B34; }
+    .compte { font-size: 0.8rem; color: #7a7a75; margin-left: auto; }
+    .proprio .liste-fiches .carte { border-color: #EFEAE3; background: #FFFEFC; }
+    .bien-visites { border: 1px solid #EFEAE3; border-radius: 8px; padding: 10px 12px; margin-top: 10px; background: #FFFEFC; }
+    .bien-visites-titre { font-weight: 700; color: #5A3A6A; font-size: 0.95rem; margin-bottom: 6px; }
+    .visite { border-top: 1px solid #F0EEE9; padding: 10px 0 4px; font-size: 0.88rem; }
+    .visite:first-of-type { border-top: none; }
+    .visite-tete { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+    .visite-nom { font-weight: 700; color: #2a2a28; }
+    .visite a { color: #5A3A6A; }
+    .visite a.bouton { color: #fff; text-decoration: none; }
+    .visite .ligne-info { font-size: 0.86rem; }
+    .sms { background: #F4EEF6; border-radius: 8px; padding: 10px; margin-top: 8px; }
+    .sms .actions { margin-top: 6px; }
+    .retard { color: #8A2D2D; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -206,6 +232,7 @@
     <nav class="onglets">
       <button type="button" class="onglet actif" data-onglet="accueil" onclick="afficherOnglet('accueil')">📊 Tableau de bord</button>
       <button type="button" class="onglet" data-onglet="annonces" onclick="afficherOnglet('annonces')">🏡 Annonces<span class="pastille" id="pastille-annonces">0</span></button>
+      <button type="button" class="onglet" data-onglet="visites" onclick="afficherOnglet('visites')">📅 Visites<span class="pastille" id="pastille-visites">0</span></button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
@@ -235,6 +262,14 @@
         <div class="compteur alerte"><div class="valeur" id="c-mandats">–</div><div class="libelle">📅 Mandats exclusifs à rappeler</div></div>
       </div>
 
+      <h2 class="titre-section">Visites</h2>
+      <div class="compteurs">
+        <div class="compteur alerte"><div class="valeur" id="c-vis-demain">–</div><div class="libelle">📱 Visites demain (SMS)</div></div>
+        <div class="compteur alerte"><div class="valeur" id="c-vis-retard">–</div><div class="libelle">⏳ Sans réponse depuis 48 h</div></div>
+        <div class="compteur"><div class="valeur" id="c-vis-a-venir">–</div><div class="libelle">✅ Visites confirmées à venir</div></div>
+        <div class="compteur"><div class="valeur" id="c-vis-courtiers">–</div><div class="libelle">🏦 Rappels courtier demandés</div></div>
+      </div>
+
       <h2 class="titre-section">Particuliers</h2>
       <div class="compteurs">
         <div class="compteur"><div class="valeur" id="c-acheteurs">–</div><div class="libelle">🔎 Acheteurs</div></div>
@@ -257,13 +292,23 @@
     <!-- Annonces -->
     <div class="panneau" id="panneau-annonces">
       <p class="aide">Chaque nouvelle annonce attend ton appel avant d'être mise en ligne. Une fois en ligne, un point est à faire tous les mois avec le propriétaire : clique sur ta décision après l'appel. Rien n'est jamais supprimé : une annonce vendue quitte le site mais reste ici.</p>
+      <input type="search" class="recherche" id="recherche-annonces" placeholder="Rechercher un propriétaire, une ville, un bien…" oninput="afficherAnnonces()">
       <div class="filtres" id="filtres-statut"></div>
       <div class="filtres" id="filtres-type"></div>
-      <div class="liste-fiches" id="liste-annonces"></div>
+      <p class="aide">Rangées par propriétaire : chaque personne a sa carte, avec tous ses biens dessous.</p>
+      <div id="liste-annonces"></div>
 
       <h2 class="titre-section">📅 Vendeurs sous mandat exclusif à rappeler</h2>
       <p class="aide">Ils ne pouvaient pas diffuser leur bien (mandat exclusif en cours) et ont accepté d'être recontactés. Tu reçois aussi un rappel par e-mail le jour de la fin de leur mandat.</p>
       <div class="liste-fiches" id="liste-mandats"></div>
+    </div>
+
+    <!-- Visites -->
+    <div class="panneau" id="panneau-visites">
+      <p class="aide">Toutes les demandes de visite, rangées par propriétaire puis par bien. Pour une visite prévue demain, ouvre cette page sur ton téléphone : le bouton 📱 ouvre ta messagerie avec le numéro et le texte déjà prêts, tu n'as plus qu'à envoyer.</p>
+      <input type="search" class="recherche" id="recherche-visites" placeholder="Rechercher un nom, un bien, une ville…" oninput="afficherVisites()">
+      <div class="filtres" id="filtres-visites"></div>
+      <div id="liste-visites"></div>
     </div>
 
     <!-- Pros à valider -->
@@ -294,7 +339,6 @@
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
-        <p class="ligne-info">📅 <strong>Visites</strong> : demandées, confirmées, repoussées, refusées, à venir.</p>
         <p class="ligne-info">⭐ <strong>Avis</strong> : valider ou refuser les avis laissés sur les pros.</p>
         <p class="ligne-info">🤝 <strong>Demandes aux pros</strong> : qui a reçu quoi, qui a répondu.</p>
       </div>
@@ -338,6 +382,8 @@
   let demandesAcces = [];
   let annonces = [];
   let rappelsMandat = [];
+  let visites = [];
+  let filtreVisites = null;
   let filtreStatut = 'a_etudier';
   let filtreType = 'tous';
 
@@ -438,12 +484,13 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces, lesAnnonces, lesMandats] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
       albSupabase.rpc('alb_gestion_annonces'),
-      albSupabase.rpc('alb_gestion_rappels_mandat')
+      albSupabase.rpc('alb_gestion_rappels_mandat'),
+      albSupabase.rpc('alb_gestion_visites')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -453,7 +500,9 @@
     demandesAcces = acces.data || [];
     annonces = lesAnnonces.data || [];
     rappelsMandat = lesMandats.data || [];
+    visites = lesVisites.data || [];
     afficherDemandesAcces();
+    afficherVisites();
     afficherAnnonces();
     afficherRappelsMandat();
     afficherCompteurs(compteurs.data || {});
@@ -516,10 +565,58 @@
     }).join('');
 
     const testStatut = (FILTRES_STATUT.find(function (f) { return f[0] === filtreStatut; }) || FILTRES_STATUT[0])[2];
-    const liste = annonces.filter(testStatut).filter(function (a) { return filtreType === 'tous' || a.type_vente === filtreType; });
+    const recherche = (document.getElementById('recherche-annonces').value || '').trim().toLowerCase();
+    const liste = annonces.filter(testStatut)
+      .filter(function (a) { return filtreType === 'tous' || a.type_vente === filtreType; })
+      .filter(function (a) {
+        if (!recherche) return true;
+        const p = a.proprietaire || {};
+        return [a.titre, a.ville, a.code_postal, p.prenom, p.nom, p.nom_entreprise, p.email, p.telephone]
+          .some(function (v) { return String(v || '').toLowerCase().includes(recherche); });
+      });
     const zone = document.getElementById('liste-annonces');
     if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucune annonce ici pour le moment. 🌿</div>'; return; }
-    zone.innerHTML = liste.map(ficheAnnonce).join('');
+    zone.innerHTML = grouperParPersonne(liste, function (a) { return a.proprietaire || {}; }).map(function (g) {
+      return '<div class="proprio' + (g.p.role === 'immo' ? ' pro' : '') + '">' + enteteProprio(g.p, g.items.length + ' bien' + (g.items.length > 1 ? 's' : '')) +
+        '<div class="liste-fiches">' + g.items.map(ficheAnnonce).join('') + '</div></div>';
+    }).join('');
+  }
+
+  // ---------- Rangement par personne (commun aux annonces et aux visites) ----------
+  function badgeQui(p) {
+    if (p.role === 'immo') return p.sous_role_immo === 'mandataire'
+      ? '<span class="badge-qui mandataire">📋 Mandataire</span>'
+      : '<span class="badge-qui agent">🏠 Agent immobilier</span>';
+    return '<span class="badge-qui particulier">🏡 Particulier</span>';
+  }
+  function lienTelephone(t) {
+    const net = String(t || '').replace(/[^0-9+]/g, '');
+    return net ? '<a href="tel:' + albEchapper(net) + '">📱 ' + albEchapper(t) + '</a>' : '';
+  }
+  function enteteProprio(p, compte) {
+    return '<div class="proprio-tete">' + badgeQui(p) +
+      '<span class="proprio-nom">' + albEchapper(((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Propriétaire inconnu') + '</span>' +
+      (p.role === 'immo' && p.nom_entreprise ? '<span class="etiquette or">' + albEchapper(p.nom_entreprise) + '</span>' : '') +
+      '<span class="compte">' + albEchapper(compte) + '</span>' +
+      '<div class="proprio-coord">' + lienTelephone(p.telephone) +
+        (p.email ? '<a href="mailto:' + albEchapper(p.email) + '">✉️ ' + albEchapper(p.email) + '</a>' : '') + '</div>' +
+    '</div>';
+  }
+  function grouperParPersonne(liste, qui) {
+    const groupes = [];
+    const index = {};
+    liste.forEach(function (x) {
+      const p = qui(x);
+      const cle = p.id || ('inconnu-' + (p.email || ''));
+      if (!index[cle]) { index[cle] = { p: p, items: [] }; groupes.push(index[cle]); }
+      index[cle].items.push(x);
+    });
+    // Les particuliers d'abord, puis les agents et mandataires ; par ordre alphabétique
+    return groupes.sort(function (g1, g2) {
+      const r1 = g1.p.role === 'immo' ? 1 : 0, r2 = g2.p.role === 'immo' ? 1 : 0;
+      if (r1 !== r2) return r1 - r2;
+      return String(g1.p.nom || '').localeCompare(String(g2.p.nom || ''), 'fr');
+    });
   }
 
   function choisirFiltreStatut(f) { filtreStatut = f; afficherAnnonces(); }
@@ -675,6 +772,129 @@
     if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
     await toutRecharger();
     afficherMessage('message-general', 'succes', '💾 Annonce corrigée. Si elle est en ligne, c\'est déjà visible sur le site.');
+  }
+
+  // ---------- Visites ----------
+  function jourIso(decalage) {
+    const d = new Date(); d.setDate(d.getDate() + (decalage || 0));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function momentVisite(jour, heure) {
+    if (!jour) return '';
+    const d = new Date(jour + 'T12:00:00');
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + (heure ? ' à ' + String(heure).replace(':', 'h') : '');
+  }
+  function sansReponseDepuis(v) {
+    if (v.statut !== 'en_attente' && v.statut !== 'autre_moment') return 0;
+    return Math.floor((Date.now() - new Date(v.modifie_le || v.cree_le).getTime()) / 86400000);
+  }
+  const FILTRES_VISITES = [
+    ['demain', '📱 Demain (SMS)', function (v) { return v.statut === 'acceptee' && v.creneau_date === jourIso(1); }],
+    ['a_traiter', '⏳ En attente de réponse', function (v) { return v.statut === 'en_attente' || v.statut === 'autre_moment'; }],
+    ['a_venir', '✅ Confirmées à venir', function (v) { return v.statut === 'acceptee' && v.creneau_date >= jourIso(0); }],
+    ['courtier', '🏦 Courtier demandé', function (v) { return v.courtier_souhaite; }],
+    ['passees', '🕘 Passées', function (v) { return (v.statut === 'acceptee' && v.creneau_date && v.creneau_date < jourIso(0)) || v.statut === 'effectuee'; }],
+    ['fermees', '✗ Refusées / annulées', function (v) { return v.statut === 'refusee' || v.statut === 'annulee'; }],
+    ['toutes', 'Toutes', function () { return true; }]
+  ];
+  const STATUTS_VISITE = {
+    en_attente: '⏳ En attente de réponse du vendeur', autre_moment: '📅 Autre moment proposé, en attente de l\'acheteur',
+    acceptee: '✅ Confirmée', refusee: '✗ Refusée par le vendeur', annulee: '✗ Annulée', effectuee: '🕘 Faite'
+  };
+
+  function choisirFiltreVisites(f) { filtreVisites = f; afficherVisites(); }
+
+  function afficherVisites() {
+    const demain = visites.filter(FILTRES_VISITES[0][2]).length;
+    const retard = visites.filter(function (v) { return sansReponseDepuis(v) >= 2; }).length;
+    document.getElementById('pastille-visites').textContent = demain + retard;
+    document.getElementById('c-vis-demain').textContent = demain;
+    document.getElementById('c-vis-retard').textContent = retard;
+    document.getElementById('c-vis-a-venir').textContent = visites.filter(FILTRES_VISITES[2][2]).length;
+    document.getElementById('c-vis-courtiers').textContent = visites.filter(FILTRES_VISITES[3][2]).length;
+
+    if (!filtreVisites) filtreVisites = demain ? 'demain' : 'a_traiter';
+    document.getElementById('filtres-visites').innerHTML = FILTRES_VISITES.map(function (f) {
+      return '<button type="button" class="filtre' + (filtreVisites === f[0] ? ' actif' : '') + '" onclick="choisirFiltreVisites(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + visites.filter(f[2]).length + ')</span></button>';
+    }).join('');
+
+    const test = (FILTRES_VISITES.find(function (f) { return f[0] === filtreVisites; }) || FILTRES_VISITES[1])[2];
+    const recherche = (document.getElementById('recherche-visites').value || '').trim().toLowerCase();
+    const liste = visites.filter(test).filter(function (v) {
+      if (!recherche) return true;
+      return [v.annonce.titre, v.annonce.ville, v.vendeur.prenom, v.vendeur.nom, v.vendeur.nom_entreprise, v.acheteur.prenom, v.acheteur.nom, v.acheteur.telephone, v.acheteur.email]
+        .some(function (x) { return String(x || '').toLowerCase().includes(recherche); });
+    });
+    const zone = document.getElementById('liste-visites');
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucune visite ici pour le moment. 🌿</div>'; return; }
+
+    zone.innerHTML = grouperParPersonne(liste, function (v) { return v.vendeur || {}; }).map(function (g) {
+      // Dans chaque carte propriétaire : un bloc par bien, avec ses visites
+      const parBien = [];
+      const idx = {};
+      g.items.forEach(function (v) {
+        if (!idx[v.annonce.id]) { idx[v.annonce.id] = { a: v.annonce, visites: [] }; parBien.push(idx[v.annonce.id]); }
+        idx[v.annonce.id].visites.push(v);
+      });
+      return '<div class="proprio' + (g.p.role === 'immo' ? ' pro' : '') + '">' +
+        enteteProprio(g.p, g.items.length + ' visite' + (g.items.length > 1 ? 's' : '') + ' · ' + parBien.length + ' bien' + (parBien.length > 1 ? 's' : '')) +
+        parBien.map(function (b) {
+          return '<div class="bien-visites"><div class="bien-visites-titre">🏡 ' + albEchapper(b.a.titre) + ' · ' + prixLisible(b.a.prix) + ' · ' + albEchapper(b.a.ville || '') +
+            (STATUTS_ANNONCE[b.a.statut] ? ' <span class="etiquette">' + STATUTS_ANNONCE[b.a.statut] + '</span>' : '') + '</div>' +
+            b.visites.map(ligneVisite).join('') + '</div>';
+        }).join('') +
+      '</div>';
+    }).join('');
+  }
+
+  function ligneVisite(v) {
+    const b = v.acheteur || {}, vd = v.vendeur || {}, a = v.annonce || {};
+    const pro = v.type_vente === 'accompagnee';
+    const retard = sansReponseDepuis(v);
+    let quand = '';
+    if (v.statut === 'autre_moment') quand = 'Proposé par le vendeur : ' + momentVisite(v.nouveau_creneau_date, v.nouveau_creneau_heure) + (v.creneau_date ? ' (demandé : ' + momentVisite(v.creneau_date, v.creneau_heure) + ')' : '');
+    else if (v.creneau_date) quand = momentVisite(v.creneau_date, v.creneau_heure);
+    else quand = pro ? 'Date à fixer par le pro au téléphone' : 'Aucun créneau choisi : le vendeur doit proposer un moment';
+
+    let sms = '';
+    if (v.statut === 'acceptee' && v.creneau_date === jourIso(1)) {
+      const heure = String(v.creneau_heure || '').replace(':', 'h');
+      const lieu = [a.adresse, ((a.code_postal || '') + ' ' + (a.ville || '')).trim()].filter(Boolean).join(', ');
+      const contactVendeur = ((vd.prenom || '') + (pro && vd.nom_entreprise ? ' (' + vd.nom_entreprise + ')' : '')).trim();
+      const telVendeur = a.telephone_annonce || vd.telephone || '';
+      const texteAcheteur = 'Bonjour ' + (b.prenom || '') + ', petit rappel : votre visite « ' + a.titre + ' » est demain à ' + heure + ', ' + lieu + '. ' +
+        (contactVendeur ? 'Contact : ' + contactVendeur + (telVendeur ? ' au ' + telVendeur : '') + '. ' : '') + 'Bonne visite ! Jocelyne, ALB Sud Immobilier';
+      const texteVendeur = 'Bonjour ' + (vd.prenom || '') + ', petit rappel : visite de votre bien « ' + a.titre + ' » demain à ' + heure + ' avec ' +
+        ((b.prenom || '') + ' ' + (b.nom || '')).trim() + (b.telephone ? ' (' + b.telephone + ')' : '') + '. Bonne visite ! Jocelyne, ALB Sud Immobilier';
+      sms = blocSms('au visiteur (' + (b.prenom || '') + ')', b.telephone, texteAcheteur) +
+            blocSms('au ' + (pro ? 'professionnel' : 'vendeur') + ' (' + (vd.prenom || '') + ')', telVendeur, texteVendeur);
+    }
+
+    return '<div class="visite">' +
+      '<div class="visite-tete"><span class="badge-qui acheteur">🔎 Acheteur</span>' +
+        '<span class="visite-nom">' + albEchapper(((b.prenom || '') + ' ' + (b.nom || '')).trim()) + '</span>' +
+        lienTelephone(b.telephone) + (b.email ? '<a href="mailto:' + albEchapper(b.email) + '">✉️ ' + albEchapper(b.email) + '</a>' : '') + '</div>' +
+      '<p class="ligne-info"><strong>' + (STATUTS_VISITE[v.statut] || albEchapper(v.statut)) + '</strong>' +
+        (retard >= 2 ? ' · <span class="retard">sans réponse depuis ' + retard + ' jours</span>' : '') + '</p>' +
+      '<p class="ligne-info">📅 ' + albEchapper(quand) + '</p>' +
+      '<p class="ligne-info">💰 Budget estimé ' + prixLisible(v.budget_estime) + ' pour un bien à ' + prixLisible(v.prix_bien) + (v.dans_budget ? ' ✅' : ' ⚠️') +
+        (v.partage_budget ? ' · partagé avec le vendeur' : '') + (v.courtier_souhaite ? ' · <strong>🏦 rappel courtier demandé</strong>' : '') + '</p>' +
+      '<details class="historique"><summary>Détail de la simulation</summary><p>Revenus ' + prixLisible(v.revenus_mensuels) + ' par mois · crédits ' + prixLisible(v.credits_mensuels) +
+        ' par mois · apport ' + prixLisible(v.apport) + ' · ' + albEchapper(v.duree_annees) + ' ans à ' + albEchapper(v.taux) + ' %</p></details>' +
+      (v.message ? '<p class="ligne-info mot">💬 Acheteur : « ' + albEchapper(v.message) + ' »</p>' : '') +
+      (v.reponse_vendeur ? '<p class="ligne-info mot">💬 Vendeur : « ' + albEchapper(v.reponse_vendeur) + ' »</p>' : '') +
+      '<p class="ligne-info" style="color:#7a7a75;">Demandée le ' + dateLisible(v.cree_le) + '</p>' +
+      sms +
+    '</div>';
+  }
+
+  function blocSms(pour, telephone, texte) {
+    const num = String(telephone || '').replace(/[^0-9+]/g, '');
+    if (!num) return '<div class="sms">📱 SMS ' + albEchapper(pour) + ' : pas de numéro.</div>';
+    return '<div class="sms"><strong>📱 SMS ' + albEchapper(pour) + '</strong>' +
+      '<textarea class="texte-pret" readonly>' + albEchapper(texte) + '</textarea>' +
+      '<div class="actions"><a class="bouton" href="sms:' + albEchapper(num) + '?&body=' + encodeURIComponent(texte) + '">📱 Ouvrir le SMS</a>' +
+      '<button type="button" class="bouton discret" onclick="copier(this)">📋 Copier le texte</button></div></div>';
   }
 
   // ---------- Vendeurs sous mandat exclusif ----------
