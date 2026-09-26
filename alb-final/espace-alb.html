@@ -11,6 +11,7 @@
   <script src="alb-connexion.js"></script>
   <script src="mes-annonces.js"></script>
   <script src="mes-visites.js"></script>
+  <script src="messagerie.js"></script>
 
   <style>
     /* ========== BASE DE LA PAGE ========== */
@@ -715,6 +716,12 @@
       <div class="message message-espace" id="message-espace"></div>
     </div>
 
+    <div class="carte rubrique" id="rubrique-messages">
+      <h2 id="messages">💬 Mes messages <span class="msg-titre-pastille cache" id="messages-non-lus"></span></h2>
+      <p>Vos échanges avec les vendeurs, les acheteurs et les pros, rangés par personne.</p>
+      <div id="messagerie"></div>
+    </div>
+
     <div class="carte rubrique cache" id="rubrique-acheteur">
       <h2>🔎 Mes recherches et mes visites</h2>
       <p>Vos demandes de visite, vos rendez-vous confirmés et votre simulation de budget.</p>
@@ -1133,6 +1140,11 @@
     if (!profil) {
       document.getElementById('zone-connecte').classList.add('cache');
       document.getElementById('zone-accueil').classList.remove('cache');
+      // Arrivée depuis « Nos pros ALB » ou une annonce : on explique pourquoi se connecter
+      const parametres = new URLSearchParams(location.search);
+      if (parametres.get('contacter') || parametres.get('annonce') || parametres.get('conversation')) {
+        afficherMessage('message-connexion', 'info', 'Connectez-vous (ou rejoignez ALB en 2 minutes) pour écrire depuis votre espace : vos coordonnées restent protégées. 💬');
+      }
       return;
     }
 
@@ -1150,6 +1162,9 @@
     document.getElementById('etiquettes-casquettes').innerHTML = etiquettes
       .map(function (texte) { return '<span class="etiquette">' + albEchapper(texte) + '</span>'; })
       .join('');
+
+    // « Mes messages » : pour tout le monde
+    if (window.albMessagerie) window.albMessagerie(profil);
 
     // « Mes visites » : acheteurs… et toute personne qui a déjà demandé une visite
     const rubriqueAcheteur = document.getElementById('rubrique-acheteur');
