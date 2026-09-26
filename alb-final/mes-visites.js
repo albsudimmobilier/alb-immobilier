@@ -43,7 +43,7 @@
     const photo = photoSure(d.photo);
     let corps = '';
 
-    if (d.type_vente === 'accompagnee' && ['en_attente', 'acceptee'].indexOf(d.statut) !== -1) {
+    if (d.type_vente === 'accompagnee' && d.statut === 'en_attente') {
       corps += '<p>Le professionnel' + (d.agence_nom ? ' (' + e(d.agence_nom) + ')' : '') + ' a reçu votre demande et vous appelle pour fixer la date de la visite.</p>';
     } else if (d.statut === 'en_attente') {
       corps += d.creneau_date
@@ -56,7 +56,7 @@
       corps += '<div class="mv-infos">' +
         '<div>📅 <strong>' + e(moment(d.creneau_date, d.creneau_heure)) + '</strong></div>' +
         (d.adresse ? '<div>📍 ' + e(d.adresse) + '</div>' : '') +
-        (d.vendeur_prenom ? '<div>👤 ' + e(d.vendeur_prenom) + (d.vendeur_telephone ? ' · 📱 <a href="tel:' + e(String(d.vendeur_telephone).replace(/[^0-9+]/g, '')) + '">' + e(d.vendeur_telephone) + '</a>' : '') + '</div>' : '') +
+        (d.vendeur_prenom ? '<div>👤 ' + e(d.vendeur_prenom) + (d.type_vente === 'accompagnee' && d.agence_nom ? ' (' + e(d.agence_nom) + ')' : '') + (d.vendeur_telephone ? ' · 📱 <a href="tel:' + e(String(d.vendeur_telephone).replace(/[^0-9+]/g, '')) + '">' + e(d.vendeur_telephone) + '</a>' : '') + '</div>' : '') +
       '</div>';
     } else if (d.statut === 'refusee') {
       corps += '<p>Le propriétaire ne peut pas donner suite pour le moment. D’autres biens vous attendent !</p>';
