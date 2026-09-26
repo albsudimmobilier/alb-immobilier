@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendre mon bien — ALB Immobilier</title>
+  <meta name="description" content="Vendez votre maison ou votre appartement ancien dans le Var et les Bouches-du-Rhône avec ALB Immobilier : Jocelyne vous appelle avant toute mise en ligne.">
+  <link rel="canonical" href="https://albimmobilier.fr/vendre-mon-bien.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #F5F3F0;
+      color: #4A4A47;
+      line-height: 1.6;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+
+    /* ========== CONTENU DE L'ESPACE (mobile d'abord) ========== */
+    .espace {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 30px 16px 10px;
+    }
+    .carte {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #E8E6E1;
+      padding: 24px 18px;
+      margin-bottom: 20px;
+    }
+    .intro { text-align: center; margin-bottom: 24px; }
+    .intro h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    .intro p { font-size: 0.95rem; }
+
+    /* Onglets Se connecter / Rejoindre ALB */
+    .onglets { display: flex; gap: 8px; margin-bottom: 20px; }
+    .onglet {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #E8E6E1;
+      background: #FBF8F3;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #4A4A47;
+      cursor: pointer;
+    }
+    .onglet.actif { border-color: #5A3A6A; background: #5A3A6A; color: white; }
+    .panneau { display: none; }
+    .panneau.actif { display: block; }
+
+    /* Champs */
+    .champ { margin-bottom: 16px; }
+    .champ label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+    .champ .aide { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
+    .champ input, .champ select, .champ textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #D8D5CE;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 1rem;
+      background: white;
+    }
+    .champ textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+    .champ input:focus, .champ select:focus, .champ textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .deux-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+
+    .choix { display: grid; gap: 10px; margin-bottom: 16px; }
+    .case {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #E8E6E1;
+      border-radius: 8px;
+      background: #FBF8F3;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .case input { margin-top: 4px; width: 18px; height: 18px; accent-color: #5A3A6A; }
+    .bloc-pro { display: none; padding: 16px; border-left: 3px solid #B28E3D; background: #FBF8F3; border-radius: 6px; margin-bottom: 16px; }
+    .bloc-pro.visible { display: block; }
+
+    .bouton {
+      display: inline-block;
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #B28E3D;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .bouton-discret {
+      background: none;
+      border: 1px solid #D8D5CE;
+      color: #4A4A47;
+      width: auto;
+      padding: 10px 18px;
+    }
+    .bouton-discret:hover { background: #F5F3F0; color: #5A3A6A; }
+
+    .message { display: none; padding: 12px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 0.92rem; }
+    .message.visible { display: block; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border: 1px solid #CBE3CD; }
+    .message.info { background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+
+    .lien-aide { display: block; text-align: center; margin-top: 14px; font-size: 0.88rem; color: #5A3A6A; cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; width: 100%; }
+
+    /* Espace connecté */
+    .bandeau-bienvenue { display: flex; flex-direction: column; gap: 14px; }
+    .bandeau-bienvenue h1 { font-size: 1.6rem; }
+    .etiquettes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .etiquette { background: #F4EEF6; color: #5A3A6A; font-size: 0.82rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .rubrique h2 { font-size: 1.25rem; margin-bottom: 8px; }
+    .rubrique p { font-size: 0.93rem; }
+    .bientot { display: inline-block; margin-top: 10px; font-size: 0.8rem; color: #B28E3D; font-weight: 600; }
+    .cache { display: none !important; }
+    .texte-intro { margin-bottom: 18px; font-size: 0.93rem; }
+    .titre-choix { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
+    .leger { font-weight: 400; }
+    .case-cgu { margin-bottom: 18px; }
+    .lien-pourpre { color: #5A3A6A; }
+    .message-espace { margin-top: 18px; }
+
+    /* Accès au compte */
+    .alerte-oubli { background: #FBF3E4; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 14px; margin-top: 16px; }
+    .alerte-oubli p { font-size: 0.92rem; margin-bottom: 10px; }
+    .titre-panneau { font-size: 1.35rem; margin-bottom: 8px; }
+    .sous-bloc { border-top: 1px dashed #D8D5CE; margin-top: 20px; padding-top: 18px; }
+    .sous-bloc h3 { font-size: 1.05rem; margin-bottom: 10px; }
+    .sous-bloc p { margin-bottom: 8px; }
+    .aide-bloc { font-size: 0.85rem; color: #7a7a75; }
+
+    /* Fenêtre de lecture des CGU / confidentialité */
+    .modal-document .modal-content { max-width: 860px; width: 94%; height: 88vh; max-height: 88vh; padding: 24px 18px 18px; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-document h2 { font-size: 1.3rem; margin-bottom: 12px; padding-right: 30px; }
+    .modal-document iframe { flex: 1; width: 100%; border: 1px solid #E8E6E1; border-radius: 6px; background: white; }
+    .modal-document .modal-buttons { margin-top: 14px; }
+
+    @media (min-width: 700px) {
+      .espace { padding: 50px 24px 20px; }
+      .carte { padding: 32px; }
+      .deux-colonnes { grid-template-columns: 1fr 1fr; }
+      .bandeau-bienvenue { flex-direction: row; justify-content: space-between; align-items: flex-start; }
+      .bouton { width: auto; min-width: 240px; }
+      .formulaire .bouton { width: 100%; }
+    }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
+    }
+  
+    /* ========== PAGE « VENDRE MON BIEN » ========== */
+    .grands-choix { display: grid; gap: 12px; }
+    .grand-choix {
+      display: block; width: 100%; text-align: left; padding: 18px 16px;
+      border: 2px solid #E8E6E1; border-radius: 10px; background: #FBF8F3;
+      font-family: inherit; font-size: 1rem; color: #4A4A47; cursor: pointer;
+    }
+    .grand-choix strong { display: block; font-size: 1.05rem; color: #5A3A6A; margin-bottom: 4px; }
+    .grand-choix:hover { border-color: #B28E3D; background: white; }
+    .etape { display: none; }
+    .etape.active { display: block; }
+    .question { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #5A3A6A; margin-bottom: 8px; }
+    .bloc-titre { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: #5A3A6A; margin: 24px 0 12px; padding-top: 18px; border-top: 1px dashed #D8D5CE; }
+    .bloc-titre:first-of-type { border-top: none; padding-top: 0; margin-top: 4px; }
+    .radios { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .radios .case { flex: 1 1 140px; }
+    .note-douce { background: #F4EEF6; border-left: 4px solid #5A3A6A; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px; font-size: 0.95rem; }
+    .note-douce p + p { margin-top: 8px; }
+    .grille-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 10px; }
+    .vignette { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 4 / 3; background: #EEE; }
+    .vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vignette button { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,0.65); color: white; cursor: pointer; font-size: 15px; line-height: 26px; padding: 0; }
+    .vignette .numero { position: absolute; left: 4px; bottom: 4px; background: rgba(255,255,255,0.9); color: #5A3A6A; font-size: 0.75rem; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+    .zone-photos { border: 2px dashed #D8D5CE; border-radius: 8px; padding: 16px; text-align: center; background: #FBF8F3; }
+    .zone-photos label { cursor: pointer; color: #5A3A6A; font-weight: 600; }
+    .zone-photos input { display: none; }
+    .badge-type { display: inline-block; font-size: 0.82rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; margin-bottom: 14px; }
+    .badge-particulier { background: #F4EEF6; color: #5A3A6A; }
+    .badge-accompagnee { background: #FBF3E4; color: #8A6A22; }
+    .merci { text-align: center; }
+    .merci .emoji { font-size: 2.6rem; }
+    .merci h2 { font-size: 1.6rem; margin: 8px 0 12px; }
+    .merci p { margin-bottom: 10px; }
+    .actions-merci { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 18px; }
+    .progression { font-size: 0.9rem; color: #5A3A6A; margin-top: 10px; text-align: center; }
+    .lien-retour { display: inline-block; margin-bottom: 14px; font-size: 0.88rem; color: #5A3A6A; cursor: pointer; background: none; border: none; font-family: inherit; text-decoration: underline; padding: 0; }
+    @media (min-width: 700px) {
+      .grands-choix { grid-template-columns: 1fr 1fr; }
+      .trois-colonnes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<main class="espace">
+
+  <div class="intro">
+    <h1>Vendre À La Bien</h1>
+    <p>Parlez-nous de votre bien : Jocelyne vous appelle, puis votre annonce est mise en ligne sur ALB Immobilier.</p>
+  </div>
+
+  <!-- ========== 1. AVEZ-VOUS DÉJÀ UN ESPACE ALB ? ========== -->
+  <section class="carte etape active" id="etape-espace">
+    <p class="question">Avez-vous déjà un espace ALB ?</p>
+    <p class="texte-intro">Si vous avez déjà rejoint ALB, retrouvez votre espace : vous pourrez y ajouter votre annonce. Sinon, pas de souci : on crée tout ensemble, en une seule fois.</p>
+    <div class="grands-choix">
+      <button type="button" class="grand-choix" onclick="reponseEspace(true)">
+        <strong>Oui, j'ai un espace ALB</strong>
+        Je me connecte avec mon e-mail et mon code PIN.
+      </button>
+      <button type="button" class="grand-choix" onclick="reponseEspace(false)">
+        <strong>Non, pas encore</strong>
+        Je remplis le formulaire : mon espace est créé en même temps.
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== 2. QUI ÊTES-VOUS ? ========== -->
+  <section class="carte etape" id="etape-qui">
+    <button type="button" class="lien-retour" onclick="afficherEtape('etape-espace')">← Revenir</button>
+    <p class="question">Vous êtes…</p>
+    <p class="texte-intro">Pour vous proposer le bon formulaire, dites-nous qui vend ce bien.</p>
+    <div class="message" id="message-qui"></div>
+    <div class="grands-choix">
+      <button type="button" class="grand-choix" onclick="choisirProfil('particulier')">
+        <strong>🏡 Un particulier</strong>
+        Je vends mon propre bien, entre particuliers.
+      </button>
+      <button type="button" class="grand-choix" onclick="choisirProfil('pro')">
+        <strong>🤝 Un agent ou un mandataire</strong>
+        Je diffuse le bien d'un client dont j'ai le mandat.
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== 3. MANDAT EXCLUSIF ? (particulier) ========== -->
+  <section class="carte etape" id="etape-mandat">
+    <button type="button" class="lien-retour" onclick="afficherEtape(profil ? 'etape-espace' : 'etape-qui')">← Revenir</button>
+    <p class="question">Avez-vous signé un mandat exclusif avec une agence pour ce bien ?</p>
+    <p class="texte-intro">Un mandat exclusif, c'est un contrat qui confie la vente de votre bien à une seule agence, pour une durée donnée. Si vous n'êtes pas sûr(e), jetez un œil à votre contrat : le mot « exclusif » y figure.</p>
+    <div class="grands-choix">
+      <button type="button" class="grand-choix" onclick="reponseMandat(false)">
+        <strong>Non</strong>
+        Je n'ai pas de mandat exclusif en cours.
+      </button>
+      <button type="button" class="grand-choix" onclick="reponseMandat(true)">
+        <strong>Oui</strong>
+        Mon bien est sous mandat exclusif avec une agence.
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== 2 bis. SOUS MANDAT EXCLUSIF ========== -->
+  <section class="carte etape" id="etape-exclusif">
+    <button type="button" class="lien-retour" onclick="afficherEtape('etape-mandat')">← Revenir</button>
+    <div class="note-douce">
+      <p><strong>Merci de votre confiance 💜</strong></p>
+      <p>Pendant un mandat exclusif, seule votre agence peut diffuser votre bien : c'est l'engagement que vous avez pris avec elle, et nous tenons à le respecter. Nous ne pouvons donc pas publier votre annonce pour le moment.</p>
+      <p>Mais on reste là. Dites-nous quand votre mandat se termine : Jocelyne vous recontactera à ce moment-là, si vous souhaitez vendre avec ALB Immobilier.</p>
+    </div>
+    <form class="formulaire" id="formulaire-exclusif" onsubmit="envoyerRappelMandat(event)">
+      <div class="message" id="message-exclusif"></div>
+      <div id="identite-exclusif">
+        <div class="deux-colonnes">
+          <div class="champ"><label for="ex-prenom">Prénom</label><input type="text" id="ex-prenom" autocomplete="given-name"></div>
+          <div class="champ"><label for="ex-nom">Nom</label><input type="text" id="ex-nom" autocomplete="family-name"></div>
+        </div>
+        <div class="deux-colonnes">
+          <div class="champ"><label for="ex-telephone">Téléphone</label><input type="tel" id="ex-telephone" autocomplete="tel"></div>
+          <div class="champ"><label for="ex-email">E-mail <span class="leger">(facultatif)</span></label><input type="email" id="ex-email" autocomplete="email"></div>
+        </div>
+      </div>
+      <div class="champ">
+        <label for="ex-fin">Date de fin de votre mandat <span class="leger">(si vous la connaissez)</span></label>
+        <input type="date" id="ex-fin">
+      </div>
+      <div class="champ">
+        <label for="ex-message">Un petit mot pour Jocelyne ? <span class="leger">(facultatif)</span></label>
+        <textarea id="ex-message" maxlength="1000" rows="3" placeholder="Votre projet, le meilleur moment pour vous rappeler…"></textarea>
+      </div>
+      <label class="case case-cgu">
+        <input type="checkbox" id="ex-recontact">
+        <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de la vente de mon bien.</span>
+      </label>
+      <button type="submit" class="bouton" id="bouton-exclusif">Je souhaite être recontacté(e)</button>
+    </form>
+    <div class="note-douce" style="margin-top:18px;">
+      <p>🔧 Un financement, des travaux, une question sur votre projet ? Vous pouvez déjà nous en parler :</p>
+      <p><a href="projets-alb.html" class="lien-pourpre"><strong>Découvrir Projets ALB →</strong></a></p>
+    </div>
+  </section>
+
+  <!-- ========== 3. LE FORMULAIRE ========== -->
+  <section class="carte etape" id="etape-formulaire">
+    <button type="button" class="lien-retour" onclick="retourDepuisFormulaire()">← Revenir</button>
+    <span class="badge-type" id="badge-type"></span>
+    <form class="formulaire" id="formulaire-annonce" onsubmit="deposer(event)" novalidate>
+      <p class="texte-intro">Il n'y a ni bonne ni mauvaise réponse : racontez-nous votre bien simplement. Vous pourrez tout modifier plus tard depuis votre espace. 💜</p>
+      <div class="message" id="message-annonce"></div>
+
+      <!-- Vous (seulement si pas encore connecté) -->
+      <div id="bloc-vous">
+        <h2 class="bloc-titre">Vous</h2>
+        <p class="aide-bloc" style="margin-bottom:12px;">Ces informations créent votre espace ALB : vous y suivrez votre annonce et pourrez la modifier quand vous voulez.</p>
+        <div class="deux-colonnes">
+          <div class="champ"><label for="v-prenom">Prénom</label><input type="text" id="v-prenom" autocomplete="given-name"></div>
+          <div class="champ"><label for="v-nom">Nom</label><input type="text" id="v-nom" autocomplete="family-name"></div>
+        </div>
+        <div class="deux-colonnes">
+          <div class="champ"><label for="v-email">E-mail</label><input type="email" id="v-email" autocomplete="email"></div>
+          <div class="champ"><label for="v-telephone">Téléphone</label><input type="tel" id="v-telephone" autocomplete="tel"><div class="aide">Il reste confidentiel : il n'est jamais affiché sur l'annonce.</div></div>
+        </div>
+        <div id="bloc-vous-pro" class="cache">
+          <span class="titre-choix">Votre métier</span>
+          <div class="radios">
+            <label class="case"><input type="radio" name="metier" value="agent"> Agent immobilier</label>
+            <label class="case"><input type="radio" name="metier" value="mandataire"> Mandataire immobilier</label>
+          </div>
+          <div class="deux-colonnes">
+            <div class="champ"><label for="v-agence">Agence ou réseau</label><input type="text" id="v-agence" autocomplete="organization" placeholder="ex. Agence du Val, IAD, Safti…"></div>
+            <div class="champ"><label for="v-siret">Numéro SIRET <span class="leger">(facultatif pour l'instant)</span></label><input type="text" id="v-siret" inputmode="numeric" maxlength="17"></div>
+          </div>
+          <div class="aide-bloc" style="margin:-6px 0 14px;">Jocelyne vous appellera pour faire connaissance : elle validera votre profil pro et votre annonce en même temps.</div>
+        </div>
+        <div class="deux-colonnes">
+          <div class="champ"><label for="v-pin">Choisissez votre code PIN</label><input type="password" id="v-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password"><div class="aide">4 chiffres, pour retrouver votre espace ALB et suivre votre annonce.</div></div>
+          <div class="champ"><label for="v-pin2">Confirmez votre code PIN</label><input type="password" id="v-pin2" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password"></div>
+        </div>
+      </div>
+
+      <!-- Le bien -->
+      <h2 class="bloc-titre">Votre bien</h2>
+      <span class="titre-choix">C'est…</span>
+      <div class="radios">
+        <label class="case"><input type="radio" name="type-bien" value="maison" onchange="afficherTerrain()"> 🏡 Une maison</label>
+        <label class="case"><input type="radio" name="type-bien" value="appartement" onchange="afficherTerrain()"> 🏢 Un appartement</label>
+      </div>
+      <div class="deux-colonnes">
+        <div class="champ"><label for="b-ville">Ville</label><input type="text" id="b-ville" autocomplete="address-level2"></div>
+        <div class="champ"><label for="b-cp">Code postal</label><input type="text" id="b-cp" inputmode="numeric" maxlength="5" autocomplete="postal-code"></div>
+      </div>
+      <div class="champ">
+        <label for="b-adresse">Adresse du bien <span class="leger">(facultatif)</span></label>
+        <input type="text" id="b-adresse" autocomplete="street-address">
+        <div class="aide">🔒 Elle n'est jamais affichée sur l'annonce : elle sera transmise seulement aux acheteurs dont la visite est confirmée.</div>
+      </div>
+      <div class="trois-colonnes">
+        <div class="champ"><label for="b-prix">Prix de vente (€)</label><input type="text" id="b-prix" inputmode="numeric" placeholder="ex. 245 000"></div>
+        <div class="champ"><label for="b-surface">Surface habitable (m²)</label><input type="text" id="b-surface" inputmode="decimal"></div>
+        <div class="champ"><label for="b-pieces">Nombre de pièces <span class="leger">(facultatif)</span></label><input type="text" id="b-pieces" inputmode="numeric"></div>
+      </div>
+      <div class="champ cache" id="champ-terrain">
+        <label for="b-terrain">Surface du terrain (m²) <span class="leger">(facultatif)</span></label>
+        <input type="text" id="b-terrain" inputmode="numeric">
+      </div>
+      <div class="deux-colonnes">
+        <div class="champ">
+          <label for="b-dpe">Classe énergie (DPE)</label>
+          <select id="b-dpe"><option value="">— Choisissez —</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select>
+        </div>
+        <div class="champ">
+          <label for="b-ges">Classe climat (GES)</label>
+          <select id="b-ges"><option value="">— Choisissez —</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select>
+        </div>
+      </div>
+      <div class="aide-bloc" style="margin:-6px 0 12px;">Ces deux lettres figurent sur votre diagnostic de performance énergétique (DPE).</div>
+      <div class="deux-colonnes">
+        <div class="champ"><label for="b-dep-min">Dépenses d'énergie par an, entre… (€) <span class="leger">(facultatif)</span></label><input type="text" id="b-dep-min" inputmode="numeric"></div>
+        <div class="champ"><label for="b-dep-max">… et (€)</label><input type="text" id="b-dep-max" inputmode="numeric"></div>
+      </div>
+      <div class="aide-bloc" style="margin:-6px 0 12px;">Cette estimation figure aussi sur votre DPE (« estimation des coûts annuels d'énergie »).</div>
+      <div class="champ">
+        <label for="b-description">Racontez-nous votre bien</label>
+        <textarea id="b-description" maxlength="4000" rows="6" placeholder="Ce qui vous a plu en l'achetant, les pièces, l'extérieur, le quartier, les travaux déjà faits…"></textarea>
+        <div class="aide">Au moins quelques lignes (30 caractères minimum).</div>
+      </div>
+
+      <!-- Pro : agence et honoraires -->
+      <div id="bloc-pro-annonce" class="cache">
+        <h2 class="bloc-titre" id="titre-bloc-pro">Votre agence</h2>
+        <div class="champ" id="champ-p-agence"><label for="p-agence">Nom de l'agence ou du réseau</label><input type="text" id="p-agence" autocomplete="organization"></div>
+        <div class="champ">
+          <label for="p-honoraires">Vos honoraires</label>
+          <input type="text" id="p-honoraires" maxlength="300" placeholder="ex. 5 % TTC du prix, à la charge du vendeur">
+          <div class="aide">Ils seront affichés sur l'annonce, comme la loi le demande pour une annonce de professionnel.</div>
+        </div>
+      </div>
+
+      <!-- Photos et vidéos -->
+      <h2 class="bloc-titre">Photos et vidéos</h2>
+      <div class="zone-photos">
+        <label for="b-photos">📷 Ajouter des photos</label>
+        <input type="file" id="b-photos" accept="image/jpeg,image/png,image/webp" multiple onchange="ajouterPhotos(this.files)">
+        <div class="aide" id="compteur-photos">Jusqu'à 10 photos. La première sera la photo principale.</div>
+      </div>
+      <div class="grille-photos" id="grille-photos"></div>
+      <div class="champ" style="margin-top:16px;">
+        <label for="b-video1">Vidéos YouTube <span class="leger">(facultatif, 2 maximum)</span></label>
+        <input type="url" id="b-video1" placeholder="https://youtu.be/…" style="margin-bottom:8px;">
+        <input type="url" id="b-video2" placeholder="https://youtu.be/…">
+        <div class="aide">🔒 Vos vidéos ne sont jamais publiques : elles sont envoyées seulement à l'acheteur, une fois sa visite confirmée. Mettez-les en « non répertoriée » sur YouTube.</div>
+      </div>
+
+      <!-- Un mot -->
+      <h2 class="bloc-titre">Un petit mot pour Jocelyne ?</h2>
+      <div class="champ">
+        <textarea id="b-message" maxlength="1000" rows="3" placeholder="Votre projet, vos délais, le meilleur moment pour vous appeler…"></textarea>
+        <div class="aide">Jocelyne lit chaque message et vous appelle avant toute mise en ligne.</div>
+      </div>
+
+      <!-- Engagements -->
+      <label class="case case-cgu" id="case-exclusif">
+        <input type="checkbox" id="c-exclusif">
+        <span>Je certifie ne pas avoir signé de mandat exclusif avec une agence pour ce bien.</span>
+      </label>
+      <label class="case case-cgu cache" id="case-mandat">
+        <input type="checkbox" id="c-mandat">
+        <span>Je certifie détenir un mandat de vente en cours pour ce bien, qui m'autorise à le diffuser.</span>
+      </label>
+      <div id="cases-inscription">
+        <label class="case case-cgu">
+          <input type="checkbox" id="c-cgu">
+          <span>J'ai lu et j'accepte les <a href="cgu.html" class="lien-pourpre" onclick="ouvrirDocument('cgu.html', 'Conditions générales'); return false;">conditions générales</a> et la <a href="confidentialite.html" class="lien-pourpre" onclick="ouvrirDocument('confidentialite.html', 'Politique de confidentialité'); return false;">politique de confidentialité</a>.</span>
+        </label>
+        <label class="case case-cgu">
+          <input type="checkbox" id="c-recontact">
+          <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de la vente de mon bien.</span>
+        </label>
+      </div>
+
+      <button type="submit" class="bouton" id="bouton-deposer">Je confie mon bien à ALB</button>
+      <div class="progression cache" id="progression"></div>
+    </form>
+  </section>
+
+  <!-- ========== 4. MERCI ========== -->
+  <section class="carte etape merci" id="etape-merci">
+    <div class="emoji">💜</div>
+    <h2>Votre bien est entre de bonnes mains</h2>
+    <p>Merci de votre confiance ! Votre annonce est bien arrivée.</p>
+    <p>Jocelyne va prendre le temps de la lire, puis elle vous appellera pour en parler avec vous <strong>avant toute mise en ligne</strong>.</p>
+    <p class="cache" id="merci-photos"></p>
+    <p>Un e-mail de confirmation vient de vous être envoyé.</p>
+    <div class="actions-merci">
+      <a href="espace-alb.html" class="bouton">Mon espace ALB</a>
+      <a href="index.html" class="lien-aide">Revenir à l'accueil</a>
+    </div>
+  </section>
+
+  <!-- ========== MERCI (mandat exclusif) ========== -->
+  <section class="carte etape merci" id="etape-merci-exclusif">
+    <div class="emoji">🤝</div>
+    <h2>C'est noté !</h2>
+    <p>Merci de votre confiance. Jocelyne a bien reçu votre demande et vous recontactera au bon moment.</p>
+    <div class="actions-merci">
+      <a href="projets-alb.html" class="bouton">Découvrir Projets ALB</a>
+      <a href="index.html" class="lien-aide">Revenir à l'accueil</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========== LECTURE DES CGU / CONFIDENTIALITÉ SANS QUITTER LE FORMULAIRE ========== -->
+<div id="document-modal" class="modal modal-document">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('document-modal')">&times;</span>
+    <h2 id="document-titre">Conditions générales</h2>
+    <iframe id="document-cadre" title="Document ALB Immobilier"></iframe>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('document-modal'); return false;">Revenir au formulaire</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---------- Fenêtres (footer officiel) ----------
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  window.onclick = function (e) { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); };
+
+  // CGU / confidentialité sans quitter le formulaire
+  function ouvrirDocument(adresse, titre) {
+    document.getElementById('document-titre').textContent = titre;
+    const cadre = document.getElementById('document-cadre');
+    cadre.onload = function () {
+      try {
+        const style = cadre.contentDocument.createElement('style');
+        style.textContent = 'header, footer, nav, .alb-header, .footer, .modal { display: none !important; } body { padding-top: 0 !important; }';
+        cadre.contentDocument.head.appendChild(style);
+      } catch (e) { /* la page s'affiche telle quelle */ }
+    };
+    cadre.src = adresse;
+    openModal('document-modal');
+  }
+
+  // ---------- Messages ----------
+  const MESSAGES_ANNONCE = {
+    TYPE_BIEN_INVALIDE: "Dites-nous s'il s'agit d'une maison ou d'un appartement.",
+    PRIX_INVALIDE: "Le prix de vente ne semble pas complet. Pouvez-vous le vérifier ?",
+    SURFACE_INVALIDE: "Indiquez la surface habitable, en m².",
+    PIECES_INVALIDES: "Le nombre de pièces ne semble pas juste.",
+    TERRAIN_INVALIDE: "La surface du terrain ne semble pas juste.",
+    VILLE_INVALIDE: "Indiquez la ville et le code postal (5 chiffres).",
+    DPE_INVALIDE: "Choisissez la classe énergie (DPE) et la classe climat (GES), de A à G.",
+    DESCRIPTION_COURTE: "Racontez-nous votre bien en quelques lignes (30 caractères minimum).",
+    VIDEO_INVALIDE: "Les vidéos doivent être des liens YouTube (2 maximum).",
+    MANDAT_NON_CERTIFIE: "Merci de certifier que vous détenez un mandat de vente pour ce bien.",
+    HONORAIRES_MANQUANTS: "Indiquez vos honoraires : ils doivent apparaître sur l'annonce.",
+    EXCLUSIF_NON_CERTIFIE: "Merci de cocher la case : vous n'avez pas de mandat exclusif pour ce bien.",
+    TROP_D_ANNONCES: "Vous avez déjà plusieurs annonces en attente. Jocelyne vous appelle très vite pour les étudier avec vous.",
+    DATE_INVALIDE: "La date de fin du mandat ne semble pas juste.",
+    NON_CONNECTE: "Votre session s'est terminée. Reconnectez-vous, puis recommencez."
+  };
+  function texteErreur(code, repli) { return MESSAGES_ANNONCE[code] || (typeof albMessageErreur === 'function' ? albMessageErreur(code) : '') || repli || "Un petit souci technique nous empêche de continuer. Réessayez dans un instant."; }
+
+  function afficherMessage(id, type, texte) {
+    const bloc = document.getElementById(id);
+    bloc.className = 'message visible ' + type;
+    bloc.textContent = texte;
+    bloc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function effacerMessage(id) { const bloc = document.getElementById(id); bloc.className = 'message'; bloc.textContent = ''; }
+
+  // ---------- Navigation entre les étapes ----------
+  let profil = null;          // profil de la personne connectée (ou null)
+  let parcours = null;        // 'particulier' ou 'pro'
+
+  function afficherEtape(id) {
+    document.querySelectorAll('.etape').forEach(function (e) { e.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function chargerProfil() {
+    try { profil = await albProfilConnecte(); } catch (e) { profil = null; }
+    return profil;
+  }
+
+  function estProImmo() { return profil && profil.role === 'immo'; }
+
+  function choisirProfil(choix) {
+    parcours = choix;
+    effacerMessage('message-qui');
+    if (choix === 'pro') { preparerFormulaire(); } else { afficherEtape('etape-mandat'); }
+  }
+
+  function reponseEspace(aUnEspace) {
+    if (aUnEspace) { window.location.href = 'espace-alb.html'; return; }
+    afficherEtape('etape-qui');
+  }
+
+  function reponseMandat(exclusif) {
+    if (exclusif) {
+      document.getElementById('identite-exclusif').classList.toggle('cache', !!profil);
+      afficherEtape('etape-exclusif');
+    } else {
+      preparerFormulaire();
+    }
+  }
+
+  function retourDepuisFormulaire() { afficherEtape(parcours === 'pro' ? (profil ? 'etape-espace' : 'etape-qui') : 'etape-mandat'); }
+
+  // Prépare le formulaire selon le parcours (particulier / pro) et la connexion
+  function preparerFormulaire() {
+    const pro = parcours === 'pro';
+    const badge = document.getElementById('badge-type');
+    badge.className = 'badge-type ' + (pro ? 'badge-accompagnee' : 'badge-particulier');
+    badge.textContent = pro ? '🤝 Vente accompagnée par un pro' : '🏡 Vente entre particuliers';
+    document.getElementById('bloc-vous').classList.toggle('cache', !!profil);
+    document.getElementById('bloc-vous-pro').classList.toggle('cache', !pro || !!profil);
+    document.getElementById('champ-p-agence').classList.toggle('cache', !profil);
+    document.getElementById('titre-bloc-pro').textContent = profil ? 'Votre agence' : 'Vos honoraires';
+    document.getElementById('cases-inscription').classList.toggle('cache', !!profil);
+    document.getElementById('bloc-pro-annonce').classList.toggle('cache', !pro);
+    document.getElementById('case-exclusif').classList.toggle('cache', pro);
+    document.getElementById('case-mandat').classList.toggle('cache', !pro);
+    document.getElementById('bouton-deposer').textContent = pro ? 'Envoyer mon annonce à Jocelyne' : 'Je confie mon bien à ALB';
+    if (pro && profil && profil.nom_entreprise && !document.getElementById('p-agence').value) {
+      document.getElementById('p-agence').value = profil.nom_entreprise;
+    }
+    effacerMessage('message-annonce');
+    afficherEtape('etape-formulaire');
+  }
+
+  function afficherTerrain() {
+    const maison = document.querySelector('input[name="type-bien"]:checked')?.value === 'maison';
+    document.getElementById('champ-terrain').classList.toggle('cache', !maison);
+  }
+
+  // ---------- Photos : réduites dans le navigateur avant l'envoi ----------
+  const PHOTOS_MAX = 10;
+  let photos = []; // { blob, url }
+
+  function reduirePhoto(fichier) {
+    return new Promise(function (resoudre) {
+      const lecteur = new FileReader();
+      lecteur.onload = function () {
+        const image = new Image();
+        image.onload = function () {
+          const cote = 1600;
+          let l = image.width, h = image.height;
+          if (l > cote || h > cote) { const r = Math.min(cote / l, cote / h); l = Math.round(l * r); h = Math.round(h * r); }
+          const toile = document.createElement('canvas');
+          toile.width = l; toile.height = h;
+          toile.getContext('2d').drawImage(image, 0, 0, l, h);
+          toile.toBlob(function (blob) { resoudre(blob); }, 'image/jpeg', 0.82);
+        };
+        image.onerror = function () { resoudre(null); };
+        image.src = lecteur.result;
+      };
+      lecteur.onerror = function () { resoudre(null); };
+      lecteur.readAsDataURL(fichier);
+    });
+  }
+
+  async function ajouterPhotos(fichiers) {
+    const liste = Array.from(fichiers || []);
+    for (const fichier of liste) {
+      if (photos.length >= PHOTOS_MAX) break;
+      if (!/^image\/(jpeg|png|webp)$/.test(fichier.type)) continue;
+      const blob = await reduirePhoto(fichier);
+      if (blob) photos.push({ blob: blob, url: URL.createObjectURL(blob) });
+    }
+    document.getElementById('b-photos').value = '';
+    dessinerPhotos();
+  }
+
+  function retirerPhoto(index) {
+    URL.revokeObjectURL(photos[index].url);
+    photos.splice(index, 1);
+    dessinerPhotos();
+  }
+
+  function dessinerPhotos() {
+    document.getElementById('grille-photos').innerHTML = photos.map(function (p, i) {
+      return '<div class="vignette"><img src="' + p.url + '" alt="Photo ' + (i + 1) + '">' +
+             '<span class="numero">' + (i === 0 ? '★ Principale' : (i + 1)) + '</span>' +
+             '<button type="button" aria-label="Retirer cette photo" onclick="retirerPhoto(' + i + ')">×</button></div>';
+    }).join('');
+    document.getElementById('compteur-photos').textContent = photos.length
+      ? photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ' sur 10. La première est la photo principale.'
+      : "Jusqu'à 10 photos. La première sera la photo principale.";
+  }
+
+  // ---------- Envoi de l'annonce ----------
+  function valeur(id) { return document.getElementById(id).value.trim(); }
+  function chiffres(id) { return valeur(id).replace(/[^0-9,.]/g, '').replace(',', '.'); }
+
+  async function deposer(event) {
+    event.preventDefault();
+    effacerMessage('message-annonce');
+    const pro = parcours === 'pro';
+    const typeBien = document.querySelector('input[name="type-bien"]:checked')?.value || '';
+
+    // Contrôles simples avant d'envoyer (le serveur revérifie tout)
+    if (!profil) {
+      if (!valeur('v-prenom') || !valeur('v-nom')) return afficherMessage('message-annonce', 'erreur', albMessageErreur('NOM_MANQUANT'));
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valeur('v-email'))) return afficherMessage('message-annonce', 'erreur', albMessageErreur('EMAIL_INVALIDE'));
+      if (valeur('v-telephone').replace(/\D/g, '').length < 10) return afficherMessage('message-annonce', 'erreur', albMessageErreur('TELEPHONE_INVALIDE'));
+      if (!/^[0-9]{4}$/.test(valeur('v-pin'))) return afficherMessage('message-annonce', 'erreur', albMessageErreur('PIN_INVALIDE'));
+      if (valeur('v-pin') !== valeur('v-pin2')) return afficherMessage('message-annonce', 'erreur', 'Les deux codes PIN ne sont pas identiques.');
+    }
+    if (!typeBien) return afficherMessage('message-annonce', 'erreur', texteErreur('TYPE_BIEN_INVALIDE'));
+    if (!valeur('b-ville') || !/^[0-9]{5}$/.test(valeur('b-cp'))) return afficherMessage('message-annonce', 'erreur', texteErreur('VILLE_INVALIDE'));
+    if (!chiffres('b-prix')) return afficherMessage('message-annonce', 'erreur', texteErreur('PRIX_INVALIDE'));
+    if (!chiffres('b-surface')) return afficherMessage('message-annonce', 'erreur', texteErreur('SURFACE_INVALIDE'));
+    if (!valeur('b-dpe') || !valeur('b-ges')) return afficherMessage('message-annonce', 'erreur', texteErreur('DPE_INVALIDE'));
+    if (valeur('b-description').length < 30) return afficherMessage('message-annonce', 'erreur', texteErreur('DESCRIPTION_COURTE'));
+    if (pro && !profil) {
+      if (!document.querySelector('input[name="metier"]:checked')) return afficherMessage('message-annonce', 'erreur', 'Dites-nous si vous êtes agent ou mandataire immobilier.');
+      if (!valeur('v-agence')) return afficherMessage('message-annonce', 'erreur', albMessageErreur('ENTREPRISE_MANQUANTE'));
+      const siret = valeur('v-siret').replace(/\s/g, '');
+      if (siret && !/^[0-9]{14}$/.test(siret)) return afficherMessage('message-annonce', 'erreur', albMessageErreur('SIRET_INVALIDE'));
+    }
+    if (pro && !valeur('p-honoraires')) return afficherMessage('message-annonce', 'erreur', texteErreur('HONORAIRES_MANQUANTS'));
+    if (pro && !document.getElementById('c-mandat').checked) return afficherMessage('message-annonce', 'erreur', texteErreur('MANDAT_NON_CERTIFIE'));
+    if (!pro && !document.getElementById('c-exclusif').checked) return afficherMessage('message-annonce', 'erreur', texteErreur('EXCLUSIF_NON_CERTIFIE'));
+    if (!profil) {
+      if (!document.getElementById('c-cgu').checked) return afficherMessage('message-annonce', 'erreur', albMessageErreur('CGU_NON_ACCEPTEES'));
+      if (!document.getElementById('c-recontact').checked) return afficherMessage('message-annonce', 'erreur', albMessageErreur('RECONTACT_NON_ACCEPTE'));
+    }
+
+    const bouton = document.getElementById('bouton-deposer');
+    const progression = document.getElementById('progression');
+    bouton.disabled = true;
+    progression.classList.remove('cache');
+
+    try {
+      // 1. Création du compte (si besoin) : la personne est connectée automatiquement
+      if (!profil) {
+        progression.textContent = 'Création de votre espace ALB…';
+        const inscrit = await albSInscrire({
+          prenom: valeur('v-prenom'), nom: valeur('v-nom'), email: valeur('v-email'), telephone: valeur('v-telephone'),
+          pin: valeur('v-pin'), est_vendeur: !pro, cgu_acceptees: true, accepte_recontact: true,
+          metier_pro: pro ? document.querySelector('input[name="metier"]:checked').value : '',
+          nom_entreprise: pro ? valeur('v-agence') : '', siret: pro ? valeur('v-siret') : '',
+          message: ((pro ? 'Dépôt d\'une annonce (vente accompagnée). ' : 'Dépôt d\'une annonce. ') + valeur('b-message')).trim()
+        });
+        if (!inscrit.ok) {
+          afficherMessage('message-annonce', 'erreur', inscrit.message);
+          if (inscrit.message === albMessageErreur('EMAIL_DEJA_UTILISE')) {
+            const bloc = document.getElementById('message-annonce');
+            bloc.innerHTML = albEchapper(inscrit.message) + ' <a href="espace-alb.html" class="lien-pourpre"><strong>Aller dans mon espace ALB →</strong></a>';
+          }
+          return;
+        }
+        await chargerProfil();
+      }
+
+      // 2. L'annonce
+      progression.textContent = 'Envoi de votre annonce…';
+      const resultat = await albAppelerGuichet({
+        action: 'depot_annonce',
+        type_bien: typeBien, ville: valeur('b-ville'), code_postal: valeur('b-cp'), adresse: valeur('b-adresse'),
+        prix: chiffres('b-prix'), surface_m2: chiffres('b-surface'), nb_pieces: chiffres('b-pieces') || null,
+        surface_terrain_m2: typeBien === 'maison' ? (chiffres('b-terrain') || null) : null,
+        dpe: valeur('b-dpe'), ges: valeur('b-ges'),
+        depenses_energie_min: chiffres('b-dep-min') || null, depenses_energie_max: chiffres('b-dep-max') || null,
+        description: valeur('b-description'),
+        videos: [valeur('b-video1'), valeur('b-video2')].filter(Boolean),
+        message: valeur('b-message'),
+        agence_nom: pro ? (valeur('p-agence') || valeur('v-agence')) : null, honoraires_texte: pro ? valeur('p-honoraires') : null,
+        certifie_sans_exclusif: !pro && document.getElementById('c-exclusif').checked,
+        certifie_mandat_detenu: pro && document.getElementById('c-mandat').checked
+      });
+      if (!resultat.ok) {
+        afficherMessage('message-annonce', 'erreur', texteErreur(resultat.code));
+        return;
+      }
+
+      // 3. Les photos
+      let photosRatees = 0;
+      if (photos.length) {
+        const { data: session } = await albSupabase.auth.getSession();
+        const idMembre = session?.session?.user?.id;
+        for (let i = 0; i < photos.length; i++) {
+          progression.textContent = 'Envoi des photos… (' + (i + 1) + '/' + photos.length + ')';
+          const chemin = idMembre + '/' + resultat.annonce_id + '/' + Date.now() + '-' + i + '.jpg';
+          const envoi = await albSupabase.storage.from('annonces-photos').upload(chemin, photos[i].blob, { contentType: 'image/jpeg', upsert: false });
+          if (envoi.error) { console.error('[ALB DEBUG] photo :', envoi.error); photosRatees++; continue; }
+          const adresse = albSupabase.storage.from('annonces-photos').getPublicUrl(chemin).data.publicUrl;
+          const fiche = await albSupabase.from('annonce_medias').insert({ annonce_id: resultat.annonce_id, url: adresse, type_media: 'photo', type: 'photo', ordre: i });
+          if (fiche.error) { console.error('[ALB DEBUG] fiche photo :', fiche.error); photosRatees++; }
+        }
+      }
+
+      if (photosRatees) {
+        const note = document.getElementById('merci-photos');
+        note.textContent = '📷 ' + photosRatees + ' photo' + (photosRatees > 1 ? 's n\'ont' : ' n\'a') + ' pas pu être envoyée' + (photosRatees > 1 ? 's' : '') + '. Pas d\'inquiétude : Jocelyne vous aidera à les ajouter lors de son appel.';
+        note.classList.remove('cache');
+      }
+      afficherEtape('etape-merci');
+    } catch (erreur) {
+      console.error('[ALB DEBUG] dépôt :', erreur);
+      afficherMessage('message-annonce', 'erreur', albMessageErreur('RESEAU'));
+    } finally {
+      bouton.disabled = false;
+      progression.classList.add('cache');
+    }
+  }
+
+  // ---------- Mandat exclusif : être recontacté à la fin ----------
+  async function envoyerRappelMandat(event) {
+    event.preventDefault();
+    effacerMessage('message-exclusif');
+    if (!document.getElementById('ex-recontact').checked) return afficherMessage('message-exclusif', 'erreur', albMessageErreur('RECONTACT_NON_ACCEPTE'));
+    const bouton = document.getElementById('bouton-exclusif');
+    bouton.disabled = true;
+    const resultat = await albAppelerGuichet({
+      action: 'rappel_mandat',
+      prenom: valeur('ex-prenom'), nom: valeur('ex-nom'), telephone: valeur('ex-telephone'), email: valeur('ex-email'),
+      fin_mandat: valeur('ex-fin'), message: valeur('ex-message'), accepte_recontact: true
+    });
+    bouton.disabled = false;
+    if (!resultat.ok) return afficherMessage('message-exclusif', 'erreur', texteErreur(resultat.code));
+    afficherEtape('etape-merci-exclusif');
+  }
+
+  // ---------- Au chargement ----------
+  document.addEventListener('DOMContentLoaded', async function () {
+    await chargerProfil();
+    // Un agent ou mandataire connecté va directement au formulaire pro
+    if (estProImmo()) { parcours = 'pro'; preparerFormulaire(); }
+    else if (profil) { parcours = 'particulier'; afficherEtape('etape-mandat'); }
+  });
+</script>
+</body>
+</html>
