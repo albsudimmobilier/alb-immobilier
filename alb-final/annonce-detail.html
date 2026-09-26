@@ -517,12 +517,6 @@
         <div id="visite-ouverte">
           <p id="texte-visite"></p>
           <button type="button" class="bouton" id="bouton-visite" onclick="demanderVisite()">Demander une visite</button>
-          <div class="info-visite cache" id="info-visite">
-            <p><strong>Les demandes de visite en ligne arrivent très bientôt.</strong></p>
-            <p>En attendant, Jocelyne organise la visite avec vous :</p>
-            <p>📱 <a href="tel:+33745602805">07 45 60 28 05</a><br>✉️ <a id="lien-email-visite" href="mailto:contact@albimmobilier.fr">contact@albimmobilier.fr</a></p>
-            <p class="reference" id="a-reference"></p>
-          </div>
         </div>
         <a class="bouton bouton-discret" href="projets-alb.html">💡 Un financement, des travaux ? Mes projets ALB</a>
       </div>
@@ -702,14 +696,11 @@
   }
 
   // ----- Visite -----
-  function allerVisite() {
-    document.getElementById('bloc-visite').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    demanderVisite();
-  }
+  function allerVisite() { demanderVisite(); }
 
+  // Le parcours de visite : simulateur budget, créneau ou appel du pro, consentement
   function demanderVisite() {
-    document.getElementById('info-visite').classList.remove('cache');
-    document.getElementById('bouton-visite').classList.add('cache');
+    if (annonce) location.href = 'demande-visite.html?id=' + encodeURIComponent(annonce.id);
   }
 
   function remplir() {
@@ -781,10 +772,6 @@
     document.getElementById('texte-visite').textContent = a.type_vente === 'accompagnee'
       ? 'Demandez une visite : le professionnel qui vend ce bien vous rappelle pour fixer un rendez-vous.'
       : 'Demandez une visite : vous choisissez un créneau parmi les disponibilités du propriétaire.';
-    const ref = 'Référence de l\'annonce : ' + String(a.id).slice(0, 8).toUpperCase();
-    document.getElementById('a-reference').textContent = ref;
-    document.getElementById('lien-email-visite').href = 'mailto:contact@albimmobilier.fr?subject=' +
-      encodeURIComponent('[PARTICULIERS ACQUEREURS] Demande de visite — ' + a.titre + ' (' + String(a.id).slice(0, 8).toUpperCase() + ')');
 
     if (a.statut !== 'compromis') {
       document.getElementById('barre-prix').textContent = prix(a.prix);
