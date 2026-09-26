@@ -130,6 +130,22 @@
     .membre:last-child { border-bottom: none; }
     .membre-nom { font-weight: 700; color: #5A3A6A; }
 
+    /* Annonces */
+    .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .filtre { border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 16px; padding: 6px 12px; font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .filtre.actif { background: #B28E3D; border-color: #B28E3D; color: #fff; }
+    .filtre .nb { opacity: 0.8; font-weight: 500; }
+    .photos-annonce { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; }
+    .photos-annonce img { width: 96px; height: 72px; object-fit: cover; border-radius: 6px; flex: 0 0 auto; }
+    .badge-vente { display: inline-block; font-size: 0.76rem; font-weight: 700; padding: 3px 10px; border-radius: 14px; margin-bottom: 6px; }
+    .badge-vente.particulier { background: #F4EEF6; color: #5A3A6A; }
+    .badge-vente.accompagnee { background: #FBF3E4; color: #8A6A1F; }
+    .prix-annonce { font-size: 1.15rem; font-weight: 700; color: #5A3A6A; }
+    .prive { background: #FBF8F3; border: 1px dashed #D8D5CE; border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+    .prive-titre { font-size: 0.76rem; font-weight: 700; color: #7a7a75; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .point-a-faire { background: #FBF3E4; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 8px 10px; margin: 8px 0; font-size: 0.88rem; }
+    .decision { margin-top: 10px; padding: 10px; border: 1px solid #E8E6E1; border-radius: 8px; background: #FBF8F3; }
+    .decision-titre { font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; }
     @media (min-width: 700px) {
       .bandeau { padding: 10px 28px; }
       .bandeau-titre { font-size: 1.1rem; }
@@ -189,6 +205,7 @@
 
     <nav class="onglets">
       <button type="button" class="onglet actif" data-onglet="accueil" onclick="afficherOnglet('accueil')">📊 Tableau de bord</button>
+      <button type="button" class="onglet" data-onglet="annonces" onclick="afficherOnglet('annonces')">🏡 Annonces<span class="pastille" id="pastille-annonces">0</span></button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
@@ -204,6 +221,18 @@
         <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
         <div class="compteur"><div class="valeur" id="c-membres">–</div><div class="libelle">Membres au total</div></div>
         <div class="compteur"><div class="valeur" id="c-nouveaux">–</div><div class="libelle">Nouveaux sur 7 jours</div></div>
+      </div>
+
+      <h2 class="titre-section">Annonces</h2>
+      <div class="compteurs">
+        <div class="compteur alerte"><div class="valeur" id="c-ann-etudier">–</div><div class="libelle">🏡 Annonces à étudier</div></div>
+        <div class="compteur alerte"><div class="valeur" id="c-ann-points">–</div><div class="libelle">📆 Points mensuels à faire</div></div>
+        <div class="compteur"><div class="valeur" id="c-ann-en-ligne">–</div><div class="libelle">🌐 En ligne</div></div>
+        <div class="compteur"><div class="valeur" id="c-ann-compromis">–</div><div class="libelle">✍️ Sous offre / compromis</div></div>
+        <div class="compteur"><div class="valeur" id="c-ann-particuliers">–</div><div class="libelle">🏡 Entre particuliers (en ligne)</div></div>
+        <div class="compteur"><div class="valeur" id="c-ann-accompagnees">–</div><div class="libelle">🤝 Accompagnées (en ligne)</div></div>
+        <div class="compteur"><div class="valeur" id="c-ann-vendues">–</div><div class="libelle">🎉 Vendues</div></div>
+        <div class="compteur alerte"><div class="valeur" id="c-mandats">–</div><div class="libelle">📅 Mandats exclusifs à rappeler</div></div>
       </div>
 
       <h2 class="titre-section">Particuliers</h2>
@@ -223,6 +252,18 @@
         <div class="compteur"><div class="valeur" id="c-autres-metiers">–</div><div class="libelle">🤝 Autres métiers</div></div>
         <div class="compteur"><div class="valeur" id="c-valides">–</div><div class="libelle">✅ Pros validés</div></div>
       </div>
+    </div>
+
+    <!-- Annonces -->
+    <div class="panneau" id="panneau-annonces">
+      <p class="aide">Chaque nouvelle annonce attend ton appel avant d'être mise en ligne. Une fois en ligne, un point est à faire tous les mois avec le propriétaire : clique sur ta décision après l'appel. Rien n'est jamais supprimé : une annonce vendue quitte le site mais reste ici.</p>
+      <div class="filtres" id="filtres-statut"></div>
+      <div class="filtres" id="filtres-type"></div>
+      <div class="liste-fiches" id="liste-annonces"></div>
+
+      <h2 class="titre-section">📅 Vendeurs sous mandat exclusif à rappeler</h2>
+      <p class="aide">Ils ne pouvaient pas diffuser leur bien (mandat exclusif en cours) et ont accepté d'être recontactés. Tu reçois aussi un rappel par e-mail le jour de la fin de leur mandat.</p>
+      <div class="liste-fiches" id="liste-mandats"></div>
     </div>
 
     <!-- Pros à valider -->
@@ -253,7 +294,6 @@
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
-        <p class="ligne-info">🏡 <strong>Annonces</strong> : valider les nouvelles annonces et leurs modifications.</p>
         <p class="ligne-info">📅 <strong>Visites</strong> : demandées, confirmées, repoussées, refusées, à venir.</p>
         <p class="ligne-info">⭐ <strong>Avis</strong> : valider ou refuser les avis laissés sur les pros.</p>
         <p class="ligne-info">🤝 <strong>Demandes aux pros</strong> : qui a reçu quoi, qui a répondu.</p>
@@ -286,11 +326,20 @@
     PRO_NON_VALIDE: "Ce pro doit d'abord être validé.",
     PROFIL_INTROUVABLE: 'Ce profil est introuvable.',
     EMAIL_INVALIDE: "Cette adresse e-mail ne semble pas complète.",
-    EMAIL_DEJA_UTILISE: "Cette adresse e-mail est déjà utilisée par un autre membre."
+    EMAIL_DEJA_UTILISE: "Cette adresse e-mail est déjà utilisée par un autre membre.",
+    DATE_COMPROMIS_MANQUANTE: "Indique la date prévue de la signature chez le notaire (acte authentique).",
+    ANNONCE_INTROUVABLE: 'Cette annonce est introuvable.',
+    DPE_OBLIGATOIRE: 'Le DPE est obligatoire.',
+    annonces_prix_positif: 'Le prix doit être supérieur à zéro.',
+    annonces_honoraires_pro: "Une annonce de pro doit afficher ses honoraires."
   };
 
   let membres = [];
   let demandesAcces = [];
+  let annonces = [];
+  let rappelsMandat = [];
+  let filtreStatut = 'a_etudier';
+  let filtreType = 'tous';
 
   function afficherMessage(id, type, texte) {
     const zone = document.getElementById(id);
@@ -389,10 +438,12 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
-      albSupabase.rpc('alb_gestion_demandes_acces')
+      albSupabase.rpc('alb_gestion_demandes_acces'),
+      albSupabase.rpc('alb_gestion_annonces'),
+      albSupabase.rpc('alb_gestion_rappels_mandat')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -400,7 +451,11 @@
     }
     membres = liste.data || [];
     demandesAcces = acces.data || [];
+    annonces = lesAnnonces.data || [];
+    rappelsMandat = lesMandats.data || [];
     afficherDemandesAcces();
+    afficherAnnonces();
+    afficherRappelsMandat();
     afficherCompteurs(compteurs.data || {});
     afficherAValider();
     afficherValides();
@@ -416,6 +471,237 @@
     };
     Object.keys(valeurs).forEach(function (id) { document.getElementById(id).textContent = valeurs[id] ?? 0; });
     document.getElementById('pastille-a-valider').textContent = c.pros_a_valider ?? 0;
+  }
+
+  // ---------- Annonces ----------
+  const STATUTS_ANNONCE = {
+    en_attente: '⏳ À étudier', disponible: '🌐 En ligne', en_pause: '⏸️ En pause', sous_offre: '🤝 Sous offre',
+    compromis: '✍️ Sous compromis', vendu: '🎉 Vendu', refusee: '✗ Refusée'
+  };
+  const FILTRES_STATUT = [
+    ['a_etudier', '⏳ À étudier', function (a) { return a.statut === 'en_attente'; }],
+    ['points', '📆 Points à faire', function (a) { return a.point_a_faire; }],
+    ['en_ligne', '🌐 En ligne', function (a) { return a.statut === 'disponible'; }],
+    ['compromis', '✍️ Offre / compromis', function (a) { return a.statut === 'sous_offre' || a.statut === 'compromis'; }],
+    ['pause', '⏸️ En pause', function (a) { return a.statut === 'en_pause'; }],
+    ['vendues', '🎉 Vendues', function (a) { return a.statut === 'vendu'; }],
+    ['refusees', '✗ Refusées', function (a) { return a.statut === 'refusee'; }],
+    ['toutes', 'Toutes', function () { return true; }]
+  ];
+  const FILTRES_TYPE = [['tous', 'Tous'], ['particulier', '🏡 Entre particuliers'], ['accompagnee', '🤝 Accompagnées']];
+
+  function prixLisible(n) { return Number(n || 0).toLocaleString('fr-FR') + ' €'; }
+
+  function afficherAnnonces() {
+    const aEtudier = annonces.filter(function (a) { return a.statut === 'en_attente'; }).length;
+    const points = annonces.filter(function (a) { return a.point_a_faire; }).length;
+    const enLigne = annonces.filter(function (a) { return a.statut === 'disponible'; });
+    const valeurs = {
+      'c-ann-etudier': aEtudier, 'c-ann-points': points, 'c-ann-en-ligne': enLigne.length,
+      'c-ann-compromis': annonces.filter(function (a) { return a.statut === 'sous_offre' || a.statut === 'compromis'; }).length,
+      'c-ann-particuliers': enLigne.filter(function (a) { return a.type_vente === 'particulier'; }).length,
+      'c-ann-accompagnees': enLigne.filter(function (a) { return a.type_vente === 'accompagnee'; }).length,
+      'c-ann-vendues': annonces.filter(function (a) { return a.statut === 'vendu'; }).length,
+      'c-mandats': rappelsMandat.length
+    };
+    Object.keys(valeurs).forEach(function (id) { document.getElementById(id).textContent = valeurs[id]; });
+    document.getElementById('pastille-annonces').textContent = aEtudier + points;
+
+    document.getElementById('filtres-statut').innerHTML = FILTRES_STATUT.map(function (f) {
+      const nb = annonces.filter(f[2]).length;
+      return '<button type="button" class="filtre' + (filtreStatut === f[0] ? ' actif' : '') + '" onclick="choisirFiltreStatut(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + nb + ')</span></button>';
+    }).join('');
+    document.getElementById('filtres-type').innerHTML = FILTRES_TYPE.map(function (f) {
+      return '<button type="button" class="filtre' + (filtreType === f[0] ? ' actif' : '') + '" onclick="choisirFiltreType(\'' + f[0] + '\')">' + f[1] + '</button>';
+    }).join('');
+
+    const testStatut = (FILTRES_STATUT.find(function (f) { return f[0] === filtreStatut; }) || FILTRES_STATUT[0])[2];
+    const liste = annonces.filter(testStatut).filter(function (a) { return filtreType === 'tous' || a.type_vente === filtreType; });
+    const zone = document.getElementById('liste-annonces');
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucune annonce ici pour le moment. 🌿</div>'; return; }
+    zone.innerHTML = liste.map(ficheAnnonce).join('');
+  }
+
+  function choisirFiltreStatut(f) { filtreStatut = f; afficherAnnonces(); }
+  function choisirFiltreType(f) { filtreType = f; afficherAnnonces(); }
+
+  function ficheAnnonce(a) {
+    const p = a.proprietaire || {};
+    const pro = a.type_vente === 'accompagnee';
+    const tel = (p.telephone || a.telephone_annonce || '').replace(/[^0-9+]/g, '');
+    const photos = (a.photos || []).map(function (u) { return '<a href="' + albEchapper(u) + '" target="_blank"><img src="' + albEchapper(u) + '" alt=""></a>'; }).join('');
+    const videos = (a.videos || []).map(function (v, i) { return '<a href="' + albEchapper(v) + '" target="_blank">🎬 Vidéo ' + (i + 1) + '</a>'; }).join(' · ');
+    const dispos = Array.isArray(a.disponibilites_visite) ? a.disponibilites_visite.length : 0;
+    const bien = (a.type_bien === 'maison' ? 'Maison' : 'Appartement') + ' · ' + (a.surface_m2 || '?') + ' m²' +
+      (a.nb_pieces ? ' · ' + a.nb_pieces + ' pièces' : '') + (a.surface_terrain_m2 ? ' · terrain ' + a.surface_terrain_m2 + ' m²' : '');
+    const energie = (a.depenses_energie_min || a.depenses_energie_max)
+      ? ' · énergie ' + (a.depenses_energie_min ? prixLisible(a.depenses_energie_min) : '?') + ' à ' + (a.depenses_energie_max ? prixLisible(a.depenses_energie_max) : '?') + '/an' : '';
+
+    return '<div class="carte fiche" id="annonce-' + a.id + '">' +
+      '<span class="badge-vente ' + (pro ? 'accompagnee' : 'particulier') + '">' + (pro ? '🤝 Vente accompagnée' + (a.agence_nom ? ' · ' + albEchapper(a.agence_nom) : '') : '🏡 Entre particuliers') + '</span>' +
+      '<div class="etiquettes"><span class="etiquette' + (a.statut === 'en_attente' ? ' or' : a.statut === 'refusee' ? ' rouge' : a.statut === 'disponible' ? ' vert' : '') + '">' + (STATUTS_ANNONCE[a.statut] || albEchapper(a.statut)) + '</span></div>' +
+      '<h3>' + albEchapper(a.titre) + '</h3>' +
+      '<p class="prix-annonce">' + prixLisible(a.prix) + '</p>' +
+      '<p class="ligne-info">📍 ' + albEchapper((a.code_postal || '') + ' ' + (a.ville || '')) + '</p>' +
+      '<p class="ligne-info">🏠 ' + albEchapper(bien) + '</p>' +
+      '<p class="ligne-info">⚡ DPE ' + albEchapper(a.dpe || '?') + ' · GES ' + albEchapper(a.ges || '?') + albEchapper(energie) + '</p>' +
+      (pro && a.honoraires_texte ? '<p class="ligne-info">💶 Honoraires : ' + albEchapper(a.honoraires_texte) + '</p>' : '') +
+      (photos ? '<div class="photos-annonce">' + photos + '</div>' : '<p class="ligne-info">📷 Aucune photo</p>') +
+      (a.point_a_faire ? '<div class="point-a-faire">📆 <strong>Point mensuel à faire</strong> avec le propriétaire (prévu le ' + dateLisible(a.prochain_point_le) + ').</div>' : '') +
+      (a.message_jocelyne ? '<p class="ligne-info mot">💬 « ' + albEchapper(a.message_jocelyne) + ' »</p>' : '') +
+      '<details class="historique"><summary>📝 Description</summary><p style="white-space:pre-line;margin-top:6px;">' + albEchapper(a.description || '') + '</p></details>' +
+      '<div class="prive"><div class="prive-titre">🔒 Jamais public</div>' +
+        '<p class="ligne-info">👤 ' + albEchapper((p.prenom || '') + ' ' + (p.nom || '')) + (p.nom_entreprise ? ' · ' + albEchapper(p.nom_entreprise) : '') + '</p>' +
+        (tel ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(tel) + '">' + albEchapper(p.telephone || a.telephone_annonce) + '</a></p>' : '') +
+        (p.email ? '<p class="ligne-info">✉️ <a href="mailto:' + albEchapper(p.email) + '">' + albEchapper(p.email) + '</a></p>' : '') +
+        (a.adresse ? '<p class="ligne-info">🏠 ' + albEchapper(a.adresse) + '</p>' : '<p class="ligne-info">🏠 Adresse non indiquée</p>') +
+        (videos ? '<p class="ligne-info">' + videos + '</p>' : '') +
+        (!pro ? '<p class="ligne-info">📅 ' + (dispos ? dispos + ' disponibilité' + (dispos > 1 ? 's' : '') + ' de visite' : 'Pas encore de disponibilités de visite') + '</p>' : '') +
+        '<p class="ligne-info">' + (pro ? (a.certifie_mandat_detenu ? '✅ A certifié détenir un mandat de vente' : '') : (a.certifie_sans_exclusif ? '✅ A certifié ne pas être sous mandat exclusif' : '')) + '</p>' +
+      '</div>' +
+      '<p class="ligne-info">🗓️ Déposée le ' + dateLisible(a.date_creation) +
+        (a.mis_en_ligne_le ? ' · en ligne depuis le ' + dateLisible(a.mis_en_ligne_le) : '') +
+        (a.modifie_le ? ' · modifiée le ' + dateLisible(a.modifie_le) : '') + '</p>' +
+      (a.statut === 'compromis' && a.date_fin_compromis ? '<p class="ligne-info">✍️ Acte prévu le ' + dateLisible(a.date_fin_compromis) + '</p>' : '') +
+      (a.statut === 'refusee' && a.motif_refus ? '<p class="ligne-info">Motif du refus : ' + albEchapper(a.motif_refus) + '</p>' : '') +
+      actionsAnnonce(a) +
+      formulaireAnnonce(a) +
+      historiqueAnnonce(a) +
+    '</div>';
+  }
+
+  function actionsAnnonce(a) {
+    const id = a.id;
+    const btn = function (decision, texte, classe) {
+      return '<button class="bouton ' + (classe || 'discret') + '" onclick="decisionAnnonce(\'' + id + '\', \'' + decision + '\', this)">' + texte + '</button>';
+    };
+    let html = '';
+    if (a.statut === 'en_attente' || a.statut === 'refusee') {
+      html = '<div class="actions">' + btn('mettre_en_ligne', '🌐 Mettre en ligne', 'vert') +
+        (a.statut === 'en_attente' ? '<button class="bouton rouge" onclick="basculer(\'refus-' + id + '\')">✗ Refuser</button>' : '') +
+        '<button class="bouton discret" onclick="basculer(\'modif-' + id + '\')">✏️ Corriger</button></div>' +
+        '<div class="decision cache" id="refus-' + id + '"><div class="decision-titre">Pourquoi ? (il sera envoyé gentiment au propriétaire, facultatif)</div>' +
+        '<textarea id="motif-' + id + '" maxlength="500" placeholder="Ex. : le bien est hors de notre zone pour le moment"></textarea>' +
+        '<div class="actions">' + btn('refuser', 'Confirmer le refus', 'rouge') + '</div></div>';
+    } else if (a.statut !== 'vendu') {
+      html = '<div class="decision"><div class="decision-titre">📞 Après ton appel (point mensuel) :</div><div class="actions" style="margin-top:0;">' +
+        (a.statut === 'disponible' ? btn('continuer', '✓ On continue', 'vert') : btn('reprendre', '▶️ Reprendre la diffusion', 'vert')) +
+        (a.statut !== 'en_pause' ? btn('pause', '⏸️ Mettre en pause') : '') +
+        (a.statut !== 'sous_offre' ? btn('sous_offre', '🤝 Sous offre') : '') +
+        (a.statut !== 'compromis' ? '<button class="bouton discret" onclick="basculer(\'compromis-' + id + '\')">✍️ Sous compromis</button>' : '') +
+        btn('vendu', '🎉 Vendu') +
+        '</div>' +
+        '<div class="cache" id="compromis-' + id + '" style="margin-top:8px;"><label class="petit-champ">Date prévue chez le notaire (acte)<input type="date" id="date-compromis-' + id + '"></label>' +
+        '<div class="actions">' + btn('compromis', 'Confirmer : sous compromis') + '</div></div>' +
+        '</div>' +
+        '<div class="actions"><button class="bouton discret" onclick="basculer(\'modif-' + id + '\')">✏️ Corriger l\'annonce</button></div>';
+    }
+    return html;
+  }
+
+  function formulaireAnnonce(a) {
+    const champ = function (nom, libelle, valeur, type) {
+      return '<div class="champ"><label>' + libelle + '</label><input name="' + nom + '" ' + (type ? 'inputmode="' + type + '"' : '') + ' value="' + albEchapper(valeur ?? '') + '"></div>';
+    };
+    const lettres = function (nom, valeur) {
+      return '<select name="' + nom + '">' + ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(function (l) { return '<option' + (l === valeur ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select>';
+    };
+    return '<form class="formulaire-fiche cache" id="modif-' + a.id + '" onsubmit="corrigerAnnonce(event, \'' + a.id + '\')">' +
+      '<div class="grille">' +
+        '<div class="champ large"><label>Titre</label><input name="titre" maxlength="120" value="' + albEchapper(a.titre || '') + '"></div>' +
+        champ('prix', 'Prix (€)', a.prix, 'numeric') +
+        '<div class="champ"><label>Type</label><select name="type_bien"><option value="maison"' + (a.type_bien === 'maison' ? ' selected' : '') + '>Maison</option><option value="appartement"' + (a.type_bien === 'appartement' ? ' selected' : '') + '>Appartement</option></select></div>' +
+        champ('ville', 'Ville', a.ville) + champ('code_postal', 'Code postal', a.code_postal, 'numeric') +
+        champ('surface_m2', 'Surface (m²)', a.surface_m2, 'decimal') + champ('nb_pieces', 'Pièces', a.nb_pieces, 'numeric') +
+        champ('surface_terrain_m2', 'Terrain (m²)', a.surface_terrain_m2, 'numeric') +
+        '<div class="champ"><label>DPE</label>' + lettres('dpe', a.dpe) + '</div>' +
+        '<div class="champ"><label>GES</label>' + lettres('ges', a.ges) + '</div>' +
+        champ('depenses_energie_min', 'Énergie : de (€/an)', a.depenses_energie_min, 'numeric') + champ('depenses_energie_max', 'à (€/an)', a.depenses_energie_max, 'numeric') +
+        (a.type_vente === 'accompagnee' ? champ('agence_nom', 'Agence', a.agence_nom) + champ('honoraires_texte', 'Honoraires', a.honoraires_texte) : '') +
+        '<div class="champ large"><label>Description</label><textarea name="description" maxlength="4000" rows="6">' + albEchapper(a.description || '') + '</textarea></div>' +
+      '</div>' +
+      '<div class="actions"><button class="bouton" type="submit">💾 Enregistrer</button><button class="bouton discret" type="button" onclick="basculer(\'modif-' + a.id + '\')">Annuler</button></div>' +
+    '</form>';
+  }
+
+  function historiqueAnnonce(a) {
+    const h = a.historique || [];
+    if (!h.length) return '';
+    return '<details class="historique"><summary>🕘 Historique de l\'annonce</summary><ul>' +
+      h.map(function (e) { return '<li>' + dateLisible(e.le) + ' : ' + albEchapper(e.evenement) + (e.detail ? ' (' + albEchapper(e.detail) + ')' : '') + '</li>'; }).join('') +
+      '</ul></details>';
+  }
+
+  function basculer(id) { document.getElementById(id).classList.toggle('cache'); }
+
+  const MESSAGES_DECISION = {
+    mettre_en_ligne: '🌐 Annonce en ligne ! Le propriétaire reçoit son e-mail, et le premier point mensuel est prévu dans 30 jours.',
+    refuser: "Annonce refusée. Le propriétaire reçoit un e-mail bienveillant. Elle reste dans l'onglet « Refusées ».",
+    continuer: '✓ Noté : on continue. Prochain point dans 30 jours.',
+    pause: "⏸️ Diffusion en pause : l'annonce n'est plus visible sur le site. Prochain point dans 30 jours.",
+    reprendre: '▶️ Diffusion reprise. Prochain point dans 30 jours.',
+    sous_offre: "🤝 Sous offre : l'annonce reste visible avec la mention « sous offre ».",
+    compromis: "✍️ Sous compromis : l'annonce reste visible avec la mention « sous compromis ». Je te rappelle au plus tard le lendemain de l'acte.",
+    vendu: "🎉 Vendu ! L'annonce quitte le site mais reste gardée ici, dans « Vendues »."
+  };
+
+  async function decisionAnnonce(id, decision, bouton) {
+    if (decision === 'vendu' && !confirm('Confirmer : ce bien est vendu ? L\'annonce quittera le site (elle reste gardée ici).')) return;
+    const date = decision === 'compromis' ? (document.getElementById('date-compromis-' + id).value || null) : null;
+    if (decision === 'compromis' && !date) { afficherMessage('message-general', 'erreur', ERREURS.DATE_COMPROMIS_MANQUANTE); return; }
+    const motif = decision === 'refuser' ? (document.getElementById('motif-' + id).value.trim() || null) : null;
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_annonce_decision', { p_id: id, p_decision: decision, p_date_fin_compromis: date, p_motif: motif });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    await toutRecharger();
+    afficherMessage('message-general', decision === 'refuser' ? 'info' : 'succes', MESSAGES_DECISION[decision] || 'C\'est enregistré ✓');
+  }
+
+  async function corrigerAnnonce(event, id) {
+    event.preventDefault();
+    const f = event.target;
+    const champs = {};
+    Array.from(f.elements).forEach(function (el) {
+      if (!el.name) return;
+      const v = el.value.trim();
+      if (v !== '') champs[el.name] = ['prix', 'surface_m2', 'nb_pieces', 'surface_terrain_m2', 'depenses_energie_min', 'depenses_energie_max'].includes(el.name)
+        ? v.replace(/[^0-9.,]/g, '').replace(',', '.') : v;
+    });
+    const bouton = f.querySelector('button[type="submit"]');
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_annonce_modifier', { p_id: id, p_champs: champs });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    await toutRecharger();
+    afficherMessage('message-general', 'succes', '💾 Annonce corrigée. Si elle est en ligne, c\'est déjà visible sur le site.');
+  }
+
+  // ---------- Vendeurs sous mandat exclusif ----------
+  function afficherRappelsMandat() {
+    const zone = document.getElementById('liste-mandats');
+    if (!rappelsMandat.length) { zone.innerHTML = '<div class="carte vide">Personne à rappeler pour le moment. 🌿</div>'; return; }
+    zone.innerHTML = rappelsMandat.map(function (r) {
+      const tel = (r.telephone || '').replace(/[^0-9+]/g, '');
+      const echu = r.fin_mandat && new Date(r.fin_mandat + 'T12:00:00') <= new Date();
+      return '<div class="carte fiche">' +
+        '<h3>' + albEchapper((r.prenom || '') + ' ' + (r.nom || '')) + '</h3>' +
+        (r.fin_mandat ? '<p class="ligne-info">' + (echu ? '🔔 <strong>Mandat terminé le ' : '📅 Fin du mandat le ') + dateLisible(r.fin_mandat) + (echu ? '</strong> : c\'est le moment d\'appeler !' : '') + '</p>' : '<p class="ligne-info">📅 Date de fin non précisée</p>') +
+        (tel ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(tel) + '">' + albEchapper(r.telephone) + '</a></p>' : '') +
+        (r.email ? '<p class="ligne-info">✉️ <a href="mailto:' + albEchapper(r.email) + '">' + albEchapper(r.email) + '</a></p>' : '') +
+        (r.message ? '<p class="ligne-info mot">💬 « ' + albEchapper(r.message) + ' »</p>' : '') +
+        '<p class="ligne-info">🗓️ Demande du ' + dateLisible(r.cree_le) + ' · ✅ accepte d\'être recontacté(e)</p>' +
+        '<div class="actions"><button class="bouton discret" onclick="rappelMandatFait(' + Number(r.id) + ', this)">✓ Rappel fait</button></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function rappelMandatFait(id, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_rappel_mandat_traite', { p_id: id });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    await toutRecharger();
   }
 
   // ---------- Pros à valider ----------
