@@ -3,799 +3,823 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Détails Annonce - ALB Immobilier</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <title>Annonce — ALB Immobilier</title>
+  <meta name="description" content="Bien ancien à vendre dans le Var ou les Bouches-du-Rhône, annonce vérifiée par ALB Sud Immobilier.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ALB Immobilier">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Annonce À La Bien · ALB Immobilier">
+  <meta property="og:image" content="https://albimmobilier.fr/logo-signature.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --pourpre: #4B1A3E;
-      --dore: #B28E3D;
-      --creme: #f5f3ee;
-      --light-bg: #f9f7f4;
-    }
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Montserrat', sans-serif;
-      background: linear-gradient(135deg, #f5f3ee 0%, #fafaf8 100%);
-      color: #2b2b2b;
-      min-height: 100vh;
-    }
-    .header {
-      background: white;
-      border-bottom: 3px solid var(--dore);
-      padding: 15px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo {
-      font-family: 'Playfair Display';
-      font-size: 1.3rem;
-      color: var(--pourpre);
-      cursor: pointer;
-    }
-    .logo strong { color: var(--dore); }
-    .btn-back {
-      background: var(--light-bg);
-      color: var(--pourpre);
-      padding: 8px 16px;
-      border: 1px solid var(--dore);
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .btn-back:hover { background: #f0ebe3; }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    .annonce-hero {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 20px rgba(75, 26, 62, 0.1);
-      margin-bottom: 30px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      align-items: center;
-    }
-    .annonce-image {
-      font-size: 4rem;
-      text-align: center;
-    }
-    .annonce-header { }
-    .annonce-titre {
-      font-family: 'Playfair Display';
-      color: var(--pourpre);
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-    .annonce-localisation {
-      color: #666;
-      font-size: 1rem;
-      margin-bottom: 15px;
-    }
-    .annonce-prix {
-      font-size: 1.8rem;
-      color: var(--dore);
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    .btn-visite {
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      width: 100%;
-      transition: all 0.3s;
-    }
-    .btn-visite:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(75, 26, 62, 0.3); }
-    .content-wrapper {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 30px;
-    }
-    .annonce-details { }
-    .details-title {
-      font-family: 'Playfair Display';
-      color: var(--pourpre);
-      font-size: 1.3rem;
-      margin-bottom: 20px;
-      border-bottom: 2px solid var(--dore);
-      padding-bottom: 10px;
-    }
-    .caracteristiques-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .caracteristique {
-      background: #f9f7f4;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid var(--dore);
-    }
-    .caracteristique-label {
-      font-size: 0.85rem;
-      color: #999;
-      margin-bottom: 5px;
-    }
-    .caracteristique-valeur {
-      font-weight: 600;
-      color: var(--pourpre);
-      font-size: 1rem;
-    }
-    .description {
-      background: #f9f7f4;
-      padding: 20px;
-      border-radius: 8px;
+      background: #F5F3F0;
+      color: #4A4A47;
       line-height: 1.6;
-      margin-bottom: 30px;
     }
-    .videos-section {
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
       background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
     }
-    .video-placeholder {
-      background: #f9f7f4;
-      height: 300px;
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3rem;
-      border-radius: 8px;
-      margin-bottom: 15px;
+      gap: 45px;
+      flex-grow: 1;
     }
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
     }
-    .vendeur-card, .horaires-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      border-left: 4px solid var(--dore);
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
     }
-    .vendeur-title, .horaires-title {
-      font-weight: 600;
-      color: var(--pourpre);
-      margin-bottom: 15px;
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
     }
-    .vendeur-info {
-      margin-bottom: 10px;
+    .btn-cta:hover {
+      background: #B28E3D !important;
     }
-    .vendeur-label {
-      font-size: 0.85rem;
-      color: #999;
-    }
-    .vendeur-value {
-      font-weight: 600;
-      color: var(--pourpre);
-    }
-    .horaire {
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .horaire:last-child { border-bottom: none; }
-    .form-step {
-      display: none;
-      margin-top: 2rem;
-      padding: 2rem;
-      background: #f5f3ee;
-      border-radius: 12px;
-    }
-    .form-step.active {
-      display: block;
-    }
-    .form-step h3 {
-      color: var(--pourpre);
-      margin-bottom: 1.5rem;
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    .form-group label {
-      display: block;
-      color: var(--pourpre);
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-family: 'Montserrat', sans-serif;
-    }
-    .form-group input:focus, .form-group select:focus {
-      outline: 0;
-      border-color: var(--dore);
-    }
-    .btn-submit {
-      width: 100%;
-      padding: 12px;
-      background: var(--pourpre);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-submit:hover {
-      background: #6b2d5f;
-    }
-    .result-box {
-      background: linear-gradient(135deg, var(--pourpre), #6b2d5f);
-      color: white;
-      border-radius: 12px;
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-      display: none;
-    }
-    .result-box.active {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1rem;
-    }
-    .result-item {
-      background: rgba(255,255,255,0.1);
-      padding: 1.5rem;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .result-value {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    .result-label {
-      font-size: 0.85rem;
-      opacity: 0.9;
-    }
-    .dispo-list {
-      margin: 1.5rem 0;
-    }
-    .dispo-item {
-      padding: 1rem;
-      background: white;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .dispo-item:hover {
-      border-color: var(--dore);
-    }
-    .dispo-item.selected {
-      border-color: var(--pourpre);
-      background: #f9f7f4;
-    }
-    .vendeur-details {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border-left: 4px solid var(--dore);
-    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
     @media (max-width: 768px) {
-      .annonce-hero { grid-template-columns: 1fr; }
-      .content-wrapper { grid-template-columns: 1fr; }
-      .caracteristiques-grid { grid-template-columns: repeat(2, 1fr); }
-      .result-box.active { grid-template-columns: 1fr; }
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+    /* ========== FICHE ANNONCE (mobile d'abord) ========== */
+    .page { max-width: 1100px; margin: 0 auto; padding: 20px 16px 10px; }
+    .retour { display: inline-block; margin-bottom: 14px; color: #5A3A6A; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+    .retour:hover { text-decoration: underline; }
+    .carte { background: white; border: 1px solid #E8E6E1; border-radius: 10px; padding: 20px 16px; margin-bottom: 18px; }
+    .carte h2 { font-size: 1.2rem; margin-bottom: 12px; }
+
+    /* Galerie */
+    .galerie { background: white; border: 1px solid #E8E6E1; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+    .grande { position: relative; aspect-ratio: 4 / 3; background: #EFEAE3; }
+    .grande img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+    .sans-photo { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 3.5rem; }
+    .sans-photo span { font-size: 0.9rem; color: #6a6a65; margin-top: 6px; }
+    .fleche { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.92); color: #5A3A6A; font-size: 1.4rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+    .fleche-g { left: 10px; }
+    .fleche-d { right: 10px; }
+    .position { position: absolute; right: 10px; bottom: 10px; background: rgba(0, 0, 0, 0.6); color: white; font-size: 0.8rem; padding: 3px 10px; border-radius: 12px; }
+    .bandeau-statut { position: absolute; left: 0; top: 14px; background: #5A3A6A; color: white; font-size: 0.85rem; font-weight: 700; padding: 6px 14px; border-radius: 0 14px 14px 0; }
+    .vignettes { display: flex; gap: 8px; padding: 10px; overflow-x: auto; }
+    .vignettes button { flex: 0 0 auto; width: 76px; height: 56px; border: 2px solid transparent; border-radius: 6px; overflow: hidden; padding: 0; cursor: pointer; background: #EFEAE3; }
+    .vignettes button.active { border-color: #B28E3D; }
+    .vignettes img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* En-tête */
+    .prix { font-size: 1.8rem; font-weight: 700; color: #5A3A6A; line-height: 1.2; }
+    .titre { font-size: 1.35rem; margin: 6px 0 4px; line-height: 1.3; }
+    .lieu { font-size: 0.95rem; color: #6a6a65; }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .badge { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 4px 11px; border-radius: 14px; background: #FBF8F3; border: 1px solid #E8E6E1; color: #4A4A47; }
+    .badge-pro { border-color: #B28E3D; color: #8A6420; }
+    .badge-verifie { background: #F4EEF6; border-color: #E2D6E8; color: #5A3A6A; }
+
+    .chiffres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .chiffre { background: #FBF8F3; border-radius: 8px; padding: 12px; }
+    .chiffre-valeur { font-weight: 700; color: #2a2a28; font-size: 1.05rem; }
+    .chiffre-nom { font-size: 0.8rem; color: #6a6a65; }
+
+    .description { white-space: pre-line; font-size: 0.97rem; overflow-wrap: anywhere; }
+
+    /* Énergie */
+    .echelle { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .echelle-titre { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+    .barre { display: flex; align-items: center; gap: 8px; }
+    .barre span { display: flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 0 12px 12px 0; color: white; font-weight: 700; font-size: 0.8rem; opacity: 0.35; }
+    .barre.active span { opacity: 1; height: 30px; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
+    .barre.active::after { content: '◀ ce bien'; font-size: 0.8rem; font-weight: 700; color: #2a2a28; }
+    .note-energie { font-size: 0.85rem; color: #6a6a65; }
+
+    /* Vente */
+    .vente p { font-size: 0.93rem; margin-bottom: 8px; }
+    .vente strong { color: #2a2a28; }
+
+    /* Visite */
+    .visite { border: 2px solid #B28E3D; }
+    .visite p { font-size: 0.93rem; margin-bottom: 12px; }
+    .bouton { display: block; width: 100%; padding: 14px 20px; border: none; border-radius: 6px; background: #B28E3D; color: white; font-family: inherit; font-size: 1rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; margin-bottom: 10px; }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton-discret { background: none; border: 1px solid #D8D5CE; color: #4A4A47; }
+    .bouton-discret:hover { background: #F5F3F0; color: #5A3A6A; }
+    .info-visite { background: #F4EEF6; border-radius: 8px; padding: 14px; font-size: 0.92rem; margin-bottom: 12px; }
+    .info-visite a { color: #5A3A6A; font-weight: 700; }
+    .reference { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
+    .alerte-statut { background: #FBF3E4; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 12px 14px; font-size: 0.92rem; margin-bottom: 12px; }
+
+    .etat { text-align: center; background: white; border: 1px solid #E8E6E1; border-radius: 10px; padding: 40px 18px; }
+    .etat p { margin-bottom: 14px; }
+    .etat .bouton { display: inline-block; width: auto; }
+
+    /* Photo en grand */
+    .visionneuse { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); z-index: 3000; display: none; align-items: center; justify-content: center; }
+    .visionneuse.active { display: flex; }
+    .visionneuse img { max-width: 96vw; max-height: 86vh; object-fit: contain; }
+    .visionneuse .fermer { position: absolute; top: 14px; right: 18px; background: none; border: none; color: white; font-size: 2.2rem; cursor: pointer; }
+    .visionneuse .fleche { background: rgba(255, 255, 255, 0.85); }
+
+    /* Téléphone : bouton de visite toujours à portée de pouce */
+    .barre-visite { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; background: white; border-top: 1px solid #E8E6E1; padding: 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08); }
+    .barre-visite .barre-prix { font-weight: 700; color: #5A3A6A; font-size: 1.05rem; white-space: nowrap; }
+    .barre-visite .bouton { margin: 0; padding: 12px 14px; flex: 1; }
+    body.avec-barre { padding-bottom: 74px; }
+
+    .cache { display: none !important; }
+
+    @media (min-width: 900px) {
+      .barre-visite { display: none; }
+      body.avec-barre { padding-bottom: 0; }
+      .page { padding: 34px 24px 20px; }
+      .fiche { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; align-items: start; }
+      .colonne-droite { position: sticky; top: 90px; }
+      .chiffres { grid-template-columns: repeat(3, 1fr); }
+      .carte { padding: 24px; }
+    }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
 <body>
-<header class="header">
-  <div class="header-content">
-    <div class="logo" onclick="window.location.href='index.html'"><strong>ALB</strong> Immobilier</div>
-    <a href="annonces.html" class="btn-back">← Retour aux annonces</a>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
   </div>
 </header>
 
-<div class="container">
-  <div class="annonce-hero">
-    <div class="annonce-image">🏠</div>
-    <div class="annonce-header">
-      <h1 class="annonce-titre" id="annonce-titre">Chargement...</h1>
-      <p class="annonce-localisation" id="annonce-localisation">📍 Chargement...</p>
-      <div class="annonce-prix" id="annonce-prix">-</div>
-      <button class="btn-visite" onclick="startVisiteFlow()">💰 Demander une visite</button>
-    </div>
+<main class="page">
+  <a class="retour" href="annonces.html" id="lien-retour">← Toutes les annonces</a>
+
+  <div class="etat" id="etat-chargement"><p>Chargement de l'annonce…</p></div>
+
+  <div class="etat cache" id="etat-absente">
+    <p><strong>Cette annonce n'est plus en ligne.</strong></p>
+    <p>Le bien a peut-être été vendu, ou le propriétaire a mis son annonce en pause. D'autres biens vous attendent.</p>
+    <a class="bouton" href="annonces.html">Voir les annonces</a>
   </div>
 
-  <div class="content-wrapper">
-    <div class="annonce-details">
-      <h2 class="details-title">📋 Caractéristiques</h2>
-      <div class="caracteristiques-grid" id="carac-grid">
-        <div style="text-align: center; color: #999;">Chargement...</div>
-      </div>
-
-      <h2 class="details-title" style="margin-top: 30px;">📝 Description</h2>
-      <div class="description" id="annonce-description">
-        <p>Chargement...</p>
-      </div>
-
-      <div class="videos-section">
-        <h2 class="details-title">📹 Visite virtuelle</h2>
-        <div class="video-placeholder">🎬</div>
-        <p style="color: #999; text-align: center; font-size: 0.9rem;">Vidéo de présentation du bien</p>
-      </div>
-    </div>
-
-    <div class="sidebar">
-      <div class="vendeur-card" id="vendeur-card">
-        <div class="vendeur-title">👤 Vendu par</div>
-        <div style="color: #999;">Chargement...</div>
-      </div>
-
-      <div class="horaires-card" id="horaires-card">
-        <div class="horaires-title">⏰ Disponibilités pour visite</div>
-        <div style="color: #999;">Chargement...</div>
-      </div>
-
-      <button class="btn-visite" onclick="startVisiteFlow()">💰 Demander une visite</button>
-    </div>
+  <div class="etat cache" id="etat-erreur">
+    <p>L'annonce n'a pas pu être chargée. Vérifiez votre connexion, puis rechargez la page.</p>
+    <button type="button" class="bouton" onclick="location.reload()">Recharger</button>
   </div>
 
-  <!-- ÉTAPE 0: INSCRIPTION ACHETEUR -->
-  <div id="form-step-0" class="form-step active">
-    <h3>👤 Étape 1: Vos informations</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-      <div class="form-group">
-        <label>Prénom *</label>
-        <input type="text" id="prenom" placeholder="Jean" required>
-      </div>
-      <div class="form-group">
-        <label>Nom *</label>
-        <input type="text" id="nom" placeholder="Dupont" required>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Email *</label>
-      <input type="email" id="email" placeholder="jean@example.com" required>
-    </div>
-    <div class="form-group">
-      <label>Téléphone *</label>
-      <input type="tel" id="telephone" placeholder="06 12 34 56 78" required>
-    </div>
-    <button class="btn-submit" onclick="nextStep(0, 1)">Continuer vers le budget →</button>
-  </div>
+  <div class="fiche cache" id="fiche">
+    <div class="colonne-gauche">
+      <div class="galerie" id="galerie"></div>
 
-  <!-- ÉTAPE 1: SIMULATEUR BUDGET -->
-  <div id="form-step-1" class="form-step">
-    <h3>💰 Étape 2: Simulateur de budget</h3>
-    
-    <form id="budget-form" onsubmit="calculateBudget(event)">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="form-group">
-          <label>Revenu mensuel net (€) *</label>
-          <input type="number" id="revenu" placeholder="3000" min="0" step="100" required>
-        </div>
-        <div class="form-group">
-          <label>Apport propre (€)</label>
-          <input type="number" id="apport" placeholder="50000" min="0" step="1000">
-        </div>
+      <div class="carte">
+        <div class="prix" id="a-prix"></div>
+        <h1 class="titre" id="a-titre"></h1>
+        <div class="lieu" id="a-lieu"></div>
+        <div class="badges" id="a-badges"></div>
       </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="form-group">
-          <label>Taux d'intérêt (%) *</label>
-          <input type="number" id="taux" placeholder="3.5" min="0" max="10" step="0.1" value="3.5" required>
-        </div>
-        <div class="form-group">
-          <label>Durée du crédit *</label>
-          <select id="duree" required>
-            <option value="">Sélectionner...</option>
-            <option value="15">15 ans</option>
-            <option value="20">20 ans</option>
-            <option value="25">25 ans</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label>Charges mensuelles (€)</label>
-        <input type="number" id="charges" placeholder="250" min="0" step="10" value="250">
-        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Assurance, copro, taxes, etc.</div>
-      </div>
-      
-      <button type="submit" class="btn-submit">📊 Calculer mon budget</button>
-    </form>
-    
-    <div id="result-section" class="result-box">
-      <div class="result-item">
-        <div class="result-label">Budget maximal</div>
-        <div class="result-value" id="budget-max">-</div>
-        <div style="font-size: 0.9rem;">€</div>
-      </div>
-      <div class="result-item">
-        <div class="result-label">Mensualité + Charges</div>
-        <div class="result-value" id="mensualite-total">-</div>
-        <div style="font-size: 0.9rem;">€/mois</div>
-      </div>
-      <div class="result-item">
-        <div class="result-label">Ratio d'endettement</div>
-        <div class="result-value" id="ratio">-</div>
-        <div style="font-size: 0.9rem;">%</div>
-      </div>
-    </div>
-    
-    <div id="ratio-warning" style="display: none; background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.5); color: #ffc107; padding: 15px; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem;"></div>
-    
-    <button class="btn-submit" onclick="nextStep(1, 2)" style="display: none;" id="btn-next-horaire">Continuer vers les disponibilités →</button>
-  </div>
 
-  <!-- ÉTAPE 2: SÉLECTION HORAIRE -->
-  <div id="form-step-2" class="form-step">
-    <h3>📅 Étape 3: Choisir un créneau de visite</h3>
-    
-    <div class="vendeur-details" id="vendeur-details-step2">
-      <div style="font-weight: 600; color: var(--pourpre); margin-bottom: 1rem;">👤 Vendeur de ce bien</div>
-      <div id="vendeur-info-step2"></div>
+      <div class="carte">
+        <h2>En bref</h2>
+        <div class="chiffres" id="a-chiffres"></div>
+      </div>
+
+      <div class="carte">
+        <h2>Description</h2>
+        <div class="description" id="a-description"></div>
+      </div>
+
+      <div class="carte">
+        <h2>Performance énergétique</h2>
+        <div class="echelle" id="a-dpe"></div>
+        <div class="echelle" id="a-ges"></div>
+        <p class="note-energie" id="a-depenses"></p>
+      </div>
     </div>
-    
-    <div class="dispo-list" id="dispos-list"></div>
-    
-    <button class="btn-submit" onclick="validerVisite()">✅ Valider ma demande de visite</button>
+
+    <div class="colonne-droite">
+      <div class="carte visite" id="bloc-visite">
+        <h2>📅 Visiter ce bien</h2>
+        <div class="alerte-statut cache" id="alerte-statut"></div>
+        <div id="visite-ouverte">
+          <p id="texte-visite"></p>
+          <button type="button" class="bouton" id="bouton-visite" onclick="demanderVisite()">Demander une visite</button>
+          <div class="info-visite cache" id="info-visite">
+            <p><strong>Les demandes de visite en ligne arrivent très bientôt.</strong></p>
+            <p>En attendant, Jocelyne organise la visite avec vous :</p>
+            <p>📱 <a href="tel:+33745602805">07 45 60 28 05</a><br>✉️ <a id="lien-email-visite" href="mailto:contact@albimmobilier.fr">contact@albimmobilier.fr</a></p>
+            <p class="reference" id="a-reference"></p>
+          </div>
+        </div>
+        <a class="bouton bouton-discret" href="projets-alb.html">💡 Un financement, des travaux ? Mes projets ALB</a>
+      </div>
+
+      <div class="carte vente" id="bloc-vente"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Téléphone : barre du bas -->
+<div class="barre-visite cache" id="barre-visite">
+  <span class="barre-prix" id="barre-prix"></span>
+  <button type="button" class="bouton" onclick="allerVisite()">📅 Demander une visite</button>
+</div>
+
+<!-- Photo en grand -->
+<div class="visionneuse" id="visionneuse" onclick="if (event.target === this) fermerVisionneuse()">
+  <button type="button" class="fermer" onclick="fermerVisionneuse()" aria-label="Fermer">&times;</button>
+  <button type="button" class="fleche fleche-g" onclick="changerPhoto(-1)" aria-label="Photo précédente">‹</button>
+  <img id="visionneuse-image" alt="">
+  <button type="button" class="fleche fleche-d" onclick="changerPhoto(1)" aria-label="Photo suivante">›</button>
+</div>
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
 <script>
-  let currentBienData = null;
-  let vendeurData = null;
-  let selectedDispo = null;
-  let calculatedBudget = null;
-
-  async function init() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const bienId = urlParams.get('id');
-    if (!bienId) {
-      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
-      return;
-    }
-    await loadBien(bienId);
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
   }
 
-  async function loadBien(id) {
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('biens_immobiliers')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      currentBienData = data;
-      displayBien(data);
-      await loadVendeur(data.vendeur_id);
-    } catch (err) {
-      console.error('Erreur:', err);
-      document.getElementById('annonce-titre').textContent = '❌ Bien non trouvé';
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
     }
   }
 
-  function displayBien(bien) {
-    document.getElementById('annonce-titre').textContent = bien.titre || 'Sans titre';
-    document.getElementById('annonce-localisation').textContent = `📍 ${bien.code_postal} ${bien.ville}`;
-    document.getElementById('annonce-prix').textContent = bien.prix_vente?.toLocaleString('fr-FR') + '€';
-    
-    document.getElementById('annonce-description').innerHTML = `
-      <p>${bien.description || 'Aucune description'}</p>
-      <br>
-      <p>À la bien, toujours ✨ ALB Immobilier</p>
-    `;
-    
-    const dpeColor = bien.dpe === 'A' || bien.dpe === 'B' ? '#155724' : '#666';
-    document.getElementById('carac-grid').innerHTML = `
-      <div class="caracteristique">
-        <div class="caracteristique-label">Type de bien</div>
-        <div class="caracteristique-valeur">${bien.type_bien || 'Non spécifié'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Surface</div>
-        <div class="caracteristique-valeur">${bien.surface || '-'} m²</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Pièces</div>
-        <div class="caracteristique-valeur">${bien.nb_pieces || '-'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">Terrain</div>
-        <div class="caracteristique-valeur">${bien.surface_terrain || '-'} m²</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">DPE</div>
-        <div class="caracteristique-valeur" style="color: ${dpeColor};">${bien.dpe || '-'}</div>
-      </div>
-      <div class="caracteristique">
-        <div class="caracteristique-label">GES</div>
-        <div class="caracteristique-valeur">${bien.ges || '-'}</div>
-      </div>
-    `;
-  }
+  // ========== FICHE ANNONCE ==========
+  const COULEURS_DPE = { A: '#009C6D', B: '#52B153', C: '#A5CC74', D: '#F4E70F', E: '#F2A74B', F: '#EB6A33', G: '#D7221F' };
+  const COULEURS_GES = { A: '#A4DBF8', B: '#8CB4D3', C: '#7792B1', D: '#5E708D', E: '#4D5271', F: '#393551', G: '#281B35' };
+  let annonce = null;
+  let photos = [];
+  let photoActive = 0;
 
-  async function loadVendeur(vendeurId) {
-    try {
-      const { data, error } = await window.supabaseClient
-        .from('profiles')
-        .select('prenom, nom, disponibilites_rdv, statut_verifie')
-        .eq('id', vendeurId)
-        .single();
-      if (error) throw error;
-      
-      vendeurData = data;
-      
-      const badgeVerif = data.statut_verifie ? '✅ Profil vérifié' : '⏳ Vérification en cours';
-      document.getElementById('vendeur-card').innerHTML = `
-        <div class="vendeur-title">👤 Vendu par</div>
-        <div style="color:#999; margin-bottom:10px;">${badgeVerif}</div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Nom</div>
-          <div class="vendeur-value">${data.prenom || ''} ${data.nom || 'Particulier'}</div>
-        </div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Type</div>
-          <div class="vendeur-value">Particulier</div>
-        </div>
-      `;
-      
-      if (data.disponibilites_rdv && data.disponibilites_rdv.length > 0) {
-        const dispos = data.disponibilites_rdv.map(d => {
-          const date = new Date(d);
-          return `📅 <strong>${date.toLocaleDateString('fr-FR')}</strong> • ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-        }).join('</div><div class="horaire">');
-        
-        document.getElementById('horaires-card').innerHTML = `
-          <div class="horaires-title">⏰ Disponibilités pour visite</div>
-          <div class="horaire">${dispos}</div>
-        `;
-      }
-    } catch (err) {
-      console.error('Erreur vendeur:', err);
-    }
-  }
-
-  function startVisiteFlow() {
-    document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
-    document.getElementById('form-step-0').classList.add('active');
-    window.scrollTo({ top: document.getElementById('form-step-0').offsetTop - 100, behavior: 'smooth' });
-  }
-
-  function nextStep(from, to) {
-    if (from === 0) {
-      const prenom = document.getElementById('prenom').value.trim();
-      const nom = document.getElementById('nom').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const telephone = document.getElementById('telephone').value.trim();
-      
-      if (!prenom || !nom || !email || !telephone) {
-        alert('⚠️ Remplissez tous les champs');
-        return;
-      }
-    }
-    
-    document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(`form-step-${to}`).classList.add('active');
-    window.scrollTo({ top: document.getElementById(`form-step-${to}`).offsetTop - 100, behavior: 'smooth' });
-  }
-
-  function calculateBudget(e) {
-    e.preventDefault();
-    
-    const revenu = parseFloat(document.getElementById('revenu').value);
-    const apport = parseFloat(document.getElementById('apport').value) || 0;
-    const taux = parseFloat(document.getElementById('taux').value) / 100;
-    const duree = parseInt(document.getElementById('duree').value);
-    const charges = parseFloat(document.getElementById('charges').value) || 0;
-    
-    if (!revenu || !duree) {
-      alert('⚠️ Remplissez tous les champs obligatoires');
-      return;
-    }
-    
-    const totalDisponible = revenu * 0.35;
-    const mensualiteMax = totalDisponible - charges;
-    
-    if (mensualiteMax <= 0) {
-      alert('⚠️ Les charges sont trop élevées');
-      return;
-    }
-    
-    const n = duree * 12;
-    const tauxMensuel = taux / 12;
-    let capitalEmpruntable;
-    
-    if (tauxMensuel === 0) {
-      capitalEmpruntable = mensualiteMax * n;
-    } else {
-      const factor = (Math.pow(1 + tauxMensuel, n) - 1) / (tauxMensuel * Math.pow(1 + tauxMensuel, n));
-      capitalEmpruntable = mensualiteMax * factor;
-    }
-    
-    const budgetTotal = capitalEmpruntable + apport;
-    const ratioEndettement = ((mensualiteMax + charges) / revenu) * 100;
-    
-    let scoreFaisabilite = 50;
-    if (ratioEndettement <= 35) scoreFaisabilite += 30;
-    else if (ratioEndettement <= 40) scoreFaisabilite += 15;
-    if (apport > budgetTotal * 0.2) scoreFaisabilite += 15;
-    if (revenu > 3000) scoreFaisabilite += 5;
-    scoreFaisabilite = Math.min(100, scoreFaisabilite);
-    
-    calculatedBudget = {
-      revenu, apport, taux, duree, charges, budgetTotal, mensualiteMax,
-      mensualiteTotal: mensualiteMax + charges, ratioEndettement, capitalEmpruntable,
-      scoreFaisabilite
-    };
-    
-    document.getElementById('budget-max').textContent = budgetTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-    document.getElementById('mensualite-total').textContent = (mensualiteMax + charges).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-    document.getElementById('ratio').textContent = ratioEndettement.toFixed(1) + '%';
-    
-    const warningEl = document.getElementById('ratio-warning');
-    if (ratioEndettement <= 35) {
-      warningEl.textContent = '✅ Votre ratio d\'endettement est bon (≤ 35%)';
-      warningEl.style.background = 'rgba(76,175,80,0.2)';
-      warningEl.style.border = '1px solid rgba(76,175,80,0.5)';
-      warningEl.style.color = '#4caf50';
-    } else {
-      warningEl.textContent = '⚠️ Attention : votre ratio dépasse 35%. Un courtier peut vous conseiller.';
-      warningEl.style.background = 'rgba(255,193,7,0.2)';
-      warningEl.style.border = '1px solid rgba(255,193,7,0.5)';
-      warningEl.style.color = '#ffc107';
-    }
-    warningEl.style.display = 'block';
-    
-    document.getElementById('result-section').classList.add('active');
-    document.getElementById('btn-next-horaire').style.display = 'block';
-  }
-
-  function loadDisposStep2() {
-    if (!vendeurData || !vendeurData.disponibilites_rdv || vendeurData.disponibilites_rdv.length === 0) {
-      document.getElementById('dispos-list').innerHTML = '<p style="color:#999;">⚠️ Aucun créneau disponible</p>';
-      return;
-    }
-    
-    const dispos = vendeurData.disponibilites_rdv;
-    let html = '';
-    dispos.forEach((dispo, idx) => {
-      const date = new Date(dispo);
-      const dateStr = date.toLocaleDateString('fr-FR');
-      const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      html += `
-        <div class="dispo-item" onclick="selectDispo('${dispo}', ${idx})" id="dispo-${idx}">
-          📅 ${dateStr} à ${timeStr}
-        </div>
-      `;
+  function e(texte) { return albEchapper(texte); }
+  function prix(n) { const v = Number(n); return isFinite(v) ? v.toLocaleString('fr-FR') + ' €' : ''; }
+  function nombre(n) { return Number(n).toLocaleString('fr-FR'); }
+  function photoSure(url) { return /^https:\/\//.test(String(url || '')) ? String(url) : ''; }
+  function montrer(id) {
+    ['etat-chargement', 'etat-absente', 'etat-erreur', 'fiche'].forEach(function (x) {
+      document.getElementById(x).classList.toggle('cache', x !== id);
     });
-    document.getElementById('dispos-list').innerHTML = html;
-    
-    if (vendeurData) {
-      document.getElementById('vendeur-info-step2').innerHTML = `
-        <div class="vendeur-info">
-          <div class="vendeur-label">Nom</div>
-          <div class="vendeur-value">${vendeurData.prenom || ''} ${vendeurData.nom || 'Particulier'}</div>
-        </div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Type</div>
-          <div class="vendeur-value">Particulier</div>
-        </div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Bien</div>
-          <div class="vendeur-value">${currentBienData.titre || 'Sans titre'}</div>
-        </div>
-        <div class="vendeur-info">
-          <div class="vendeur-label">Localisation</div>
-          <div class="vendeur-value">${currentBienData.code_postal} ${currentBienData.ville}</div>
-        </div>
-      `;
-    }
   }
 
-  function selectDispo(dispo, idx) {
-    selectedDispo = dispo;
-    document.querySelectorAll('[id^="dispo-"]').forEach(el => el.classList.remove('selected'));
-    document.getElementById(`dispo-${idx}`).classList.add('selected');
+  // ----- Galerie -----
+  function dessinerGalerie() {
+    const zone = document.getElementById('galerie');
+    const statut = annonce.statut === 'compromis' ? '<span class="bandeau-statut">Sous compromis</span>'
+      : annonce.statut === 'sous_offre' ? '<span class="bandeau-statut">Sous offre</span>' : '';
+    if (!photos.length) {
+      zone.innerHTML = '<div class="grande"><div class="sans-photo">🏡<span>Les photos arrivent bientôt</span></div>' + statut + '</div>';
+      return;
+    }
+    const plusieurs = photos.length > 1;
+    zone.innerHTML =
+      '<div class="grande">' +
+        '<img src="' + e(photos[photoActive]) + '" alt="' + e(annonce.titre) + ' — photo ' + (photoActive + 1) + '" onclick="ouvrirVisionneuse()">' +
+        statut +
+        (plusieurs ? '<button type="button" class="fleche fleche-g" onclick="changerPhoto(-1)" aria-label="Photo précédente">‹</button><button type="button" class="fleche fleche-d" onclick="changerPhoto(1)" aria-label="Photo suivante">›</button>' : '') +
+        '<span class="position">' + (photoActive + 1) + ' / ' + photos.length + '</span>' +
+      '</div>' +
+      (plusieurs ? '<div class="vignettes">' + photos.map(function (p, i) {
+        return '<button type="button" class="' + (i === photoActive ? 'active' : '') + '" onclick="choisirPhoto(' + i + ')" aria-label="Photo ' + (i + 1) + '"><img src="' + e(p) + '" alt="" loading="lazy"></button>';
+      }).join('') + '</div>' : '');
+  }
+  function choisirPhoto(i) { photoActive = i; dessinerGalerie(); majVisionneuse(); }
+  function changerPhoto(pas) {
+    if (!photos.length) return;
+    photoActive = (photoActive + pas + photos.length) % photos.length;
+    dessinerGalerie(); majVisionneuse();
+  }
+  function ouvrirVisionneuse() { majVisionneuse(); document.getElementById('visionneuse').classList.add('active'); }
+  function fermerVisionneuse() { document.getElementById('visionneuse').classList.remove('active'); }
+  function majVisionneuse() {
+    const img = document.getElementById('visionneuse-image');
+    if (photos[photoActive]) img.src = photos[photoActive];
+    const plusieurs = photos.length > 1;
+    document.querySelectorAll('.visionneuse .fleche').forEach(function (b) { b.classList.toggle('cache', !plusieurs); });
+  }
+  document.addEventListener('keydown', function (ev) {
+    if (!document.getElementById('visionneuse').classList.contains('active')) return;
+    if (ev.key === 'Escape') fermerVisionneuse();
+    if (ev.key === 'ArrowLeft') changerPhoto(-1);
+    if (ev.key === 'ArrowRight') changerPhoto(1);
+  });
+
+  // ----- Énergie -----
+  function echelle(titre, lettre, couleurs) {
+    return '<div class="echelle-titre">' + titre + '</div>' + ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(function (l, i) {
+      const texte = ['C', 'D'].indexOf(l) !== -1 && couleurs === COULEURS_DPE ? '#2a2a28' : 'white';
+      return '<div class="barre' + (l === lettre ? ' active' : '') + '"><span style="background:' + couleurs[l] + ';color:' + texte + ';width:' + (34 + i * 12) + 'px">' + l + '</span></div>';
+    }).join('');
   }
 
-  async function validerVisite() {
-    if (!selectedDispo) {
-      alert('⚠️ Sélectionner un créneau');
-      return;
+  // ----- Visite -----
+  function allerVisite() {
+    document.getElementById('bloc-visite').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    demanderVisite();
+  }
+
+  function demanderVisite() {
+    document.getElementById('info-visite').classList.remove('cache');
+    document.getElementById('bouton-visite').classList.add('cache');
+  }
+
+  function remplir() {
+    const a = annonce;
+    const typeTexte = a.type_bien === 'maison' ? 'Maison' : 'Appartement';
+    document.title = a.titre + ' — ' + prix(a.prix) + ' | ALB Immobilier';
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute('content', typeTexte + ' ancien à vendre à ' + a.ville + ' (' + a.code_postal + ') : ' + prix(a.prix) + '. Annonce vérifiée par ALB Sud Immobilier.');
+    const canon = document.createElement('link');
+    canon.rel = 'canonical';
+    canon.href = 'https://albimmobilier.fr/annonce-detail.html?id=' + encodeURIComponent(a.id);
+    document.head.appendChild(canon);
+
+    document.getElementById('a-prix').textContent = prix(a.prix);
+    document.getElementById('a-titre').textContent = a.titre;
+    document.getElementById('a-lieu').textContent = '📍 ' + a.ville + ' (' + a.code_postal + ')';
+
+    const badges = [];
+    badges.push(a.type_vente === 'accompagnee'
+      ? '<span class="badge badge-pro">🤝 Vente accompagnée par un pro</span>'
+      : '<span class="badge">🏡 Vente entre particuliers</span>');
+    badges.push('<span class="badge badge-verifie">✅ Vérifiée par ALB Sud Immobilier</span>');
+    document.getElementById('a-badges').innerHTML = badges.join('');
+
+    const chiffres = [[typeTexte, 'Type de bien']];
+    if (a.surface_m2) chiffres.push([nombre(a.surface_m2) + ' m²', 'Surface habitable']);
+    if (a.nb_pieces) chiffres.push([String(a.nb_pieces), a.nb_pieces > 1 ? 'Pièces' : 'Pièce']);
+    if (a.surface_terrain_m2) chiffres.push([nombre(a.surface_terrain_m2) + ' m²', 'Terrain']);
+    if (a.surface_m2 && a.prix) chiffres.push([nombre(Math.round(a.prix / a.surface_m2)) + ' €', 'Prix au m²']);
+    chiffres.push(['DPE ' + (a.dpe || '?') + ' · GES ' + (a.ges || '?'), 'Énergie']);
+    document.getElementById('a-chiffres').innerHTML = chiffres.map(function (c) {
+      return '<div class="chiffre"><div class="chiffre-valeur">' + e(c[0]) + '</div><div class="chiffre-nom">' + e(c[1]) + '</div></div>';
+    }).join('');
+
+    document.getElementById('a-description').textContent = a.description || '';
+
+    document.getElementById('a-dpe').innerHTML = echelle('Diagnostic de performance énergétique (DPE)', a.dpe, COULEURS_DPE);
+    document.getElementById('a-ges').innerHTML = echelle('Émissions de gaz à effet de serre (GES)', a.ges, COULEURS_GES);
+    const dep = document.getElementById('a-depenses');
+    if (a.depenses_energie_min && a.depenses_energie_max) {
+      dep.textContent = 'Montant estimé des dépenses annuelles d\'énergie pour un usage standard : entre ' + nombre(a.depenses_energie_min) + ' € et ' + nombre(a.depenses_energie_max) + ' € par an.';
+    } else {
+      dep.classList.add('cache');
     }
-    
-    const prenom = document.getElementById('prenom').value.trim();
-    const nom = document.getElementById('nom').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const telephone = document.getElementById('telephone').value.trim();
-    
-    if (!prenom || !nom || !email || !telephone) {
-      alert('⚠️ Remplissez tous les champs');
-      return;
+
+    // Bloc vente : particulier ou pro, toujours clair
+    const vente = document.getElementById('bloc-vente');
+    if (a.type_vente === 'accompagnee') {
+      vente.innerHTML = '<h2>🤝 Vente accompagnée</h2>' +
+        '<p>Ce bien est proposé par un professionnel de l\'immobilier' + (a.agence_nom ? ' : <strong>' + e(a.agence_nom) + '</strong>' : '') + '.</p>' +
+        (a.honoraires_texte ? '<p>Honoraires : <strong>' + e(a.honoraires_texte) + '</strong></p>' : '') +
+        '<p>Vous faites votre demande sur ALB Immobilier, et le professionnel vous rappelle pour fixer la visite.</p>';
+    } else {
+      vente.innerHTML = '<h2>🏡 Vente entre particuliers</h2>' +
+        '<p>Ce bien est vendu directement par son propriétaire, sans agence.</p>' +
+        '<p>Vous choisissez un créneau parmi ses disponibilités, et ALB Sud Immobilier fait le lien entre vous.</p>';
     }
-    
-    if (!calculatedBudget) {
-      alert('⚠️ Calculer le budget d\'abord');
-      return;
+
+    // Visite selon le statut
+    const alerte = document.getElementById('alerte-statut');
+    if (a.statut === 'compromis') {
+      alerte.textContent = 'Ce bien est sous compromis : les visites sont suspendues pour le moment. Si la vente ne se fait pas, l\'annonce redeviendra disponible.';
+      alerte.classList.remove('cache');
+      document.getElementById('visite-ouverte').classList.add('cache');
+    } else if (a.statut === 'sous_offre') {
+      alerte.textContent = 'Une offre est en cours sur ce bien. Vous pouvez tout de même demander une visite : on vous tiendra au courant.';
+      alerte.classList.remove('cache');
     }
-    
-    const date = new Date(selectedDispo);
-    
+    document.getElementById('texte-visite').textContent = a.type_vente === 'accompagnee'
+      ? 'Demandez une visite : le professionnel qui vend ce bien vous rappelle pour fixer un rendez-vous.'
+      : 'Demandez une visite : vous choisissez un créneau parmi les disponibilités du propriétaire.';
+    const ref = 'Référence de l\'annonce : ' + String(a.id).slice(0, 8).toUpperCase();
+    document.getElementById('a-reference').textContent = ref;
+    document.getElementById('lien-email-visite').href = 'mailto:contact@albimmobilier.fr?subject=' +
+      encodeURIComponent('[PARTICULIERS ACQUEREURS] Demande de visite — ' + a.titre + ' (' + String(a.id).slice(0, 8).toUpperCase() + ')');
+
+    if (a.statut !== 'compromis') {
+      document.getElementById('barre-prix').textContent = prix(a.prix);
+      document.getElementById('barre-visite').classList.remove('cache');
+      document.body.classList.add('avec-barre');
+    }
+
+    dessinerGalerie();
+  }
+
+  async function charger() {
+    const id = new URLSearchParams(location.search).get('id') || '';
+    if (!/^[0-9a-f-]{36}$/i.test(id)) { montrer('etat-absente'); return; }
+    const { data, error } = await albSupabase.from('annonces_publiques')
+      .select('id, titre, description, prix, ville, code_postal, type_bien, surface_m2, nb_pieces, surface_terrain_m2, dpe, ges, depenses_energie_min, depenses_energie_max, statut, type_vente, agence_nom, honoraires_texte, photos')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) { console.error('[ALB DEBUG] annonce :', error); montrer('etat-erreur'); return; }
+    if (!data) { montrer('etat-absente'); return; }
+    annonce = data;
+    photos = (Array.isArray(data.photos) ? data.photos : []).map(photoSure).filter(Boolean);
+    remplir();
+    montrer('fiche');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // Retour vers la liste avec les mêmes filtres, si on vient de là
     try {
-      // Étape 1: Créer le profil acheteur
-      const { data: acheteurData, error: acheteurError } = await window.supabaseClient
-        .from('profiles')
-        .insert({
-          prenom: prenom,
-          nom: nom,
-          email: email,
-          telephone: telephone,
-          role: 'particulier',
-          est_acquereur: true
-        })
-        .select()
-        .single();
-      
-      if (acheteurError) throw new Error('Erreur création profil acheteur: ' + acheteurError.message);
-      
-      const acheteurId = acheteurData.id;
-      
-      // Étape 2: Créer la visite avec l'acheteur_id
-      const { error: visiteError } = await window.supabaseClient
-        .from('visites')
-        .insert({
-          acheteur_id: acheteurId,
-          annonce_id: currentBienData.id,
-          vendeur_id: currentBienData.vendeur_id,
-          nom_acheteur: prenom + ' ' + nom,
-          telephone_acheteur: telephone,
-          email_acheteur: email,
-          date_visite: date.toISOString().split('T')[0],
-          heure_visite: date.toTimeString().slice(0, 5),
-          statut: 'en_attente',
-          budget_estime: calculatedBudget.budgetTotal || null,
-          score_faisabilite: calculatedBudget.scoreFaisabilite || null,
-          ratio_endettement: calculatedBudget.ratioEndettement || null,
-          statut_simulation: 'validee'
-        });
-      
-      if (visiteError) throw new Error('Erreur création visite: ' + visiteError.message);
-      
-      alert('✅ Visite demandée avec succès! Le vendeur recevra votre demande.');
-      location.reload();
-    } catch (err) {
-      alert('❌ Erreur: ' + err.message);
-      console.error('Erreur:', err);
-    }
-  }
-
-  const originalNextStep = window.nextStep;
-  window.nextStep = function(from, to) {
-    if (from === 1 && to === 2) {
-      loadDisposStep2();
-    }
-    originalNextStep.call(this, from, to);
-  };
-
-  init();
+      const venant = new URL(document.referrer);
+      if (venant.origin === location.origin && /^\/annonces(\.html)?$/.test(venant.pathname)) {
+        document.getElementById('lien-retour').href = venant.pathname + venant.search;
+      }
+    } catch (ex) { /* arrivée directe : on garde le lien simple */ }
+    charger();
+  });
 </script>
 </body>
 </html>
