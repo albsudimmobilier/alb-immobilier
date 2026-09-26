@@ -518,6 +518,7 @@
           <p id="texte-visite"></p>
           <button type="button" class="bouton" id="bouton-visite" onclick="demanderVisite()">Demander une visite</button>
         </div>
+        <a class="bouton bouton-discret" id="lien-question" href="espace-alb.html#messages">✉️ Poser une question sur ce bien</a>
         <a class="bouton bouton-discret" href="projets-alb.html">💡 Un financement, des travaux ? Mes projets ALB</a>
       </div>
 
@@ -778,6 +779,9 @@
       document.getElementById('barre-visite').classList.remove('cache');
       document.body.classList.add('avec-barre');
     }
+
+    // Poser une question : la messagerie de Mon espace ALB, liée à cette annonce
+    document.getElementById('lien-question').href = 'espace-alb.html?annonce=' + encodeURIComponent(a.id) + '#messages';
 
     dessinerGalerie();
   }
