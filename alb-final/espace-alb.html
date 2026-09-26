@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="alb-connexion.js"></script>
   <script src="mes-annonces.js"></script>
+  <script src="mes-visites.js"></script>
 
   <style>
     /* ========== BASE DE LA PAGE ========== */
@@ -717,7 +718,7 @@
     <div class="carte rubrique cache" id="rubrique-acheteur">
       <h2>🔎 Mes recherches et mes visites</h2>
       <p>Vos demandes de visite, vos rendez-vous confirmés et votre simulation de budget.</p>
-      <span class="bientot">Bientôt disponible ici</span>
+      <div id="mes-visites"></div>
     </div>
 
     <div class="carte rubrique cache" id="rubrique-vendeur">
@@ -1150,7 +1151,14 @@
       .map(function (texte) { return '<span class="etiquette">' + albEchapper(texte) + '</span>'; })
       .join('');
 
-    document.getElementById('rubrique-acheteur').classList.toggle('cache', !casquettes.includes('acheteur'));
+    // « Mes visites » : acheteurs… et toute personne qui a déjà demandé une visite
+    const rubriqueAcheteur = document.getElementById('rubrique-acheteur');
+    rubriqueAcheteur.classList.toggle('cache', !casquettes.includes('acheteur'));
+    if (window.albMesVisites) {
+      window.albMesVisites(profil).then(function (aDesVisites) {
+        if (aDesVisites) rubriqueAcheteur.classList.remove('cache');
+      });
+    }
     // « Mes annonces » : vendeurs, agents et mandataires… et toute personne qui a déjà une annonce
     const rubriqueVendeur = document.getElementById('rubrique-vendeur');
     const vendeurOuImmo = casquettes.includes('vendeur') || profil.role === 'immo';
