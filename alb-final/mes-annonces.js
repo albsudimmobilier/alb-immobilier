@@ -471,6 +471,7 @@
         const quand = d.statut === 'autre_moment' ? moment(d.nouveau_creneau_date, d.nouveau_creneau_heure) : moment(d.creneau_date, d.creneau_heure);
         html += '<div class="ma-visite-quand">' + (quand ? '📅 ' + e(quand) : 'Aucun de vos créneaux ne lui convenait : proposez-lui un moment.') + '</div>';
       }
+      html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="ecrire" data-demande="' + e(d.id) + '">💬 Écrire à ' + e(d.acheteur_prenom || 'l’acheteur') + '</button></div>';
       if (d.acheteur_telephone) html += '<div>📱 <a href="tel:' + e(String(d.acheteur_telephone).replace(/[^0-9+]/g, '')) + '">' + e(d.acheteur_telephone) + '</a></div>';
       if (d.budget_ok === true) html += '<div class="ma-petit">✅ Budget vérifié avec le simulateur ALB : ce bien entre dans son budget.</div>';
       if (d.message) html += '<div class="ma-visite-mot">💬 ' + e(d.message) + '</div>';
@@ -578,6 +579,8 @@
       } else if (action === 'ajouter-dispo') {
         cible.disabled = true;
         ajouterDispo(id).finally(function () { cible.disabled = false; });
+      } else if (action === 'ecrire') {
+        if (window.albMessagerieOuvrir) window.albMessagerieOuvrir({ demande: cible.dataset.demande });
       } else if (action === 'visite') {
         repondreVisite(cible);
       } else if (action === 'visite-autre') {
