@@ -108,11 +108,19 @@
       prives = r1.data || [];
       medias = r2.data || [];
     }
+    // Les demandes de visite reçues (le prénom et le créneau ; le reste une fois la visite confirmée)
+    let demandes = [];
+    if (ids.length) {
+      const r3 = await albSupabase.rpc('alb_mes_demandes_recues');
+      if (r3.error) console.error('[ALB DEBUG] demandes de visite :', r3.error);
+      demandes = r3.data || [];
+    }
     annonces = liste.map(function (a) {
       return {
         a: a,
         prive: prives.find(function (p) { return p.annonce_id === a.id; }) || {},
         photos: medias.filter(function (m) { return m.annonce_id === a.id; }),
+        visites: demandes.filter(function (d) { return d.annonce_id === a.id; }),
       };
     });
   }
@@ -155,7 +163,13 @@
       }
     }
 
+    const aTraiter = x.visites.filter(function (d) { return d.statut === 'en_attente' && d.type_vente === 'particulier'; }).length;
+    if (x.visites.length) {
+      boutons += '<button type="button" class="ma-btn ma-btn-visites' + (ouvert[a.id] === 'visites' ? ' actif' : '') + (aTraiter ? ' ma-a-traiter' : '') + '" data-action="ouvrir" data-panneau="visites" data-id="' + e(a.id) + '">📬 Demandes de visite (' + x.visites.length + ')' + (aTraiter ? ' · ' + aTraiter + ' à traiter' : '') + '</button>';
+    }
+
     let panneau = '';
+    if (ouvert[a.id] === 'visites') panneau = panneauVisites(x);
     if (!vendu && ouvert[a.id] === 'modifier') panneau = panneauModifier(x);
     if (!vendu && ouvert[a.id] === 'photos') panneau = panneauPhotos(x);
     if (!vendu && ouvert[a.id] === 'dispos') panneau = panneauDispos(x);
@@ -436,6 +450,89 @@
     await enregistrerDispos(id, avenir, 'Créneau retiré.');
   }
 
+  // ----- Demandes de visite reçues -----
+  const STATUTS_VISITE = {
+    en_attente: '⏳ À traiter', acceptee: '✅ Visite confirmée', autre_moment: '📅 Autre moment proposé, en attente de sa réponse',
+    refusee: 'Refusée', annulee: 'Annulée', effectuee: 'Effectuée',
+  };
+  function moment(jour, heure) { return jour && heure ? dateFr(jour) + ' à ' + String(heure).replace(':', 'h') : ''; }
+
+  function panneauVisites(x) {
+    const lignes = x.visites.map(function (d) {
+      const passee = d.statut === 'acceptee' && d.creneau_date && d.creneau_date < aujourdhui();
+      let html = '<div class="ma-visite" id="mv-' + e(d.id) + '">' +
+        '<div class="ma-visite-tete"><strong>' + e(((d.acheteur_prenom || '') + ' ' + (d.acheteur_nom || '')).trim() || 'Un acheteur') + '</strong>' +
+        '<span class="ma-visite-statut">' + e(passee ? 'Visite passée' : (STATUTS_VISITE[d.statut] || d.statut)) + '</span></div>';
+      if (d.type_vente === 'accompagnee') {
+        html += '<div class="ma-petit">Demande du ' + e(dateCourte(d.cree_le)) + '. Il a accepté que vous l’appeliez pour fixer la visite.</div>';
+      } else {
+        const quand = d.statut === 'autre_moment' ? moment(d.nouveau_creneau_date, d.nouveau_creneau_heure) : moment(d.creneau_date, d.creneau_heure);
+        html += '<div class="ma-visite-quand">' + (quand ? '📅 ' + e(quand) : 'Aucun de vos créneaux ne lui convenait : proposez-lui un moment.') + '</div>';
+      }
+      if (d.acheteur_telephone) html += '<div>📱 <a href="tel:' + e(String(d.acheteur_telephone).replace(/[^0-9+]/g, '')) + '">' + e(d.acheteur_telephone) + '</a></div>';
+      if (d.budget_ok === true) html += '<div class="ma-petit">✅ Budget vérifié avec le simulateur ALB : ce bien entre dans son budget.</div>';
+      if (d.message) html += '<div class="ma-visite-mot">💬 ' + e(d.message) + '</div>';
+
+      if (d.type_vente === 'particulier' && !passee) {
+        if (d.statut === 'en_attente') {
+          html += '<div class="ma-boutons">' +
+            (d.creneau_date ? '<button type="button" class="ma-btn ma-btn-oui" data-action="visite" data-decision="accepter" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">✅ Accepter</button>' : '') +
+            '<button type="button" class="ma-btn" data-action="visite-autre" data-demande="' + e(d.id) + '">📅 Proposer un autre moment</button>' +
+            '<button type="button" class="ma-btn" data-action="visite" data-decision="refuser" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Refuser</button>' +
+          '</div>';
+        } else if (d.statut === 'autre_moment') {
+          html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="visite-autre" data-demande="' + e(d.id) + '">📅 Proposer un autre moment</button>' +
+            '<button type="button" class="ma-btn" data-action="visite" data-decision="refuser" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Refuser</button></div>';
+        } else if (d.statut === 'acceptee') {
+          html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="visite" data-decision="annuler" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Annuler la visite</button></div>';
+        }
+        html += '<div class="ma-autre cache" id="ma-autre-' + e(d.id) + '">' +
+          '<div class="ma-nouveau-dispo">' +
+            '<div class="champ"><label for="va-date-' + e(d.id) + '">Jour</label><input type="date" id="va-date-' + e(d.id) + '" min="' + aujourdhui() + '"></div>' +
+            '<div class="champ"><label for="va-heure-' + e(d.id) + '">Heure</label><input type="time" id="va-heure-' + e(d.id) + '" step="900" value="14:00"></div>' +
+          '</div>' +
+          '<div class="champ"><label for="va-mot-' + e(d.id) + '">Un petit mot <span style="font-weight:400;">(facultatif)</span></label><input type="text" id="va-mot-' + e(d.id) + '" maxlength="300"></div>' +
+          '<button type="button" class="bouton" data-action="visite" data-decision="autre_moment" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Envoyer ma proposition</button>' +
+        '</div>';
+      }
+      return html + '</div>';
+    }).join('');
+    return '<div class="ma-panneau"><h3>📬 Demandes de visite</h3>' +
+      (x.a.type_vente === 'particulier'
+        ? '<p class="ma-petit">Vous voyez le prénom et le moment demandé. Dès que vous acceptez, vous recevez tous les deux les coordonnées par e-mail, et un rappel la veille.</p>'
+        : '<p class="ma-petit">Chaque acheteur a accepté que vous l’appeliez pour fixer la visite. Vous avez reçu ses coordonnées par e-mail.</p>') +
+      lignes + '</div>';
+  }
+
+  async function repondreVisite(bouton) {
+    const id = bouton.dataset.id, demande = bouton.dataset.demande, decision = bouton.dataset.decision;
+    const corps = { action: 'reponse_visite', demande_id: demande, decision: decision };
+    if (decision === 'autre_moment') {
+      corps.date = texte('va-date-' + demande); corps.heure = texte('va-heure-' + demande); corps.message = texte('va-mot-' + demande);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(corps.date) || corps.date < aujourdhui() || !/^\d{2}:\d{2}$/.test(corps.heure)) {
+        montrerMessage('ma-msg-' + id, 'erreur', 'Choisissez un jour à venir et une heure.');
+        return;
+      }
+    }
+    if (decision === 'refuser' && !window.confirm('Refuser cette demande de visite ? L’acheteur sera prévenu gentiment.')) return;
+    if (decision === 'annuler' && !window.confirm('Annuler cette visite ? Le visiteur sera prévenu par e-mail.')) return;
+    bouton.disabled = true;
+    const r = await albAppelerGuichet(corps);
+    if (!r.ok) {
+      bouton.disabled = false;
+      const textes = { CRENEAU_PASSE: 'Ce moment est déjà passé : proposez-en un autre.', CRENEAU_INVALIDE: 'Choisissez un jour à venir et une heure.', DECISION_IMPOSSIBLE: 'Cette demande a déjà changé : rechargez la page.' };
+      montrerMessage('ma-msg-' + id, 'erreur', textes[r.code] || albMessageErreur(r.code));
+      return;
+    }
+    await rafraichir();
+    montrerMessage('ma-msg-' + id, 'succes', {
+      accepter: 'Visite confirmée ✅ Vous recevez tous les deux un e-mail avec les coordonnées.',
+      autre_moment: 'Votre proposition est partie 📅 Il vous répondra depuis son espace.',
+      refuser: 'C’est noté. L’acheteur est prévenu.',
+      annuler: 'Visite annulée. Le visiteur est prévenu.',
+    }[decision]);
+  }
+
   // ---------- Clics ----------
   async function rafraichir() {
     try { await charger(); } catch (ex) { /* on garde l'affichage précédent */ }
@@ -465,6 +562,11 @@
       } else if (action === 'ajouter-dispo') {
         cible.disabled = true;
         ajouterDispo(id).finally(function () { cible.disabled = false; });
+      } else if (action === 'visite') {
+        repondreVisite(cible);
+      } else if (action === 'visite-autre') {
+        const bloc = el('ma-autre-' + cible.dataset.demande);
+        if (bloc) bloc.classList.toggle('cache');
       } else if (action === 'retirer-dispo') {
         retirerDispo(id, Number(cible.dataset.index));
       }
@@ -534,6 +636,17 @@
       '.ma-dispos li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid #E8E6E1;border-radius:6px;margin-bottom:6px;font-size:.9rem;background:#FBF8F3;}',
       '.ma-dispos li span::first-letter{text-transform:uppercase;}',
       '.ma-retirer-dispo{border:none;background:none;color:#8A2D2D;font-size:1rem;cursor:pointer;padding:4px 8px;}',
+      '.ma-visite{border:1px solid #E8E6E1;border-radius:8px;padding:12px;margin-bottom:10px;background:#FBF8F3;font-size:.9rem;}',
+      '.ma-visite a{color:#5A3A6A;font-weight:600;}',
+      '.ma-visite-tete{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;}',
+      '.ma-visite-statut{font-size:.8rem;font-weight:700;color:#5A3A6A;}',
+      '.ma-visite-quand{font-weight:600;color:#2a2a28;}',
+      '.ma-visite-quand::first-letter{text-transform:uppercase;}',
+      '.ma-visite-mot{margin-top:6px;font-style:italic;overflow-wrap:anywhere;}',
+      '.ma-visite .ma-boutons{margin-top:10px;}',
+      '.ma-autre{margin-top:10px;}',
+      '.ma-btn-oui{background:#EEF6EE;border-color:#CBE3CD;color:#2E6B34;}',
+      '.ma-a-traiter{border-color:#B28E3D;background:#FBF3E4;color:#8A6420;}',
       '.ma-nouveau-dispo{display:grid;grid-template-columns:1fr;gap:0 10px;}',
       '@media (min-width:600px){.ma-nouveau-dispo{grid-template-columns:2fr 1fr 1fr;}.ma-actions{flex-direction:row;}.ma-vignette{width:128px;height:96px;}}',
     ].join('\n');
