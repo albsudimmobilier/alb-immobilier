@@ -11,16 +11,114 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Montserrat', sans-serif; background-color: #f5f3ee; color: #333; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
-    .alb-header { background: white; border-bottom: 1px solid #E8E6E0; padding: 0; position: sticky; top: 0; z-index: 1000; height: 70px; }
-    .header-wrapper { width: 100%; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; gap: 50px; height: 100%; }
-    .logo-left { display: flex; align-items: center; flex-shrink: 0; height: 100%; }
-    .logo-left img { height: 100%; object-fit: contain; max-width: 200px; }
-    .nav { display: flex; align-items: center; justify-content: center; gap: 45px; flex-grow: 1; }
-    .nav a { color: #333; text-decoration: none; font-size: 0.95rem; font-weight: 500; padding: 6px 0; border-bottom: 2px solid transparent; transition: all 0.3s; white-space: nowrap; }
-    .nav a:hover { color: #B28E3D; border-bottom-color: #B28E3D; }
-    .nav a.active { color: #4B1A3E; border-bottom-color: #4B1A3E; font-weight: 600; }
-    .btn-cta { background: #4B1A3E !important; color: white !important; padding: 10px 22px !important; border-radius: 4px; border: none !important; }
-    .btn-cta:hover { background: #B28E3D !important; }
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
     .content-section { padding: 60px 40px; background: white; }
     .page-title { font-size: 2rem; color: #4B1A3E; margin-bottom: 15px; font-weight: 600; }
     .page-subtitle { color: #666; font-size: 1.05rem; line-height: 1.6; margin-bottom: 40px; }
@@ -72,8 +170,6 @@
     .modal-btn-secondary { background-color: #B28E3D; }
     .modal-btn-secondary:hover { background-color: #4B1A3E; }
     @media (max-width: 768px) {
-      .header-wrapper { flex-wrap: wrap; gap: 15px; padding: 15px; height: auto; }
-      .nav { order: 3; width: 100%; flex-direction: column; gap: 10px; }
       .content-section { padding: 40px 20px; }
       .page-title { font-size: 1.5rem; }
       .footer-container { gap: 30px; padding: 40px 20px; }
@@ -82,21 +178,21 @@
   </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="alb-header">
-    <div class="header-wrapper">
-      <a href="index.html" class="logo-left">
-        <img src="LOGO.png" alt="ALB Sud Immobilier" />
-      </a>
-      <nav class="nav">
-        <a href="index.html">Accueil</a>
-        <a href="annonces.html">Annonces</a>
-        <a href="vitrine-pros.html">Vitrine des pros</a>
-        <a href="projets-alb.html" class="active">Projets ALB</a>
-        <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
-      </nav>
-    </div>
-  </header>
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
 
   <!-- CONTENT -->
   <section class="content-section">
@@ -321,7 +417,8 @@
 
   <script>
     const state = { q1: null, subq1: null, subq2: null, q2: null, q3: null, step: 1 };
-    const routes = { financement: 'financement_interactive.html', travaux: 'projets-travaux.html', accompagnement: 'accompagnement_vente_achat.html' };
+    // Les 3 modules passent par la même page de demande (mise en relation avec les pros validés)
+    const routes = { financement: 'projet-demande.html', travaux: 'projet-demande.html', accompagnement: 'projet-demande.html' };
 
     document.querySelectorAll('#q1-choices .choice-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -427,7 +524,12 @@
     }
 
     function navigateToModule(module) {
-      if (routes[module]) window.location.href = routes[module];
+      if (!routes[module]) return;
+      // On transmet les réponses déjà données (projet et code postal) pour ne rien redemander
+      const params = new URLSearchParams({ module: module });
+      if (state.q2) params.set('objet', state.q2);
+      if (/^\d{5}$/.test(state.q3 || '')) params.set('cp', state.q3);
+      window.location.href = routes[module] + '?' + params.toString();
     }
 
     function openModal(modalId) {
