@@ -516,7 +516,7 @@
     <section class="etape verrou" id="etape-options">
       <h2><span class="numero">3</span> Pour aller plus loin <span class="leger" style="font-family:'Montserrat',sans-serif;font-size:0.8rem;">(facultatif)</span></h2>
       <label class="case"><input type="checkbox" id="c-partage"> <span>Indiquer au vendeur que <strong>mon budget a été vérifié</strong> avec le simulateur ALB. Il ne voit jamais vos revenus ni le montant.</span></label>
-      <label class="case"><input type="checkbox" id="c-courtier"> <span>Je souhaite qu'un <strong>courtier partenaire</strong> d'ALB Sud Immobilier m'appelle pour mon financement : entretien téléphonique de 20 minutes environ, sans engagement. Mes coordonnées et ma simulation lui seront transmises pour cela.</span></label>
+      <label class="case"><input type="checkbox" id="c-courtier"> <span>Je souhaite qu'un <strong>courtier partenaire</strong> d'ALB Sud Immobilier me rappelle pour mon financement, sans engagement. J'accepte que ma simulation soit transmise aux courtiers de mon secteur, et que celui qui accepte reçoive mon nom et mon téléphone pour m'appeler. Je reçois aussi ses coordonnées.</span></label>
       <div class="champ">
         <label for="c-message">Un petit mot pour le vendeur <span class="leger">— facultatif</span></label>
         <textarea id="c-message" maxlength="600" rows="3" placeholder="Votre projet, vos questions sur le bien…"></textarea>
@@ -870,7 +870,7 @@
     if (particulier && creneau) lignes.push('Le propriétaire a reçu votre demande pour le <strong>' + e(dateFr(creneau.date)) + ' à ' + e(creneau.heure.replace(':', 'h')) + '</strong>. Dès qu\'il accepte, vous recevez l\'adresse et ses coordonnées par e-mail.');
     else if (particulier) lignes.push('Le propriétaire va vous proposer un moment de visite. Vous serez prévenu(e) par e-mail.');
     else lignes.push('Le professionnel qui vend ce bien a reçu votre demande : il vous appelle pour fixer la date de la visite.');
-    if (el('c-courtier').checked) lignes.push('Un courtier partenaire vous appellera pour un entretien de 20 minutes environ, sans engagement.');
+    if (el('c-courtier').checked) lignes.push('Votre demande de financement est partie vers les courtiers partenaires de votre secteur : celui qui accepte vous appelle, et vous recevez ses coordonnées par e-mail. Vous la suivez dans « Mes projets ALB ».');
     lignes.push('Un e-mail récapitulatif vient de partir. Pensez à regarder vos courriers indésirables.');
     el('merci-suite').innerHTML = lignes.map(function (l) { return '<li>' + l + '</li>'; }).join('');
     el('formulaire').classList.add('cache');
