@@ -233,6 +233,7 @@
       <button type="button" class="onglet actif" data-onglet="accueil" onclick="afficherOnglet('accueil')">📊 Tableau de bord</button>
       <button type="button" class="onglet" data-onglet="annonces" onclick="afficherOnglet('annonces')">🏡 Annonces<span class="pastille" id="pastille-annonces">0</span></button>
       <button type="button" class="onglet" data-onglet="visites" onclick="afficherOnglet('visites')">📅 Visites<span class="pastille" id="pastille-visites">0</span></button>
+      <button type="button" class="onglet" data-onglet="projets" onclick="afficherOnglet('projets')">🤝 Projets<span class="pastille" id="pastille-projets">0</span></button>
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
@@ -269,6 +270,14 @@
         <div class="compteur alerte"><div class="valeur" id="c-vis-retard">–</div><div class="libelle">⏳ Sans réponse depuis 48 h</div></div>
         <div class="compteur"><div class="valeur" id="c-vis-a-venir">–</div><div class="libelle">✅ Visites confirmées à venir</div></div>
         <div class="compteur"><div class="valeur" id="c-vis-courtiers">–</div><div class="libelle">🏦 Rappels courtier demandés</div></div>
+      </div>
+
+      <h2 class="titre-section">Projets ALB (mises en relation)</h2>
+      <div class="compteurs">
+        <div class="compteur alerte"><div class="valeur" id="c-pj-traiter">–</div><div class="libelle">📞 À traiter par toi</div></div>
+        <div class="compteur"><div class="valeur" id="c-pj-cours">–</div><div class="libelle">📨 Chez les pros</div></div>
+        <div class="compteur"><div class="valeur" id="c-pj-faites">–</div><div class="libelle">✅ Mises en relation faites</div></div>
+        <div class="compteur"><div class="valeur" id="c-pj-acceptes">–</div><div class="libelle">🤝 Acceptations de pros</div></div>
       </div>
 
       <h2 class="titre-section">Particuliers</h2>
@@ -310,6 +319,14 @@
       <input type="search" class="recherche" id="recherche-visites" placeholder="Rechercher un nom, un bien, une ville…" oninput="afficherVisites()">
       <div class="filtres" id="filtres-visites"></div>
       <div id="liste-visites"></div>
+    </div>
+
+    <!-- Projets ALB -->
+    <div class="panneau" id="panneau-projets">
+      <p class="aide">Les demandes faites depuis « Projets ALB » (et les rappels courtier des demandes de visite), rangées par personne. Les pros ne voient jamais les coordonnées du particulier : les premiers qui acceptent lui écrivent dans sa messagerie ALB. « À traiter » = à vérifier avec lui (mandat), aucun pro disponible, ou tous les pros ont décliné.</p>
+      <input type="search" class="recherche" id="recherche-projets" placeholder="Rechercher un nom, un secteur, un pro…" oninput="afficherProjets()">
+      <div class="filtres" id="filtres-projets"></div>
+      <div id="liste-projets"></div>
     </div>
 
     <!-- Messages -->
@@ -393,6 +410,8 @@
   let visites = [];
   let conversations = [];
   let filtreVisites = null;
+  let projets = [];
+  let filtreProjets = null;
   let filtreStatut = 'a_etudier';
   let filtreType = 'tous';
 
@@ -493,14 +512,15 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations, lesProjets] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
       albSupabase.rpc('alb_gestion_annonces'),
       albSupabase.rpc('alb_gestion_rappels_mandat'),
       albSupabase.rpc('alb_gestion_visites'),
-      albSupabase.rpc('alb_gestion_conversations')
+      albSupabase.rpc('alb_gestion_conversations'),
+      albSupabase.rpc('alb_gestion_projets')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -512,7 +532,9 @@
     rappelsMandat = lesMandats.data || [];
     visites = lesVisites.data || [];
     conversations = lesConversations.data || [];
+    projets = lesProjets.data || [];
     afficherDemandesAcces();
+    afficherProjets();
     afficherMessages();
     afficherVisites();
     afficherAnnonces();
@@ -907,6 +929,113 @@
       '<textarea class="texte-pret" readonly>' + albEchapper(texte) + '</textarea>' +
       '<div class="actions"><a class="bouton" href="sms:' + albEchapper(num) + '?&body=' + encodeURIComponent(texte) + '">📱 Ouvrir le SMS</a>' +
       '<button type="button" class="bouton discret" onclick="copier(this)">📋 Copier le texte</button></div></div>';
+  }
+
+  // ---------- Projets ALB (mises en relation) ----------
+  const MODULES_PROJET = { financement: '💶 Financement (courtiers)', travaux: '🔧 Travaux (artisans)', accompagnement: '🤝 Vente / achat (agents et mandataires)' };
+  const STATUTS_PROJET = {
+    nouvelle: '⏳ En cours d\'envoi', a_verifier: '📞 À vérifier avec lui (mandat)', a_orienter: '🔎 Aucun pro disponible : à orienter',
+    envoyee: '📨 Chez les pros', complete: '✅ Mise en relation faite', sans_suite: '📞 Tous les pros ont décliné', annulee: '✗ Retirée par le particulier'
+  };
+  const STATUTS_LIGNE = { en_attente: '⏳ pas encore répondu', acceptee: '✅ a accepté', refusee: '✗ a décliné', complete: 'plus nécessaire', annulee: 'demande retirée' };
+  const LIBELLES_PROJET = {
+    objet: { achat_rp: 'Résidence principale', investissement: 'Investissement locatif', travaux: 'Financer des travaux', rachat: 'Renégocier / regrouper', autre: 'Autre' },
+    categorie: { electricite: 'Électricité', plomberie: 'Plomberie', carrelage: 'Carrelage', peinture: 'Peinture', menuiserie: 'Menuiserie', renovation_globale: 'Rénovation globale', ne_sait_pas: 'Pas défini' },
+    delai_travaux: { urgent: 'Urgent', court: '1 à 2 mois', moyen: '2 à 3 mois', long: 'Plus de 3 mois' },
+    budget_travaux: { moins_5000: '< 5 000 €', '5000_15000': '5 000 à 15 000 €', '15000_50000': '15 000 à 50 000 €', plus_50000: '> 50 000 €', ne_sait_pas: 'Pas défini' },
+    projet: { vendre: 'Vendre', acheter: 'Acheter', les_deux: 'Vendre et acheter' },
+    mandat: { non: 'aucun mandat', simple: 'mandat simple', ne_sait_pas: 'mandat à vérifier' }
+  };
+  function libProjet(liste, v) { return (LIBELLES_PROJET[liste] || {})[v] || v || ''; }
+  const FILTRES_PROJETS = [
+    ['a_traiter', '📞 À traiter', function (p) { return p.statut === 'a_verifier' || p.statut === 'a_orienter' || p.statut === 'sans_suite'; }],
+    ['en_cours', '📨 Chez les pros', function (p) { return p.statut === 'envoyee' || p.statut === 'nouvelle'; }],
+    ['faites', '✅ Faites', function (p) { return p.statut === 'complete'; }],
+    ['retirees', '✗ Retirées', function (p) { return p.statut === 'annulee'; }],
+    ['toutes', 'Toutes', function () { return true; }]
+  ];
+  function choisirFiltreProjets(f) { filtreProjets = f; afficherProjets(); }
+
+  function resumeProjet(p) {
+    const d = p.details || {}, pv = p.prive || {};
+    if (p.module === 'financement') {
+      return libProjet('objet', d.objet) + (d.prix_vise ? ' · bien à ' + prixLisible(d.prix_vise) : '') + ' · budget ' + prixLisible(d.budget_max) +
+        ' · à emprunter ' + prixLisible(d.montant_emprunt) + ' · apport ' + prixLisible(d.apport) + ' · ' + (d.duree || '?') + ' ans' +
+        (pv.revenus_mensuels != null ? ' · revenus ' + prixLisible(pv.revenus_mensuels) + '/mois, crédits ' + prixLisible(pv.credits_mensuels) + '/mois' : '');
+    }
+    if (p.module === 'travaux') {
+      return libProjet('categorie', d.categorie) + ' · ' + libProjet('delai_travaux', d.delai) + (d.budget ? ' · ' + libProjet('budget_travaux', d.budget) : '') +
+        (d.besoin_financement ? ' · 💶 besoin de financement' : '');
+    }
+    return libProjet('projet', d.projet) + (d.mandat ? ' · ' + libProjet('mandat', d.mandat) : '') + (d.budget_achat ? ' · budget achat ' + prixLisible(d.budget_achat) : '');
+  }
+
+  function ficheProjet(p) {
+    const lignes = (p.pros || []).map(function (l) {
+      const pr = l.pro || {};
+      return '<p class="ligne-info">' + badgeQuiLarge(pr) + ' <strong>' + albEchapper(((pr.prenom || '') + ' ' + (pr.nom || '')).trim()) + '</strong>' +
+        (pr.nom_entreprise ? ' <span class="etiquette or">' + albEchapper(pr.nom_entreprise) + '</span>' : '') +
+        ' · ' + (STATUTS_LIGNE[l.statut] || albEchapper(l.statut)) + (l.rang ? ' (n° ' + l.rang + ')' : '') +
+        (l.repondu_le ? ' le ' + dateLisible(l.repondu_le) : '') + ' ' + lienTelephone(pr.telephone) +
+        (l.mot_refus ? '<br><span class="mot">💬 « ' + albEchapper(l.mot_refus) + ' »</span>' : '') + '</p>';
+    }).join('');
+    const acceptes = (p.pros || []).filter(function (l) { return l.statut === 'acceptee'; }).length;
+    const peutEnvoyer = p.statut === 'a_verifier' || p.statut === 'a_orienter';
+    return '<div class="carte fiche" id="projet-' + p.id + '">' +
+      '<div class="etiquettes"><span class="etiquette' + (FILTRES_PROJETS[0][2](p) ? ' or' : p.statut === 'complete' ? ' vert' : '') + '">' + (STATUTS_PROJET[p.statut] || albEchapper(p.statut)) + '</span>' +
+        (p.source === 'visite' ? '<span class="etiquette">📅 Depuis une demande de visite</span>' : '') + '</div>' +
+      '<h3>' + (MODULES_PROJET[p.module] || albEchapper(p.module)) + '</h3>' +
+      '<p class="ligne-info">📍 ' + albEchapper([p.zone, p.code_postal].filter(Boolean).join(' · ') || 'Secteur non précisé') + '</p>' +
+      '<p class="ligne-info">📝 ' + albEchapper(resumeProjet(p)) + '</p>' +
+      (p.description ? '<p class="ligne-info mot">💬 « ' + albEchapper(p.description) + ' »</p>' : '') +
+      '<p class="ligne-info">🎯 ' + (p.mode === 'direct' ? 'Pros choisis par lui' : 'Envoyée aux pros du secteur') + ' · ' + acceptes + ' sur ' + p.quota + ' accepté' + (acceptes > 1 ? 's' : '') +
+        ' · ' + (p.appel_autorise ? '📞 accepte d\'être appelé' : '💬 messagerie seulement') + '</p>' +
+      (lignes ? '<details class="historique"' + (p.statut === 'sans_suite' ? ' open' : '') + '><summary>Les pros contactés (' + (p.pros || []).length + ')</summary>' + lignes + '</details>' : '') +
+      '<p class="ligne-info" style="color:#7a7a75;">Demandée le ' + dateLisible(p.cree_le) + (p.maj_le && p.maj_le !== p.cree_le ? ' · dernière action le ' + dateLisible(p.maj_le) : '') + '</p>' +
+      (peutEnvoyer ? '<div class="actions"><button type="button" class="bouton" onclick="envoyerProjetAuxPros(\'' + p.id + '\', this)">📨 Envoyer aux pros maintenant</button></div>' +
+        '<p class="aide">' + (p.statut === 'a_verifier' ? 'Après ton appel : s\'il n\'a pas de mandat exclusif, envoie sa demande aux pros du secteur.' : 'Dès qu\'un pro est disponible dans son secteur (validé et en ligne), envoie-lui la demande.') + '</p>' : '') +
+    '</div>';
+  }
+
+  function afficherProjets() {
+    const aTraiter = projets.filter(FILTRES_PROJETS[0][2]).length;
+    document.getElementById('pastille-projets').textContent = aTraiter;
+    document.getElementById('c-pj-traiter').textContent = aTraiter;
+    document.getElementById('c-pj-cours').textContent = projets.filter(FILTRES_PROJETS[1][2]).length;
+    document.getElementById('c-pj-faites').textContent = projets.filter(FILTRES_PROJETS[2][2]).length;
+    document.getElementById('c-pj-acceptes').textContent = projets.reduce(function (n, p) { return n + (p.pros || []).filter(function (l) { return l.statut === 'acceptee'; }).length; }, 0);
+
+    if (!filtreProjets) filtreProjets = aTraiter ? 'a_traiter' : 'toutes';
+    document.getElementById('filtres-projets').innerHTML = FILTRES_PROJETS.map(function (f) {
+      return '<button type="button" class="filtre' + (filtreProjets === f[0] ? ' actif' : '') + '" onclick="choisirFiltreProjets(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + projets.filter(f[2]).length + ')</span></button>';
+    }).join('');
+    const test = (FILTRES_PROJETS.find(function (f) { return f[0] === filtreProjets; }) || FILTRES_PROJETS[4])[2];
+    const recherche = (document.getElementById('recherche-projets').value || '').trim().toLowerCase();
+    const liste = projets.filter(test).filter(function (p) {
+      if (!recherche) return true;
+      const pa = p.particulier || {};
+      return [pa.prenom, pa.nom, pa.email, pa.telephone, p.zone, p.code_postal, p.description, MODULES_PROJET[p.module]]
+        .concat((p.pros || []).map(function (l) { return ((l.pro || {}).prenom || '') + ' ' + ((l.pro || {}).nom || '') + ' ' + ((l.pro || {}).nom_entreprise || ''); }))
+        .some(function (x) { return String(x || '').toLowerCase().includes(recherche); });
+    });
+    const zone = document.getElementById('liste-projets');
+    if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucun projet ici pour le moment. 🌿</div>'; return; }
+    zone.innerHTML = grouperParPersonne(liste, function (p) { return p.particulier || {}; }).map(function (g) {
+      return '<div class="proprio' + (g.p.role !== 'particulier' ? ' pro' : '') + '">' + enteteProprio(g.p, g.items.length + ' projet' + (g.items.length > 1 ? 's' : '')) +
+        '<div class="liste-fiches">' + g.items.map(ficheProjet).join('') + '</div></div>';
+    }).join('');
+  }
+
+  async function envoyerProjetAuxPros(id, bouton) {
+    if (!confirm('Envoyer cette demande aux pros du secteur maintenant ?')) return;
+    bouton.disabled = true;
+    const r = await albAppelerGuichet({ action: 'envoyer_projet', projet_id: id });
+    bouton.disabled = false;
+    if (!r.ok) { afficherMessage('message-general', 'erreur', r.code === 'DEJA_ENVOYEE' ? 'Cette demande est déjà partie.' : albMessageErreur(r.code)); return; }
+    await toutRecharger();
+    afficherMessage('message-general', r.nb_pros ? 'succes' : 'info', r.nb_pros
+      ? '📨 Demande envoyée à ' + r.nb_pros + ' pro' + (r.nb_pros > 1 ? 's' : '') + '. Le particulier est prévenu par e-mail.'
+      : 'Toujours aucun pro disponible dans ce secteur (validé et en ligne). La demande reste « à orienter ».');
   }
 
   // ---------- Messages entre membres (lecture seule) ----------
