@@ -1,13 +1,15 @@
 // ============================================================
 // api/app-pros.js — Page "Nos pros ALB"
 // ------------------------------------------------------------
-// Les pros sont lus via la fonction sécurisée alb_pros_publics() :
+// Les pros sont lus via la fonction sécurisée alb_pros_publics2() :
 // elle ne renvoie QUE les infos publiques (jamais e-mail, téléphone,
 // SIRET ni code PIN), et uniquement les pros validés ET mis en ligne.
 //
 // Les filtres se construisent tout seuls à partir des pros en ligne :
 // dès que Jocelyne valide un pro « autre métier » ou ajoute une
 // « autre zone », ils apparaissent ici sans rien toucher.
+// Les pros mettent eux-mêmes à jour leur fiche depuis leur espace ALB
+// (photo, présentation, zones, rendez-vous, disponibilité, remplaçant).
 // ============================================================
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -43,6 +45,13 @@ const ITEMS_PER_PAGE = 9;
 
 document.addEventListener('DOMContentLoaded', loadPros);
 
+// Petits styles pour les rendez-vous et le remplaçant (ajoutés ici pour ne pas toucher la page)
+const stylesPros = document.createElement('style');
+stylesPros.textContent = '.pro-rdv{font-size:.85rem;color:#4A4A47;margin:8px 0 0;}' +
+  '.pro-remplacant{font-size:.85rem;margin:-6px 0 12px;text-align:center;}' +
+  '.pro-remplacant a,.fiche-ligne a{color:#4B1A3E;font-weight:600;}';
+document.head.appendChild(stylesPros);
+
 // Protège le texte écrit par les pros avant de l'afficher
 function echapper(texte) {
   return String(texte ?? '')
@@ -64,7 +73,7 @@ function libelleMetier(pro) {
 }
 
 async function loadPros() {
-  const { data, error } = await supabase.rpc('alb_pros_publics');
+  const { data, error } = await supabase.rpc('alb_pros_publics2');
 
   if (error) {
     console.error('[ALB DEBUG] Nos pros ALB :', error);
@@ -169,6 +178,18 @@ function avatarHtml(pro) {
   return `<div class="pro-avatar">${echapper(initiales)}</div>`;
 }
 
+// Les types de rendez-vous proposés par le pro
+function rendezVous(pro) {
+  const m = pro.modes || {};
+  return [m.telephone ? '📞 Téléphone' : '', m.visio ? '💻 Visio' : '', m.physique ? '🤝 En personne' : ''].filter(Boolean);
+}
+
+// Pro indisponible qui a organisé son remplacement
+function remplacantHtml(pro, classe) {
+  if (!pro.remplace_par || !pro.remplace_par.id) return '';
+  return `<p class="${classe}">🔁 En son absence : <a href="espace-alb.html?contacter=${encodeURIComponent(pro.remplace_par.id)}">${echapper(pro.remplace_par.nom)}</a></p>`;
+}
+
 function createProCard(pro) {
   const zonesHtml = (pro.zone_intervention || [])
     .map(zone => `<span class="zone-tag">${echapper(zone)}</span>`).join('');
@@ -189,7 +210,9 @@ function createProCard(pro) {
       <p class="pro-presentation">${echapper(pro.presentation || pro.bio || 'Professionnel validé par ALB')}</p>
       <p class="pro-localisation"><strong>📍 ${echapper(localisation)}</strong></p>
       ${zonesHtml ? `<div class="pro-zones">${zonesHtml}</div>` : ''}
+      ${rendezVous(pro).length ? `<p class="pro-rdv">Rendez-vous : ${echapper(rendezVous(pro).join(' · '))}</p>` : ''}
       <div class="pro-status ${classeDispo}">${echapper(disponibilite)}</div>
+      ${remplacantHtml(pro, 'pro-remplacant')}
       <div class="pro-action">
         <a href="espace-alb.html?contacter=${encodeURIComponent(pro.id)}" class="btn btn-primary">💬 Contacter via ALB</a>
         <button type="button" class="btn btn-secondary" onclick="viewProfile('${encodeURIComponent(pro.id)}')">📋 Profil</button>
@@ -244,7 +267,9 @@ function viewProfile(proIdEncode) {
     ${pro.presentation || pro.bio ? `<p class="fiche-ligne">${echapper(pro.presentation || pro.bio)}</p>` : ''}
     ${localisation ? `<p class="fiche-ligne">📍 ${echapper(localisation)}</p>` : ''}
     ${zones ? `<p class="fiche-ligne">🗺️ <strong>Intervient :</strong> ${echapper(zones)}</p>` : ''}
+    ${rendezVous(pro).length ? `<p class="fiche-ligne">🗓️ <strong>Rendez-vous :</strong> ${echapper(rendezVous(pro).join(' · '))}</p>` : ''}
     <p class="fiche-ligne">🕒 ${echapper(LIBELLES_DISPONIBILITE[pro.status_disponibilite] || 'Disponible')}</p>
+    ${remplacantHtml(pro, 'fiche-ligne')}
     ${numeros.length ? `<div class="fiche-numeros">${numeros.join('')}</div>` : ''}
   `;
   document.getElementById('fiche-pro-contacter').href = 'espace-alb.html?contacter=' + encodeURIComponent(pro.id);
