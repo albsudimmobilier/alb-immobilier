@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon projet — ALB Immobilier</title>
+  <meta name="description" content="Financement, travaux, vente ou achat accompagné : décrivez votre projet, ALB Immobilier le transmet aux bons professionnels, et vos coordonnées restent protégées.">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #F5F3F0;
+      color: #4A4A47;
+      line-height: 1.6;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+    /* ========== MON PROJET (mobile d'abord) ========== */
+    .page { max-width: 760px; margin: 0 auto; padding: 22px 16px 10px; }
+    .retour { display: inline-block; margin-bottom: 14px; color: #5A3A6A; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+    .retour:hover { text-decoration: underline; }
+    .intro h1 { font-size: 1.6rem; line-height: 1.25; margin-bottom: 6px; }
+    .intro p { font-size: 0.93rem; margin-bottom: 16px; }
+
+    .modules { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+    .module { display: flex; gap: 12px; align-items: center; text-align: left; background: white; border: 2px solid #E8E6E1; border-radius: 10px; padding: 14px; font-family: inherit; font-size: 0.95rem; color: #4A4A47; cursor: pointer; }
+    .module:hover { border-color: #B28E3D; }
+    .module.actif { border-color: #5A3A6A; background: #F4EEF6; }
+    .module-emoji { font-size: 1.6rem; }
+    .module strong { display: block; color: #2a2a28; }
+
+    .etape { background: white; border: 1px solid #E8E6E1; border-radius: 10px; padding: 20px 16px; margin-bottom: 16px; }
+    .etape h2 { font-size: 1.2rem; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+    .numero { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: #5A3A6A; color: white; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; align-items: center; justify-content: center; flex-shrink: 0; }
+    .etape > p { font-size: 0.9rem; margin-bottom: 14px; }
+
+    .champ { margin-bottom: 14px; }
+    .champ label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+    .champ .aide { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
+    .champ input, .champ select, .champ textarea { width: 100%; padding: 12px; border: 1px solid #D8D5CE; border-radius: 6px; font-family: inherit; font-size: 1rem; background: white; color: #4A4A47; }
+    .champ textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+    .champ input:focus, .champ select:focus, .champ textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .deux-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 14px; }
+    .leger { font-weight: 400; color: #7a7a75; }
+    .sous-titre { font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700; color: #5A3A6A; margin: 6px 0 10px; }
+
+    .bouton { display: block; width: 100%; padding: 14px 20px; border: none; border-radius: 6px; background: #B28E3D; color: white; font-family: inherit; font-size: 1rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .bouton-discret { background: none; border: 1px solid #D8D5CE; color: #4A4A47; }
+    .bouton-discret:hover { background: #F5F3F0; color: #5A3A6A; }
+
+    .resultat { margin-top: 4px; border-radius: 8px; padding: 14px; font-size: 0.93rem; background: #EEF6EE; border: 1px solid #CBE3CD; }
+    .resultat-chiffre { font-size: 1.5rem; font-weight: 700; color: #5A3A6A; line-height: 1.2; margin: 4px 0; }
+    .petit { font-size: 0.8rem; color: #7a7a75; margin-top: 8px; }
+
+    .case { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #E8E6E1; border-radius: 8px; background: #FBF8F3; cursor: pointer; font-size: 0.92rem; margin-bottom: 10px; }
+    .case input { margin-top: 3px; width: 18px; height: 18px; accent-color: #5A3A6A; flex-shrink: 0; }
+    .case-importante { border-color: #B28E3D; background: #FFFBF3; }
+
+    .onglets { display: flex; gap: 8px; margin-bottom: 14px; }
+    .onglet { flex: 1; padding: 11px; border: 2px solid #E8E6E1; background: #FBF8F3; border-radius: 8px; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: #4A4A47; cursor: pointer; }
+    .onglet.actif { border-color: #5A3A6A; background: #5A3A6A; color: white; }
+    .connecte { background: #F4EEF6; border-radius: 8px; padding: 12px 14px; font-size: 0.93rem; }
+
+    .quotas { display: flex; gap: 8px; margin: 6px 0 10px; }
+    .quota { flex: 1; padding: 12px 8px; border: 2px solid #E8E6E1; background: #FBF8F3; border-radius: 8px; font-family: inherit; font-size: 0.95rem; font-weight: 700; color: #4A4A47; cursor: pointer; }
+    .quota.actif { border-color: #5A3A6A; background: #5A3A6A; color: white; }
+
+    .pro { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid #E8E6E1; border-radius: 8px; margin-bottom: 10px; cursor: pointer; background: white; }
+    .pro:hover { border-color: #B28E3D; }
+    .pro.choisi { border-color: #5A3A6A; background: #F4EEF6; }
+    .pro input { margin-top: 4px; width: 18px; height: 18px; accent-color: #5A3A6A; flex-shrink: 0; }
+    .pro img, .pro .sans-photo { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #EFEAE3; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    .pro-nom { font-weight: 700; color: #2a2a28; }
+    .pro-infos { font-size: 0.82rem; color: #6a6a65; }
+    .pro-texte { font-size: 0.85rem; margin-top: 4px; overflow-wrap: anywhere; }
+    .pro-hors { font-size: 0.75rem; font-weight: 700; color: #8A6420; }
+    .pro.indispo { opacity: 0.55; cursor: not-allowed; }
+    .compteur { font-size: 0.88rem; font-weight: 600; color: #5A3A6A; }
+
+    .alerte { background: #FBF3E4; border: 1px solid #EAD7B0; border-radius: 8px; padding: 14px; font-size: 0.92rem; margin-bottom: 12px; }
+    .message { display: none; padding: 12px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.92rem; }
+    .message.visible { display: block; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .message.info { background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+
+    .etat { text-align: center; background: white; border: 1px solid #E8E6E1; border-radius: 10px; padding: 36px 18px; }
+    .etat p { margin-bottom: 14px; }
+    .merci h2 { font-size: 1.5rem; margin-bottom: 10px; }
+    .merci ul { text-align: left; margin: 0 auto 16px; max-width: 480px; padding-left: 20px; }
+    .merci li { margin-bottom: 8px; font-size: 0.93rem; }
+    .merci .bouton { margin: 6px auto; max-width: 340px; }
+
+    .cache { display: none !important; }
+
+    @media (min-width: 700px) {
+      .page { padding: 34px 24px 20px; }
+      .intro h1 { font-size: 2rem; }
+      .deux-colonnes { grid-template-columns: 1fr 1fr; }
+      .modules { grid-template-columns: 1fr 1fr 1fr; }
+      .etape { padding: 24px; }
+    }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <a class="retour" href="projets-alb.html">← Revenir à Projets ALB</a>
+
+  <div id="formulaire">
+    <div class="intro">
+      <h1 id="titre-page">Mon projet</h1>
+      <p id="texte-intro">Décrivez votre projet : ALB Immobilier le transmet aux bons professionnels. Vos coordonnées ne leur sont données qu'avec votre accord, et vous recevez les leurs : vous décidez de la suite.</p>
+    </div>
+
+    <div class="modules" id="choix-module">
+      <button type="button" class="module" data-module="financement"><span class="module-emoji">💶</span><span><strong>Financement</strong>Un courtier pour votre prêt</span></button>
+      <button type="button" class="module" data-module="travaux"><span class="module-emoji">🔧</span><span><strong>Travaux</strong>Les bons artisans</span></button>
+      <button type="button" class="module" data-module="accompagnement"><span class="module-emoji">🤝</span><span><strong>Vente ou achat</strong>Un agent ou un mandataire</span></button>
+    </div>
+
+    <div id="suite" class="cache">
+      <!-- 1. Le projet -->
+      <section class="etape">
+        <h2><span class="numero">1</span> Votre projet</h2>
+
+        <!-- Financement -->
+        <div id="bloc-financement" class="cache">
+          <div class="deux-colonnes">
+            <div class="champ"><label for="f-objet">Votre projet</label>
+              <select id="f-objet">
+                <option value="achat_rp">Acheter ma résidence principale</option>
+                <option value="investissement">Investissement locatif</option>
+                <option value="travaux">Financer des travaux</option>
+                <option value="rachat">Renégocier ou regrouper mes crédits</option>
+                <option value="autre">Autre projet</option>
+              </select></div>
+            <div class="champ"><label for="f-type">Type de bien <span class="leger">— facultatif</span></label>
+              <select id="f-type"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="immeuble">Immeuble</option><option value="autre">Autre</option></select></div>
+            <div class="champ"><label for="f-prix">Prix du bien visé (€) <span class="leger">— facultatif</span></label><input type="number" id="f-prix" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 250 000"></div>
+            <div class="champ"><label for="f-delai">Quand ?</label>
+              <select id="f-delai"><option value="moins_3_mois">Dans les 3 mois</option><option value="3_6_mois">Dans 3 à 6 mois</option><option value="plus_6_mois">Dans plus de 6 mois</option><option value="ne_sait_pas" selected>Je ne sais pas encore</option></select></div>
+            <div class="champ"><label for="f-situation">Votre situation <span class="leger">— facultatif</span></label>
+              <select id="f-situation"><option value="">—</option><option value="cdi">Salarié(e) en CDI</option><option value="fonctionnaire">Fonctionnaire</option><option value="cdd">CDD / intérim</option><option value="independant">Indépendant(e) / chef d'entreprise</option><option value="retraite">Retraité(e)</option><option value="autre">Autre</option></select></div>
+            <div class="champ"><label for="f-primo">Premier achat ? <span class="leger">— facultatif</span></label>
+              <select id="f-primo"><option value="">—</option><option value="oui">Oui, c'est mon premier achat</option><option value="non">Non</option></select></div>
+          </div>
+        </div>
+
+        <!-- Travaux -->
+        <div id="bloc-travaux" class="cache">
+          <div class="deux-colonnes">
+            <div class="champ"><label for="t-categorie">Corps de métier</label>
+              <select id="t-categorie"><option value="">— Choisissez —</option><option value="electricite">Électricité</option><option value="plomberie">Plomberie</option><option value="carrelage">Carrelage</option><option value="peinture">Peinture</option><option value="menuiserie">Menuiserie</option><option value="renovation_globale">Rénovation globale</option><option value="ne_sait_pas">Je ne sais pas encore</option></select></div>
+            <div class="champ"><label for="t-delai">Délai souhaité</label>
+              <select id="t-delai"><option value="urgent">Urgent (moins de 2 semaines)</option><option value="court">1 à 2 mois</option><option value="moyen" selected>2 à 3 mois</option><option value="long">Plus de 3 mois</option></select></div>
+            <div class="champ"><label for="t-logement">Logement <span class="leger">— facultatif</span></label>
+              <select id="t-logement"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="autre">Autre</option></select></div>
+            <div class="champ"><label for="t-budget">Budget estimé <span class="leger">— facultatif</span></label>
+              <select id="t-budget"><option value="">—</option><option value="moins_5000">Moins de 5 000 €</option><option value="5000_15000">5 000 à 15 000 €</option><option value="15000_50000">15 000 à 50 000 €</option><option value="plus_50000">Plus de 50 000 €</option><option value="ne_sait_pas">Je ne sais pas encore</option></select></div>
+          </div>
+        </div>
+
+        <!-- Accompagnement vente / achat -->
+        <div id="bloc-accompagnement" class="cache">
+          <div class="champ"><label for="a-projet">Vous souhaitez…</label>
+            <select id="a-projet"><option value="vendre">Vendre mon bien</option><option value="acheter">Acheter un bien</option><option value="les_deux">Vendre et acheter</option></select></div>
+          <div id="a-vente">
+            <p class="sous-titre">🏠 Le bien à vendre</p>
+            <div class="deux-colonnes">
+              <div class="champ"><label for="a-type-vente">Type de bien</label>
+                <select id="a-type-vente"><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="local">Local professionnel</option><option value="autre">Autre</option></select></div>
+              <div class="champ"><label for="a-avancement-vente">Où en êtes-vous ?</label>
+                <select id="a-avancement-vente"><option value="prochainement">🟢 Je veux vendre prochainement</option><option value="reflechit">🟡 Je réfléchis à vendre</option><option value="valeur">🔵 Je veux connaître la valeur de mon bien</option><option value="ne_sait_pas">🤔 Je ne sais pas par où commencer</option></select></div>
+            </div>
+            <div class="champ"><label for="a-mandat">Avez-vous déjà confié la vente de ce bien à un professionnel ?</label>
+              <select id="a-mandat"><option value="non">Non</option><option value="simple">Oui, un mandat simple</option><option value="exclusif">Oui, un mandat exclusif</option><option value="ne_sait_pas">Je ne sais pas</option></select></div>
+            <div class="alerte cache" id="a-exclusif">🔒 Votre bien est actuellement en exclusivité avec un professionnel. ALB Immobilier ne peut donc pas vous proposer un autre agent ou mandataire pour vendre ce même bien pendant la durée de cette exclusivité. Pour le reste de votre projet (financement, travaux, achat), nous restons à vos côtés !</div>
+            <div class="alerte cache" id="a-verifier">Pas de souci : Jocelyne vous appelle pour vérifier cela avec vous, puis envoie votre demande aux professionnels.</div>
+          </div>
+          <div id="a-achat" class="cache">
+            <p class="sous-titre">🔑 Le bien recherché</p>
+            <div class="deux-colonnes">
+              <div class="champ"><label for="a-type-achat">Type de bien</label>
+                <select id="a-type-achat"><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="local">Local professionnel</option><option value="autre">Autre</option></select></div>
+              <div class="champ"><label for="a-avancement-achat">Où en êtes-vous ?</label>
+                <select id="a-avancement-achat"><option value="activement">🟢 Je recherche activement</option><option value="commence">🟡 Je commence mes recherches</option><option value="savoir">🔵 Je veux savoir ce que je peux acheter</option><option value="ne_sait_pas">🤔 Je ne sais pas par où commencer</option></select></div>
+              <div class="champ"><label for="a-budget">Budget envisagé (€) <span class="leger">— facultatif</span></label><input type="number" id="a-budget" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 300 000"></div>
+            </div>
+          </div>
+          <div id="a-deux" class="cache">
+            <div class="champ"><label for="a-priorite">Votre priorité</label>
+              <select id="a-priorite"><option value="vendre_dabord">Vendre d'abord</option><option value="acheter_dabord">Acheter d'abord</option><option value="parallele">Les deux en parallèle</option><option value="ne_sait_pas" selected>Je ne sais pas encore</option></select></div>
+          </div>
+        </div>
+
+        <!-- Proposer un courtier (travaux et achat) -->
+        <label class="case case-importante cache" id="bloc-courtier"><input type="checkbox" id="c-courtier"> <span><strong>💶 Besoin d'un financement ?</strong> Je souhaite aussi qu'un courtier partenaire me rappelle pour financer <span id="texte-courtier">ce projet</span>, sans engagement. Il reçoit ma simulation de budget (et mes coordonnées seulement si j'accepte d'être appelé(e), case plus bas).</span></label>
+
+        <!-- Simulation de budget (financement, ou courtier demandé) -->
+        <div id="bloc-simulation" class="cache">
+          <p class="sous-titre">Votre budget en 30 secondes</p>
+          <div class="deux-colonnes">
+            <div class="champ"><label for="s-revenus">Revenus nets mensuels du foyer (€)</label><input type="number" id="s-revenus" min="0" step="50" inputmode="numeric" placeholder="Ex. : 3 500"></div>
+            <div class="champ"><label for="s-credits">Crédits en cours par mois (€) <span class="leger">— facultatif</span></label><input type="number" id="s-credits" min="0" step="10" inputmode="numeric" placeholder="Ex. : 250"></div>
+            <div class="champ"><label for="s-apport">Apport personnel (€) <span class="leger">— facultatif</span></label><input type="number" id="s-apport" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 30 000"></div>
+            <div class="champ"><label for="s-duree">Durée du prêt</label><select id="s-duree"><option value="15">15 ans</option><option value="20">20 ans</option><option value="25" selected>25 ans</option></select></div>
+          </div>
+          <div class="champ"><label for="s-taux">Taux d'intérêt (%)</label><input type="number" id="s-taux" min="0" max="15" step="0.05" inputmode="decimal"><div class="aide">Taux moyen du moment, que vous pouvez modifier.</div></div>
+          <div class="resultat cache" id="resultat-budget"></div>
+          <p class="petit">Vos revenus restent confidentiels : les courtiers voient seulement le budget, la mensualité possible et l'apport.</p>
+        </div>
+
+        <div class="champ">
+          <label for="p-description" id="label-description">Parlez-nous de votre projet <span class="leger">— facultatif</span></label>
+          <textarea id="p-description" maxlength="2000" rows="4"></textarea>
+          <div class="aide">Sans nom, téléphone ni adresse : ce texte est montré aux professionnels.</div>
+        </div>
+      </section>
+
+      <!-- 2. Le secteur -->
+      <section class="etape">
+        <h2><span class="numero">2</span> Votre secteur</h2>
+        <div class="deux-colonnes">
+          <div class="champ"><label for="p-cp">Code postal du bien (ou du secteur recherché)</label><input type="text" id="p-cp" inputmode="numeric" maxlength="5" placeholder="Ex. : 83000"></div>
+          <div class="champ"><label for="p-zone">Secteur</label><select id="p-zone"><option value="">Tout le département</option></select></div>
+        </div>
+      </section>
+
+      <!-- 3. Les pros -->
+      <section class="etape">
+        <h2><span class="numero">3</span> <span id="titre-pros">Les professionnels</span></h2>
+        <div class="onglets">
+          <button type="button" class="onglet actif" id="onglet-ouvert" onclick="choisirMode('ouvert')">Aidez-moi à choisir</button>
+          <button type="button" class="onglet" id="onglet-direct" onclick="choisirMode('direct')">Je choisis moi-même</button>
+        </div>
+        <div id="panneau-ouvert">
+          <p style="font-size:0.92rem;">Votre demande part vers les <span class="nom-pros">professionnels</span> validés de votre secteur. Avec combien souhaitez-vous échanger, au plus ?</p>
+          <div class="quotas">
+            <button type="button" class="quota actif" data-quota="1">1</button>
+            <button type="button" class="quota" data-quota="2">2</button>
+            <button type="button" class="quota" data-quota="3">3</button>
+          </div>
+          <p class="petit">Les premiers qui acceptent votre demande vous écrivent ; ensuite, elle se ferme toute seule.</p>
+        </div>
+        <div id="panneau-direct" class="cache">
+          <p style="font-size:0.92rem;">Cochez jusqu'à 3 professionnels. <span class="compteur" id="compteur-pros">0 / 3</span></p>
+          <div id="liste-pros"><p class="petit">Chargement…</p></div>
+        </div>
+      </section>
+
+      <!-- 4. Vous -->
+      <section class="etape">
+        <h2><span class="numero">4</span> Vous</h2>
+        <div class="connecte cache" id="deja-connecte"></div>
+        <div id="bloc-identite">
+          <p>Votre espace ALB se crée en même temps : vous y suivez votre demande et vos échanges avec les pros.</p>
+          <div class="onglets">
+            <button type="button" class="onglet actif" id="onglet-nouveau" onclick="choisirIdentite('nouveau')">Je n'ai pas d'espace</button>
+            <button type="button" class="onglet" id="onglet-membre" onclick="choisirIdentite('membre')">J'ai déjà un espace</button>
+          </div>
+          <div id="panneau-nouveau">
+            <div class="deux-colonnes">
+              <div class="champ"><label for="i-prenom">Prénom</label><input type="text" id="i-prenom" autocomplete="given-name" maxlength="80"></div>
+              <div class="champ"><label for="i-nom">Nom</label><input type="text" id="i-nom" autocomplete="family-name" maxlength="80"></div>
+              <div class="champ"><label for="i-email">E-mail</label><input type="email" id="i-email" autocomplete="email" maxlength="200"></div>
+              <div class="champ"><label for="i-telephone">Téléphone</label><input type="tel" id="i-telephone" autocomplete="tel" maxlength="20"><div class="aide">Pour que Jocelyne puisse vous joindre. Jamais donné aux pros.</div></div>
+              <div class="champ"><label for="i-pin">Choisissez un code PIN</label><input type="password" id="i-pin" inputmode="numeric" maxlength="4" autocomplete="new-password"><div class="aide">4 chiffres, pour vous connecter ensuite.</div></div>
+              <div class="champ"><label for="i-pin2">Confirmez le code PIN</label><input type="password" id="i-pin2" inputmode="numeric" maxlength="4" autocomplete="new-password"></div>
+            </div>
+            <label class="case"><input type="checkbox" id="i-cgu"> <span>J'ai lu et j'accepte les <a href="cgu.html" target="_blank" style="color:#5A3A6A;">conditions générales</a> et la <a href="confidentialite.html" target="_blank" style="color:#5A3A6A;">politique de confidentialité</a>.</span></label>
+            <label class="case"><input type="checkbox" id="i-recontact"> <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de mon projet.</span></label>
+          </div>
+          <div id="panneau-membre" class="cache">
+            <div class="deux-colonnes">
+              <div class="champ"><label for="m-email">E-mail</label><input type="email" id="m-email" autocomplete="email"></div>
+              <div class="champ"><label for="m-pin">Code PIN</label><input type="password" id="m-pin" inputmode="numeric" maxlength="4" autocomplete="current-password"></div>
+            </div>
+            <a href="espace-alb.html#oubli" style="font-size:0.85rem;color:#5A3A6A;">J'ai oublié mon code PIN</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Envoi -->
+      <section class="etape">
+        <label class="case"><input type="checkbox" id="c-appel"> <span><strong>📞 J'accepte d'être appelé(e)</strong> : les professionnels qui acceptent ma demande reçoivent mon nom et mon téléphone pour me rappeler. Sans cette case, ils m'écrivent seulement dans ma messagerie ALB. Dans les deux cas, je reçois leurs coordonnées.</span></label>
+        <label class="case case-importante"><input type="checkbox" id="c-consentement"> <span>J'accepte qu'ALB Sud Immobilier transmette les informations de mon projet (sans mes coordonnées) aux professionnels sélectionnés, afin qu'ils puissent me recontacter par ma messagerie ALB.</span></label>
+        <div class="message" id="message-envoi"></div>
+        <button type="button" class="bouton" id="bouton-envoyer" onclick="envoyerProjet()">📨 Envoyer ma demande</button>
+      </section>
+    </div>
+  </div>
+
+  <div class="etat merci cache" id="merci">
+    <h2>Votre demande est partie ✅</h2>
+    <ul id="merci-suite"></ul>
+    <a class="bouton" href="espace-alb.html#mes-projets">Suivre ma demande dans mon espace</a>
+    <a class="bouton bouton-discret" href="projets-alb.html">Revenir à Projets ALB</a>
+  </div>
+</main>
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
+    }
+  }
+
+  // ========== MON PROJET ==========
+  const MESSAGES = {
+    CONSENTEMENT_MANQUANT: "Merci de cocher la case d'accord pour que votre demande puisse être transmise.",
+    CP_INVALIDE: "Indiquez un code postal à 5 chiffres (étape 2).",
+    ZONE_INVALIDE: "Choisissez votre secteur dans la liste (étape 2).",
+    PROS_INVALIDES: "Cochez entre 1 et 3 professionnels (étape 3).",
+    CHAMP_INVALIDE: "Vérifiez les informations de votre projet (étape 1).",
+    BUDGET_INVALIDE: "Indiquez au moins vos revenus mensuels (ou votre apport), avec des chiffres valables (étape 1).",
+    DESCRIPTION_TROP_COURTE: "Décrivez vos travaux en quelques mots de plus (étape 1) : c'est ce qui aide les artisans à vous répondre.",
+    MANDAT_EXCLUSIF: "Votre bien est en exclusivité avec un professionnel : nous ne pouvons pas proposer un autre agent ou mandataire pour ce bien.",
+    TROP_DE_DEMANDES: "Vous avez fait beaucoup de demandes aujourd'hui. Réessayez demain, ou appelez Jocelyne au 07 45 60 28 05.",
+    NON_CONNECTE: "Votre session s'est terminée. Reconnectez-vous, puis renvoyez votre demande."
+  };
+  const MODULES = {
+    financement: { titre: 'Mon projet de financement', intro: 'Un courtier partenaire étudie votre prêt, sans engagement.', pros: 'courtiers', unPro: 'courtier', titrePros: 'Les courtiers' },
+    travaux: { titre: 'Mon projet de travaux', intro: 'Des artisans validés par ALB Sud Immobilier étudient vos travaux.', pros: 'artisans', unPro: 'artisan', titrePros: 'Les artisans' },
+    accompagnement: { titre: 'Vendre ou acheter, accompagné(e)', intro: 'Un agent ou un mandataire immobilier vous accompagne.', pros: 'agents et mandataires', unPro: 'agent ou mandataire', titrePros: 'Les agents et mandataires' }
+  };
+  const ZONES = {
+    '83': ['Toulon et environs', 'Centre Var', 'Est Var/Golfe', 'Dracénie', 'Haut Var/Verdon'],
+    '13': ['Marseille et environs', "Pays d'Aix", 'Aubagne/La Ciotat', 'Étang de Berre/Martigues', "Salon/Pays d'Arles"]
+  };
+  let module = '';
+  let mode = 'ouvert';
+  let quota = 1;
+  let choisis = [];
+  let prosDispo = [];
+  let profil = null;
+  let identite = 'nouveau';
+  let tauxParDuree = { 15: 3.45, 20: 3.5, 25: 3.6 };
+
+  function e(t) { return albEchapper(t); }
+  function el(id) { return document.getElementById(id); }
+  function euros(n) { return Math.round(Number(n)).toLocaleString('fr-FR') + ' €'; }
+  function nombre(id) { const t = String(el(id).value || '').replace(/\s/g, '').replace(',', '.'); return t === '' ? 0 : Number(t); }
+  function montrerMessage(id, type, texte) { const m = el(id); m.className = 'message visible ' + type; m.textContent = texte; m.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  function cacherMessage(id) { el(id).className = 'message'; }
+
+  // ----- Le type de projet -----
+  function choisirModule(m) {
+    if (!MODULES[m]) return;
+    module = m;
+    document.querySelectorAll('.module').forEach(function (b) { b.classList.toggle('actif', b.dataset.module === m); });
+    ['financement', 'travaux', 'accompagnement'].forEach(function (x) { el('bloc-' + x).classList.toggle('cache', x !== m); });
+    majCourtier();
+    el('titre-page').textContent = MODULES[m].titre;
+    el('texte-intro').textContent = MODULES[m].intro + ' Vos coordonnées ne sont données aux professionnels qu\'avec votre accord, et vous recevez les leurs : vous décidez de la suite.';
+    el('titre-pros').textContent = MODULES[m].titrePros;
+    document.querySelectorAll('.nom-pros').forEach(function (s) { s.textContent = MODULES[m].pros; });
+    el('label-description').innerHTML = m === 'travaux'
+      ? 'Décrivez vos travaux <span class="leger">— quelques phrases</span>'
+      : 'Parlez-nous de votre projet <span class="leger">— facultatif</span>';
+    el('p-description').placeholder = m === 'travaux' ? 'Ex. : fuite sous l\'évier de la cuisine, à reprendre avec le carrelage autour…' : 'Ce qui compte pour vous, vos questions…';
+    el('suite').classList.remove('cache');
+    choisis = [];
+    chargerPros();
+  }
+
+  // ----- Financement : le budget se calcule en direct -----
+  function calculer(revenus, credits, apport, duree, taux) {
+    const mensualite = Math.max(0, revenus * 0.35 - credits);
+    const t = taux / 100 / 12, n = duree * 12;
+    const capital = t > 0 ? mensualite * (1 - Math.pow(1 + t, -n)) / t : mensualite * n;
+    return Math.max(0, Math.round((capital + apport) / 1.075 / 1000) * 1000);
+  }
+  function majBudget() {
+    const revenus = nombre('s-revenus'), credits = nombre('s-credits'), apport = nombre('s-apport');
+    const zone = el('resultat-budget');
+    if (!(revenus > 0 || apport > 0)) { zone.classList.add('cache'); return; }
+    const montant = calculer(revenus, credits, apport, Number(el('s-duree').value), nombre('s-taux'));
+    const prix = module === 'financement' ? nombre('f-prix') : module === 'accompagnement' ? nombre('a-budget') : 0;
+    zone.innerHTML = 'Votre budget d\'achat estimé<div class="resultat-chiffre">' + e(euros(montant)) + '</div>' +
+      (prix > 0 ? (montant >= prix ? '✅ Le prix visé entre dans ce budget.' : '⚠️ Le prix visé dépasse ce budget de <strong>' + e(euros(prix - montant)) + '</strong> : un courtier peut vous aider à y voir plus clair.') : '') +
+      '<div class="petit">Estimation indicative : 35 % de vos revenus moins vos crédits en cours, frais de notaire de l\'ancien compris (environ 7,5 %). Elle ne vaut pas accord de prêt.</div>';
+    zone.classList.remove('cache');
+  }
+
+  // ----- Accompagnement : les questions suivent le projet -----
+  // Travaux ou achat : on propose aussi un courtier, et la simulation s'ouvre si on coche
+  function courtierPossible() {
+    return module === 'travaux' || (module === 'accompagnement' && el('a-projet').value !== 'vendre');
+  }
+  function majCourtier() {
+    const possible = courtierPossible();
+    el('bloc-courtier').classList.toggle('cache', !possible);
+    el('texte-courtier').textContent = module === 'travaux' ? 'ces travaux' : 'cet achat';
+    el('bloc-simulation').classList.toggle('cache', !(module === 'financement' || (possible && el('c-courtier').checked)));
+  }
+  function avecCourtier() { return courtierPossible() && el('c-courtier').checked; }
+
+  function majAccompagnement() {
+    majCourtier();
+    const p = el('a-projet').value;
+    el('a-vente').classList.toggle('cache', p === 'acheter');
+    el('a-achat').classList.toggle('cache', p === 'vendre');
+    el('a-deux').classList.toggle('cache', p !== 'les_deux');
+    const mandat = el('a-mandat').value;
+    const exclusif = p !== 'acheter' && mandat === 'exclusif';
+    el('a-exclusif').classList.toggle('cache', !exclusif);
+    el('a-verifier').classList.toggle('cache', !(p !== 'acheter' && mandat === 'ne_sait_pas'));
+    el('bouton-envoyer').disabled = exclusif;
+  }
+
+  // ----- Le secteur -----
+  function majZones() {
+    const cp = el('p-cp').value.trim();
+    const zones = /^[0-9]{5}$/.test(cp) ? (ZONES[cp.slice(0, 2)] || []) : [];
+    const avant = el('p-zone').value;
+    el('p-zone').innerHTML = '<option value="">' + (zones.length ? 'Je ne sais pas / tout le département' : 'Tout le secteur') + '</option>' +
+      zones.map(function (z) { return '<option value="' + e(z) + '"' + (z === avant ? ' selected' : '') + '>' + e(z) + '</option>'; }).join('');
+    el('p-zone').disabled = !zones.length;
+  }
+
+  // ----- Les pros -----
+  function choisirMode(m) {
+    mode = m;
+    el('onglet-ouvert').classList.toggle('actif', m === 'ouvert');
+    el('onglet-direct').classList.toggle('actif', m === 'direct');
+    el('panneau-ouvert').classList.toggle('cache', m !== 'ouvert');
+    el('panneau-direct').classList.toggle('cache', m !== 'direct');
+  }
+
+  async function chargerPros() {
+    const cp = el('p-cp').value.trim();
+    const { data, error } = await albSupabase.rpc('alb_projet_choix_pros', { p_module: module, p_code_postal: /^[0-9]{5}$/.test(cp) ? cp : null, p_zone: el('p-zone').value || null });
+    if (error) { console.error('[ALB DEBUG] pros :', error); el('liste-pros').innerHTML = '<p class="petit">La liste n\'a pas pu être chargée. Choisissez « Aidez-moi à choisir ».</p>'; return; }
+    prosDispo = data || [];
+    choisis = choisis.filter(function (id) { return prosDispo.some(function (p) { return p.id === id; }); });
+    dessinerPros();
+  }
+
+  function dessinerPros() {
+    const zone = el('liste-pros');
+    if (!prosDispo.length) {
+      zone.innerHTML = '<p class="petit">Pas encore de ' + e(MODULES[module].pros) + ' à choisir sur ALB Immobilier. Choisissez « Aidez-moi à choisir » : Jocelyne s\'occupe de trouver la bonne personne.</p>';
+    } else {
+      zone.innerHTML = prosDispo.map(function (p) {
+        const photo = /^https:\/\//.test(String(p.photo_url || '')) ? p.photo_url : '';
+        const coche = choisis.indexOf(p.id) !== -1;
+        const indispo = p.disponible === false;
+        const m = p.modes || {};
+        const rdv = [m.telephone ? '📞 téléphone' : '', m.visio ? '💻 visio' : '', m.physique ? '🤝 en personne' : ''].filter(Boolean).join(' · ');
+        const metier = p.role === 'immo' ? (p.sous_role_immo === 'mandataire' ? 'Mandataire immobilier' : 'Agent immobilier') : p.role === 'courtier' ? 'Courtier' : 'Artisan';
+        return '<label class="pro' + (coche ? ' choisi' : '') + (indispo ? ' indispo' : '') + '"><input type="checkbox" class="case-pro" value="' + e(p.id) + '"' + (coche ? ' checked' : '') + (indispo ? ' disabled' : '') + '>' +
+          (photo ? '<img src="' + e(photo) + '" alt="">' : '<span class="sans-photo">👤</span>') +
+          '<span><span class="pro-nom">' + e(p.nom_affiche) + '</span>' +
+          '<span class="pro-infos"> · ' + e(metier) + (p.label_rge ? ' · RGE' : '') + '</span>' +
+          (p.zones && p.zones.length ? '<br><span class="pro-infos">🗺️ ' + e(p.zones.join(', ')) + '</span>' : '') +
+          (rdv ? '<br><span class="pro-infos">Rendez-vous : ' + e(rdv) + '</span>' : '') +
+          (indispo ? '<br><span class="pro-hors">Indisponible en ce moment' + (p.remplace_par ? ' · remplacé par ' + e(p.remplace_par) : '') + '</span>' : '') +
+          (!indispo && !p.dans_secteur ? '<br><span class="pro-hors">Hors de votre secteur</span>' : '') +
+          (p.presentation ? '<div class="pro-texte">' + e(p.presentation) + '</div>' : '') +
+          '</span></label>';
+      }).join('');
+    }
+    el('compteur-pros').textContent = choisis.length + ' / 3';
+  }
+
+  document.addEventListener('change', function (ev) {
+    if (!ev.target.classList.contains('case-pro')) return;
+    const id = ev.target.value;
+    if (ev.target.checked) {
+      if (choisis.length >= 3) { ev.target.checked = false; return; }
+      choisis.push(id);
+    } else {
+      choisis = choisis.filter(function (x) { return x !== id; });
+    }
+    dessinerPros();
+  });
+
+  document.addEventListener('click', function (ev) {
+    const q = ev.target.closest('.quota');
+    if (q) {
+      quota = Number(q.dataset.quota);
+      document.querySelectorAll('.quota').forEach(function (b) { b.classList.toggle('actif', b === q); });
+    }
+    const m = ev.target.closest('.module');
+    if (m) choisirModule(m.dataset.module);
+  });
+
+  // ----- 4. Identité -----
+  function choisirIdentite(quoi) {
+    identite = quoi;
+    el('onglet-nouveau').classList.toggle('actif', quoi === 'nouveau');
+    el('onglet-membre').classList.toggle('actif', quoi === 'membre');
+    el('panneau-nouveau').classList.toggle('cache', quoi !== 'nouveau');
+    el('panneau-membre').classList.toggle('cache', quoi !== 'membre');
+  }
+
+  function afficherConnecte() {
+    el('deja-connecte').innerHTML = '✅ Vous êtes connecté(e) : <strong>' + e(((profil.prenom || '') + ' ' + (profil.nom || '')).trim()) + '</strong>. Vos coordonnées ne sont données aux professionnels qu\'avec votre accord (case plus bas).';
+    el('deja-connecte').classList.remove('cache');
+    el('bloc-identite').classList.add('cache');
+  }
+
+  async function seConnecterOuCreer() {
+    if (profil) return true;
+    if (identite === 'membre') {
+      const r = await albSeConnecter(el('m-email').value.trim(), el('m-pin').value.trim());
+      if (!r.ok) { montrerMessage('message-envoi', 'erreur', r.message); return false; }
+    } else {
+      const pin = el('i-pin').value.trim();
+      if (!el('i-prenom').value.trim() || !el('i-nom').value.trim()) { montrerMessage('message-envoi', 'erreur', 'Indiquez votre prénom et votre nom (étape 4).'); return false; }
+      if (!/^\S+@\S+\.\S+$/.test(el('i-email').value.trim())) { montrerMessage('message-envoi', 'erreur', 'Indiquez une adresse e-mail valable (étape 4).'); return false; }
+      if (el('i-telephone').value.replace(/\D/g, '').length < 10) { montrerMessage('message-envoi', 'erreur', 'Indiquez un numéro de téléphone complet (étape 4).'); return false; }
+      if (!/^[0-9]{4}$/.test(pin)) { montrerMessage('message-envoi', 'erreur', 'Votre code PIN doit contenir exactement 4 chiffres (étape 4).'); return false; }
+      if (pin !== el('i-pin2').value.trim()) { montrerMessage('message-envoi', 'erreur', 'Les deux codes PIN ne sont pas identiques (étape 4).'); return false; }
+      if (!el('i-cgu').checked) { montrerMessage('message-envoi', 'erreur', 'Merci d\'accepter les conditions générales (étape 4).'); return false; }
+      if (!el('i-recontact').checked) { montrerMessage('message-envoi', 'erreur', 'Pour vous accompagner, nous devons pouvoir vous recontacter : cochez la case prévue (étape 4).'); return false; }
+      const p = el('a-projet').value;
+      const r = await albSInscrire({
+        prenom: el('i-prenom').value, nom: el('i-nom').value, email: el('i-email').value, telephone: el('i-telephone').value, pin: pin,
+        est_acquereur: module === 'financement' || (module === 'accompagnement' && p !== 'vendre'),
+        est_vendeur: module === 'accompagnement' && p !== 'acheter',
+        est_client_pro: module === 'travaux',
+        cgu_acceptees: true, accepte_recontact: true,
+        message: 'Inscription depuis Projets ALB : ' + MODULES[module].titre
+      });
+      if (!r.ok) {
+        if (r.message === albMessageErreur('EMAIL_DEJA_UTILISE')) choisirIdentite('membre');
+        montrerMessage('message-envoi', 'erreur', r.message);
+        return false;
+      }
+    }
+    profil = await albProfilConnecte();
+    if (profil) afficherConnecte();
+    return !!profil;
+  }
+
+  // ----- 5. Envoi -----
+  function donneesProjet() {
+    const d = { module: module, mode: mode, quota: quota, pros: mode === 'direct' ? choisis : [],
+      code_postal: el('p-cp').value.trim(), zone: el('p-zone').value, description: el('p-description').value.trim() };
+    if (module === 'financement') {
+      Object.assign(d, { objet: el('f-objet').value, type_bien: el('f-type').value, prix_vise: el('f-prix').value, delai: el('f-delai').value,
+        situation: el('f-situation').value, primo: el('f-primo').value,
+        revenus_mensuels: nombre('s-revenus'), credits_mensuels: nombre('s-credits'), apport: nombre('s-apport'),
+        duree_annees: Number(el('s-duree').value), taux: nombre('s-taux') });
+    } else if (module === 'travaux') {
+      Object.assign(d, { categorie: el('t-categorie').value, delai: el('t-delai').value, logement: el('t-logement').value,
+        budget: el('t-budget').value, besoin_financement: avecCourtier() });
+    } else {
+      Object.assign(d, { projet: el('a-projet').value, type_bien_vente: el('a-type-vente').value, avancement_vente: el('a-avancement-vente').value,
+        mandat: el('a-mandat').value, type_bien_achat: el('a-type-achat').value, avancement_achat: el('a-avancement-achat').value,
+        budget_achat: el('a-budget').value, priorite: el('a-priorite').value });
+    }
+    if (avecCourtier()) {
+      Object.assign(d, { courtier: true, revenus_mensuels: nombre('s-revenus'), credits_mensuels: nombre('s-credits'), apport: nombre('s-apport'),
+        duree_annees: Number(el('s-duree').value), taux: nombre('s-taux') });
+    }
+    return d;
+  }
+
+  function verifierAvantEnvoi(d) {
+    if ((module === 'financement' || d.courtier) && !(d.revenus_mensuels > 0 || d.apport > 0)) return MESSAGES.BUDGET_INVALIDE;
+    if (module === 'travaux' && !d.categorie) return 'Choisissez le corps de métier (étape 1).';
+    if (module === 'travaux' && d.description.length < 20) return MESSAGES.DESCRIPTION_TROP_COURTE;
+    if (module === 'accompagnement' && d.projet !== 'acheter' && d.mandat === 'exclusif') return MESSAGES.MANDAT_EXCLUSIF;
+    if (!/^[0-9]{5}$/.test(d.code_postal)) return MESSAGES.CP_INVALIDE;
+    if (mode === 'direct' && (choisis.length < 1 || choisis.length > 3)) return MESSAGES.PROS_INVALIDES;
+    if (!el('c-consentement').checked) return MESSAGES.CONSENTEMENT_MANQUANT;
+    return '';
+  }
+
+  async function envoyerProjet() {
+    cacherMessage('message-envoi');
+    const d = donneesProjet();
+    const souci = verifierAvantEnvoi(d);
+    if (souci) { montrerMessage('message-envoi', 'erreur', souci); return; }
+    const bouton = el('bouton-envoyer');
+    bouton.disabled = true;
+    bouton.textContent = 'Envoi en cours…';
+    try {
+      if (!(await seConnecterOuCreer())) return;
+      d.action = 'demande_projet';
+      d.consentement = true;
+      d.appel_autorise = el('c-appel').checked;
+      const r = await albAppelerGuichet(d);
+      if (!r.ok) { montrerMessage('message-envoi', 'erreur', MESSAGES[r.code] || albMessageErreur(r.code)); return; }
+      afficherMerci(r, d);
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = '📨 Envoyer ma demande';
+    }
+  }
+
+  function afficherMerci(r, d) {
+    const m = MODULES[module];
+    const lignes = [];
+    if (r.a_verifier) lignes.push('Vous ne savez pas si votre bien est en exclusivité : <strong>Jocelyne vous appelle</strong> pour le vérifier avec vous, puis envoie votre demande.');
+    else if (!r.nb_pros) lignes.push('Pas encore de ' + e(m.pros) + ' disponible dans votre secteur : <strong>Jocelyne s\'en occupe personnellement</strong> et revient vers vous très vite.');
+    else lignes.push('Votre demande est partie vers <strong>' + e(r.nb_pros) + ' ' + e(r.nb_pros > 1 ? m.pros : m.unPro) + '</strong>. Dès qu\'un professionnel l\'accepte, il vous écrit dans votre messagerie ALB et vous êtes prévenu(e) par e-mail.');
+    if (d.courtier) lignes.push(r.nb_courtiers
+      ? 'Votre demande de financement est aussi partie vers <strong>' + e(r.nb_courtiers) + ' courtier' + (r.nb_courtiers > 1 ? 's' : '') + '</strong> : le premier qui accepte vous écrit dans votre messagerie ALB.'
+      : 'Pour le financement, <strong>Jocelyne vous trouve un courtier</strong> et revient vers vous.');
+    lignes.push(d.appel_autorise
+      ? 'Vous avez accepté d\'être appelé(e) : seuls les professionnels qui acceptent votre demande reçoivent votre nom et votre téléphone. Vous recevez aussi leurs coordonnées par e-mail.'
+      : 'Vos coordonnées ne sont pas données aux professionnels : ils vous écrivent dans votre messagerie ALB, et vous recevez leurs coordonnées par e-mail.');
+    lignes.push('Un e-mail récapitulatif vient de partir. Pensez à regarder vos courriers indésirables.');
+    el('merci-suite').innerHTML = lignes.map(function (l) { return '<li>' + l + '</li>'; }).join('');
+    el('formulaire').classList.add('cache');
+    el('merci').classList.remove('cache');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ----- Chargement -----
+  async function charger() {
+    const params = new URLSearchParams(location.search);
+    const cp = params.get('cp') || '';
+    if (/^[0-9]{5}$/.test(cp)) el('p-cp').value = cp;
+    majZones();
+    const objet = params.get('objet') || '';
+    if (objet === 'investissement') el('f-objet').value = 'investissement';
+    if (objet === 'logement-actuel') el('f-objet').value = 'travaux';
+    if (objet === 'vente') el('a-projet').value = 'vendre';
+    if (objet === 'achat' || objet === 'investissement') el('a-projet').value = 'acheter';
+    majAccompagnement();
+
+    try {
+      const { data: t } = await albSupabase.from('parametres_taux_credit').select('taux_15_ans, taux_20_ans, taux_25_ans').order('id', { ascending: false }).limit(1).maybeSingle();
+      if (t) tauxParDuree = { 15: Number(t.taux_15_ans), 20: Number(t.taux_20_ans), 25: Number(t.taux_25_ans) };
+    } catch (ex) { /* valeurs par défaut */ }
+    el('s-taux').value = tauxParDuree[el('s-duree').value];
+    el('s-duree').addEventListener('change', function () { el('s-taux').value = tauxParDuree[this.value]; majBudget(); });
+    ['s-revenus', 's-credits', 's-apport', 's-taux', 'f-prix', 'a-budget'].forEach(function (i) { el(i).addEventListener('input', majBudget); });
+    ['a-projet', 'a-mandat'].forEach(function (i) { el(i).addEventListener('change', majAccompagnement); });
+    el('c-courtier').addEventListener('change', function () { majCourtier(); if (this.checked) { majBudget(); el('c-appel').checked = true; } });
+    el('p-cp').addEventListener('input', function () { majZones(); if (module) chargerPros(); });
+    el('p-zone').addEventListener('change', function () { if (module) chargerPros(); });
+
+    choisirModule(params.get('module') || '');
+
+    profil = await albProfilConnecte();
+    if (profil) afficherConnecte();
+  }
+
+  document.addEventListener('DOMContentLoaded', charger);
+</script>
+</body>
+</html>
