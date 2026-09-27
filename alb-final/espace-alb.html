@@ -12,6 +12,8 @@
   <script src="mes-annonces.js"></script>
   <script src="mes-visites.js"></script>
   <script src="messagerie.js"></script>
+  <script src="mes-projets.js"></script>
+  <script src="mon-profil-pro.js"></script>
 
   <style>
     /* ========== BASE DE LA PAGE ========== */
@@ -722,6 +724,12 @@
       <div id="messagerie"></div>
     </div>
 
+    <div class="carte rubrique cache" id="rubrique-projets">
+      <h2>📂 Mes projets ALB</h2>
+      <p>Financement, travaux, vente ou achat accompagné : suivez vos demandes et les professionnels qui vous ont répondu.</p>
+      <div id="mes-projets"></div>
+    </div>
+
     <div class="carte rubrique cache" id="rubrique-acheteur">
       <h2>🔎 Mes recherches et mes visites</h2>
       <p>Vos demandes de visite, vos rendez-vous confirmés et votre simulation de budget.</p>
@@ -735,9 +743,10 @@
     </div>
 
     <div class="carte rubrique cache" id="rubrique-pro">
-      <h2>🤝 Mon activité pro</h2>
-      <p>Les projets qui vous sont confiés, vos réponses et votre profil sur « Nos pros ALB ».</p>
-      <span class="bientot">Bientôt disponible ici</span>
+      <h2 id="activite-pro">🤝 Mon activité pro</h2>
+      <p>Votre fiche sur « Nos pros ALB », votre disponibilité, votre remplaçant, et les demandes de projets qui vous sont confiées.</p>
+      <div id="profil-pro"></div>
+      <div id="projets-recus"></div>
     </div>
 
     <div class="carte rubrique">
@@ -1183,7 +1192,23 @@
         if (aDesAnnonces) rubriqueVendeur.classList.remove('cache');
       });
     }
-    document.getElementById('rubrique-pro').classList.toggle('cache', !estPro);
+    // « Mes projets ALB » : tous les particuliers… et les pros qui ont déjà fait une demande
+    const rubriqueProjets = document.getElementById('rubrique-projets');
+    rubriqueProjets.classList.toggle('cache', estPro);
+    if (window.albMesProjets) {
+      window.albMesProjets(profil).then(function (aDesProjets) {
+        if (aDesProjets) rubriqueProjets.classList.remove('cache');
+      });
+    }
+    // « Mon activité pro » : les pros… et toute personne qui a déjà reçu une demande
+    const rubriquePro = document.getElementById('rubrique-pro');
+    rubriquePro.classList.toggle('cache', !estPro);
+    if (estPro && window.albMonProfilPro) window.albMonProfilPro(profil);
+    if (window.albProjetsRecus) {
+      window.albProjetsRecus(profil).then(function (nbRecues) {
+        if (nbRecues > 0) rubriquePro.classList.remove('cache');
+      });
+    }
 
     // Message d'accueil selon la situation
     if (vientDeRejoindre) {
