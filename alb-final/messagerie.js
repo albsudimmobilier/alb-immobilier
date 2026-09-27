@@ -270,8 +270,17 @@
   }
 
   // ---------- Points d'entrée ----------
-  // Ouvrir une conversation depuis ailleurs dans l'espace (Mes annonces, Mes visites)
-  window.albMessagerieOuvrir = function (ctx) { ouvrirAvec(ctx || {}); };
+  // Ouvrir une conversation depuis ailleurs dans l'espace (Mes annonces, Mes visites, Mes projets)
+  window.albMessagerieOuvrir = function (ctx) {
+    ctx = ctx || {};
+    if (ctx.conversation) {
+      const rubrique = el('rubrique-messages');
+      if (rubrique) rubrique.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      ouvrirConversation(ctx.conversation);
+      return;
+    }
+    ouvrirAvec(ctx);
+  };
 
   window.albMessagerie = async function (profil) {
     if (!profil || !profil.id) return;
