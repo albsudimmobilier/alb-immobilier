@@ -28,6 +28,8 @@ const ALB_MESSAGES = {
   NON_CONNECTE: "Votre session s'est terminée. Reconnectez-vous, puis recommencez.",
   RECONTACT_NON_ACCEPTE: "Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.",
   METIER_AUTRE_MANQUANT: "Dites-nous quel est votre métier.",
+  METIER_ARTISAN_MANQUANT: "Cochez au moins un corps de métier.",
+  ARTISAN_AUTRE_MANQUANT: "Vous avez coché « Autre » : dites-nous quel est votre corps de métier.",
   AUTRE_A_PRECISER: "Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.",
   EMAIL_INVALIDE: "L'adresse e-mail ne semble pas complète. Pouvez-vous la vérifier ?",
   PIN_INVALIDE: "Votre code PIN doit contenir exactement 4 chiffres.",
@@ -86,7 +88,15 @@ async function albSeConnecter(email, pin) {
 async function albSInscrire(donnees) {
   const resultat = await albAppelerGuichet({ action: "inscription", ...donnees });
   if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
-  return albOuvrirSession(resultat.jeton);
+  const session = await albOuvrirSession(resultat.jeton);
+  // Artisan : ses corps de métier sont enregistrés dès que son espace est ouvert
+  if (session.ok && Array.isArray(donnees.metiers_artisan) && donnees.metiers_artisan.length) {
+    const { error } = await albSupabase.rpc("alb_mes_metiers_inscription", {
+      p_metiers: donnees.metiers_artisan, p_autre: donnees.artisan_autre || null
+    });
+    if (error) console.error("[ALB] Corps de métier :", error.message);
+  }
+  return session;
 }
 
 // ---------- Accès au compte ----------
