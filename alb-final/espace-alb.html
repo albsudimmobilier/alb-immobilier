@@ -14,6 +14,7 @@
   <script src="messagerie.js"></script>
   <script src="mes-projets.js"></script>
   <script src="mon-profil-pro.js"></script>
+  <script src="mes-avis.js"></script>
 
   <style>
     /* ========== BASE DE LA PAGE ========== */
@@ -202,6 +203,10 @@
     .case input { margin-top: 4px; width: 18px; height: 18px; accent-color: #5A3A6A; }
     .bloc-pro { display: none; padding: 16px; border-left: 3px solid #B28E3D; background: #FBF8F3; border-radius: 6px; margin-bottom: 16px; }
     .bloc-pro.visible { display: block; }
+    .cases-metiers { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 4px; }
+    .cases-metiers label { display: flex; align-items: center; gap: 8px; font-weight: 400; font-size: 0.92rem; margin: 0; padding: 7px 10px; border: 1px solid #E8E6E1; border-radius: 6px; background: #fff; cursor: pointer; }
+    .cases-metiers input { width: 17px; height: 17px; accent-color: #5A3A6A; flex-shrink: 0; }
+    @media (min-width: 560px) { .cases-metiers { grid-template-columns: 1fr 1fr; } }
 
     .bouton {
       display: inline-block;
@@ -653,12 +658,25 @@
                 <option value="artisan">Artisan</option>
                 <option value="agent">Agent immobilier</option>
                 <option value="mandataire">Mandataire immobilier</option>
-                <option value="autre">Autre métier</option>
+                <option value="notaire">Notaire</option>
+                <option value="diagnostiqueur">Diagnostiqueur</option>
+                <option value="architecte">Architecte</option>
+                <option value="avocat">Avocat</option>
+                <option value="reseau">Réseau partenaire</option>
+                <option value="autre">Autre (à préciser)</option>
               </select>
             </div>
             <div class="champ cache" id="champ-metier-autre">
               <label for="insc-metier-autre">Quel est votre métier ?</label>
               <input type="text" id="insc-metier-autre" maxlength="100">
+            </div>
+            <div class="champ cache" id="champ-metiers-artisan">
+              <label>Vos corps de métier <span class="leger">(plusieurs choix possibles)</span></label>
+              <div class="cases-metiers" id="cases-metiers-artisan"></div>
+            </div>
+            <div class="champ cache" id="champ-artisan-autre">
+              <label for="insc-artisan-autre">Quel autre corps de métier ?</label>
+              <input type="text" id="insc-artisan-autre" maxlength="100">
             </div>
             <div class="champ">
               <label for="insc-entreprise">Nom de votre entreprise</label>
@@ -747,6 +765,12 @@
       <p>Votre fiche sur « Nos pros ALB », votre disponibilité, votre remplaçant, et les demandes de projets qui vous sont confiées.</p>
       <div id="profil-pro"></div>
       <div id="projets-recus"></div>
+    </div>
+
+    <div class="carte rubrique cache" id="rubrique-avis">
+      <h2>⭐ Mes avis</h2>
+      <p>Les avis que vous donnez sur nos pros après un échange (et, si vous êtes pro, ceux que vous recevez).</p>
+      <div id="mes-avis"></div>
     </div>
 
     <div class="carte rubrique">
@@ -1024,9 +1048,36 @@
     if (autre) document.getElementById('insc-message').focus();
   }
 
+  // Les corps de métier qu'un artisan peut cocher (mêmes codes que la base)
+  const METIERS_ARTISAN = {
+    macon: 'Maçon', renovation: 'Rénovation générale', plombier: 'Plombier', electricien: 'Électricien',
+    peintre: 'Peintre', menuisier: 'Menuisier', couvreur: 'Couvreur', carreleur: 'Carreleur',
+    chauffagiste: 'Chauffagiste', climaticien: 'Climaticien', pisciniste: 'Pisciniste', paysagiste: 'Paysagiste',
+    terrassier: 'Terrassier – assainissement', facadier: 'Façadier – isolation RGE', autre: 'Autre (à préciser)'
+  };
+  document.getElementById('cases-metiers-artisan').innerHTML = Object.keys(METIERS_ARTISAN).map(function (code) {
+    return '<label><input type="checkbox" name="metier-artisan" value="' + code + '"' +
+      (code === 'autre' ? ' onchange="afficherArtisanAutre()"' : '') + '> ' + METIERS_ARTISAN[code] + '</label>';
+  }).join('');
+
+  // Les autres professionnels : enregistrés comme « autre métier » avec ce nom
+  const AUTRES_PROS = { notaire: 'Notaire', diagnostiqueur: 'Diagnostiqueur', architecte: 'Architecte', avocat: 'Avocat', reseau: 'Réseau partenaire' };
+
+  function metiersArtisanCoches() {
+    return Array.from(document.querySelectorAll('input[name="metier-artisan"]:checked')).map(function (c) { return c.value; });
+  }
+
+  function afficherArtisanAutre() {
+    const coche = metiersArtisanCoches().indexOf('autre') !== -1;
+    document.getElementById('champ-artisan-autre').classList.toggle('cache', !coche);
+    if (coche) document.getElementById('insc-artisan-autre').focus();
+  }
+
   function afficherMetierAutre() {
-    const metierAutre = document.getElementById('insc-metier').value === 'autre';
-    document.getElementById('champ-metier-autre').classList.toggle('cache', !metierAutre);
+    const metier = document.getElementById('insc-metier').value;
+    document.getElementById('champ-metier-autre').classList.toggle('cache', metier !== 'autre');
+    document.getElementById('champ-metiers-artisan').classList.toggle('cache', metier !== 'artisan');
+    document.getElementById('champ-artisan-autre').classList.toggle('cache', !(metier === 'artisan' && metiersArtisanCoches().indexOf('autre') !== -1));
   }
 
   // ---------- Connexion ----------
@@ -1072,6 +1123,8 @@
     const autreCoche = document.getElementById('insc-autre').checked;
     const message = document.getElementById('insc-message').value.trim();
     const metierAutre = document.getElementById('insc-metier-autre').value.trim();
+    const metiersArtisan = estPro && metier === 'artisan' ? metiersArtisanCoches() : [];
+    const artisanAutre = metiersArtisan.indexOf('autre') !== -1 ? document.getElementById('insc-artisan-autre').value.trim() : '';
 
     if (pin !== confirmation) {
       afficherMessage('message-inscription', 'erreur', 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?');
@@ -1083,6 +1136,14 @@
     }
     if (estPro && metier === 'autre' && !metierAutre) {
       afficherMessage('message-inscription', 'erreur', 'Dites-nous quel est votre métier.');
+      return;
+    }
+    if (estPro && metier === 'artisan' && !metiersArtisan.length) {
+      afficherMessage('message-inscription', 'erreur', 'Cochez au moins un corps de métier.');
+      return;
+    }
+    if (metiersArtisan.indexOf('autre') !== -1 && !artisanAutre) {
+      afficherMessage('message-inscription', 'erreur', 'Vous avez coché « Autre » : dites-nous quel est votre corps de métier.');
       return;
     }
     if (autreCoche && !message) {
@@ -1111,8 +1172,10 @@
       est_acquereur: document.getElementById('insc-acheteur').checked,
       est_vendeur: document.getElementById('insc-vendeur').checked,
       est_client_pro: document.getElementById('insc-client-pro').checked,
-      metier_pro: estPro ? metier : '',
-      metier_autre: estPro && metier === 'autre' ? metierAutre : '',
+      metier_pro: estPro ? (AUTRES_PROS[metier] ? 'autre' : metier) : '',
+      metier_autre: !estPro ? '' : metier === 'autre' ? metierAutre : (AUTRES_PROS[metier] || ''),
+      metiers_artisan: metiersArtisan,
+      artisan_autre: artisanAutre,
       autre_coche: autreCoche,
       besoin_autre: autreCoche ? message.slice(0, 300) : '',
       message: message,
@@ -1130,6 +1193,7 @@
       return;
     }
     document.getElementById('formulaire-inscription').reset();
+    afficherMetierAutre();
     await afficherEspace(true);
   }
 
@@ -1207,6 +1271,15 @@
     if (window.albProjetsRecus) {
       window.albProjetsRecus(profil).then(function (nbRecues) {
         if (nbRecues > 0) rubriquePro.classList.remove('cache');
+      });
+    }
+
+    // « Mes avis » : dès qu'il y a un avis donné, un avis à donner, ou pour les pros (avis reçus)
+    const rubriqueAvis = document.getElementById('rubrique-avis');
+    rubriqueAvis.classList.add('cache');
+    if (window.albMesAvis) {
+      window.albMesAvis(profil).then(function (aMontrer) {
+        if (aMontrer) rubriqueAvis.classList.remove('cache');
       });
     }
 
