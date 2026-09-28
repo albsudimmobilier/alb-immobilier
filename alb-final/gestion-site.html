@@ -134,6 +134,8 @@
     .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .filtre { border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 16px; padding: 6px 12px; font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
     .filtre.actif { background: #B28E3D; border-color: #B28E3D; color: #fff; }
+    .etoiles-avis { color: #B28E3D; letter-spacing: 1px; font-size: 1.05rem; }
+    .aide-avis { font-size: 0.8rem; color: #7a7a75; }
     .filtre .nb { opacity: 0.8; font-weight: 500; }
     .photos-annonce { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; }
     .photos-annonce img { width: 96px; height: 72px; object-fit: cover; border-radius: 6px; flex: 0 0 auto; }
@@ -237,6 +239,7 @@
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
+      <button type="button" class="onglet" data-onglet="avis" onclick="afficherOnglet('avis')">⭐ Avis<span class="pastille" id="pastille-avis">0</span></button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
       <button type="button" class="onglet" data-onglet="acces" onclick="afficherOnglet('acces')">🔑 Accès<span class="pastille" id="pastille-acces">0</span></button>
       <button type="button" class="onglet" data-onglet="bientot" onclick="afficherOnglet('bientot')">🔜 À venir</button>
@@ -247,6 +250,7 @@
       <h2 class="titre-section">Aujourd'hui</h2>
       <div class="compteurs">
         <div class="compteur alerte"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
+        <div class="compteur alerte"><div class="valeur" id="c-avis-a-relire">–</div><div class="libelle">⭐ Avis à relire</div></div>
         <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
         <div class="compteur"><div class="valeur" id="c-membres">–</div><div class="libelle">Membres au total</div></div>
         <div class="compteur"><div class="valeur" id="c-nouveaux">–</div><div class="libelle">Nouveaux sur 7 jours</div></div>
@@ -348,6 +352,14 @@
       <div class="liste-fiches" id="liste-valides"></div>
     </div>
 
+    <!-- Avis sur les pros -->
+    <div class="panneau" id="panneau-avis">
+      <p class="aide">Les avis laissés sur les pros de « Nos pros ALB ». Seules les personnes qui ont échangé avec le pro via ALB (et à qui il a répondu) peuvent en donner un. Rien n'est visible tant que tu n'as pas cliqué sur « Publier » : dès que tu publies, l'avis apparaît sur la fiche du pro. Si la personne modifie son avis, il revient ici à relire.</p>
+      <input type="search" class="recherche" id="recherche-avis" placeholder="Rechercher un pro, une personne, un mot…" oninput="afficherAvis()">
+      <div class="filtres" id="filtres-avis"></div>
+      <div class="liste-fiches" id="liste-avis"></div>
+    </div>
+
     <!-- Membres -->
     <div class="panneau" id="panneau-membres">
       <input type="search" class="recherche" id="recherche-membres" placeholder="Rechercher un nom, un e-mail, une ville…" oninput="afficherMembres()">
@@ -364,7 +376,6 @@
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
-        <p class="ligne-info">⭐ <strong>Avis</strong> : valider ou refuser les avis laissés sur les pros.</p>
         <p class="ligne-info">🤝 <strong>Demandes aux pros</strong> : qui a reçu quoi, qui a répondu.</p>
       </div>
     </div>
@@ -386,7 +397,22 @@
   };
   const ZONES = [].concat.apply([], Object.values(ZONES_PAR_DEPARTEMENT));
   const METIERS = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', agent: '🏠 Agent immobilier', mandataire: '📋 Mandataire immobilier', autre: '🤝 Autre métier' };
+  // Corps de métier des artisans (mêmes codes que l'inscription)
+  const METIERS_ARTISAN = {
+    macon: 'Maçon', renovation: 'Rénovation générale', plombier: 'Plombier', electricien: 'Électricien',
+    peintre: 'Peintre', menuisier: 'Menuisier', couvreur: 'Couvreur', carreleur: 'Carreleur',
+    chauffagiste: 'Chauffagiste', climaticien: 'Climaticien', pisciniste: 'Pisciniste', paysagiste: 'Paysagiste',
+    terrassier: 'Terrassier – assainissement', facadier: 'Façadier – isolation RGE', autre: 'Autre'
+  };
+  function corpsDeMetierLisibles(m) {
+    return (m.metiers_artisan || []).map(function (c) {
+      return c === 'autre' ? (m.artisan_autre || 'Autre') : (METIERS_ARTISAN[c] || c);
+    });
+  }
   const ERREURS = {
+    AVIS_INTROUVABLE: 'Cet avis est introuvable.',
+    METIER_ARTISAN_MANQUANT: 'Coche au moins un corps de métier pour cet artisan.',
+    ARTISAN_AUTRE_MANQUANT: 'Tu as coché « Autre » : écris le corps de métier.',
     ACCES_REFUSE: "Accès refusé : cette action est réservée à l'équipe ALB.",
     SIRET_MANQUANT: 'Indique le SIRET (14 chiffres) avant de valider.',
     SIRET_INVALIDE: 'Le SIRET doit contenir exactement 14 chiffres.',
@@ -412,6 +438,8 @@
   let filtreVisites = null;
   let projets = [];
   let filtreProjets = null;
+  let avis = [];
+  let filtreAvis = 'a_relire';
   let filtreStatut = 'a_etudier';
   let filtreType = 'tous';
 
@@ -449,6 +477,7 @@
     if (m.est_client_pro) liste.push('<span class="etiquette">🛠️ Client pro</span>');
     const metier = metierDe(m);
     if (metier && metier !== 'autre') liste.push('<span class="etiquette or">' + METIERS[metier] + '</span>');
+    if (metier === 'artisan') corpsDeMetierLisibles(m).forEach(function (c) { liste.push('<span class="etiquette">' + albEchapper(c) + '</span>'); });
     if (m.metier_autre) liste.push('<span class="etiquette or">🤝 ' + albEchapper(m.metier_autre) + '</span>');
     if (m.besoin_autre) liste.push('<span class="etiquette">✨ Autre</span>');
     if (m.statut_verifie) liste.push('<span class="etiquette vert">✅ Validé</span>');
@@ -512,7 +541,7 @@
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations, lesProjets] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations, lesProjets, lesAvis] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
@@ -520,7 +549,8 @@
       albSupabase.rpc('alb_gestion_rappels_mandat'),
       albSupabase.rpc('alb_gestion_visites'),
       albSupabase.rpc('alb_gestion_conversations'),
-      albSupabase.rpc('alb_gestion_projets')
+      albSupabase.rpc('alb_gestion_projets'),
+      albSupabase.rpc('alb_gestion_avis')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -533,6 +563,8 @@
     visites = lesVisites.data || [];
     conversations = lesConversations.data || [];
     projets = lesProjets.data || [];
+    avis = lesAvis.data || [];
+    afficherAvis();
     afficherDemandesAcces();
     afficherProjets();
     afficherMessages();
@@ -1173,6 +1205,74 @@
     await toutRecharger();
   }
 
+  // ---------- Avis sur les pros ----------
+  const STATUTS_AVIS = { en_attente: '⏳ À relire', publie: '✅ Publié', refuse: '✗ Non publié' };
+  const FILTRES_AVIS = [
+    ['a_relire', '⏳ À relire', function (a) { return a.statut === 'en_attente'; }],
+    ['publies', '✅ Publiés', function (a) { return a.statut === 'publie'; }],
+    ['refuses', '✗ Non publiés', function (a) { return a.statut === 'refuse'; }],
+    ['tous', 'Tous', function () { return true; }]
+  ];
+
+  function etoilesAvis(note) {
+    const n = Math.max(0, Math.min(5, Number(note) || 0));
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  function choisirFiltreAvis(nom) { filtreAvis = nom; afficherAvis(); }
+
+  function afficherAvis() {
+    const aRelire = avis.filter(FILTRES_AVIS[0][2]).length;
+    document.getElementById('pastille-avis').textContent = aRelire;
+    document.getElementById('c-avis-a-relire').textContent = aRelire;
+
+    document.getElementById('filtres-avis').innerHTML = FILTRES_AVIS.map(function (f) {
+      return '<button type="button" class="filtre' + (filtreAvis === f[0] ? ' actif' : '') + '" onclick="choisirFiltreAvis(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + avis.filter(f[2]).length + ')</span></button>';
+    }).join('');
+
+    const filtre = (FILTRES_AVIS.find(function (f) { return f[0] === filtreAvis; }) || FILTRES_AVIS[3])[2];
+    const recherche = (document.getElementById('recherche-avis').value || '').trim().toLowerCase();
+    const liste = avis.filter(filtre).filter(function (a) {
+      if (!recherche) return true;
+      return [a.pro, a.auteur, a.auteur_email, a.texte].join(' ').toLowerCase().includes(recherche);
+    });
+    const zone = document.getElementById('liste-avis');
+    if (!liste.length) {
+      zone.innerHTML = '<div class="carte vide">' + (filtreAvis === 'a_relire' ? 'Aucun avis à relire pour le moment. 🌿' : 'Aucun avis ici.') + '</div>';
+      return;
+    }
+    zone.innerHTML = liste.map(function (a) {
+      const modifie = a.maj_le && a.cree_le && (new Date(a.maj_le) - new Date(a.cree_le) > 60000);
+      const classeStatut = a.statut === 'publie' ? ' vert' : a.statut === 'refuse' ? ' rouge' : ' or';
+      const boutons = [];
+      if (a.statut !== 'publie') boutons.push('<button class="bouton vert" onclick="modererAvis(\'' + a.id + '\', \'publie\', this)">✓ Publier</button>');
+      if (a.statut === 'en_attente') boutons.push('<button class="bouton rouge" onclick="modererAvis(\'' + a.id + '\', \'refuse\', this)">✗ Ne pas publier</button>');
+      if (a.statut === 'publie') boutons.push('<button class="bouton rouge" onclick="modererAvis(\'' + a.id + '\', \'refuse\', this)">Retirer de la fiche</button>');
+      return '<div class="carte fiche">' +
+        '<h3>⭐ Avis sur ' + albEchapper(a.pro || 'un pro') + '</h3>' +
+        '<div class="etiquettes"><span class="etiquette' + classeStatut + '">' + STATUTS_AVIS[a.statut] + '</span>' +
+          (modifie ? '<span class="etiquette">✏️ Modifié par son auteur</span>' : '') + '</div>' +
+        '<p class="ligne-info"><span class="etoiles-avis">' + etoilesAvis(a.note) + '</span> <strong>' + albEchapper(a.note) + '/5</strong></p>' +
+        '<p class="ligne-info mot">« ' + albEchapper(a.texte) + ' »</p>' +
+        '<p class="ligne-info">👤 ' + albEchapper(a.auteur || '') + (a.auteur_email ? ' · <a href="mailto:' + albEchapper(a.auteur_email) + '">' + albEchapper(a.auteur_email) + '</a>' : '') + '</p>' +
+        '<p class="ligne-info">🗓️ Donné le ' + dateLisible(a.cree_le) + (modifie ? ' · modifié le ' + dateLisible(a.maj_le) : '') + '</p>' +
+        '<p class="ligne-info aide-avis">Sur la fiche, seuls le prénom et l\'initiale du nom apparaissent.</p>' +
+        '<div class="actions">' + boutons.join('') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function modererAvis(id, statut, bouton) {
+    if (statut === 'refuse' && !confirm('Ne pas afficher cet avis sur la fiche du pro ?')) return;
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_moderer_avis', { p_id: id, p_statut: statut });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    afficherMessage('message-general', statut === 'publie' ? 'succes' : 'info',
+      statut === 'publie' ? 'Avis publié ✓ Il apparaît maintenant sur la fiche du pro dans « Nos pros ALB ».' : "Cet avis n'apparaît pas sur la fiche du pro. Il reste dans l'onglet « Non publiés ».");
+    await toutRecharger();
+  }
+
   // ---------- Pros validés ----------
   function afficherValides() {
     const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie; });
@@ -1225,6 +1325,12 @@
         (metier === 'courtier' ? '<div class="champ"><label>Numéro ORIAS</label><input name="numero_orias" value="' + albEchapper(m.numero_orias || '') + '"></div>' : '') +
         (metier === 'agent' || metier === 'mandataire' ? '<div class="champ"><label>Numéro de carte T</label><input name="numero_carte_t" value="' + albEchapper(m.numero_carte_t || '') + '"></div>' : '') +
         (metier === 'artisan' ? '<div class="champ"><label>&nbsp;</label><div class="cases"><label><input type="checkbox" name="label_rge"' + (m.label_rge ? ' checked' : '') + '> Label RGE</label></div></div>' : '') +
+        (metier === 'artisan' ? '<div class="champ large"><label>Corps de métier (affichés dans les filtres)</label><div class="cases">' +
+          Object.keys(METIERS_ARTISAN).map(function (c) {
+            return '<label><input type="checkbox" name="metier_artisan" value="' + c + '"' + ((m.metiers_artisan || []).includes(c) ? ' checked' : '') + '> ' + METIERS_ARTISAN[c] + '</label>';
+          }).join('') +
+          '</div></div>' +
+          '<div class="champ"><label>Si « Autre » : lequel ?</label><input name="artisan_autre" maxlength="60" value="' + albEchapper(m.artisan_autre || '') + '"></div>' : '') +
       '</div>' +
       '<div class="actions"><button type="submit" class="bouton">💾 Enregistrer la fiche</button></div>' +
     '</form>';
@@ -1252,6 +1358,11 @@
       numero_carte_t: valeur('numero_carte_t'),
       label_rge: f.elements['label_rge'] ? f.elements['label_rge'].checked : false
     };
+    // Artisan : ses corps de métier
+    if (f.querySelector('input[name="metier_artisan"]')) {
+      fiche.metiers_artisan = Array.from(f.querySelectorAll('input[name="metier_artisan"]:checked')).map(function (c) { return c.value; });
+      fiche.artisan_autre = valeur('artisan_autre');
+    }
     const bouton = f.querySelector('button[type="submit"]');
     bouton.disabled = true;
     const { error } = await albSupabase.rpc('alb_gestion_modifier_fiche', { p_id: id, p_fiche: fiche });
