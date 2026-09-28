@@ -164,3 +164,83 @@ function albEchapper(texte) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+
+// ============================================================
+// CGU et politique de confidentialité : lecture sans quitter la page
+// ------------------------------------------------------------
+// Tout lien vers les CGU ou la politique de confidentialité (pied de page,
+// cases à cocher des formulaires…) s'ouvre dans une fenêtre par-dessus la
+// page. Ce qui a déjà été rempli dans un formulaire reste donc intact.
+// ============================================================
+const ALB_DOCUMENTS = {
+  cgu: { adresse: "cgu.html", titre: "Conditions générales" },
+  confidentialite: { adresse: "confidentialite.html", titre: "Politique de confidentialité" }
+};
+
+// Reconnaît un lien vers l'un des deux documents (cgu, cgu.html, /cgu, https://albimmobilier.fr/cgu…)
+function albDocumentDuLien(lien) {
+  let adresse;
+  try { adresse = new URL(lien.getAttribute("href") || "", window.location.href); } catch (e) { return null; }
+  const memeSite = adresse.origin === window.location.origin || /(^|\.)albimmobilier\.fr$/.test(adresse.hostname);
+  if (!memeSite) return null;
+  const nom = adresse.pathname.split("/").pop().replace(/\.html$/, "");
+  return ALB_DOCUMENTS[nom] || null;
+}
+
+// Crée la fenêtre une seule fois, avec ses propres styles (indépendants de la page)
+function albFenetreDocument() {
+  let fond = document.getElementById("alb-fenetre-document");
+  if (fond) return fond;
+  fond = document.createElement("div");
+  fond.id = "alb-fenetre-document";
+  fond.setAttribute("role", "dialog");
+  fond.setAttribute("aria-modal", "true");
+  fond.style.cssText = "display:none;position:fixed;inset:0;z-index:100000;background:rgba(40,20,35,.55);align-items:center;justify-content:center;padding:12px;";
+  fond.innerHTML =
+    '<div style="background:#FFFFFF;border-radius:12px;width:100%;max-width:860px;height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25);font-family:Montserrat,Arial,sans-serif;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid #E8E6E1;">' +
+        '<strong id="alb-document-titre" style="color:#5A3A6A;font-size:1.1rem;"></strong>' +
+        '<button type="button" id="alb-document-fermer-x" aria-label="Fermer" style="background:none;border:none;font-size:1.8rem;line-height:1;color:#5A3A6A;cursor:pointer;">&times;</button>' +
+      '</div>' +
+      '<iframe id="alb-document-cadre" title="Document ALB Immobilier" style="flex:1;width:100%;border:none;background:#FFFFFF;"></iframe>' +
+      '<div style="padding:12px 18px;border-top:1px solid #E8E6E1;text-align:center;">' +
+        '<button type="button" id="alb-document-fermer" style="background:#B28E3D;color:#FFFFFF;border:none;border-radius:6px;padding:12px 24px;font-weight:600;font-size:1rem;cursor:pointer;font-family:inherit;">Revenir à la page</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(fond);
+  const fermer = function () { fond.style.display = "none"; document.body.style.overflow = ""; };
+  document.getElementById("alb-document-fermer").addEventListener("click", fermer);
+  document.getElementById("alb-document-fermer-x").addEventListener("click", fermer);
+  fond.addEventListener("click", function (e) { if (e.target === fond) fermer(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && fond.style.display !== "none") fermer(); });
+  // Dans la fenêtre, on masque le menu et le pied de page du document
+  document.getElementById("alb-document-cadre").addEventListener("load", function () {
+    try {
+      const doc = this.contentDocument;
+      const style = doc.createElement("style");
+      style.textContent = "header, footer, nav, .alb-header, .footer, .modal { display: none !important; } body { padding-top: 0 !important; }";
+      doc.head.appendChild(style);
+    } catch (e) { /* le document s'affiche tel quel */ }
+  });
+  return fond;
+}
+
+function albOuvrirDocument(doc) {
+  const fond = albFenetreDocument();
+  document.getElementById("alb-document-titre").textContent = doc.titre;
+  document.getElementById("alb-document-cadre").src = doc.adresse;
+  fond.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+document.addEventListener("click", function (e) {
+  if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const lien = e.target.closest && e.target.closest("a[href]");
+  if (!lien) return;
+  const doc = albDocumentDuLien(lien);
+  if (!doc) return;
+  // Déjà sur la page du document : on laisse faire
+  if (window.location.pathname.replace(/\.html$/, "").endsWith("/" + doc.adresse.replace(/\.html$/, ""))) return;
+  e.preventDefault();
+  albOuvrirDocument(doc);
+});
