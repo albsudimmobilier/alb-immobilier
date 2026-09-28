@@ -46,7 +46,8 @@
     .carte { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 18px; margin-bottom: 16px; }
 
     /* Onglets */
-    .onglets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 16px; }
+    /* Les onglets passent à la ligne : aucun n'est caché sur le côté */
+    .onglets { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px; margin-bottom: 16px; }
     .onglet {
       flex: 0 0 auto; border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 20px;
       padding: 8px 14px; font-family: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -63,6 +64,8 @@
     .compteur .libelle { font-size: 0.82rem; margin-top: 4px; }
     .compteur.alerte { border-color: #B28E3D; background: #FBF3E4; }
     .compteur.alerte .valeur { color: #8A6A1F; }
+    .compteur[data-aller] { cursor: pointer; }
+    .compteur[data-aller]:hover { border-color: #5A3A6A; box-shadow: 0 2px 8px rgba(90, 58, 106, 0.12); }
     .titre-section { font-size: 1.2rem; margin: 22px 0 10px; }
 
     /* Fiches */
@@ -249,8 +252,8 @@
     <div class="panneau actif" id="panneau-accueil">
       <h2 class="titre-section">Aujourd'hui</h2>
       <div class="compteurs">
-        <div class="compteur alerte"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
-        <div class="compteur alerte"><div class="valeur" id="c-avis-a-relire">–</div><div class="libelle">⭐ Avis à relire</div></div>
+        <div class="compteur alerte" data-aller="a-valider"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
+        <div class="compteur alerte" data-aller="avis"><div class="valeur" id="c-avis-a-relire">–</div><div class="libelle">⭐ Avis à relire</div></div>
         <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
         <div class="compteur"><div class="valeur" id="c-membres">–</div><div class="libelle">Membres au total</div></div>
         <div class="compteur"><div class="valeur" id="c-nouveaux">–</div><div class="libelle">Nouveaux sur 7 jours</div></div>
@@ -258,7 +261,7 @@
 
       <h2 class="titre-section">Annonces</h2>
       <div class="compteurs">
-        <div class="compteur alerte"><div class="valeur" id="c-ann-etudier">–</div><div class="libelle">🏡 Annonces à étudier</div></div>
+        <div class="compteur alerte" data-aller="annonces"><div class="valeur" id="c-ann-etudier">–</div><div class="libelle">🏡 Annonces à étudier</div></div>
         <div class="compteur alerte"><div class="valeur" id="c-ann-points">–</div><div class="libelle">📆 Points mensuels à faire</div></div>
         <div class="compteur"><div class="valeur" id="c-ann-en-ligne">–</div><div class="libelle">🌐 En ligne</div></div>
         <div class="compteur"><div class="valeur" id="c-ann-compromis">–</div><div class="libelle">✍️ Sous offre / compromis</div></div>
@@ -278,7 +281,7 @@
 
       <h2 class="titre-section">Projets ALB (mises en relation)</h2>
       <div class="compteurs">
-        <div class="compteur alerte"><div class="valeur" id="c-pj-traiter">–</div><div class="libelle">📞 À traiter par toi</div></div>
+        <div class="compteur alerte" data-aller="projets"><div class="valeur" id="c-pj-traiter">–</div><div class="libelle">📞 À traiter par toi</div></div>
         <div class="compteur"><div class="valeur" id="c-pj-cours">–</div><div class="libelle">📨 Chez les pros</div></div>
         <div class="compteur"><div class="valeur" id="c-pj-faites">–</div><div class="libelle">✅ Mises en relation faites</div></div>
         <div class="compteur"><div class="valeur" id="c-pj-acceptes">–</div><div class="libelle">🤝 Acceptations de pros</div></div>
@@ -505,6 +508,14 @@
     document.querySelectorAll('.panneau').forEach(function (p) { p.classList.toggle('actif', p.id === 'panneau-' + nom); });
     effacerMessage('message-general');
   }
+
+  // Un clic sur une case jaune du tableau de bord ouvre l'onglet correspondant
+  document.addEventListener('click', function (e) {
+    const compteur = e.target.closest && e.target.closest('.compteur[data-aller]');
+    if (!compteur) return;
+    afficherOnglet(compteur.dataset.aller);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // ---------- Connexion ----------
   async function seConnecter(event) {
