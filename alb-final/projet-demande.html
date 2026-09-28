@@ -20,6 +20,10 @@
       background: #F5F3F0;
       color: #4A4A47;
       line-height: 1.6;
+      /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
 
@@ -132,7 +136,7 @@
       }
     }
     /* ========== MON PROJET (mobile d'abord) ========== */
-    .page { max-width: 760px; margin: 0 auto; padding: 22px 16px 10px; }
+    .page { max-width: 760px; margin: 0 auto; padding: 22px 16px 10px; width: 100%; flex: 1 0 auto; }
     .retour { display: inline-block; margin-bottom: 14px; color: #5A3A6A; font-size: 0.9rem; font-weight: 600; text-decoration: none; }
     .retour:hover { text-decoration: underline; }
     .intro h1 { font-size: 1.6rem; line-height: 1.25; margin-bottom: 6px; }
@@ -456,7 +460,7 @@
 </header>
 
 <main class="page">
-  <a class="retour" href="projets-alb.html">← Revenir à Projets ALB</a>
+  <a class="retour" href="projets-alb.html" id="lien-retour">← Revenir à Projets ALB</a>
 
   <div id="formulaire">
     <div class="intro">
@@ -478,7 +482,7 @@
         <!-- Financement -->
         <div id="bloc-financement" class="cache">
           <div class="deux-colonnes">
-            <div class="champ"><label for="f-objet">Votre projet</label>
+            <div class="champ" id="champ-f-objet"><label for="f-objet">Votre projet</label>
               <select id="f-objet">
                 <option value="achat_rp">Acheter ma résidence principale</option>
                 <option value="investissement">Investissement locatif</option>
@@ -487,7 +491,7 @@
                 <option value="autre">Autre projet</option>
               </select></div>
             <div class="champ"><label for="f-type">Type de bien <span class="leger">— facultatif</span></label>
-              <select id="f-type"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="immeuble">Immeuble</option><option value="autre">Autre</option></select></div>
+              <select id="f-type"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option></select></div>
             <div class="champ"><label for="f-prix">Prix du bien visé (€) <span class="leger">— facultatif</span></label><input type="number" id="f-prix" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 250 000"></div>
             <div class="champ"><label for="f-delai">Quand ?</label>
               <select id="f-delai"><option value="moins_3_mois">Dans les 3 mois</option><option value="3_6_mois">Dans 3 à 6 mois</option><option value="plus_6_mois">Dans plus de 6 mois</option><option value="ne_sait_pas" selected>Je ne sais pas encore</option></select></div>
@@ -506,7 +510,7 @@
             <div class="champ"><label for="t-delai">Délai souhaité</label>
               <select id="t-delai"><option value="urgent">Urgent (moins de 2 semaines)</option><option value="court">1 à 2 mois</option><option value="moyen" selected>2 à 3 mois</option><option value="long">Plus de 3 mois</option></select></div>
             <div class="champ"><label for="t-logement">Logement <span class="leger">— facultatif</span></label>
-              <select id="t-logement"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="autre">Autre</option></select></div>
+              <select id="t-logement"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option></select></div>
             <div class="champ"><label for="t-budget">Budget estimé <span class="leger">— facultatif</span></label>
               <select id="t-budget"><option value="">—</option><option value="moins_5000">Moins de 5 000 €</option><option value="5000_15000">5 000 à 15 000 €</option><option value="15000_50000">15 000 à 50 000 €</option><option value="plus_50000">Plus de 50 000 €</option><option value="ne_sait_pas">Je ne sais pas encore</option></select></div>
           </div>
@@ -520,7 +524,7 @@
             <p class="sous-titre">🏠 Le bien à vendre</p>
             <div class="deux-colonnes">
               <div class="champ"><label for="a-type-vente">Type de bien</label>
-                <select id="a-type-vente"><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="local">Local professionnel</option><option value="autre">Autre</option></select></div>
+                <select id="a-type-vente"><option value="maison">Maison</option><option value="appartement">Appartement</option></select></div>
               <div class="champ"><label for="a-avancement-vente">Où en êtes-vous ?</label>
                 <select id="a-avancement-vente"><option value="prochainement">🟢 Je veux vendre prochainement</option><option value="reflechit">🟡 Je réfléchis à vendre</option><option value="valeur">🔵 Je veux connaître la valeur de mon bien</option><option value="ne_sait_pas">🤔 Je ne sais pas par où commencer</option></select></div>
             </div>
@@ -533,7 +537,7 @@
             <p class="sous-titre">🔑 Le bien recherché</p>
             <div class="deux-colonnes">
               <div class="champ"><label for="a-type-achat">Type de bien</label>
-                <select id="a-type-achat"><option value="maison">Maison</option><option value="appartement">Appartement</option><option value="terrain">Terrain</option><option value="local">Local professionnel</option><option value="autre">Autre</option></select></div>
+                <select id="a-type-achat"><option value="maison">Maison</option><option value="appartement">Appartement</option></select></div>
               <div class="champ"><label for="a-avancement-achat">Où en êtes-vous ?</label>
                 <select id="a-avancement-achat"><option value="activement">🟢 Je recherche activement</option><option value="commence">🟡 Je commence mes recherches</option><option value="savoir">🔵 Je veux savoir ce que je peux acheter</option><option value="ne_sait_pas">🤔 Je ne sais pas par où commencer</option></select></div>
               <div class="champ"><label for="a-budget">Budget envisagé (€) <span class="leger">— facultatif</span></label><input type="number" id="a-budget" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 300 000"></div>
@@ -797,16 +801,30 @@
   }
 
   // ----- Financement : le budget se calcule en direct -----
-  function calculer(revenus, credits, apport, duree, taux) {
+  // Ce qu'on peut emprunter avec 35 % des revenus, moins les crédits en cours
+  function capitalEmpruntable(revenus, credits, duree, taux) {
     const mensualite = Math.max(0, revenus * 0.35 - credits);
     const t = taux / 100 / 12, n = duree * 12;
-    const capital = t > 0 ? mensualite * (1 - Math.pow(1 + t, -n)) / t : mensualite * n;
+    return t > 0 ? mensualite * (1 - Math.pow(1 + t, -n)) / t : mensualite * n;
+  }
+  // Achat : on retire les frais de notaire de l'ancien (environ 7,5 %)
+  function calculer(revenus, credits, apport, duree, taux) {
+    const capital = capitalEmpruntable(revenus, credits, duree, taux);
     return Math.max(0, Math.round((capital + apport) / 1.075 / 1000) * 1000);
   }
   function majBudget() {
     const revenus = nombre('s-revenus'), credits = nombre('s-credits'), apport = nombre('s-apport');
     const zone = el('resultat-budget');
     if (!(revenus > 0 || apport > 0)) { zone.classList.add('cache'); return; }
+    if (module === 'travaux') {
+      // Travaux : ce qu'on pourrait emprunter en plus de l'apport, sans frais de notaire
+      const capital = capitalEmpruntable(revenus, credits, Number(el('s-duree').value), nombre('s-taux'));
+      const total = Math.max(0, Math.round((capital + apport) / 1000) * 1000);
+      zone.innerHTML = 'Ce que vous pourriez financer pour vos travaux<div class="resultat-chiffre">' + e(euros(total)) + '</div>' +
+        '<div class="petit">Estimation indicative : 35 % de vos revenus moins vos crédits en cours, plus votre apport. Si vous avez déjà un crédit immobilier, un courtier peut regarder comment tout regrouper. Elle ne vaut pas accord de prêt.</div>';
+      zone.classList.remove('cache');
+      return;
+    }
     const montant = calculer(revenus, credits, apport, Number(el('s-duree').value), nombre('s-taux'));
     const prix = module === 'financement' ? nombre('f-prix') : module === 'accompagnement' ? nombre('a-budget') : 0;
     zone.innerHTML = 'Votre budget d\'achat estimé<div class="resultat-chiffre">' + e(euros(montant)) + '</div>' +
@@ -1050,11 +1068,22 @@
     if (/^[0-9]{5}$/.test(cp)) el('p-cp').value = cp;
     majZones();
     const objet = params.get('objet') || '';
-    if (objet === 'investissement') el('f-objet').value = 'investissement';
-    if (objet === 'logement-actuel') el('f-objet').value = 'travaux';
+    const moduleChoisi = params.get('module') || '';
+    if (moduleChoisi === 'financement') {
+      // « Je veux acheter » : seulement un achat pour y habiter, ou pour un investisseur
+      Array.from(el('f-objet').options).forEach(function (o) { if (o.value !== 'achat_rp' && o.value !== 'investissement') o.remove(); });
+      el('f-objet').value = 'achat_rp';
+    }
     if (objet === 'vente') el('a-projet').value = 'vendre';
-    if (objet === 'achat' || objet === 'investissement') el('a-projet').value = 'acheter';
+    if (objet === 'achat') el('a-projet').value = 'acheter';
+    if (objet === 'les_deux') el('a-projet').value = 'les_deux';
     majAccompagnement();
+    // Arrivée depuis les questions de Projets ALB : le type de projet est déjà choisi,
+    // on n'affiche que lui (pas les deux autres)
+    if (MODULES[moduleChoisi]) {
+      el('choix-module').classList.add('cache');
+      el('lien-retour').textContent = '← Changer de projet';
+    }
 
     try {
       const { data: t } = await albSupabase.from('parametres_taux_credit').select('taux_15_ans, taux_20_ans, taux_25_ans').order('id', { ascending: false }).limit(1).maybeSingle();
@@ -1069,6 +1098,8 @@
     el('p-zone').addEventListener('change', function () { if (module) chargerPros(); });
 
     choisirModule(params.get('module') || '');
+    // Un prêt travaux se fait en général sur une durée plus courte
+    if (module === 'travaux') { el('s-duree').value = '15'; el('s-taux').value = tauxParDuree[15]; }
 
     profil = await albProfilConnecte();
     if (profil) afficherConnecte();
