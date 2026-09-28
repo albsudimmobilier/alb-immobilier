@@ -157,7 +157,15 @@
     .bouton-retour { background: #fff; color: #5A3A6A; border: 1px solid #D8D5CE; }
     .bouton-retour:hover { background: #F5F3F0; }
     .cache { display: none !important; }
+    /* Travaux : plusieurs corps de métier possibles */
+    .metiers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .metiers button { padding: 12px 10px; gap: 8px; font-size: 0.9rem; }
+    .metiers button .coche { width: 18px; height: 18px; border: 2px solid #D8D5CE; border-radius: 4px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #fff; }
+    .metiers button.choisi .coche { background: #5A3A6A; border-color: #5A3A6A; }
+    .metiers button.choisi .coche::after { content: "✓"; }
+    .metiers .large { grid-column: 1 / -1; }
     @media (min-width: 700px) {
+      .metiers { grid-template-columns: 1fr 1fr 1fr; }
       .page { padding: 40px 24px 20px; }
       .page h1 { font-size: 2.1rem; }
     }
@@ -436,6 +444,39 @@
     </div>
   </section>
 
+  <!-- 2. Financement : acheter pour quoi ? -->
+  <section class="question" id="q-financement">
+    <h2>Votre achat, c'est pour…</h2>
+    <div class="choix">
+      <button type="button" data-objet="achat"><span class="emoji">🏡</span><span>Y habiter (résidence principale)</span></button>
+      <button type="button" data-objet="secondaire"><span class="emoji">🌿</span><span>Une résidence secondaire</span></button>
+      <button type="button" data-objet="investissement"><span class="emoji">🔑</span><span>Investir (investissement locatif)</span></button>
+    </div>
+  </section>
+
+  <!-- 2. Travaux : un ou plusieurs corps de métier -->
+  <section class="question" id="q-travaux">
+    <h2>Quels travaux ? <span style="font-weight:500;font-size:0.9rem;color:#7a7a75;">(plusieurs choix possibles)</span></h2>
+    <div class="choix metiers" id="choix-metiers">
+      <button type="button" data-metier="macon"><span class="coche"></span><span>Maçonnerie</span></button>
+      <button type="button" data-metier="plombier"><span class="coche"></span><span>Plomberie</span></button>
+      <button type="button" data-metier="electricien"><span class="coche"></span><span>Électricité</span></button>
+      <button type="button" data-metier="peintre"><span class="coche"></span><span>Peinture</span></button>
+      <button type="button" data-metier="menuisier"><span class="coche"></span><span>Menuiserie</span></button>
+      <button type="button" data-metier="couvreur"><span class="coche"></span><span>Toiture – couverture</span></button>
+      <button type="button" data-metier="carreleur"><span class="coche"></span><span>Carrelage</span></button>
+      <button type="button" data-metier="chauffagiste"><span class="coche"></span><span>Chauffage</span></button>
+      <button type="button" data-metier="climaticien"><span class="coche"></span><span>Climatisation</span></button>
+      <button type="button" data-metier="pisciniste"><span class="coche"></span><span>Piscine</span></button>
+      <button type="button" data-metier="paysagiste"><span class="coche"></span><span>Jardin – paysage</span></button>
+      <button type="button" data-metier="terrassier"><span class="coche"></span><span>Terrassement – assainissement</span></button>
+      <button type="button" data-metier="facadier"><span class="coche"></span><span>Façade – isolation</span></button>
+      <button type="button" data-metier="renovation"><span class="coche"></span><span>Rénovation générale</span></button>
+      <button type="button" data-metier="autre"><span class="coche"></span><span>Autre</span></button>
+      <button type="button" data-metier="ne_sait_pas" class="large"><span class="coche"></span><span>🤷 Je ne sais pas encore : Jocelyne m'aide à y voir clair</span></button>
+    </div>
+  </section>
+
   <!-- 2. Accompagnement : seulement vendre ou acheter -->
   <section class="question" id="q-accompagnement">
     <h2>Vous souhaitez…</h2>
@@ -562,12 +603,12 @@
 
   // ========== PROJETS ALB : les questions ==========
   // Chaque réponse mène à une seule suite :
-  //  • acheter sans connaître ses moyens → financement de l'achat
-  //  • travaux → travaux seulement
+  //  • acheter sans connaître ses moyens → pour y habiter, résidence secondaire ou investir → financement
+  //  • travaux → quels corps de métier (plusieurs possibles) → travaux seulement
   //  • vendre ou acheter accompagné(e) → vente ou achat seulement
-  const etat = { module: '', objet: '' };
+  const etat = { module: '', objet: '', metiers: [] };
   const chemin = ['depart'];          // les questions déjà vues, pour le bouton « Retour »
-  const ETAPE = { depart: 1, hesite: 1, 'acheter-vendre': 1, accompagnement: 2, tout: 2, cp: 3 };
+  const ETAPE = { depart: 1, hesite: 1, 'acheter-vendre': 1, financement: 2, travaux: 2, accompagnement: 2, tout: 2, cp: 3 };
   const TITRES_CP = {
     financement: 'Où cherchez-vous ? (code postal)',
     travaux: 'Le code postal du logement',
@@ -581,7 +622,8 @@
     const etape = ETAPE[nom] || 1;
     document.querySelectorAll('.point').forEach(function (p, i) { p.classList.toggle('actif', i < etape); });
     el('bouton-retour').classList.toggle('cache', chemin.length < 2);
-    el('bouton-suite').classList.toggle('cache', nom !== 'cp');
+    el('bouton-suite').classList.toggle('cache', nom !== 'cp' && nom !== 'travaux');
+    if (nom === 'travaux') el('bouton-suite').disabled = !etat.metiers.length;
     if (nom === 'cp') {
       el('titre-cp').textContent = TITRES_CP[etat.module] || 'Le code postal du bien';
       verifierCp();
@@ -599,14 +641,30 @@
     bouton.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.toggle('choisi', b === bouton); });
   }
 
+  // Travaux : on coche un ou plusieurs corps de métier (« Je ne sais pas » se coche seul)
+  function cocherMetier(b) {
+    const code = b.dataset.metier;
+    const boutons = document.querySelectorAll('#choix-metiers button');
+    if (code === 'ne_sait_pas') {
+      const deja = b.classList.contains('choisi');
+      boutons.forEach(function (x) { x.classList.remove('choisi'); });
+      if (!deja) b.classList.add('choisi');
+    } else {
+      document.querySelector('#choix-metiers [data-metier="ne_sait_pas"]').classList.remove('choisi');
+      b.classList.toggle('choisi');
+    }
+    etat.metiers = Array.from(boutons).filter(function (x) { return x.classList.contains('choisi'); }).map(function (x) { return x.dataset.metier; });
+    el('bouton-suite').disabled = !etat.metiers.length;
+  }
+
   // Un clic sur un choix
   document.querySelectorAll('.choix button').forEach(function (b) {
     b.addEventListener('click', function () {
+      if (b.dataset.metier) { cocherMetier(b); return; }
       marquer(b);
       if (b.dataset.objet) { etat.objet = b.dataset.objet; allerA('cp'); return; }
       const aller = b.dataset.aller;
-      if (aller === 'travaux' || aller === 'financement') { etat.module = aller; etat.objet = ''; allerA('cp'); return; }
-      if (aller === 'accompagnement') { etat.module = aller; etat.objet = ''; allerA(aller); return; }
+      if (aller === 'travaux' || aller === 'financement' || aller === 'accompagnement') { etat.module = aller; etat.objet = ''; allerA(aller); return; }
       allerA(aller);   // hesite, acheter-vendre, tout
     });
   });
@@ -635,11 +693,14 @@
   });
   el('code-postal').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') el('bouton-suite').click(); });
 
-  // Continuer : on part vers le formulaire, sans rien redemander
+  // Continuer : après les travaux → le code postal ; après le code postal → le formulaire, sans rien redemander
   el('bouton-suite').addEventListener('click', function () {
+    const actuelle = chemin[chemin.length - 1];
+    if (actuelle === 'travaux') { if (etat.metiers.length) allerA('cp'); return; }
     if (!etat.module || !verifierCp()) return;
     const params = new URLSearchParams({ module: etat.module, cp: el('code-postal').value.trim() });
     if (etat.objet) params.set('objet', etat.objet);
+    if (etat.module === 'travaux' && etat.metiers.length) params.set('metiers', etat.metiers.join(','));
     location.href = 'projet-demande.html?' + params.toString();
   });
 </script>
