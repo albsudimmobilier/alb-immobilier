@@ -255,6 +255,7 @@
         <div class="compteur alerte" data-aller="a-valider"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
         <div class="compteur alerte" data-aller="avis"><div class="valeur" id="c-avis-a-relire">–</div><div class="libelle">⭐ Avis à relire</div></div>
         <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
+        <div class="compteur" data-aller="valides"><div class="valeur" id="c-renvois">–</div><div class="libelle">🔁 Remplacements en cours</div></div>
         <div class="compteur"><div class="valeur" id="c-membres">–</div><div class="libelle">Membres au total</div></div>
         <div class="compteur"><div class="valeur" id="c-nouveaux">–</div><div class="libelle">Nouveaux sur 7 jours</div></div>
       </div>
@@ -351,6 +352,11 @@
 
     <!-- Pros validés -->
     <div class="panneau" id="panneau-valides">
+      <h2 class="titre-section">🔁 Remplacements entre pros</h2>
+      <p class="aide">Quand un pro est indisponible, il peut demander à un confrère du même métier de prendre ses nouvelles demandes. Tu vois ici qui remplace qui. Rien à faire de ton côté : c'est pour info.</p>
+      <div id="liste-renvois"></div>
+
+      <h2 class="titre-section">✅ Pros validés</h2>
       <p class="aide">Complète la fiche de chaque pro, puis mets-le en ligne pour qu'il apparaisse sur « Nos pros ALB ».</p>
       <div class="liste-fiches" id="liste-valides"></div>
     </div>
@@ -379,7 +385,9 @@
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
-        <p class="ligne-info">🤝 <strong>Demandes aux pros</strong> : qui a reçu quoi, qui a répondu.</p>
+        <p class="ligne-info">📋 <strong>Ce que j'ai à faire aujourd'hui</strong> : une liste claire en haut du tableau de bord.</p>
+        <p class="ligne-info">🗺️ <strong>Chiffres par département</strong> (Var, Bouches-du-Rhône) et temps moyen de vente des biens.</p>
+        <p class="ligne-info">💶 <strong>Prévisionnel financier</strong> d'ALB Sud Immobilier.</p>
       </div>
     </div>
   </section>
@@ -442,6 +450,7 @@
   let projets = [];
   let filtreProjets = null;
   let avis = [];
+  let renvois = [];
   let filtreAvis = 'a_relire';
   let filtreStatut = 'a_etudier';
   let filtreType = 'tous';
@@ -548,11 +557,14 @@
     if (estAdmin !== true) { montrer('zone-refus'); return; }
     montrer('zone-gestion');
     await toutRecharger();
+    // Arrivée depuis un e-mail (ex. : gestion-site.html#avis) : on ouvre directement le bon onglet
+    const onglet = location.hash.slice(1);
+    if (onglet && document.querySelector('.onglet[data-onglet="' + onglet.replace(/[^a-z-]/g, '') + '"]')) afficherOnglet(onglet);
   }
 
   // ---------- Données ----------
   async function toutRecharger() {
-    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations, lesProjets, lesAvis] = await Promise.all([
+    const [compteurs, liste, acces, lesAnnonces, lesMandats, lesVisites, lesConversations, lesProjets, lesAvis, lesRenvois] = await Promise.all([
       albSupabase.rpc('alb_gestion_compteurs'),
       albSupabase.rpc('alb_gestion_membres'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
@@ -561,7 +573,8 @@
       albSupabase.rpc('alb_gestion_visites'),
       albSupabase.rpc('alb_gestion_conversations'),
       albSupabase.rpc('alb_gestion_projets'),
-      albSupabase.rpc('alb_gestion_avis')
+      albSupabase.rpc('alb_gestion_avis'),
+      albSupabase.rpc('alb_gestion_renvois')
     ]);
     if (compteurs.error || liste.error) {
       afficherMessage('message-general', 'erreur', messageErreur(compteurs.error || liste.error));
@@ -575,7 +588,9 @@
     conversations = lesConversations.data || [];
     projets = lesProjets.data || [];
     avis = lesAvis.data || [];
+    renvois = lesRenvois.data || [];
     afficherAvis();
+    afficherRenvois();
     afficherDemandesAcces();
     afficherProjets();
     afficherMessages();
@@ -1282,6 +1297,29 @@
     afficherMessage('message-general', statut === 'publie' ? 'succes' : 'info',
       statut === 'publie' ? 'Avis publié ✓ Il apparaît maintenant sur la fiche du pro dans « Nos pros ALB ».' : "Cet avis n'apparaît pas sur la fiche du pro. Il reste dans l'onglet « Non publiés ».");
     await toutRecharger();
+  }
+
+  // ---------- Remplacements entre pros (pour info) ----------
+  const STATUTS_RENVOI = { en_attente: '⏳ En attente de sa réponse', accepte: '✅ Remplacement en cours', refuse: '✗ A refusé', annule: 'Terminé' };
+  function carteRenvoi(r) {
+    const classe = r.statut === 'accepte' ? ' vert' : r.statut === 'en_attente' ? ' or' : '';
+    const dispo = r.pro_disponibilite === 'non_disponible' ? 'indisponible' : r.pro_disponibilite === 'occupé' ? 'occupé' : 'disponible';
+    return '<div class="carte fiche">' +
+      '<div class="etiquettes"><span class="etiquette' + classe + '">' + (STATUTS_RENVOI[r.statut] || albEchapper(r.statut)) + '</span></div>' +
+      '<p class="ligne-info"><strong>' + albEchapper(r.remplacant) + '</strong> remplace <strong>' + albEchapper(r.pro) + '</strong></p>' +
+      '<p class="ligne-info">🕒 ' + albEchapper(r.pro) + ' est actuellement ' + dispo +
+        (r.statut === 'accepte' && dispo !== 'indisponible' ? ' : ses demandes lui reviennent directement.' : '.') + '</p>' +
+      (r.message ? '<p class="ligne-info mot">💬 « ' + albEchapper(r.message) + ' »</p>' : '') +
+      '<p class="ligne-info">🗓️ Demandé le ' + dateLisible(r.cree_le) + (r.repondu_le ? ' · réponse le ' + dateLisible(r.repondu_le) : '') + '</p>' +
+    '</div>';
+  }
+  function afficherRenvois() {
+    const actifs = renvois.filter(function (r) { return r.statut === 'en_attente' || r.statut === 'accepte'; });
+    const anciens = renvois.filter(function (r) { return r.statut !== 'en_attente' && r.statut !== 'accepte'; });
+    document.getElementById('c-renvois').textContent = renvois.filter(function (r) { return r.statut === 'accepte'; }).length;
+    document.getElementById('liste-renvois').innerHTML =
+      (actifs.length ? '<div class="liste-fiches">' + actifs.map(carteRenvoi).join('') + '</div>' : '<div class="carte vide">Aucun remplacement en cours. 🌿</div>') +
+      (anciens.length ? '<details class="historique"><summary>🕘 Anciens remplacements (' + anciens.length + ')</summary><div class="liste-fiches">' + anciens.map(carteRenvoi).join('') + '</div></details>' : '');
   }
 
   // ---------- Pros validés ----------
