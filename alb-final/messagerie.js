@@ -284,6 +284,12 @@
 
   window.albMessagerie = async function (profil) {
     if (!profil || !profil.id) return;
+    // Arrivée depuis « Donner son avis » sur Nos pros ALB : une fois connecté, on y retourne
+    const avisPour = new URLSearchParams(location.search).get('avis') || '';
+    if (/^[0-9a-f-]{36}$/i.test(avisPour)) {
+      location.replace('vitrine-pros.html?avis=' + encodeURIComponent(avisPour));
+      return;
+    }
     styles();
     brancher();
     try { await chargerListe(); } catch (ex) {
