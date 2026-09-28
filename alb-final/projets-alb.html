@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mes Projets ALB - Triage et accompagnement</title>
+  <title>Projets ALB — Financement, travaux, vente ou achat · ALB Immobilier</title>
+  <meta name="description" content="Un projet immobilier dans l'ancien (Var, Bouches-du-Rhône) ? Financement, travaux, vente ou achat : répondez à quelques questions, ALB Immobilier vous oriente vers des professionnels vérifiés.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Montserrat', sans-serif; background-color: #f5f3ee; color: #333; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+    /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
+    html, body { min-height: 100%; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+    main { flex: 1 0 auto; }
     /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
     .alb-header {
       background: white;
@@ -119,61 +122,261 @@
         margin-top: 4px;
       }
     }
-    .content-section { padding: 60px 40px; background: white; }
-    .page-title { font-size: 2rem; color: #4B1A3E; margin-bottom: 15px; font-weight: 600; }
-    .page-subtitle { color: #666; font-size: 1.05rem; line-height: 1.6; margin-bottom: 40px; }
-    .progress-indicator { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 2rem; }
-    .progress-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background-color: #d1d5db; transition: background-color 0.2s; }
-    .progress-dot.active { background-color: #4B1A3E; }
-    .question-group { margin-bottom: 2.5rem; display: none; }
-    .question-group.active { display: block; }
-    .question-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #111827; }
-    .choices { display: flex; flex-direction: column; gap: 1rem; }
-    .choice-btn { padding: 1.25rem 1.5rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: white; cursor: pointer; text-align: left; transition: all 0.2s; font-size: 1rem; color: #1f2937; }
-    .choice-btn:hover { border-color: #4B1A3E; background-color: #faf8f6; }
-    .choice-btn.selected { border-color: #4B1A3E; background-color: #f3e8f1; font-weight: 600; color: #4B1A3E; }
-    .choice-emoji { font-size: 1.5rem; margin-right: 1rem; vertical-align: middle; }
-    .choice-text { display: inline-block; vertical-align: middle; }
-    .action-buttons { display: flex; gap: 1rem; margin-top: 2rem; justify-content: center; }
-    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-weight: 600; }
-    .btn-primary { background: linear-gradient(135deg, #4B1A3E, #6b2d5f); color: white; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(75, 26, 62, 0.3); }
-    .btn-primary:disabled { background: #d1d5db; cursor: not-allowed; transform: none; }
-    .btn-secondary { background-color: #e5e7eb; color: #1f2937; }
-    .btn-secondary:hover { background-color: #d1d5db; }
-    .input-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .input-group label { font-size: 0.9rem; font-weight: 600; color: #111827; }
-    .input-group input { padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.375rem; font-size: 1rem; transition: all 0.2s; }
-    .input-group input:focus { outline: none; border-color: #4B1A3E; box-shadow: 0 0 0 3px rgba(75, 26, 62, 0.1); }
-    .input-group input.error { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
-    .error-message { font-size: 0.85rem; color: #dc2626; display: none; }
-    .error-message.show { display: block; }
-    .footer { background-color: #262626; color: white; padding: 60px 0 0 0; width: 100%; }
-    .footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 100%; padding: 60px 40px; }
-    .footer-col h5 { color: white; margin-bottom: 20px; font-weight: 600; font-size: 1rem; }
-    .footer-col p { color: #ccc; font-size: 0.9rem; line-height: 1.8; margin: 0; }
-    .footer-col a { color: #B28E3D; text-decoration: none; cursor: pointer; }
-    .footer-col a:hover { text-decoration: underline; }
-    .footer-bottom { background-color: #1a1a1a; padding: 20px 40px; text-align: center; font-size: 0.85rem; color: #999; }
-    .footer-slogan { color: #B28E3D; }
-    .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); overflow: auto; }
-    .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background-color: white; padding: 40px; border-radius: 8px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; }
-    .modal-close { color: #999; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-    .modal-close:hover { color: #333; }
-    .modal h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #4B1A3E; margin-bottom: 20px; margin-top: 20px; }
-    .modal p { color: #666; line-height: 1.8; margin-bottom: 15px; font-size: 0.95rem; }
-    .modal-slogan { color: #4B1A3E; font-weight: 600; margin-bottom: 20px; }
-    .modal-buttons { display: flex; gap: 15px; margin-top: 30px; }
-    .modal-btn { display: inline-block; padding: 12px 25px; background-color: #4B1A3E; color: white; text-decoration: none; border-radius: 4px; font-weight: 600; transition: all 0.3s ease; border: none; cursor: pointer; }
-    .modal-btn:hover { background-color: #B28E3D; }
-    .modal-btn-secondary { background-color: #B28E3D; }
-    .modal-btn-secondary:hover { background-color: #4B1A3E; }
+
+    /* ========== PROJETS ALB (mobile d'abord) ========== */
+    .page { max-width: 760px; margin: 0 auto; padding: 26px 16px 10px; width: 100%; }
+    .page h1 { font-family: 'Playfair Display', serif; color: #5A3A6A; font-size: 1.7rem; line-height: 1.25; margin-bottom: 8px; }
+    .intro { font-size: 0.97rem; margin-bottom: 22px; }
+    .progression { display: flex; gap: 6px; justify-content: center; margin-bottom: 22px; }
+    .point { width: 8px; height: 8px; border-radius: 50%; background: #D8D5CE; transition: background 0.2s; }
+    .point.actif { background: #5A3A6A; }
+    .question { display: none; }
+    .question.active { display: block; }
+    .question h2 { font-size: 1.15rem; font-weight: 700; color: #2a2a28; margin-bottom: 14px; line-height: 1.35; }
+    .choix { display: flex; flex-direction: column; gap: 10px; }
+    .choix button {
+      display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+      padding: 16px 16px; border: 2px solid #E8E6E1; border-radius: 10px; background: #fff;
+      font-family: inherit; font-size: 0.97rem; color: #2a2a28; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .choix button:hover { border-color: #5A3A6A; background: #FBF8F3; }
+    .choix button.choisi { border-color: #5A3A6A; background: #F4EEF6; font-weight: 600; color: #4B1A3E; }
+    .emoji { font-size: 1.5rem; flex: 0 0 auto; }
+    .champ { display: flex; flex-direction: column; gap: 6px; }
+    .champ label { font-size: 0.9rem; font-weight: 600; color: #2a2a28; }
+    .champ input { font-family: inherit; font-size: 1rem; padding: 12px 14px; border: 2px solid #E8E6E1; border-radius: 8px; background: #fff; }
+    .champ input:focus { outline: none; border-color: #5A3A6A; }
+    .champ input.erreur { border-color: #C0392B; }
+    .aide { font-size: 0.82rem; color: #7a7a75; }
+    .aide.erreur { color: #C0392B; }
+    .boutons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 24px; }
+    .bouton { border: none; border-radius: 8px; padding: 12px 20px; font-family: inherit; font-size: 0.97rem; font-weight: 600; cursor: pointer; }
+    .bouton-suite { background: #4B1A3E; color: #fff; margin-left: auto; }
+    .bouton-suite:hover { background: #B28E3D; }
+    .bouton-suite:disabled { background: #D8D5CE; cursor: not-allowed; }
+    .bouton-retour { background: #fff; color: #5A3A6A; border: 1px solid #D8D5CE; }
+    .bouton-retour:hover { background: #F5F3F0; }
+    .cache { display: none !important; }
+    @media (min-width: 700px) {
+      .page { padding: 40px 24px 20px; }
+      .page h1 { font-size: 2.1rem; }
+    }
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
     @media (max-width: 768px) {
-      .content-section { padding: 40px 20px; }
-      .page-title { font-size: 1.5rem; }
-      .footer-container { gap: 30px; padding: 40px 20px; }
-      .modal-content { width: 95%; padding: 30px; }
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -194,359 +397,251 @@
   </div>
 </header>
 
-  <!-- CONTENT -->
-  <section class="content-section">
-    <div class="container">
-      <h1 class="page-title">Mes Projets ALB</h1>
-      <p class="page-subtitle">Vous avez un projet en tête mais vous ne savez pas trop par où commencer ? C'est normal. Dites-nous ce qui vous préoccupe, on vous guide.</p>
+<main class="page">
+  <h1>Projets ALB</h1>
+  <p class="intro">Vous avez un projet en tête mais vous ne savez pas trop par où commencer ? C'est normal. Dites-nous ce qui vous préoccupe, on vous guide.</p>
 
-      <div class="progress-indicator">
-        <div class="progress-dot active" id="progress0"></div>
-        <div class="progress-dot" id="progress1"></div>
-        <div class="progress-dot" id="progress2"></div>
-      </div>
+  <div class="progression" aria-hidden="true">
+    <span class="point actif"></span><span class="point"></span><span class="point"></span>
+  </div>
 
-      <!-- Q1 -->
-      <div class="question-group active" id="q1-group">
-        <div class="question-title">Qu'est-ce qui vous ressemble le plus en ce moment ?</div>
-        <div class="choices" id="q1-choices">
-          <button class="choice-btn" data-value="financement">
-            <span class="choice-emoji">🏠</span>
-            <span class="choice-text">Je veux acheter, mais je ne sais pas si j'en ai les moyens</span>
-          </button>
-          <button class="choice-btn" data-value="travaux">
-            <span class="choice-emoji">🔧</span>
-            <span class="choice-text">J'ai des travaux à faire (fuite, toiture, imprévu...) mais je ne sais pas par où commencer</span>
-          </button>
-          <button class="choice-btn" data-value="accompagnement">
-            <span class="choice-emoji">🤝</span>
-            <span class="choice-text">Je veux vendre ou acheter, mais je préfère être accompagné(e) par un professionnel</span>
-          </button>
-          <button class="choice-btn" data-value="undefined">
-            <span class="choice-emoji">🤔</span>
-            <span class="choice-text">Je ne sais pas encore, je regarde juste</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Sous-Q1 -->
-      <div class="question-group" id="subq1-group">
-        <div class="question-title">Votre besoin concerne plutôt...</div>
-        <div class="choices" id="subq1-choices">
-          <button class="choice-btn" data-value="logement">
-            <span class="choice-emoji">🏚️</span>
-            <span class="choice-text">Un logement que vous avez déjà (travaux, amélioration...)</span>
-          </button>
-          <button class="choice-btn" data-value="achatovente">
-            <span class="choice-emoji">🔑</span>
-            <span class="choice-text">Un bien que vous voulez acheter ou vendre</span>
-          </button>
-          <button class="choice-btn" data-value="unclear">
-            <span class="choice-emoji">🤷</span>
-            <span class="choice-text">Je ne sais pas encore</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Sous-Q2 -->
-      <div class="question-group" id="subq2-group">
-        <div class="question-title">Vous préférez...</div>
-        <div class="choices" id="subq2-choices">
-          <button class="choice-btn" data-value="accompagnement">
-            <span class="choice-emoji">🤝</span>
-            <span class="choice-text">Être accompagné(e) par un professionnel</span>
-          </button>
-          <button class="choice-btn" data-value="financement">
-            <span class="choice-emoji">💶</span>
-            <span class="choice-text">D'abord savoir ce que vous pouvez vous permettre</span>
-          </button>
-          <button class="choice-btn" data-value="both">
-            <span class="choice-emoji">🤷</span>
-            <span class="choice-text">Les deux, ou je ne sais pas encore</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Q2 -->
-      <div class="question-group" id="q2-group">
-        <div class="question-title">Ce projet concerne</div>
-        <div class="choices" id="q2-choices">
-          <button class="choice-btn" data-value="achat">
-            <span class="choice-text">Un bien que vous voulez acheter</span>
-          </button>
-          <button class="choice-btn" data-value="vente">
-            <span class="choice-text">Un bien que vous voulez vendre</span>
-          </button>
-          <button class="choice-btn" data-value="investissement">
-            <span class="choice-text">Un investissement locatif</span>
-          </button>
-          <button class="choice-btn" data-value="logement-actuel">
-            <span class="choice-text">Votre logement actuel</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Q3 -->
-      <div class="question-group" id="q3-group">
-        <div class="question-title">Code postal du bien concerné</div>
-        <div class="input-group">
-          <label for="codePostal">Code postal (5 chiffres) *</label>
-          <input type="text" id="codePostal" placeholder="Ex: 75001" maxlength="5">
-          <div class="error-message" id="cpError">Code postal invalide (5 chiffres)</div>
-        </div>
-      </div>
-
-      <!-- Modules -->
-      <div class="question-group" id="modules-display">
-        <div class="question-title">Modules disponibles</div>
-        <div class="choices" id="modules-choices">
-          <button class="choice-btn" data-module="financement">
-            <span class="choice-emoji">💶</span>
-            <span class="choice-text">Financement - Simulez votre budget</span>
-          </button>
-          <button class="choice-btn" data-module="travaux">
-            <span class="choice-emoji">🔧</span>
-            <span class="choice-text">Travaux - Trouvez les bons artisans</span>
-          </button>
-          <button class="choice-btn" data-module="accompagnement">
-            <span class="choice-emoji">🤝</span>
-            <span class="choice-text">Accompagnement - Soyez guidé par un professionnel</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="action-buttons">
-        <button class="btn btn-secondary" id="prevBtn" style="display: none;">← Retour</button>
-        <button class="btn btn-primary" id="nextBtn">Continuer</button>
-      </div>
+  <!-- 1. Point de départ -->
+  <section class="question active" id="q-depart">
+    <h2>Qu'est-ce qui vous ressemble le plus en ce moment ?</h2>
+    <div class="choix">
+      <button type="button" data-aller="financement"><span class="emoji">🏠</span><span>Je veux acheter, mais je ne sais pas si j'en ai les moyens</span></button>
+      <button type="button" data-aller="travaux"><span class="emoji">🔧</span><span>J'ai des travaux à faire (fuite, toiture, imprévu…) mais je ne sais pas par où commencer</span></button>
+      <button type="button" data-aller="accompagnement"><span class="emoji">🤝</span><span>Je veux vendre ou acheter, mais je préfère être accompagné(e) par un professionnel</span></button>
+      <button type="button" data-aller="hesite"><span class="emoji">🤔</span><span>Je ne sais pas encore, je regarde juste</span></button>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="footer">
+  <!-- 1 bis. Je ne sais pas encore -->
+  <section class="question" id="q-hesite">
+    <h2>Votre besoin concerne plutôt…</h2>
+    <div class="choix">
+      <button type="button" data-aller="travaux"><span class="emoji">🏚️</span><span>Un logement que vous avez déjà (travaux, amélioration…)</span></button>
+      <button type="button" data-aller="acheter-vendre"><span class="emoji">🔑</span><span>Un bien que vous voulez acheter ou vendre</span></button>
+      <button type="button" data-aller="tout"><span class="emoji">🤷</span><span>Je ne sais pas encore</span></button>
+    </div>
+  </section>
+
+  <!-- 1 ter. Acheter ou vendre : accompagné ou d'abord le budget -->
+  <section class="question" id="q-acheter-vendre">
+    <h2>Vous préférez…</h2>
+    <div class="choix">
+      <button type="button" data-aller="accompagnement"><span class="emoji">🤝</span><span>Être accompagné(e) par un professionnel</span></button>
+      <button type="button" data-aller="financement"><span class="emoji">💶</span><span>D'abord savoir ce que je peux me permettre</span></button>
+      <button type="button" data-aller="tout"><span class="emoji">🤷</span><span>Les deux, ou je ne sais pas encore</span></button>
+    </div>
+  </section>
+
+  <!-- 2. Accompagnement : seulement vendre ou acheter -->
+  <section class="question" id="q-accompagnement">
+    <h2>Vous souhaitez…</h2>
+    <div class="choix">
+      <button type="button" data-objet="vente"><span class="emoji">🏠</span><span>Vendre mon bien</span></button>
+      <button type="button" data-objet="achat"><span class="emoji">🔑</span><span>Acheter un bien</span></button>
+      <button type="button" data-objet="les_deux"><span class="emoji">🔄</span><span>Vendre et acheter</span></button>
+    </div>
+  </section>
+
+  <!-- 3. Le code postal -->
+  <section class="question" id="q-cp">
+    <h2 id="titre-cp">Le code postal du bien</h2>
+    <div class="champ">
+      <label for="code-postal">Code postal (5 chiffres)</label>
+      <input type="text" id="code-postal" inputmode="numeric" maxlength="5" placeholder="Ex. : 83000" autocomplete="postal-code">
+      <p class="aide" id="aide-cp">Pour trouver les professionnels de votre secteur (Var et Bouches-du-Rhône).</p>
+    </div>
+  </section>
+
+  <!-- Je ne sais pas encore : on montre tout, sans rien choisir à la place de la personne -->
+  <section class="question" id="q-tout">
+    <h2>Voici ce qu'ALB Immobilier peut faire pour vous</h2>
+    <div class="choix">
+      <button type="button" data-aller="financement"><span class="emoji">💶</span><span><strong>Financement</strong> · savoir ce que je peux acheter, avec un courtier</span></button>
+      <button type="button" data-aller="travaux"><span class="emoji">🔧</span><span><strong>Travaux</strong> · trouver les bons artisans</span></button>
+      <button type="button" data-aller="accompagnement"><span class="emoji">🤝</span><span><strong>Vente ou achat</strong> · être accompagné(e) par un agent ou un mandataire</span></button>
+    </div>
+  </section>
+
+  <div class="boutons">
+    <button type="button" class="bouton bouton-retour cache" id="bouton-retour">← Retour</button>
+    <button type="button" class="bouton bouton-suite cache" id="bouton-suite" disabled>Continuer →</button>
+  </div>
+</main>
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
     <div class="footer-container">
       <div class="footer-col">
-        <h5>Annonces</h5>
-        <p><a onclick="openModal('chercher-modal')"><strong>Chercher une annonce</strong></a><br><br><a onclick="openModal('vendre-modal')"><strong>Vendre mon bien</strong></a></p>
-      </div>
-      <div class="footer-col">
         <h5>À propos</h5>
-        <p><a onclick="openModal('apropos-modal')">À propos d'ALB Immobilier</a></p>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
       </div>
       <div class="footer-col">
-        <h5>Fondatrice</h5>
-        <p><a onclick="openModal('jocelyne-modal')">Le mot de la fondatrice</a></p>
-      </div>
-      <div class="footer-col contact">
         <h5>Contact</h5>
-        <p><strong>📧 contact@albimmobilier.fr</strong></p>
-        <p>📱 07 45 60 28 05</p>
-        <p style="margin-top: 16px; font-size: 0.9rem;">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
       </div>
     </div>
     <div class="footer-bottom">
       <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
     </div>
-  </footer>
-
-  <!-- MODALS -->
-  <div id="chercher-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('chercher-modal')">&times;</span>
-      <h2>Chercher une annonce</h2>
-      <p>Trouvez le bien qui vous ressemble. Simulez votre financement. Organisez une visite. Un courtier vous contactera si besoin.</p>
-      <div class="modal-buttons">
-        <a href="/annonces.html" class="modal-btn">Accéder aux annonces</a>
-        <a href="index.html" class="modal-btn modal-btn-secondary">Retour à l'accueil</a>
-      </div>
-    </div>
   </div>
-  <div id="vendre-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('vendre-modal')">&times;</span>
-      <h2>Vendre mon bien</h2>
-      <p>Inscrivez-vous pour diffuser et modifier en temps réel votre annonce. Organisez vos visites. Les acheteurs simulent leur budget avant de vous contacter.</p>
-      <div class="modal-buttons">
-        <a href="/inscription-particulier-vendeur.html" class="modal-btn">Commencer à vendre</a>
-        <a href="index.html" class="modal-btn modal-btn-secondary">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
-  <div id="apropos-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
-      <p class="modal-slogan"><span class="slogan-word-1">Quand</span> <span class="slogan-word-2">l'ancien</span> <span class="slogan-word-1">se met</span> <span class="slogan-word-2">à la bien.</span></p>
-      <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
-      <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
-      <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
-      <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
-      <p>Ce n'est pas seulement un service en ligne.</p>
-      <p>C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
-      <p>Parce que la technologie ne doit jamais remplacer la relation humaine.</p>
-      <p>Elle doit simplement la rendre plus fluide.</p>
-      <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien.</p>
-      <p>Une façon où chaque projet compte.</p>
-      <p>Où chaque utilisateur est écouté.</p>
-      <p>Et où la confiance retrouve naturellement sa place.</p>
-      <p>À la bien, toujours.</p>
-      <div class="modal-buttons">
-        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
-  <div id="jocelyne-modal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
-      <h2>Le mot de la fondatrice</h2>
-      <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
-      <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
-      <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
-      <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
-      <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
-      <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
-      <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
-      <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
-      <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
-      <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
-      <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
-      <div class="modal-buttons">
-        <a href="index.html" class="modal-btn">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
+</footer>
 
-  <script>
-    const state = { q1: null, subq1: null, subq2: null, q2: null, q3: null, step: 1 };
-    // Les 3 modules passent par la même page de demande (mise en relation avec les pros validés)
-    const routes = { financement: 'projet-demande.html', travaux: 'projet-demande.html', accompagnement: 'projet-demande.html' };
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
 
-    document.querySelectorAll('#q1-choices .choice-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#q1-choices .choice-btn').forEach(b => b.classList.remove('selected'));
-        e.currentTarget.classList.add('selected');
-        state.q1 = e.currentTarget.dataset.value;
-        if (state.q1 === 'undefined') showQuestion('subq1');
-        else showQuestion('q2');
-      });
-    });
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
 
-    document.querySelectorAll('#subq1-choices .choice-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#subq1-choices .choice-btn').forEach(b => b.classList.remove('selected'));
-        e.currentTarget.classList.add('selected');
-        state.subq1 = e.currentTarget.dataset.value;
-        if (state.subq1 === 'logement') { state.q1 = 'travaux'; showQuestion('q2'); }
-        else if (state.subq1 === 'achatovente') showQuestion('subq2');
-        else if (state.subq1 === 'unclear') showQuestion('modules');
-      });
-    });
-
-    document.querySelectorAll('#subq2-choices .choice-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#subq2-choices .choice-btn').forEach(b => b.classList.remove('selected'));
-        e.currentTarget.classList.add('selected');
-        state.subq2 = e.currentTarget.dataset.value;
-        if (state.subq2 === 'both') showQuestion('modules');
-        else { state.q1 = state.subq2; showQuestion('q2'); }
-      });
-    });
-
-    document.querySelectorAll('#q2-choices .choice-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#q2-choices .choice-btn').forEach(b => b.classList.remove('selected'));
-        e.currentTarget.classList.add('selected');
-        state.q2 = e.currentTarget.dataset.value;
-        showQuestion('q3');
-      });
-    });
-
-    document.querySelectorAll('#modules-choices .choice-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const module = e.currentTarget.dataset.module;
-        state.q1 = module;
-        navigateToModule(module);
-      });
-    });
-
-    const codePostalInput = document.getElementById('codePostal');
-    const cpError = document.getElementById('cpError');
-    const nextBtn = document.getElementById('nextBtn');
-
-    codePostalInput.addEventListener('input', (e) => {
-      state.q3 = e.target.value;
-      validateCodePostal();
-    });
-
-    function validateCodePostal() {
-      const cp = state.q3;
-      const isValid = /^\d{5}$/.test(cp);
-      if (cp === '') {
-        codePostalInput.classList.remove('error');
-        cpError.classList.remove('show');
-        nextBtn.disabled = true;
-      } else if (isValid) {
-        codePostalInput.classList.remove('error');
-        cpError.classList.remove('show');
-        nextBtn.disabled = false;
-      } else {
-        codePostalInput.classList.add('error');
-        cpError.classList.add('show');
-        nextBtn.disabled = true;
-      }
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
     }
+  }
 
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (state.q1 && state.q2 && state.q3) navigateToModule(state.q1);
+  // ========== PROJETS ALB : les questions ==========
+  // Chaque réponse mène à une seule suite :
+  //  • acheter sans connaître ses moyens → financement de l'achat
+  //  • travaux → travaux seulement
+  //  • vendre ou acheter accompagné(e) → vente ou achat seulement
+  const etat = { module: '', objet: '' };
+  const chemin = ['depart'];          // les questions déjà vues, pour le bouton « Retour »
+  const ETAPE = { depart: 1, hesite: 1, 'acheter-vendre': 1, accompagnement: 2, tout: 2, cp: 3 };
+  const TITRES_CP = {
+    financement: 'Où cherchez-vous ? (code postal)',
+    travaux: 'Le code postal du logement',
+    accompagnement: 'Le code postal du bien (ou du secteur recherché)'
+  };
+
+  function el(id) { return document.getElementById(id); }
+
+  function montrer(nom) {
+    document.querySelectorAll('.question').forEach(function (q) { q.classList.toggle('active', q.id === 'q-' + nom); });
+    const etape = ETAPE[nom] || 1;
+    document.querySelectorAll('.point').forEach(function (p, i) { p.classList.toggle('actif', i < etape); });
+    el('bouton-retour').classList.toggle('cache', chemin.length < 2);
+    el('bouton-suite').classList.toggle('cache', nom !== 'cp');
+    if (nom === 'cp') {
+      el('titre-cp').textContent = TITRES_CP[etat.module] || 'Le code postal du bien';
+      verifierCp();
+      el('code-postal').focus();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function allerA(nom) {
+    chemin.push(nom);
+    montrer(nom);
+  }
+
+  function marquer(bouton) {
+    bouton.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.toggle('choisi', b === bouton); });
+  }
+
+  // Un clic sur un choix
+  document.querySelectorAll('.choix button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      marquer(b);
+      if (b.dataset.objet) { etat.objet = b.dataset.objet; allerA('cp'); return; }
+      const aller = b.dataset.aller;
+      if (aller === 'travaux' || aller === 'financement') { etat.module = aller; etat.objet = ''; allerA('cp'); return; }
+      if (aller === 'accompagnement') { etat.module = aller; etat.objet = ''; allerA(aller); return; }
+      allerA(aller);   // hesite, acheter-vendre, tout
     });
+  });
 
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (state.step > 1) goBackQuestion();
-    });
+  // Retour : on revient à la question d'avant
+  el('bouton-retour').addEventListener('click', function () {
+    if (chemin.length < 2) return;
+    chemin.pop();
+    montrer(chemin[chemin.length - 1]);
+  });
 
-    function showQuestion(questionId) {
-      document.querySelectorAll('.question-group').forEach(g => g.classList.remove('active'));
-      const groupId = questionId === 'modules' ? 'modules-display' : questionId + '-group';
-      document.getElementById(groupId).classList.add('active');
-      updateProgressAndButtons(questionId);
-    }
+  // Code postal
+  function verifierCp() {
+    const cp = el('code-postal').value.trim();
+    const bon = /^[0-9]{5}$/.test(cp);
+    const faux = cp !== '' && !bon;
+    el('code-postal').classList.toggle('erreur', faux);
+    el('aide-cp').classList.toggle('erreur', faux);
+    el('aide-cp').textContent = faux ? 'Le code postal doit contenir 5 chiffres.' : 'Pour trouver les professionnels de votre secteur (Var et Bouches-du-Rhône).';
+    el('bouton-suite').disabled = !bon;
+    return bon;
+  }
+  el('code-postal').addEventListener('input', function () {
+    this.value = this.value.replace(/[^0-9]/g, '');
+    verifierCp();
+  });
+  el('code-postal').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') el('bouton-suite').click(); });
 
-    function updateProgressAndButtons(questionId) {
-      const stepMap = { q1: 1, subq1: 1, subq2: 2, q2: 2, q3: 3, modules: 4 };
-      state.step = stepMap[questionId] || 1;
-      document.querySelectorAll('.progress-dot').forEach((dot, idx) => {
-        dot.classList.toggle('active', idx < Math.min(state.step, 3));
-      });
-      const prevBtn = document.getElementById('prevBtn');
-      prevBtn.style.display = (state.step > 1 && !['modules', 'q1', 'subq1'].includes(questionId)) ? 'block' : 'none';
-      if (questionId === 'q3') { nextBtn.textContent = 'Continuer →'; validateCodePostal(); }
-      else if (questionId === 'modules') { nextBtn.style.display = 'none'; }
-      else { nextBtn.textContent = 'Continuer →'; nextBtn.disabled = false; }
-    }
-
-    function navigateToModule(module) {
-      if (!routes[module]) return;
-      // On transmet les réponses déjà données (projet et code postal) pour ne rien redemander
-      const params = new URLSearchParams({ module: module });
-      if (state.q2) params.set('objet', state.q2);
-      if (/^\d{5}$/.test(state.q3 || '')) params.set('cp', state.q3);
-      window.location.href = routes[module] + '?' + params.toString();
-    }
-
-    function openModal(modalId) {
-      document.getElementById(modalId).classList.add('active');
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
-    }
-
-    window.onclick = function(event) {
-      if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('active');
-      }
-    }
-
-    updateProgressAndButtons('q1');
-  </script>
+  // Continuer : on part vers le formulaire, sans rien redemander
+  el('bouton-suite').addEventListener('click', function () {
+    if (!etat.module || !verifierCp()) return;
+    const params = new URLSearchParams({ module: etat.module, cp: el('code-postal').value.trim() });
+    if (etat.objet) params.set('objet', etat.objet);
+    location.href = 'projet-demande.html?' + params.toString();
+  });
+</script>
 </body>
 </html>
