@@ -121,8 +121,8 @@
     <p class="aide">Les 6 derniers mois (le département compte, pas la période).</p>
     <div class="carte tableau-conteneur" id="t-mois"></div>
 
-    <h2 class="titre-section">💶 Ce que ça représenterait avec les tarifs 2027</h2>
-    <p class="aide">Simple repère : tout est gratuit jusqu'au 31 décembre 2026. Calcul sur la période et le département choisis.</p>
+    <h2 class="titre-section">💶 Ce que ça rapporterait avec les tarifs 2027</h2>
+    <p class="aide">Simple repère : tout est gratuit jusqu'au 31 décembre 2026. Les abonnements sont comptés sur les annonces en ligne aujourd'hui ; les mises en relation, sur la période choisie.</p>
     <div class="compteurs" id="c-valeur"></div>
   </div>
 </main>
@@ -140,7 +140,7 @@
   const MODULES = { financement: '💶 Financement', travaux: '🔧 Travaux', accompagnement: '🤝 Vente / achat' };
   const METIERS = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', agent: '🏠 Agent', mandataire: '📋 Mandataire', autre: '🤝 Autre' };
   const NOMS_DEP = { '83': 'Var', '13': 'Bouches-du-Rhône', autre: 'Autre' };
-  const TARIF_AGENT = 5, TARIF_COURTIER = 150;
+  const TARIF_AGENT_MOIS = 60, TARIF_PARTICULIER_MOIS = 9.9, TAUX_ARTISAN = 10, TARIF_COURTIER = 150;
 
   let donnees = null;
   const choix = { periode: '90', dep: 'tous', bien: 'tous', vente: 'tous' };
@@ -318,13 +318,22 @@
   }
 
   // ----- Repère tarifs 2027 -----
+  // Abonnements : comptés sur les annonces en ligne aujourd'hui (sous offre et compromis compris)
+  // Mises en relation : comptées sur la période et le département choisis
   function dessinerValeur() {
+    const enLigne = donnees.annonces.filter(function (a) { return bonDep(a) && ['disponible', 'sous_offre', 'compromis'].indexOf(a.statut) !== -1; });
+    const agents = {};
+    enLigne.filter(function (a) { return a.type_vente === 'accompagnee'; }).forEach(function (a) { agents[a.vendeur] = true; });
+    const nbAgents = Object.keys(agents).length;
+    const nbParticuliers = enLigne.filter(function (a) { return a.type_vente === 'particulier'; }).length;
     const envois = donnees.envois.filter(function (x) { return bonDep(x) && dansPeriode(x.envoye_le); });
-    const agents = envois.filter(function (x) { return x.metier === 'agent' || x.metier === 'mandataire'; }).length;
+    const artisans = envois.filter(function (x) { return x.metier === 'artisan' && x.statut === 'acceptee'; }).length;
     const courtiers = envois.filter(function (x) { return x.metier === 'courtier' && x.statut === 'acceptee'; }).length;
     el('c-valeur').innerHTML =
-      compteur(euros(agents * TARIF_AGENT), '🏠 Envois aux agents et mandataires', nb(agents) + ' envoi' + (agents > 1 ? 's' : '') + ' × ' + TARIF_AGENT + ' €') +
-      compteur(euros(courtiers * TARIF_COURTIER), '🏦 Contacts acceptés par les courtiers', nb(courtiers) + ' × ' + TARIF_COURTIER + ' €, seulement si le prêt est signé');
+      compteur(euros(nbAgents * TARIF_AGENT_MOIS) + ' HT', '🏠 Abonnements agents et mandataires, par mois', nb(nbAgents) + ' pro' + (nbAgents > 1 ? 's' : '') + ' avec une annonce en ligne × ' + TARIF_AGENT_MOIS + ' € HT', true) +
+      compteur((nbParticuliers * TARIF_PARTICULIER_MOIS).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' € TTC', '🏡 Abonnements particuliers vendeurs, par mois', nb(nbParticuliers) + ' annonce' + (nbParticuliers > 1 ? 's' : '') + ' en ligne × 9,90 € TTC', true) +
+      compteur(nb(artisans), '🔨 Mises en relation avec les artisans', TAUX_ARTISAN + ' % HT de chaque facture validée (montant connu une fois la facture déclarée)') +
+      compteur(euros(courtiers * TARIF_COURTIER) + ' HT', '🏦 Contacts acceptés par les courtiers', nb(courtiers) + ' × ' + TARIF_COURTIER + ' € HT, seulement si le prêt est signé');
   }
 
   function dessinerTout() {
