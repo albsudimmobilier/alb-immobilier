@@ -220,6 +220,13 @@
     .cases-metiers input { width: 18px; height: 18px; accent-color: #5A3A6A; flex-shrink: 0; }
     .cases-metiers .large { grid-column: 1 / -1; }
     .pro-metiers { font-size: 0.8rem; color: #5A3A6A; font-weight: 600; }
+    /* Photos, plans, vidéo */
+    .ajout-fichiers { display: inline-block; width: auto; padding: 10px 16px; font-size: 0.92rem; cursor: pointer; }
+    .fichier { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #E8E6E1; border-radius: 6px; margin-top: 8px; font-size: 0.88rem; background: #FBF8F3; }
+    .fichier img { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    .fichier .icone { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #EFEAE3; border-radius: 4px; flex-shrink: 0; }
+    .fichier span.nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fichier button { border: none; background: none; color: #8A2D2D; font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
 
     @media (min-width: 700px) {
       .cases-metiers { grid-template-columns: 1fr 1fr 1fr; }
@@ -578,6 +585,14 @@
           <p class="petit">Vos revenus restent confidentiels : les courtiers voient seulement le budget, la mensualité possible et l'apport.</p>
         </div>
 
+        <!-- Photos, plans, vidéo (travaux et vente accompagnée) -->
+        <div class="champ cache" id="bloc-medias">
+          <label>📷 Photos, plans ou vidéo <span class="leger">— facultatif, mais très utile aux professionnels</span></label>
+          <label class="bouton bouton-discret ajout-fichiers">➕ Ajouter des fichiers<input type="file" id="p-fichiers" multiple accept="image/*,application/pdf,video/*" hidden></label>
+          <div id="liste-fichiers"></div>
+          <div class="aide">Jusqu'à 8 photos ou plans (PDF) de 10 Mo chacun, et une vidéo de 50 Mo au plus. Seuls vous, Jocelyne et les professionnels qui reçoivent votre demande peuvent les voir. Évitez d'y montrer votre nom ou votre adresse.</div>
+        </div>
+
         <div class="champ">
           <label for="p-description" id="label-description">Parlez-nous de votre projet <span class="leger">— facultatif</span></label>
           <textarea id="p-description" maxlength="2000" rows="4"></textarea>
@@ -795,6 +810,48 @@
     if (module === 'travaux' && prosDispo.length) dessinerPros();
   }
 
+  // ----- Photos, plans, vidéo -----
+  let fichiers = [];
+  function typeFichier(f) { return /^image\//.test(f.type) ? 'photo' : f.type === 'application/pdf' ? 'plan' : /^video\//.test(f.type) ? 'video' : ''; }
+  function mediasPossibles() { return module === 'travaux' || (module === 'accompagnement' && el('a-projet').value !== 'acheter'); }
+  function majMedias() { el('bloc-medias').classList.toggle('cache', !mediasPossibles()); }
+  function fichiersActifs() { return mediasPossibles() ? fichiers : []; }
+  function ajouterFichiers(liste) {
+    let souci = '';
+    Array.from(liste).forEach(function (f) {
+      const t = typeFichier(f);
+      if (!t) { souci = 'Seules les photos, les plans en PDF et les vidéos sont acceptés.'; return; }
+      if (t === 'video' && fichiers.some(function (x) { return typeFichier(x) === 'video'; })) { souci = 'Une seule vidéo par demande.'; return; }
+      if (t === 'video' && f.size > 50 * 1024 * 1024) { souci = 'La vidéo « ' + f.name + ' » dépasse 50 Mo.'; return; }
+      if (t !== 'video' && f.size > 10 * 1024 * 1024) { souci = 'Le fichier « ' + f.name + ' » dépasse 10 Mo.'; return; }
+      if (t !== 'video' && fichiers.filter(function (x) { return typeFichier(x) !== 'video'; }).length >= 8) { souci = '8 photos ou plans au plus.'; return; }
+      fichiers.push(f);
+    });
+    dessinerFichiers();
+    if (souci) montrerMessage('message-envoi', 'erreur', souci);
+  }
+  function dessinerFichiers() {
+    el('liste-fichiers').innerHTML = fichiers.map(function (f, i) {
+      const t = typeFichier(f);
+      const apercu = t === 'photo' ? '<img src="' + URL.createObjectURL(f) + '" alt="">' : '<span class="icone">' + (t === 'plan' ? '📄' : '🎬') + '</span>';
+      return '<div class="fichier">' + apercu + '<span class="nom">' + e(f.name) + '</span><button type="button" data-retirer="' + i + '" aria-label="Retirer">✕</button></div>';
+    }).join('');
+  }
+  // Envoi des fichiers dans l'espace privé du particulier, avant la demande
+  async function envoyerFichiers(uid) {
+    const medias = [];
+    for (let i = 0; i < fichiersActifs().length; i++) {
+      const f = fichiersActifs()[i];
+      const ext = (f.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'bin';
+      const chemin = uid + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      el('bouton-envoyer').textContent = 'Envoi des fichiers (' + (i + 1) + '/' + fichiersActifs().length + ')…';
+      const { error } = await albSupabase.storage.from('projets-medias').upload(chemin, f, { contentType: f.type, upsert: false });
+      if (error) { console.error('[ALB DEBUG] fichier :', error); throw new Error('Le fichier « ' + f.name + ' » n\'a pas pu être envoyé. Réessayez, ou retirez-le.'); }
+      medias.push({ chemin: chemin, type: typeFichier(f), nom: f.name.slice(0, 120) });
+    }
+    return medias;
+  }
+
   const ZONES = {
     '83': ['Toulon et environs', 'Centre Var', 'Est Var/Golfe', 'Dracénie', 'Haut Var/Verdon'],
     '13': ['Marseille et environs', "Pays d'Aix", 'Aubagne/La Ciotat', 'Étang de Berre/Martigues', "Salon/Pays d'Arles"]
@@ -822,6 +879,7 @@
     document.querySelectorAll('.module').forEach(function (b) { b.classList.toggle('actif', b.dataset.module === m); });
     ['financement', 'travaux', 'accompagnement'].forEach(function (x) { el('bloc-' + x).classList.toggle('cache', x !== m); });
     majCourtier();
+    majMedias();
     el('titre-page').textContent = MODULES[m].titre;
     el('texte-intro').textContent = MODULES[m].intro + ' Vos coordonnées ne sont données aux professionnels qu\'avec votre accord, et vous recevez les leurs : vous décidez de la suite.';
     el('titre-pros').textContent = MODULES[m].titrePros;
@@ -883,6 +941,7 @@
 
   function majAccompagnement() {
     majCourtier();
+    majMedias();
     const p = el('a-projet').value;
     el('a-vente').classList.toggle('cache', p === 'acheter');
     el('a-achat').classList.toggle('cache', p === 'vendre');
@@ -974,6 +1033,8 @@
   });
 
   document.addEventListener('click', function (ev) {
+    const r = ev.target.closest('[data-retirer]');
+    if (r) { fichiers.splice(Number(r.dataset.retirer), 1); dessinerFichiers(); return; }
     const q = ev.target.closest('.quota');
     if (q) {
       quota = Number(q.dataset.quota);
@@ -1078,11 +1139,21 @@
     bouton.textContent = 'Envoi en cours…';
     try {
       if (!(await seConnecterOuCreer())) return;
+      let medias = [];
+      if (fichiersActifs().length) {
+        try { medias = await envoyerFichiers(profil.id); }
+        catch (ex) { montrerMessage('message-envoi', 'erreur', ex.message); return; }
+      }
+      bouton.textContent = 'Envoi en cours…';
       d.action = 'demande_projet';
       d.consentement = true;
       d.appel_autorise = el('c-appel').checked;
       const r = await albAppelerGuichet(d);
       if (!r.ok) { montrerMessage('message-envoi', 'erreur', MESSAGES[r.code] || albMessageErreur(r.code)); return; }
+      if (medias.length && r.projet_id) {
+        const { error: eMedias } = await albSupabase.rpc('alb_projet_ajouter_medias', { p_projet: r.projet_id, p_medias: medias });
+        if (eMedias) console.error('[ALB DEBUG] fichiers joints :', eMedias); else d.nb_medias = medias.length;
+      }
       afficherMerci(r, d);
     } finally {
       bouton.disabled = false;
@@ -1103,6 +1174,7 @@
     lignes.push(d.appel_autorise
       ? 'Vous avez accepté d\'être appelé(e) : seuls les professionnels qui acceptent votre demande reçoivent votre nom et votre téléphone. Vous recevez aussi leurs coordonnées par e-mail.'
       : 'Vos coordonnées ne sont pas données aux professionnels : ils vous écrivent dans votre messagerie ALB, et vous recevez leurs coordonnées par e-mail.');
+    if (d.nb_medias) lignes.push('📷 ' + e(d.nb_medias) + ' fichier' + (d.nb_medias > 1 ? 's joints' : ' joint') + ' à votre demande : les professionnels les voient avec elle.');
     lignes.push('Un e-mail récapitulatif vient de partir. Pensez à regarder vos courriers indésirables.');
     el('merci-suite').innerHTML = lignes.map(function (l) { return '<li>' + l + '</li>'; }).join('');
     el('formulaire').classList.add('cache');
@@ -1146,6 +1218,7 @@
     ['a-projet', 'a-mandat'].forEach(function (i) { el(i).addEventListener('change', majAccompagnement); });
     el('c-courtier').addEventListener('change', function () { majCourtier(); if (this.checked) { majBudget(); el('c-appel').checked = true; } });
     el('p-cp').addEventListener('input', function () { majZones(); if (module) chargerPros(); });
+    el('p-fichiers').addEventListener('change', function () { ajouterFichiers(this.files); this.value = ''; });
     el('p-zone').addEventListener('change', function () { if (module) chargerPros(); });
 
     choisirModule(params.get('module') || '');
