@@ -214,7 +214,15 @@
 
     .cache { display: none !important; }
 
+    /* Travaux : plusieurs corps de métier possibles */
+    .cases-metiers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .cases-metiers label { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 0.9rem; padding: 9px 10px; border: 1px solid #E8E6E1; border-radius: 6px; background: #FBF8F3; cursor: pointer; margin: 0; }
+    .cases-metiers input { width: 18px; height: 18px; accent-color: #5A3A6A; flex-shrink: 0; }
+    .cases-metiers .large { grid-column: 1 / -1; }
+    .pro-metiers { font-size: 0.8rem; color: #5A3A6A; font-weight: 600; }
+
     @media (min-width: 700px) {
+      .cases-metiers { grid-template-columns: 1fr 1fr 1fr; }
       .page { padding: 34px 24px 20px; }
       .intro h1 { font-size: 2rem; }
       .deux-colonnes { grid-template-columns: 1fr 1fr; }
@@ -485,6 +493,7 @@
             <div class="champ" id="champ-f-objet"><label for="f-objet">Votre projet</label>
               <select id="f-objet">
                 <option value="achat_rp">Acheter ma résidence principale</option>
+                <option value="achat_rs">Acheter une résidence secondaire</option>
                 <option value="investissement">Investissement locatif</option>
                 <option value="travaux">Financer des travaux</option>
                 <option value="rachat">Renégocier ou regrouper mes crédits</option>
@@ -504,9 +513,12 @@
 
         <!-- Travaux -->
         <div id="bloc-travaux" class="cache">
+          <div class="champ"><label>Quels travaux ? <span class="leger">— plusieurs choix possibles</span></label>
+            <div class="cases-metiers" id="t-categories"></div>
+            <div class="alerte cache" id="t-jocelyne" style="margin-top:10px;">🤷 Pas de souci : votre demande arrive d'abord chez Jocelyne. Elle vous appelle pour préciser vos travaux, puis l'envoie aux bons artisans.
+              <label class="case case-importante" style="margin:10px 0 0;"><input type="checkbox" id="t-rappel"> <span><strong>📞 J'accepte que Jocelyne (ALB Sud Immobilier) m'appelle</strong> pour préciser mes travaux.</span></label></div>
+          </div>
           <div class="deux-colonnes">
-            <div class="champ"><label for="t-categorie">Corps de métier</label>
-              <select id="t-categorie"><option value="">— Choisissez —</option><option value="electricite">Électricité</option><option value="plomberie">Plomberie</option><option value="carrelage">Carrelage</option><option value="peinture">Peinture</option><option value="menuiserie">Menuiserie</option><option value="renovation_globale">Rénovation globale</option><option value="ne_sait_pas">Je ne sais pas encore</option></select></div>
             <div class="champ"><label for="t-delai">Délai souhaité</label>
               <select id="t-delai"><option value="urgent">Urgent (moins de 2 semaines)</option><option value="court">1 à 2 mois</option><option value="moyen" selected>2 à 3 mois</option><option value="long">Plus de 3 mois</option></select></div>
             <div class="champ"><label for="t-logement">Logement <span class="leger">— facultatif</span></label>
@@ -760,6 +772,29 @@
     travaux: { titre: 'Mon projet de travaux', intro: 'Des artisans validés par ALB Sud Immobilier étudient vos travaux.', pros: 'artisans', unPro: 'artisan', titrePros: 'Les artisans' },
     accompagnement: { titre: 'Vendre ou acheter, accompagné(e)', intro: 'Un agent ou un mandataire immobilier vous accompagne.', pros: 'agents et mandataires', unPro: 'agent ou mandataire', titrePros: 'Les agents et mandataires' }
   };
+  // Travaux : les corps de métier (mêmes codes que les artisans)
+  const METIERS_TRAVAUX = [
+    ['macon', 'Maçonnerie'], ['plombier', 'Plomberie'], ['electricien', 'Électricité'], ['peintre', 'Peinture'],
+    ['menuisier', 'Menuiserie'], ['couvreur', 'Toiture – couverture'], ['carreleur', 'Carrelage'], ['chauffagiste', 'Chauffage'],
+    ['climaticien', 'Climatisation'], ['pisciniste', 'Piscine'], ['paysagiste', 'Jardin – paysage'], ['terrassier', 'Terrassement – assainissement'],
+    ['facadier', 'Façade – isolation'], ['renovation', 'Rénovation générale'], ['autre', 'Autre (précisez plus bas)'], ['ne_sait_pas', '🤷 Je ne sais pas encore']
+  ];
+  const NOMS_METIERS = {};
+  METIERS_TRAVAUX.forEach(function (m) { NOMS_METIERS[m[0]] = m[1].replace(' (précisez plus bas)', '').replace('🤷 ', ''); });
+  function categoriesChoisies() { return Array.from(document.querySelectorAll('.case-metier:checked')).map(function (c) { return c.value; }); }
+  // « Je ne sais pas » (ou seulement « Autre ») : la demande va d'abord chez Jocelyne
+  function pourJocelyne(liste) { return liste.length > 0 && (liste.indexOf('ne_sait_pas') !== -1 || liste.every(function (c) { return c === 'autre'; })); }
+  function dessinerMetiers(coches) {
+    el('t-categories').innerHTML = METIERS_TRAVAUX.map(function (m) {
+      return '<label' + (m[0] === 'ne_sait_pas' ? ' class="large"' : '') + '><input type="checkbox" class="case-metier" value="' + m[0] + '"' + (coches.indexOf(m[0]) !== -1 ? ' checked' : '') + '> ' + e(m[1]) + '</label>';
+    }).join('');
+    majMetiers();
+  }
+  function majMetiers() {
+    el('t-jocelyne').classList.toggle('cache', !pourJocelyne(categoriesChoisies()));
+    if (module === 'travaux' && prosDispo.length) dessinerPros();
+  }
+
   const ZONES = {
     '83': ['Toulon et environs', 'Centre Var', 'Est Var/Golfe', 'Dracénie', 'Haut Var/Verdon'],
     '13': ['Marseille et environs', "Pays d'Aix", 'Aubagne/La Ciotat', 'Étang de Berre/Martigues', "Salon/Pays d'Arles"]
@@ -889,6 +924,10 @@
 
   function dessinerPros() {
     const zone = el('liste-pros');
+    // Travaux : les artisans qui font les travaux demandés passent en premier
+    const demandes = module === 'travaux' ? categoriesChoisies().filter(function (c) { return c !== 'ne_sait_pas' && c !== 'autre'; }) : [];
+    function convient(p) { return !demandes.length || !(p.metiers || []).length || (p.metiers || []).some(function (c) { return demandes.indexOf(c) !== -1; }); }
+    if (demandes.length) prosDispo.sort(function (a, b) { return (convient(b) ? 1 : 0) - (convient(a) ? 1 : 0); });
     if (!prosDispo.length) {
       zone.innerHTML = '<p class="petit">Pas encore de ' + e(MODULES[module].pros) + ' à choisir sur ALB Immobilier. Choisissez « Aidez-moi à choisir » : Jocelyne s\'occupe de trouver la bonne personne.</p>';
     } else {
@@ -903,6 +942,8 @@
           (photo ? '<img src="' + e(photo) + '" alt="">' : '<span class="sans-photo">👤</span>') +
           '<span><span class="pro-nom">' + e(p.nom_affiche) + '</span>' +
           '<span class="pro-infos"> · ' + e(metier) + (p.label_rge ? ' · RGE' : '') + '</span>' +
+          ((p.metiers || []).length ? '<br><span class="pro-metiers">🔧 ' + e(p.metiers.map(function (c) { return c === 'autre' ? (p.artisan_autre || 'Autre') : (NOMS_METIERS[c] || c); }).join(', ')) + '</span>' : '') +
+          (!convient(p) ? '<br><span class="pro-hors">Ne fait pas les travaux demandés</span>' : '') +
           (p.zones && p.zones.length ? '<br><span class="pro-infos">🗺️ ' + e(p.zones.join(', ')) + '</span>' : '') +
           (rdv ? '<br><span class="pro-infos">Rendez-vous : ' + e(rdv) + '</span>' : '') +
           (indispo ? '<br><span class="pro-hors">Indisponible en ce moment' + (p.remplace_par ? ' · remplacé par ' + e(p.remplace_par) : '') + '</span>' : '') +
@@ -915,6 +956,12 @@
   }
 
   document.addEventListener('change', function (ev) {
+    if (ev.target.classList.contains('case-metier')) {
+      if (ev.target.checked && ev.target.value === 'ne_sait_pas') document.querySelectorAll('.case-metier').forEach(function (c) { if (c !== ev.target) c.checked = false; });
+      else if (ev.target.checked) document.querySelector('.case-metier[value="ne_sait_pas"]').checked = false;
+      majMetiers();
+      return;
+    }
     if (!ev.target.classList.contains('case-pro')) return;
     const id = ev.target.value;
     if (ev.target.checked) {
@@ -995,7 +1042,7 @@
         revenus_mensuels: nombre('s-revenus'), credits_mensuels: nombre('s-credits'), apport: nombre('s-apport'),
         duree_annees: Number(el('s-duree').value), taux: nombre('s-taux') });
     } else if (module === 'travaux') {
-      Object.assign(d, { categorie: el('t-categorie').value, delai: el('t-delai').value, logement: el('t-logement').value,
+      Object.assign(d, { categories: categoriesChoisies(), delai: el('t-delai').value, logement: el('t-logement').value,
         budget: el('t-budget').value, besoin_financement: avecCourtier() });
     } else {
       Object.assign(d, { projet: el('a-projet').value, type_bien_vente: el('a-type-vente').value, avancement_vente: el('a-avancement-vente').value,
@@ -1011,7 +1058,8 @@
 
   function verifierAvantEnvoi(d) {
     if ((module === 'financement' || d.courtier) && !(d.revenus_mensuels > 0 || d.apport > 0)) return MESSAGES.BUDGET_INVALIDE;
-    if (module === 'travaux' && !d.categorie) return 'Choisissez le corps de métier (étape 1).';
+    if (module === 'travaux' && !d.categories.length) return 'Cochez au moins un type de travaux (étape 1).';
+    if (module === 'travaux' && mode !== 'direct' && pourJocelyne(d.categories) && !el('t-rappel').checked) return 'Pour préciser vos travaux, Jocelyne doit pouvoir vous appeler : cochez la case prévue (étape 1).';
     if (module === 'travaux' && d.description.length < 20) return MESSAGES.DESCRIPTION_TROP_COURTE;
     if (module === 'accompagnement' && d.projet !== 'acheter' && d.mandat === 'exclusif') return MESSAGES.MANDAT_EXCLUSIF;
     if (!/^[0-9]{5}$/.test(d.code_postal)) return MESSAGES.CP_INVALIDE;
@@ -1045,7 +1093,8 @@
   function afficherMerci(r, d) {
     const m = MODULES[module];
     const lignes = [];
-    if (r.a_verifier) lignes.push('Vous ne savez pas si votre bien est en exclusivité : <strong>Jocelyne vous appelle</strong> pour le vérifier avec vous, puis envoie votre demande.');
+    if (module === 'travaux' && !r.nb_pros && pourJocelyne(d.categories || [])) lignes.push('Vos travaux restent à préciser : <strong>Jocelyne vous appelle</strong> pour en parler avec vous, puis envoie votre demande aux bons artisans.');
+    else if (r.a_verifier) lignes.push('Vous ne savez pas si votre bien est en exclusivité : <strong>Jocelyne vous appelle</strong> pour le vérifier avec vous, puis envoie votre demande.');
     else if (!r.nb_pros) lignes.push('Pas encore de ' + e(m.pros) + ' disponible dans votre secteur : <strong>Jocelyne s\'en occupe personnellement</strong> et revient vers vous très vite.');
     else lignes.push('Votre demande est partie vers <strong>' + e(r.nb_pros) + ' ' + e(r.nb_pros > 1 ? m.pros : m.unPro) + '</strong>. Dès qu\'un professionnel l\'accepte, il vous écrit dans votre messagerie ALB et vous êtes prévenu(e) par e-mail.');
     if (d.courtier) lignes.push(r.nb_courtiers
@@ -1070,10 +1119,12 @@
     const objet = params.get('objet') || '';
     const moduleChoisi = params.get('module') || '';
     if (moduleChoisi === 'financement') {
-      // « Je veux acheter » : seulement un achat pour y habiter, ou pour un investisseur
-      Array.from(el('f-objet').options).forEach(function (o) { if (o.value !== 'achat_rp' && o.value !== 'investissement') o.remove(); });
-      el('f-objet').value = 'achat_rp';
+      // « Je veux acheter » : pour y habiter, une résidence secondaire, ou pour investir
+      Array.from(el('f-objet').options).forEach(function (o) { if (['achat_rp', 'achat_rs', 'investissement'].indexOf(o.value) === -1) o.remove(); });
+      el('f-objet').value = objet === 'investissement' ? 'investissement' : objet === 'secondaire' ? 'achat_rs' : 'achat_rp';
     }
+    // Travaux : les corps de métier déjà cochés dans Projets ALB
+    dessinerMetiers((params.get('metiers') || '').split(',').filter(function (c) { return NOMS_METIERS[c]; }));
     if (objet === 'vente') el('a-projet').value = 'vendre';
     if (objet === 'achat') el('a-projet').value = 'acheter';
     if (objet === 'les_deux') el('a-projet').value = 'les_deux';
