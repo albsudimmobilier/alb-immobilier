@@ -938,8 +938,7 @@
       '</div>';
     }).join('');
   }
-
-  function ligneVisite(v) {
+    function ligneVisite(v) {
     const b = v.acheteur || {}, vd = v.vendeur || {}, a = v.annonce || {};
     const pro = v.type_vente === 'accompagnee';
     const retard = sansReponseDepuis(v);
@@ -997,14 +996,26 @@
   };
   const STATUTS_LIGNE = { en_attente: '⏳ pas encore répondu', acceptee: '✅ a accepté', refusee: '✗ a décliné', complete: 'plus nécessaire', annulee: 'demande retirée' };
   const LIBELLES_PROJET = {
-    objet: { achat_rp: 'Résidence principale', investissement: 'Investissement locatif', travaux: 'Financer des travaux', rachat: 'Renégocier / regrouper', autre: 'Autre' },
-    categorie: { electricite: 'Électricité', plomberie: 'Plomberie', carrelage: 'Carrelage', peinture: 'Peinture', menuiserie: 'Menuiserie', renovation_globale: 'Rénovation globale', ne_sait_pas: 'Pas défini' },
+    objet: { achat_rp: 'Résidence principale', achat_rs: 'Résidence secondaire', investissement: 'Investissement locatif', travaux: 'Financer des travaux', rachat: 'Renégocier / regrouper', autre: 'Autre' },
+    categorie: {
+      macon: 'Maçonnerie', renovation: 'Rénovation générale', plombier: 'Plomberie', electricien: 'Électricité', peintre: 'Peinture',
+      menuisier: 'Menuiserie', couvreur: 'Toiture', carreleur: 'Carrelage', chauffagiste: 'Chauffage', climaticien: 'Climatisation',
+      pisciniste: 'Piscine', paysagiste: 'Jardin', terrassier: 'Terrassement', facadier: 'Façade – isolation', autre: 'Autre', ne_sait_pas: 'Pas défini',
+      electricite: 'Électricité', plomberie: 'Plomberie', carrelage: 'Carrelage', peinture: 'Peinture', menuiserie: 'Menuiserie', renovation_globale: 'Rénovation globale'
+    },
     delai_travaux: { urgent: 'Urgent', court: '1 à 2 mois', moyen: '2 à 3 mois', long: 'Plus de 3 mois' },
     budget_travaux: { moins_5000: '< 5 000 €', '5000_15000': '5 000 à 15 000 €', '15000_50000': '15 000 à 50 000 €', plus_50000: '> 50 000 €', ne_sait_pas: 'Pas défini' },
     projet: { vendre: 'Vendre', acheter: 'Acheter', les_deux: 'Vendre et acheter' },
     mandat: { non: 'aucun mandat', simple: 'mandat simple', ne_sait_pas: 'mandat à vérifier' }
   };
   function libProjet(liste, v) { return (LIBELLES_PROJET[liste] || {})[v] || v || ''; }
+  // Travaux : un ou plusieurs corps de métier
+  // « Je ne sais pas » (ou seulement « Autre ») : c'est à toi de préciser les travaux avec lui
+  function aPreciser(p) { const c = categoriesProjet(p.details || {}); return c.length > 0 && (c.indexOf('ne_sait_pas') !== -1 || c.every(function (x) { return x === 'autre'; })); }
+  function categoriesProjet(d) { return Array.isArray(d.categories) ? d.categories : (d.categorie ? [d.categorie] : []); }
+  // Les codes de travaux (les mêmes que ceux des artisans)
+  const TRAVAUX_CODES = ['macon', 'plombier', 'electricien', 'peintre', 'menuisier', 'couvreur', 'carreleur', 'chauffagiste', 'climaticien', 'pisciniste', 'paysagiste', 'terrassier', 'facadier', 'renovation', 'autre'];
+  const ANCIENS_CODES = { electricite: 'electricien', plomberie: 'plombier', carrelage: 'carreleur', peinture: 'peintre', menuiserie: 'menuisier', renovation_globale: 'renovation' };
   const FILTRES_PROJETS = [
     ['a_traiter', '📞 À traiter', function (p) { return p.statut === 'a_verifier' || p.statut === 'a_orienter' || p.statut === 'sans_suite'; }],
     ['en_cours', '📨 Chez les pros', function (p) { return p.statut === 'envoyee' || p.statut === 'nouvelle'; }],
@@ -1022,7 +1033,7 @@
         (pv.revenus_mensuels != null ? ' · revenus ' + prixLisible(pv.revenus_mensuels) + '/mois, crédits ' + prixLisible(pv.credits_mensuels) + '/mois' : '');
     }
     if (p.module === 'travaux') {
-      return libProjet('categorie', d.categorie) + ' · ' + libProjet('delai_travaux', d.delai) + (d.budget ? ' · ' + libProjet('budget_travaux', d.budget) : '') +
+      return categoriesProjet(d).map(function (c) { return libProjet('categorie', c); }).join(', ') + ' · ' + libProjet('delai_travaux', d.delai) + (d.budget ? ' · ' + libProjet('budget_travaux', d.budget) : '') +
         (d.besoin_financement ? ' · 💶 besoin de financement' : '');
     }
     return libProjet('projet', d.projet) + (d.mandat ? ' · ' + libProjet('mandat', d.mandat) : '') + (d.budget_achat ? ' · budget achat ' + prixLisible(d.budget_achat) : '');
@@ -1040,18 +1051,19 @@
     const acceptes = (p.pros || []).filter(function (l) { return l.statut === 'acceptee'; }).length;
     const peutEnvoyer = p.statut === 'a_verifier' || p.statut === 'a_orienter';
     return '<div class="carte fiche" id="projet-' + p.id + '">' +
-      '<div class="etiquettes"><span class="etiquette' + (FILTRES_PROJETS[0][2](p) ? ' or' : p.statut === 'complete' ? ' vert' : '') + '">' + (STATUTS_PROJET[p.statut] || albEchapper(p.statut)) + '</span>' +
+      '<div class="etiquettes"><span class="etiquette' + (FILTRES_PROJETS[0][2](p) ? ' or' : p.statut === 'complete' ? ' vert' : '') + '">' + (p.statut === 'a_orienter' && p.module === 'travaux' && aPreciser(p) ? '📞 Travaux à préciser avec lui' : (STATUTS_PROJET[p.statut] || albEchapper(p.statut))) + '</span>' +
         (p.source === 'visite' ? '<span class="etiquette">📅 Depuis une demande de visite</span>' : '') + '</div>' +
       '<h3>' + (MODULES_PROJET[p.module] || albEchapper(p.module)) + '</h3>' +
       '<p class="ligne-info">📍 ' + albEchapper([p.zone, p.code_postal].filter(Boolean).join(' · ') || 'Secteur non précisé') + '</p>' +
       '<p class="ligne-info">📝 ' + albEchapper(resumeProjet(p)) + '</p>' +
       (p.description ? '<p class="ligne-info mot">💬 « ' + albEchapper(p.description) + ' »</p>' : '') +
+      blocMediasGestion(p.details || {}) +
+      ((p.details || {}).mot_alb ? '<p class="ligne-info mot">✍️ Ton mot pour les pros : « ' + albEchapper(p.details.mot_alb) + ' »</p>' : '') +
       '<p class="ligne-info">🎯 ' + (p.mode === 'direct' ? 'Pros choisis par lui' : 'Envoyée aux pros du secteur') + ' · ' + acceptes + ' sur ' + p.quota + ' accepté' + (acceptes > 1 ? 's' : '') +
         ' · ' + (p.appel_autorise ? '📞 accepte d\'être appelé' : '💬 messagerie seulement') + '</p>' +
       (lignes ? '<details class="historique"' + (p.statut === 'sans_suite' ? ' open' : '') + '><summary>Les pros contactés (' + (p.pros || []).length + ')</summary>' + lignes + '</details>' : '') +
       '<p class="ligne-info" style="color:#7a7a75;">Demandée le ' + dateLisible(p.cree_le) + (p.maj_le && p.maj_le !== p.cree_le ? ' · dernière action le ' + dateLisible(p.maj_le) : '') + '</p>' +
-      (peutEnvoyer ? '<div class="actions"><button type="button" class="bouton" onclick="envoyerProjetAuxPros(\'' + p.id + '\', this)">📨 Envoyer aux pros maintenant</button></div>' +
-        '<p class="aide">' + (p.statut === 'a_verifier' ? 'Après ton appel : s\'il n\'a pas de mandat exclusif, envoie sa demande aux pros du secteur.' : 'Dès qu\'un pro est disponible dans son secteur (validé et en ligne), envoie-lui la demande.') + '</p>' : '') +
+      (peutEnvoyer ? blocEnvoiProjet(p) : '') +
     '</div>';
   }
 
@@ -1082,12 +1094,96 @@
       return '<div class="proprio' + (g.p.role !== 'particulier' ? ' pro' : '') + '">' + enteteProprio(g.p, g.items.length + ' projet' + (g.items.length > 1 ? 's' : '')) +
         '<div class="liste-fiches">' + g.items.map(ficheProjet).join('') + '</div></div>';
     }).join('');
+    chargerMediasGestion();
+  }
+
+  // Photos, plans, vidéo joints par le particulier (fichiers privés : liens temporaires)
+  function blocMediasGestion(d) {
+    const m = Array.isArray(d.medias) ? d.medias : [];
+    if (!m.length) return '';
+    return '<p class="ligne-info">📷 <strong>Photos, plans, vidéo</strong></p><div class="photos-annonce">' + m.map(function (x) {
+      return '<a class="media-projet" target="_blank" rel="noopener" data-chemin="' + albEchapper(x.chemin) + '" title="' + albEchapper(x.nom || '') + '" style="width:96px;height:72px;border-radius:6px;background:#EFEAE3;display:flex;align-items:center;justify-content:center;flex:0 0 auto;text-decoration:none;font-size:0.8rem;font-weight:600;">' +
+        (x.type === 'photo' ? '<img alt="">' : (x.type === 'plan' ? '📄 Plan' : '🎬 Vidéo')) + '</a>';
+    }).join('') + '</div>';
+  }
+  async function chargerMediasGestion() {
+    const liens = Array.from(document.querySelectorAll('#liste-projets .media-projet:not([href])'));
+    if (!liens.length) return;
+    const { data, error } = await albSupabase.storage.from('projets-medias').createSignedUrls(liens.map(function (a) { return a.dataset.chemin; }), 3600);
+    if (error || !data) { console.error('[ALB] Fichiers des projets :', error); return; }
+    data.forEach(function (x, i) {
+      if (!x || !x.signedUrl) return;
+      liens[i].href = x.signedUrl;
+      const img = liens[i].querySelector('img');
+      if (img) img.src = x.signedUrl;
+    });
+  }
+
+  // Après ton appel : tu précises les travaux, tu choisis les pros (ou tous ceux qui conviennent) et tu leur laisses un mot
+  const ROLE_MODULE = { financement: 'courtier', travaux: 'artisan', accompagnement: 'immo' };
+  function prosPourProjet(p, codes) {
+    const dep = p.code_postal ? String(p.code_postal).slice(0, 2) : '';
+    return membres.filter(function (m) {
+      if (m.role !== ROLE_MODULE[p.module] || !m.statut_verifie || !m.profil_mis_en_ligne) return false;
+      return true;
+    }).map(function (m) {
+      const metiers = m.metiers_artisan || [];
+      const fait = p.module !== 'travaux' || !codes.length || !metiers.length || metiers.some(function (c) { return codes.indexOf(c) !== -1; });
+      const zones = m.zone_intervention || [];
+      const secteur = (p.zone && zones.indexOf(p.zone) !== -1) || (dep && (zones.some(function (z) { return (ZONES_PAR_DEPARTEMENT[dep === '83' ? 'Var' : 'Bouches-du-Rhône'] || []).indexOf(z) !== -1; }) || String(m.code_postal || '').slice(0, 2) === dep));
+      return { m: m, fait: fait, secteur: secteur };
+    }).sort(function (a, b) { return (b.fait + b.secteur) - (a.fait + a.secteur); });
+  }
+  function listeProsEnvoi(p) {
+    const codes = Array.from(document.querySelectorAll('#envoi-' + p.id + ' .envoi-metier:checked')).map(function (c) { return c.value; });
+    const liste = prosPourProjet(p, codes.filter(function (c) { return c !== 'autre'; }));
+    if (!liste.length) return '<p class="aide">Aucun pro validé et en ligne pour ce type de projet pour le moment.</p>';
+    return liste.map(function (x) {
+      const m = x.m;
+      const metiers = (m.metiers_artisan || []).map(function (c) { return c === 'autre' ? (m.artisan_autre || 'Autre') : libProjet('categorie', c); }).join(', ');
+      return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:0.86rem;margin:6px 0;"><input type="checkbox" class="envoi-pro" value="' + albEchapper(m.id) + '" style="width:auto;margin-top:3px;">' +
+        '<span><strong>' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '</strong>' +
+        (metiers ? ' · ' + albEchapper(metiers) : '') +
+        (!x.fait ? ' <span class="etiquette rouge">ne fait pas ces travaux</span>' : '') +
+        (!x.secteur ? ' <span class="etiquette or">hors secteur</span>' : '') +
+        (m.status_disponibilite === 'non_disponible' ? ' <span class="etiquette rouge">indisponible</span>' : '') + '</span></label>';
+    }).join('');
+  }
+  function blocEnvoiProjet(p) {
+    const codes = categoriesProjet(p.details || {}).map(function (c) { return ANCIENS_CODES[c] || c; });
+    return '<div class="decision" id="envoi-' + p.id + '">' +
+      '<div class="decision-titre">📞 Après ton appel, envoie sa demande</div>' +
+      (p.module === 'travaux' ? '<p class="aide">Quels travaux ? (coche ce que vous avez vu ensemble)</p><div class="cases">' +
+        TRAVAUX_CODES.map(function (c) {
+          return '<label><input type="checkbox" class="envoi-metier" value="' + c + '"' + (codes.indexOf(c) !== -1 ? ' checked' : '') + ' onchange="majEnvoiProjet(\'' + p.id + '\')"> ' + albEchapper(libProjet('categorie', c)) + '</label>';
+        }).join('') + '</div>' : '') +
+      '<p class="aide" style="margin-top:10px;">À qui ? Coche jusqu\'à 3 pros, ou ne coche rien pour l\'envoyer à tous ceux ' + (p.module === 'travaux' ? 'qui font ces travaux dans son secteur.' : 'de son secteur.') + '</p>' +
+      '<div class="envoi-pros">' + listeProsEnvoi(p) + '</div>' +
+      '<label class="petit-champ" style="margin-top:8px;">Ton mot pour les pros <span style="font-weight:400">(facultatif, ils le verront avec la demande)</span>' +
+      '<textarea class="envoi-mot" maxlength="1000" placeholder="Ex. : j\'ai eu Madame au téléphone, elle souhaite un devis rapidement pour sa salle de bains…"></textarea></label>' +
+      '<div class="actions"><button type="button" class="bouton" onclick="envoyerProjetAuxPros(\'' + p.id + '\', this)">📨 Envoyer la demande</button></div>' +
+    '</div>';
+  }
+  function majEnvoiProjet(id) {
+    const p = projets.find(function (x) { return x.id === id; });
+    const bloc = document.getElementById('envoi-' + id);
+    if (!p || !bloc) return;
+    const coches = Array.from(bloc.querySelectorAll('.envoi-pro:checked')).map(function (c) { return c.value; });
+    bloc.querySelector('.envoi-pros').innerHTML = listeProsEnvoi(p);
+    coches.forEach(function (v) { const c = bloc.querySelector('.envoi-pro[value="' + v + '"]'); if (c) c.checked = true; });
   }
 
   async function envoyerProjetAuxPros(id, bouton) {
-    if (!confirm('Envoyer cette demande aux pros du secteur maintenant ?')) return;
+    const bloc = document.getElementById('envoi-' + id);
+    const p = projets.find(function (x) { return x.id === id; }) || {};
+    const categories = bloc ? Array.from(bloc.querySelectorAll('.envoi-metier:checked')).map(function (c) { return c.value; }) : [];
+    const pros = bloc ? Array.from(bloc.querySelectorAll('.envoi-pro:checked')).map(function (c) { return c.value; }) : [];
+    const mot = bloc ? bloc.querySelector('.envoi-mot').value.trim() : '';
+    if (p.module === 'travaux' && !categories.length) { afficherMessage('message-general', 'erreur', 'Coche au moins un type de travaux avant d\'envoyer.'); return; }
+    if (pros.length > 3) { afficherMessage('message-general', 'erreur', 'Coche 3 pros au plus (ou aucun pour l\'envoyer à tous ceux qui conviennent).'); return; }
+    if (!confirm(pros.length ? 'Envoyer cette demande aux ' + pros.length + ' pro(s) cochés ?' : 'Envoyer cette demande à tous les pros qui conviennent ?')) return;
     bouton.disabled = true;
-    const r = await albAppelerGuichet({ action: 'envoyer_projet', projet_id: id });
+    const r = await albAppelerGuichet({ action: 'envoyer_projet', projet_id: id, categories: categories, pros: pros, mot: mot });
     bouton.disabled = false;
     if (!r.ok) { afficherMessage('message-general', 'erreur', r.code === 'DEJA_ENVOYEE' ? 'Cette demande est déjà partie.' : albMessageErreur(r.code)); return; }
     await toutRecharger();
