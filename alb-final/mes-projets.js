@@ -72,7 +72,30 @@
     if (d.mot_alb) l.push(['Le mot de Jocelyne', d.mot_alb]);
     return '<dl class="pj-recap">' + l.filter(function (x) { return x[1]; }).map(function (x) {
       return '<dt>' + e(x[0]) + '</dt><dd>' + e(x[1]) + '</dd>';
-    }).join('') + '</dl>' + (p.description ? '<p class="pj-description">' + e(p.description) + '</p>' : '');
+    }).join('') + '</dl>' + (p.description ? '<p class="pj-description">' + e(p.description) + '</p>' : '') + blocMedias(d);
+  }
+
+  // Photos, plans, vidéo joints à la demande (fichiers privés : liens temporaires)
+  function blocMedias(d) {
+    const m = Array.isArray(d.medias) ? d.medias : [];
+    if (!m.length) return '';
+    return '<p class="pj-medias-titre">📷 Photos, plans, vidéo</p><div class="pj-medias">' + m.map(function (x) {
+      return '<a class="pj-media" target="_blank" rel="noopener" data-chemin="' + e(x.chemin) + '" title="' + e(x.nom || '') + '">' +
+        (x.type === 'photo' ? '<img alt="">' : '<span>' + (x.type === 'plan' ? '📄 Plan' : '🎬 Vidéo') + '</span>') + '</a>';
+    }).join('') + '</div>';
+  }
+  async function chargerMedias(zone) {
+    if (!zone) return;
+    const liens = Array.from(zone.querySelectorAll('.pj-media:not([href])'));
+    if (!liens.length) return;
+    const { data, error } = await albSupabase.storage.from('projets-medias').createSignedUrls(liens.map(function (a) { return a.dataset.chemin; }), 3600);
+    if (error || !data) { console.error('[ALB DEBUG] fichiers :', error); return; }
+    data.forEach(function (x, i) {
+      if (!x || !x.signedUrl) return;
+      liens[i].href = x.signedUrl;
+      const img = liens[i].querySelector('img');
+      if (img) img.src = x.signedUrl;
+    });
   }
 
   function lienTel(t) {
@@ -165,6 +188,7 @@
     if (error) { bouton.disabled = false; message('pj-msg-' + id, 'erreur', 'Cette demande a déjà changé : rechargez la page.'); return; }
     try { await chargerProjets(); } catch (ex) { /* on garde l'affichage */ }
     dessinerProjets();
+    chargerMedias(el('mes-projets'));
     message('pj-msg-' + id, 'succes', 'C’est noté, votre demande est retirée.');
   }
 
@@ -260,6 +284,7 @@
     }
     try { await chargerRecues(); } catch (ex) { /* on garde l'affichage */ }
     dessinerRecues();
+    chargerMedias(el('projets-recus'));
     message('pj-msg-' + id, 'succes', accepter ? 'C’est parti ✅ Votre message est arrivé dans sa messagerie ALB.' : 'C’est noté, merci pour votre réponse.');
     if (accepter && r.conversation_id && window.albMessagerieOuvrir) window.albMessagerieOuvrir({ conversation: r.conversation_id });
   }
@@ -298,6 +323,10 @@
       '.pj-recap dd{font-weight:600;overflow-wrap:anywhere;}',
       '.pj-description{background:#F4EEF6;border-left:4px solid #5A3A6A;border-radius:4px;padding:10px 12px;white-space:pre-line;overflow-wrap:anywhere;}',
       '.pj-champ{margin-top:12px;}',
+      '.pj-medias-titre{font-weight:600;font-size:.88rem;color:#5A3A6A;}',
+      '.pj-medias{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}',
+      '.pj-media{width:86px;height:86px;border-radius:8px;overflow:hidden;background:#EFEAE3;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#5A3A6A;font-weight:600;font-size:.8rem;text-align:center;}',
+      '.pj-media img{width:100%;height:100%;object-fit:cover;}',
       '.pj-champ label{display:block;font-weight:600;font-size:.88rem;margin-bottom:6px;}',
       '.pj-champ textarea{width:100%;padding:10px;border:1px solid #D8D5CE;border-radius:6px;font-family:inherit;font-size:.95rem;resize:vertical;}',
       '.pj-carte .message{margin:10px 0 0;}',
@@ -356,6 +385,7 @@
       return false;
     }
     dessinerProjets();
+    chargerMedias(zone);
     montrerDepuisLien('projet-', projets, null, '#mes-projets', 'rubrique-projets');
     return projets.length > 0;
   };
@@ -371,6 +401,7 @@
       return 0;
     }
     dessinerRecues();
+    chargerMedias(zone);
     montrerDepuisLien('recue-', recues, 'projet', '#activite-pro', 'rubrique-pro');
     return recues.length;
   };
