@@ -22,11 +22,17 @@
     accompagnement: { icone: '🤝', titre: 'Vente / achat accompagné', pros: 'agents et mandataires', unPro: 'agent ou mandataire' },
   };
   const LIBELLES = {
-    objet: { achat_rp: 'Achat de la résidence principale', investissement: 'Investissement locatif', travaux: 'Financer des travaux', rachat: 'Renégocier ou regrouper des crédits', autre: 'Autre projet' },
+    objet: { achat_rp: 'Achat de la résidence principale', achat_rs: 'Achat d’une résidence secondaire', investissement: 'Investissement locatif', travaux: 'Financer des travaux', rachat: 'Renégocier ou regrouper des crédits', autre: 'Autre projet' },
     type_bien: { maison: 'Maison', appartement: 'Appartement', terrain: 'Terrain', immeuble: 'Immeuble', local: 'Local professionnel', autre: 'Autre' },
     situation: { cdi: 'Salarié(e) en CDI', fonctionnaire: 'Fonctionnaire', cdd: 'CDD / intérim', independant: 'Indépendant(e) / chef d’entreprise', retraite: 'Retraité(e)', autre: 'Autre' },
     delai_fin: { moins_3_mois: 'Dans les 3 mois', '3_6_mois': 'Dans 3 à 6 mois', plus_6_mois: 'Dans plus de 6 mois', ne_sait_pas: 'Pas encore défini' },
-    categorie: { electricite: 'Électricité', plomberie: 'Plomberie', carrelage: 'Carrelage', peinture: 'Peinture', menuiserie: 'Menuiserie', renovation_globale: 'Rénovation globale', ne_sait_pas: 'Pas encore défini' },
+    categorie: {
+      macon: 'Maçonnerie', renovation: 'Rénovation générale', plombier: 'Plomberie', electricien: 'Électricité', peintre: 'Peinture',
+      menuisier: 'Menuiserie', couvreur: 'Toiture – couverture', carreleur: 'Carrelage', chauffagiste: 'Chauffage', climaticien: 'Climatisation',
+      pisciniste: 'Piscine', paysagiste: 'Jardin – paysage', terrassier: 'Terrassement – assainissement', facadier: 'Façade – isolation',
+      autre: 'Autre', ne_sait_pas: 'Pas encore défini',
+      electricite: 'Électricité', plomberie: 'Plomberie', carrelage: 'Carrelage', peinture: 'Peinture', menuiserie: 'Menuiserie', renovation_globale: 'Rénovation globale'
+    },
     logement: { maison: 'Maison', appartement: 'Appartement', autre: 'Autre' },
     budget_travaux: { moins_5000: 'Moins de 5 000 €', '5000_15000': '5 000 à 15 000 €', '15000_50000': '15 000 à 50 000 €', plus_50000: 'Plus de 50 000 €', ne_sait_pas: 'Pas encore défini' },
     delai_travaux: { urgent: 'Urgent (moins de 2 semaines)', court: '1 à 2 mois', moyen: '2 à 3 mois', long: 'Plus de 3 mois' },
@@ -37,6 +43,11 @@
     priorite: { vendre_dabord: 'Vendre d’abord', acheter_dabord: 'Acheter d’abord', parallele: 'Les deux en parallèle', ne_sait_pas: 'Pas encore défini' },
   };
   function lib(liste, v) { return (LIBELLES[liste] || {})[v] || ''; }
+  // Travaux : un ou plusieurs corps de métier
+  function libCategories(d) {
+    const liste = Array.isArray(d.categories) ? d.categories : (d.categorie ? [d.categorie] : []);
+    return liste.map(function (c) { return lib('categorie', c); }).filter(Boolean).join(', ');
+  }
 
   // Le récapitulatif du projet (le même que celui envoyé aux pros)
   function recap(p) {
@@ -50,7 +61,7 @@
         ['Endettement actuel', d.endettement_actuel != null ? d.endettement_actuel + ' %' : ''], ['Situation', lib('situation', d.situation)],
         ['Premier achat', d.primo === 'oui' ? 'Oui' : d.primo === 'non' ? 'Non' : ''], ['Échéance', lib('delai_fin', d.delai)]);
     } else if (p.module === 'travaux') {
-      l.push(['Corps de métier', lib('categorie', d.categorie)], ['Logement', lib('logement', d.logement)], ['Budget', lib('budget_travaux', d.budget)],
+      l.push(['Corps de métier', libCategories(d)], ['Logement', lib('logement', d.logement)], ['Budget', lib('budget_travaux', d.budget)],
         ['Délai', lib('delai_travaux', d.delai)], ['Besoin de financement', d.besoin_financement ? 'Oui' : '']);
     } else {
       l.push(['Projet', lib('projet', d.projet)]);
@@ -58,6 +69,7 @@
       if (d.avancement_achat) l.push(['Achat', lib('avancement_achat', d.avancement_achat)], ['Bien recherché', lib('type_bien', d.type_bien_achat)], ['Budget envisagé', d.budget_achat ? euros(d.budget_achat) : '']);
       if (d.priorite) l.push(['Priorité', lib('priorite', d.priorite)]);
     }
+    if (d.mot_alb) l.push(['Le mot de Jocelyne', d.mot_alb]);
     return '<dl class="pj-recap">' + l.filter(function (x) { return x[1]; }).map(function (x) {
       return '<dt>' + e(x[0]) + '</dt><dd>' + e(x[1]) + '</dd>';
     }).join('') + '</dl>' + (p.description ? '<p class="pj-description">' + e(p.description) + '</p>' : '');
