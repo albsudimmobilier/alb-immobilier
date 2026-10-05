@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Où en est votre projet ? — ALB Immobilier</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #F5F3F0;
+      color: #4A4A47;
+      line-height: 1.6;
+      /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+    /* ========== SUIVI (mobile d'abord) ========== */
+    .page { max-width: 640px; margin: 0 auto; padding: 26px 16px 10px; width: 100%; flex: 1 0 auto; }
+    .carte { background: white; border: 1px solid #E8E6E1; border-radius: 10px; padding: 22px 18px; }
+    .carte h1 { font-size: 1.5rem; line-height: 1.25; margin-bottom: 8px; }
+    .carte > p { font-size: 0.95rem; margin-bottom: 14px; }
+    .choix { display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid #E8E6E1; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-size: 0.98rem; font-weight: 600; color: #2a2a28; background: #FBF8F3; }
+    .choix:hover { border-color: #B28E3D; }
+    .choix input { width: 20px; height: 20px; accent-color: #5A3A6A; flex-shrink: 0; }
+    .choix.actif { border-color: #5A3A6A; background: #F4EEF6; }
+    .champ { margin: 14px 0; }
+    .champ label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+    .champ input, .champ textarea { width: 100%; padding: 12px; border: 1px solid #D8D5CE; border-radius: 6px; font-family: inherit; font-size: 1rem; color: #4A4A47; }
+    .champ textarea { resize: vertical; min-height: 80px; }
+    .champ input:focus, .champ textarea:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .aide { font-size: 0.8rem; color: #7a7a75; margin-top: 4px; }
+    .bouton { display: block; width: 100%; padding: 14px 20px; border: none; border-radius: 6px; background: #B28E3D; color: white; font-family: inherit; font-size: 1rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; margin-top: 10px; }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .bouton-discret { background: none; border: 1px solid #D8D5CE; color: #4A4A47; }
+    .bouton-discret:hover { background: #F5F3F0; color: #5A3A6A; }
+    .message { display: none; padding: 12px 14px; border-radius: 6px; margin: 12px 0; font-size: 0.92rem; background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .message.visible { display: block; }
+    .confidentiel { font-size: 0.82rem; color: #7a7a75; background: #F5F3F0; border-radius: 6px; padding: 10px 12px; margin-top: 14px; }
+    .cache { display: none !important; }
+    @media (min-width: 700px) { .page { padding: 40px 24px 20px; } .carte { padding: 28px; } .carte h1 { font-size: 1.8rem; } }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="carte" id="chargement"><p>Un instant…</p></div>
+
+  <!-- Lien plus valable -->
+  <div class="carte cache" id="invalide">
+    <h1>Ce lien n'est plus valable</h1>
+    <p>Il a peut-être expiré. Pas de souci : répondez simplement à l'e-mail reçu, ou appelez Jocelyne au <a href="tel:+33745602805" style="color:#5A3A6A;font-weight:600;">07 45 60 28 05</a>.</p>
+    <a class="bouton" href="index.html">Aller sur ALB Immobilier</a>
+  </div>
+
+  <!-- La question -->
+  <div class="carte cache" id="question">
+    <h1 id="titre"></h1>
+    <p id="intro"></p>
+    <div id="liste-choix"></div>
+    <div class="champ cache" id="bloc-montant">
+      <label for="montant" id="label-montant"></label>
+      <input type="number" id="montant" min="0" step="100" inputmode="numeric" placeholder="Ex. : 8 000">
+      <div class="aide">Facultatif. Un ordre d'idée suffit.</div>
+    </div>
+    <div class="champ">
+      <label for="commentaire">Un mot à ajouter ? <span style="font-weight:400;color:#7a7a75;">(facultatif)</span></label>
+      <textarea id="commentaire" maxlength="1000" placeholder="Ce qui s'est bien passé, ou moins bien…"></textarea>
+    </div>
+    <div class="message" id="message"></div>
+    <button type="button" class="bouton" id="envoyer">Envoyer ma réponse</button>
+    <p class="confidentiel">🔒 Votre réponse reste entre vous et Jocelyne (ALB Sud Immobilier) : le professionnel ne la voit pas. Elle nous aide à garder sur ALB Immobilier des pros sérieux.</p>
+  </div>
+
+  <!-- Merci -->
+  <div class="carte cache" id="merci">
+    <h1>Merci pour votre réponse 💜</h1>
+    <p id="merci-texte"></p>
+    <a class="bouton cache" id="lien-avis" href="#">⭐ Donner mon avis sur ce pro</a>
+    <a class="bouton bouton-discret" href="espace-alb.html#mes-projets">Voir mes projets</a>
+    <p class="confidentiel">Un changement ? Vous pouvez modifier votre réponse avec le même lien, tant que Jocelyne ne l'a pas vérifiée.</p>
+  </div>
+</main>
+
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
+    }
+  }
+
+
+  // ========== SUIVI APRÈS MISE EN RELATION ==========
+  // Le particulier répond sans se connecter, grâce au lien personnel reçu par e-mail.
+  // Le choix cliqué dans l'e-mail est seulement présélectionné : la réponse part
+  // avec le bouton « Envoyer » (les logiciels qui ouvrent les liens tout seuls ne répondent pas à sa place).
+  const QUESTIONS = {
+    artisan: { question: 'Où en sont vos travaux avec', montant: 'Montant approximatif des travaux (€)',
+      choix: [['fait', '✅ Les travaux sont faits'], ['en_cours', '🔨 Ils sont en cours, ou le devis est signé'], ['pas_encore', '⏳ Pas encore décidé'], ['non', '✗ Nous n\'avons pas donné suite']] },
+    courtier: { question: 'Où en est votre prêt avec', montant: 'Montant emprunté approximatif (€)',
+      choix: [['fait', '✅ Mon prêt est signé'], ['en_cours', '📝 Le dossier est en cours'], ['pas_encore', '⏳ Pas encore décidé'], ['non', '✗ Nous n\'avons pas donné suite']] },
+    agent: { question: 'Où en êtes-vous avec', montant: '',
+      choix: [['fait', '✅ Nous travaillons ensemble'], ['en_cours', '💬 Nous en parlons encore'], ['pas_encore', '⏳ Pas encore décidé'], ['non', '✗ Nous n\'avons pas donné suite']] },
+    autre: { question: 'Où en êtes-vous avec', montant: '',
+      choix: [['fait', '✅ C\'est fait'], ['en_cours', '🔄 C\'est en cours'], ['pas_encore', '⏳ Pas encore décidé'], ['non', '✗ Nous n\'avons pas donné suite']] }
+  };
+  const MODULES = { financement: 'de financement', travaux: 'de travaux', accompagnement: 'de vente ou d\'achat' };
+  const ERREURS = {
+    LIEN_INVALIDE: 'Ce lien n\'est plus valable. Répondez simplement à l\'e-mail reçu.',
+    DEJA_TRAITE: 'Jocelyne a déjà pris en compte votre réponse. Pour la modifier, appelez-la au 07 45 60 28 05.',
+    REPONSE_INVALIDE: 'Choisissez une réponse.',
+    MONTANT_INVALIDE: 'Le montant ne semble pas juste.',
+    COMMENTAIRE_TROP_LONG: 'Votre mot est un peu long : 1 000 caractères au plus.'
+  };
+  const params = new URLSearchParams(location.search);
+  const jeton = params.get('j') || '';
+  let infos = null, q = null;
+
+  function el(id) { return document.getElementById(id); }
+  function e(t) { return albEchapper(t); }
+  function montrer(id) { ['chargement', 'invalide', 'question', 'merci'].forEach(function (x) { el(x).classList.toggle('cache', x !== id); }); }
+  function choisie() { const c = document.querySelector('input[name="reponse"]:checked'); return c ? c.value : ''; }
+  function majChoix() {
+    const r = choisie();
+    document.querySelectorAll('.choix').forEach(function (l) { l.classList.toggle('actif', l.querySelector('input').checked); });
+    el('bloc-montant').classList.toggle('cache', !(q.montant && (r === 'fait' || r === 'en_cours')));
+    el('message').classList.remove('visible');
+  }
+
+  async function charger() {
+    if (jeton.length < 32) { montrer('invalide'); return; }
+    const { data, error } = await albSupabase.rpc('alb_suivi_lire', { p_jeton: jeton });
+    if (error || !data || !data.ok) { montrer('invalide'); return; }
+    infos = data;
+    q = QUESTIONS[data.metier === 'mandataire' ? 'agent' : data.metier] || QUESTIONS.autre;
+    el('titre').textContent = q.question + ' ' + data.pro + ' ?';
+    el('intro').textContent = (data.prenom ? 'Bonjour ' + data.prenom + ', ' : 'Bonjour, ') + data.pro + ' a accepté votre demande ' + (MODULES[data.module] || '') + ' sur ALB Immobilier. Où en êtes-vous ?';
+    const preselection = ['fait', 'en_cours', 'pas_encore', 'non'].indexOf(params.get('r')) !== -1 ? params.get('r') : (data.reponse || '');
+    el('liste-choix').innerHTML = q.choix.map(function (c) {
+      return '<label class="choix"><input type="radio" name="reponse" value="' + c[0] + '"' + (c[0] === preselection ? ' checked' : '') + '> ' + e(c[1]) + '</label>';
+    }).join('');
+    if (q.montant) el('label-montant').textContent = q.montant;
+    if (data.montant != null) el('montant').value = data.montant;
+    if (data.commentaire) el('commentaire').value = data.commentaire;
+    majChoix();
+    if (data.verrouille) { afficherMerci(data.reponse, true); return; }
+    montrer('question');
+  }
+
+  async function envoyer() {
+    const r = choisie();
+    if (!r) { el('message').textContent = ERREURS.REPONSE_INVALIDE; el('message').classList.add('visible'); return; }
+    const brut = String(el('montant').value || '').replace(/\s/g, '').replace(',', '.');
+    const montant = !el('bloc-montant').classList.contains('cache') && brut !== '' ? Number(brut) : null;
+    if (montant !== null && !(montant >= 0)) { el('message').textContent = ERREURS.MONTANT_INVALIDE; el('message').classList.add('visible'); return; }
+    const bouton = el('envoyer');
+    bouton.disabled = true;
+    bouton.textContent = 'Envoi…';
+    const { data, error } = await albSupabase.rpc('alb_suivi_repondre', { p_jeton: jeton, p_reponse: r, p_montant: montant, p_commentaire: el('commentaire').value });
+    bouton.disabled = false;
+    bouton.textContent = 'Envoyer ma réponse';
+    if (error || !data || !data.ok) {
+      console.error('[ALB DEBUG] suivi :', error || data);
+      el('message').textContent = ERREURS[data && data.code] || 'Votre réponse n\'a pas pu être envoyée. Réessayez dans un instant.';
+      el('message').classList.add('visible');
+      return;
+    }
+    afficherMerci(r, false);
+  }
+
+  function afficherMerci(r, dejaVerifiee) {
+    const textes = {
+      fait: 'Bonne nouvelle ! Merci d\'avoir pris le temps de répondre.',
+      en_cours: 'Merci ! Je vous souhaite que la suite se passe au mieux.',
+      pas_encore: 'Merci ! Prenez votre temps. Si besoin, je reste disponible au 07 45 60 28 05.',
+      non: 'Merci de me l\'avoir dit. Si vous souhaitez un autre professionnel, ou un coup de main, appelez-moi au 07 45 60 28 05 : on trouve une solution ensemble.'
+    };
+    el('merci-texte').textContent = (dejaVerifiee ? 'Votre réponse a déjà été prise en compte. ' : '') + (textes[r] || '');
+    const avis = infos && infos.avis_possible && (r === 'fait' || r === 'en_cours');
+    el('lien-avis').classList.toggle('cache', !avis);
+    if (avis) {
+      el('lien-avis').href = 'vitrine-pros.html?avis=' + encodeURIComponent(infos.pro_id);
+      el('lien-avis').textContent = '⭐ Donner mon avis sur ' + infos.pro;
+    }
+    montrer('merci');
+  }
+
+  document.addEventListener('change', function (ev) { if (ev.target.name === 'reponse') majChoix(); });
+  document.addEventListener('DOMContentLoaded', function () {
+    el('envoyer').addEventListener('click', envoyer);
+    charger();
+  });
+</script>
+</body>
+</html>
