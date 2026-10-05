@@ -198,6 +198,7 @@
     <span class="bandeau-titre">Gestion du site</span>
   </div>
   <div class="bandeau-droite">
+    <a href="statistiques.html">📈 Statistiques</a>
     <a href="index.html" target="_blank">Voir le site</a>
     <button type="button" id="bouton-deconnexion" class="cache" onclick="seDeconnecter()">Me déconnecter</button>
   </div>
@@ -286,6 +287,7 @@
         <div class="compteur"><div class="valeur" id="c-pj-cours">–</div><div class="libelle">📨 Chez les pros</div></div>
         <div class="compteur"><div class="valeur" id="c-pj-faites">–</div><div class="libelle">✅ Mises en relation faites</div></div>
         <div class="compteur"><div class="valeur" id="c-pj-acceptes">–</div><div class="libelle">🤝 Acceptations de pros</div></div>
+        <div class="compteur alerte" data-aller="projets" id="compteur-suivis"><div class="valeur" id="c-pj-suivis">–</div><div class="libelle">🔎 Suivis à vérifier</div></div>
       </div>
 
       <h2 class="titre-section">Particuliers</h2>
@@ -386,7 +388,7 @@
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
         <p class="ligne-info">📋 <strong>Ce que j'ai à faire aujourd'hui</strong> : une liste claire en haut du tableau de bord.</p>
-        <p class="ligne-info">🗺️ <strong>Chiffres par département</strong> (Var, Bouches-du-Rhône) et temps moyen de vente des biens.</p>
+        <p class="ligne-info">🗺️ Les chiffres par département et le temps de vente sont là : bouton <a href="statistiques.html"><strong>📈 Statistiques</strong></a>, en haut.</p>
         <p class="ligne-info">💶 <strong>Prévisionnel financier</strong> d'ALB Sud Immobilier.</p>
       </div>
     </div>
@@ -425,6 +427,7 @@
     METIER_ARTISAN_MANQUANT: 'Coche au moins un corps de métier pour cet artisan.',
     ARTISAN_AUTRE_MANQUANT: 'Tu as coché « Autre » : écris le corps de métier.',
     ACCES_REFUSE: "Accès refusé : cette action est réservée à l'équipe ALB.",
+    SUIVI_INTROUVABLE: 'Ce suivi est introuvable.',
     SIRET_MANQUANT: 'Indique le SIRET (14 chiffres) avant de valider.',
     SIRET_INVALIDE: 'Le SIRET doit contenir exactement 14 chiffres.',
     METIER_A_CHOISIR: "Choisis d'abord le métier de ce pro.",
@@ -934,11 +937,7 @@
           return '<div class="bien-visites"><div class="bien-visites-titre">🏡 ' + albEchapper(b.a.titre) + ' · ' + prixLisible(b.a.prix) + ' · ' + albEchapper(b.a.ville || '') +
             (STATUTS_ANNONCE[b.a.statut] ? ' <span class="etiquette">' + STATUTS_ANNONCE[b.a.statut] + '</span>' : '') + '</div>' +
             b.visites.map(ligneVisite).join('') + '</div>';
-        }).join('') +
-      '</div>';
-    }).join('');
-  }
-    function ligneVisite(v) {
+        }).join('') +  function ligneVisite(v) {
     const b = v.acheteur || {}, vd = v.vendeur || {}, a = v.annonce || {};
     const pro = v.type_vente === 'accompagnee';
     const retard = sansReponseDepuis(v);
@@ -1016,10 +1015,16 @@
   // Les codes de travaux (les mêmes que ceux des artisans)
   const TRAVAUX_CODES = ['macon', 'plombier', 'electricien', 'peintre', 'menuisier', 'couvreur', 'carreleur', 'chauffagiste', 'climaticien', 'pisciniste', 'paysagiste', 'terrassier', 'facadier', 'renovation', 'autre'];
   const ANCIENS_CODES = { electricite: 'electricien', plomberie: 'plombier', carrelage: 'carreleur', peinture: 'peintre', menuiserie: 'menuisier', renovation_globale: 'renovation' };
+  // Suivi après mise en relation : le particulier dit que c'est fait ou en cours, et tu n'as pas encore vérifié
+  function suivisAVerifier(p) {
+    return [].concat.apply([], (p.pros || []).map(function (l) { return l.suivis || []; }))
+      .filter(function (su) { return (su.reponse === 'fait' || su.reponse === 'en_cours') && !su.traite_le; });
+  }
   const FILTRES_PROJETS = [
     ['a_traiter', '📞 À traiter', function (p) { return p.statut === 'a_verifier' || p.statut === 'a_orienter' || p.statut === 'sans_suite'; }],
     ['en_cours', '📨 Chez les pros', function (p) { return p.statut === 'envoyee' || p.statut === 'nouvelle'; }],
     ['faites', '✅ Faites', function (p) { return p.statut === 'complete'; }],
+    ['suivis', '🔎 Suivis à vérifier', function (p) { return suivisAVerifier(p).length > 0; }],
     ['retirees', '✗ Retirées', function (p) { return p.statut === 'annulee'; }],
     ['toutes', 'Toutes', function () { return true; }]
   ];
@@ -1046,7 +1051,8 @@
         (pr.nom_entreprise ? ' <span class="etiquette or">' + albEchapper(pr.nom_entreprise) + '</span>' : '') +
         ' · ' + (STATUTS_LIGNE[l.statut] || albEchapper(l.statut)) + (l.rang ? ' (n° ' + l.rang + ')' : '') +
         (l.repondu_le ? ' le ' + dateLisible(l.repondu_le) : '') + ' ' + lienTelephone(pr.telephone) +
-        (l.mot_refus ? '<br><span class="mot">💬 « ' + albEchapper(l.mot_refus) + ' »</span>' : '') + '</p>';
+        (l.mot_refus ? '<br><span class="mot">💬 « ' + albEchapper(l.mot_refus) + ' »</span>' : '') + '</p>' +
+        (l.suivis || []).map(function (su) { return ligneSuivi(su, pr); }).join('');
     }).join('');
     const acceptes = (p.pros || []).filter(function (l) { return l.statut === 'acceptee'; }).length;
     const peutEnvoyer = p.statut === 'a_verifier' || p.statut === 'a_orienter';
@@ -1061,7 +1067,7 @@
       ((p.details || {}).mot_alb ? '<p class="ligne-info mot">✍️ Ton mot pour les pros : « ' + albEchapper(p.details.mot_alb) + ' »</p>' : '') +
       '<p class="ligne-info">🎯 ' + (p.mode === 'direct' ? 'Pros choisis par lui' : 'Envoyée aux pros du secteur') + ' · ' + acceptes + ' sur ' + p.quota + ' accepté' + (acceptes > 1 ? 's' : '') +
         ' · ' + (p.appel_autorise ? '📞 accepte d\'être appelé' : '💬 messagerie seulement') + '</p>' +
-      (lignes ? '<details class="historique"' + (p.statut === 'sans_suite' ? ' open' : '') + '><summary>Les pros contactés (' + (p.pros || []).length + ')</summary>' + lignes + '</details>' : '') +
+      (lignes ? '<details class="historique"' + (p.statut === 'sans_suite' || suivisAVerifier(p).length ? ' open' : '') + '><summary>Les pros contactés (' + (p.pros || []).length + ')</summary>' + lignes + '</details>' : '') +
       '<p class="ligne-info" style="color:#7a7a75;">Demandée le ' + dateLisible(p.cree_le) + (p.maj_le && p.maj_le !== p.cree_le ? ' · dernière action le ' + dateLisible(p.maj_le) : '') + '</p>' +
       (peutEnvoyer ? blocEnvoiProjet(p) : '') +
     '</div>';
@@ -1074,12 +1080,15 @@
     document.getElementById('c-pj-cours').textContent = projets.filter(FILTRES_PROJETS[1][2]).length;
     document.getElementById('c-pj-faites').textContent = projets.filter(FILTRES_PROJETS[2][2]).length;
     document.getElementById('c-pj-acceptes').textContent = projets.reduce(function (n, p) { return n + (p.pros || []).filter(function (l) { return l.statut === 'acceptee'; }).length; }, 0);
+    const nbSuivis = projets.reduce(function (n, p) { return n + suivisAVerifier(p).length; }, 0);
+    document.getElementById('c-pj-suivis').textContent = nbSuivis;
+    document.getElementById('pastille-projets').textContent = aTraiter + nbSuivis;
 
-    if (!filtreProjets) filtreProjets = aTraiter ? 'a_traiter' : 'toutes';
+    if (!filtreProjets) filtreProjets = aTraiter ? 'a_traiter' : nbSuivis ? 'suivis' : 'toutes';
     document.getElementById('filtres-projets').innerHTML = FILTRES_PROJETS.map(function (f) {
       return '<button type="button" class="filtre' + (filtreProjets === f[0] ? ' actif' : '') + '" onclick="choisirFiltreProjets(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + projets.filter(f[2]).length + ')</span></button>';
     }).join('');
-    const test = (FILTRES_PROJETS.find(function (f) { return f[0] === filtreProjets; }) || FILTRES_PROJETS[4])[2];
+    const test = (FILTRES_PROJETS.find(function (f) { return f[0] === filtreProjets; }) || FILTRES_PROJETS[FILTRES_PROJETS.length - 1])[2];
     const recherche = (document.getElementById('recherche-projets').value || '').trim().toLowerCase();
     const liste = projets.filter(test).filter(function (p) {
       if (!recherche) return true;
@@ -1171,6 +1180,37 @@
     const coches = Array.from(bloc.querySelectorAll('.envoi-pro:checked')).map(function (c) { return c.value; });
     bloc.querySelector('.envoi-pros').innerHTML = listeProsEnvoi(p);
     coches.forEach(function (v) { const c = bloc.querySelector('.envoi-pro[value="' + v + '"]'); if (c) c.checked = true; });
+  }
+
+  // ---------- Suivi après mise en relation (réponses des particuliers à 30 et 60 jours) ----------
+  const REPONSES_SUIVI = {
+    artisan: { fait: '✅ Travaux faits', en_cours: '🔨 Travaux en cours ou devis signé', pas_encore: '⏳ Pas encore décidé', non: '✗ Pas de suite' },
+    courtier: { fait: '✅ Prêt signé', en_cours: '📝 Dossier de prêt en cours', pas_encore: '⏳ Pas encore décidé', non: '✗ Pas de suite' },
+    immo: { fait: '✅ Ils travaillent ensemble', en_cours: '💬 Ils en parlent encore', pas_encore: '⏳ Pas encore décidé', non: '✗ Pas de suite' },
+    autre: { fait: '✅ C\'est fait', en_cours: '🔄 En cours', pas_encore: '⏳ Pas encore décidé', non: '✗ Pas de suite' }
+  };
+  function ligneSuivi(su, pr) {
+    if (!su.envoye_le && !su.reponse) return '';
+    const textes = REPONSES_SUIVI[pr.role] || REPONSES_SUIVI.autre;
+    const aVerifier = (su.reponse === 'fait' || su.reponse === 'en_cours') && !su.traite_le;
+    return '<div class="' + (aVerifier ? 'point-a-faire' : 'ligne-info') + '" style="margin:4px 0 8px 12px;">🔎 <strong>Suivi ' + su.etape + ' jours</strong> : ' +
+      (su.reponse
+        ? albEchapper(textes[su.reponse] || su.reponse) + (su.montant != null ? ' · ' + prixLisible(su.montant) : '') + ' <span style="color:#7a7a75;">(le ' + dateLisible(su.repondu_le) + ')</span>' +
+          (su.commentaire ? '<br><span class="mot">💬 « ' + albEchapper(su.commentaire) + ' »</span>' : '')
+        : '<span style="color:#7a7a75;">e-mail envoyé le ' + dateLisible(su.envoye_le) + ', pas encore de réponse</span>') +
+      (su.traite_le ? '<br><span class="etiquette vert">✓ Vérifié le ' + dateLisible(su.traite_le) + '</span>' + (su.note_jocelyne ? ' <span style="color:#7a7a75;">' + albEchapper(su.note_jocelyne) + '</span>' : '') : '') +
+      (aVerifier ? '<div class="actions" style="margin-top:6px;"><button type="button" class="bouton vert" onclick="suiviTraite(\'' + su.id + '\', this)">✓ Vérifié avec le pro</button></div>' : '') +
+    '</div>';
+  }
+  async function suiviTraite(id, bouton) {
+    const note = window.prompt('C\'est vérifié avec le pro ? Un petit mot pour t\'en souvenir (facultatif) — ex. : facture de 8 500 € reçue, 850 € à facturer.', '');
+    if (note === null) return;
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_suivi_traite', { p_id: id, p_note: note.trim().slice(0, 1000) || null });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+    await toutRecharger();
+    afficherMessage('message-general', 'succes', '✓ C\'est noté : ce suivi est vérifié.');
   }
 
   async function envoyerProjetAuxPros(id, bouton) {
@@ -1706,3 +1746,7 @@
 </script>
 </body>
 </html>
+      '</div>';
+    }).join('');
+  }
+  
