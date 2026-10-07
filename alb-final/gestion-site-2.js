@@ -527,7 +527,14 @@ function afficherRenvois() {
 
 // ---------- Pros validés ----------
 function afficherValides() {
-  const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie; });
+  // Les pros validés mais pas encore en ligne passent en premier
+  const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie; })
+    .sort(function (a, b) { return (a.profil_mis_en_ligne ? 1 : 0) - (b.profil_mis_en_ligne ? 1 : 0); });
+  const pasEnLigne = liste.filter(function (m) { return !m.profil_mis_en_ligne; }).length;
+  const compteur = document.getElementById('c-pas-en-ligne');
+  if (compteur) compteur.textContent = pasEnLigne;
+  const pastille = document.getElementById('pastille-valides');
+  if (pastille) { pastille.textContent = pasEnLigne; pastille.classList.toggle('cache', !pasEnLigne); }
   const zone = document.getElementById('liste-valides');
   if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucun pro validé pour le moment.</div>'; return; }
 
@@ -539,6 +546,7 @@ function afficherValides() {
       '<h3>' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '</h3>' +
       '<p class="ligne-info">👤 ' + albEchapper((m.prenom || '') + ' ' + (m.nom || '')) + '</p>' +
       etiquettesDe(m) + messageDe(m) + coordonnees(m) +
+      (m.profil_mis_en_ligne ? '' : '<div class="point-a-faire">⏸️ <strong>Validé mais pas encore en ligne</strong> : invisible sur « Nos pros ALB » et ne reçoit aucune demande. Complète sa fiche puis clique sur « 🌐 Mettre en ligne ».</div>') +
       (ficheIncomplete ? '<p class="ligne-info">⚠️ Fiche à compléter (présentation, ville, zones) avant la mise en ligne.</p>' : '') +
       '<div class="actions">' +
         (m.profil_mis_en_ligne
