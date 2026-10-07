@@ -242,7 +242,7 @@
       <button type="button" class="onglet" data-onglet="projets" onclick="afficherOnglet('projets')">🤝 Projets<span class="pastille" id="pastille-projets">0</span></button>
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
-      <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés</button>
+      <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés<span class="pastille cache" id="pastille-valides">0</span></button>
       <button type="button" class="onglet" data-onglet="avis" onclick="afficherOnglet('avis')">⭐ Avis<span class="pastille" id="pastille-avis">0</span></button>
       <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
       <button type="button" class="onglet" data-onglet="acces" onclick="afficherOnglet('acces')">🔑 Accès<span class="pastille" id="pastille-acces">0</span></button>
@@ -254,6 +254,7 @@
       <h2 class="titre-section">Aujourd'hui</h2>
       <div class="compteurs">
         <div class="compteur alerte" data-aller="a-valider"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
+        <div class="compteur alerte" data-aller="valides"><div class="valeur" id="c-pas-en-ligne">–</div><div class="libelle">⏸️ Pros validés pas encore en ligne</div></div>
         <div class="compteur alerte" data-aller="avis"><div class="valeur" id="c-avis-a-relire">–</div><div class="libelle">⭐ Avis à relire</div></div>
         <div class="compteur"><div class="valeur" id="c-en-ligne">–</div><div class="libelle">Pros visibles sur « Nos pros ALB »</div></div>
         <div class="compteur" data-aller="valides"><div class="valeur" id="c-renvois">–</div><div class="libelle">🔁 Remplacements en cours</div></div>
