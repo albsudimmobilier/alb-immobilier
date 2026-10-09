@@ -3,6 +3,8 @@
 //  • Ma fiche sur « Nos pros ALB » : photo, présentation, zones,
 //    types de rendez-vous, disponibilité (en ligne tout de suite,
 //    Jocelyne est prévenue par e-mail)
+//  • Mes papiers : numéros et attestations demandés selon le métier,
+//    vérifiés ensuite par Jocelyne dans Gestion du site
 //  • Mon remplaçant : demander à un confrère de prendre mes
 //    nouvelles demandes quand je suis indisponible (il doit accepter)
 //  • Les confrères qui me demandent de les remplacer
@@ -27,9 +29,14 @@
     PAS_ENCORE_VALIDE: 'Cette option s’ouvre une fois votre profil validé par Jocelyne.',
     CONFRERE_INVALIDE: 'Ce confrère n’est pas disponible pour un remplacement.',
     DECISION_IMPOSSIBLE: 'Cette demande a déjà changé : rechargez la page.',
+    FICHIER_INVALIDE: 'Le fichier n’a pas pu être enregistré. Réessayez.',
+    VALEUR_MANQUANTE: 'Ce champ est vide.',
+    VALEUR_TROP_LONGUE: 'C’est un peu long : 200 caractères au plus.',
+    PAPIER_INCONNU: 'Ce papier n’est pas demandé pour votre métier. Rechargez la page.',
   };
   let fiche = null;
   let confreres = [];
+  let papiers = [];
   let photoEnAttente = null; // adresse de la nouvelle photo, avant enregistrement
 
   function message(id, type, texte) { const m = el(id); if (!m) return; m.className = 'message visible ' + type; m.textContent = texte; }
@@ -112,10 +119,43 @@
         }).join('') +
         '<div class="pp-champ"><label for="pp-autres">Autres zones <span class="pp-leger">— séparées par une virgule</span></label>' +
           '<input id="pp-autres" maxlength="200" value="' + e(zones.filter(function (z) { return ZONES_CONNUES.indexOf(z) === -1; }).join(', ')) + '"></div>' +
-        '<p class="pp-aide">Nom de l’entreprise, SIRET, ORIAS, carte T ou label RGE : à changer avec Jocelyne (07 45 60 28 05), pour qu’elle puisse les vérifier.</p>' +
+        '<p class="pp-aide">Vos numéros officiels (ORIAS, carte T…) et vos attestations s’envoient dans « Mes papiers », juste en dessous. Nom de l’entreprise ou SIRET : à changer avec Jocelyne (07 45 60 28 05).</p>' +
         '<div class="message" id="pp-msg-fiche"></div>' +
         '<button type="submit" class="bouton pp-enregistrer">💾 Enregistrer ma fiche</button>' +
       '</form></div>';
+  }
+
+  // ---------- Mes papiers ----------
+  const STATUTS_PAPIER = {
+    a_verifier: '<span class="pp-pastille pp-attente">⏳ Bien reçu, Jocelyne vérifie</span>',
+    verifie: '<span class="pp-pastille pp-ok">✅ Vérifié</span>',
+    refuse: '<span class="pp-pastille pp-non">✗ À renvoyer</span>'
+  };
+  function lignePapier(d) {
+    const envoye = !!d.statut;
+    let saisie;
+    if (d.genre === 'fichier') {
+      saisie = (d.nom_fichier ? '<p class="pp-aide">📎 ' + e(d.nom_fichier) + ' · envoyé le ' + e(dateCourte(d.envoye_le)) + '</p>' : '') +
+        '<label class="pp-btn">📎 ' + (envoye ? 'Envoyer un nouveau fichier' : 'Choisir le fichier (PDF ou photo)') +
+        '<input type="file" class="pp-papier-fichier" data-type="' + e(d.type) + '" accept="application/pdf,image/*" hidden></label>';
+    } else {
+      saisie = '<div class="pp-ligne-saisie"><input id="pp-papier-' + e(d.type) + '" maxlength="200" value="' + e(d.valeur || '') + '"' +
+        (d.type === 'corps_metier' ? ' placeholder="Ex. : plomberie, chauffage"' : '') + '>' +
+        '<button type="button" class="pp-btn" data-action="papier-envoyer" data-type="' + e(d.type) + '">' + (envoye ? 'Mettre à jour' : 'Envoyer') + '</button></div>';
+    }
+    return '<div class="pp-papier">' +
+      '<p class="pp-papier-titre">' + e(d.libelle) + (d.facultatif ? ' <span class="pp-leger">— si vous en avez un</span>' : '') + ' ' + (STATUTS_PAPIER[d.statut] || '') + '</p>' +
+      (d.statut === 'refuse' && d.note ? '<p class="pp-mot">💬 ' + e(d.note) + '</p>' : '') +
+      saisie + '<div class="message" id="pp-msg-papier-' + e(d.type) + '"></div></div>';
+  }
+  function blocPapiers() {
+    if (!papiers.length) return '';
+    const manquants = papiers.filter(function (d) { return !d.facultatif && (!d.statut || d.statut === 'refuse'); }).length;
+    return '<div class="pp-bloc" id="pp-papiers"><p class="pp-titre">📄 Mes papiers</p>' +
+      '<p class="pp-aide">' + (manquants
+        ? 'Il nous manque encore ' + manquants + ' élément' + (manquants > 1 ? 's' : '') + '. Ils restent privés : seule Jocelyne les voit, pour vérifier que tout est en règle avant de vous présenter aux particuliers.'
+        : 'Merci, tout est là ✅ Seule Jocelyne voit vos papiers. Pensez à renvoyer une attestation quand elle est renouvelée.') + '</p>' +
+      papiers.map(lignePapier).join('') + '</div>';
   }
 
   function blocRenvoi() {
@@ -167,7 +207,7 @@
   function dessiner(profilId) {
     const zone = el('profil-pro');
     if (!zone || !fiche) return;
-    zone.innerHTML = blocFiche() + blocRenvoi() + blocDemandesRecues();
+    zone.innerHTML = blocFiche() + blocPapiers() + blocRenvoi() + blocDemandesRecues();
     const compteur = function () { el('pp-compteur').textContent = '— ' + el('pp-presentation').value.length + ' / 500'; };
     el('pp-presentation').addEventListener('input', compteur); compteur();
     el('pp-fichier').addEventListener('change', function () { changerPhoto(this.files[0], profilId); });
@@ -198,6 +238,38 @@
     await charger();
     dessiner(profilId);
     message('pp-msg-fiche', 'succes', fiche.en_ligne ? 'C’est enregistré ✅ Votre fiche est déjà à jour sur « Nos pros ALB ».' : 'C’est enregistré ✅');
+  }
+
+  async function envoyerPapierTexte(bouton, profilId) {
+    const type = bouton.dataset.type;
+    const valeur = el('pp-papier-' + type).value.trim();
+    if (!valeur) { message('pp-msg-papier-' + type, 'erreur', ERREURS.VALEUR_MANQUANTE); return; }
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_pro_deposer_papier', { p_type: type, p_valeur: valeur, p_chemin: null, p_nom: null });
+    bouton.disabled = false;
+    if (error) { console.error('[ALB DEBUG] papier :', error); message('pp-msg-papier-' + type, 'erreur', erreurDe(error)); return; }
+    await charger();
+    dessiner(profilId);
+    message('pp-msg-papier-' + type, 'succes', 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
+  }
+
+  async function envoyerPapierFichier(input, profilId) {
+    const fichier = input.files[0];
+    const type = input.dataset.type;
+    const idMsg = 'pp-msg-papier-' + type;
+    if (!fichier) return;
+    if (fichier.size > 10 * 1024 * 1024) { message(idMsg, 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
+    if (!/^image\//.test(fichier.type) && fichier.type !== 'application/pdf') { message(idMsg, 'erreur', 'Choisissez un PDF ou une photo.'); return; }
+    message(idMsg, 'info', 'Envoi en cours…');
+    const extension = fichier.type === 'application/pdf' ? 'pdf' : ((fichier.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+    const chemin = profilId + '/' + type + '-' + Date.now() + '.' + extension;
+    const envoi = await albSupabase.storage.from('pro-documents').upload(chemin, fichier, { contentType: fichier.type, upsert: false });
+    if (envoi.error) { console.error('[ALB DEBUG] papier fichier :', envoi.error); message(idMsg, 'erreur', 'Le fichier n’a pas pu être envoyé. Réessayez.'); return; }
+    const { error } = await albSupabase.rpc('alb_pro_deposer_papier', { p_type: type, p_valeur: null, p_chemin: chemin, p_nom: fichier.name });
+    if (error) { console.error('[ALB DEBUG] papier :', error); message(idMsg, 'erreur', erreurDe(error)); return; }
+    await charger();
+    dessiner(profilId);
+    message(idMsg, 'succes', 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
   }
 
   async function agirRenvoi(bouton, profilId) {
@@ -231,10 +303,11 @@
   }
 
   async function charger() {
-    const [a, b] = await Promise.all([albSupabase.rpc('alb_pro_ma_fiche'), albSupabase.rpc('alb_pro_confreres')]);
+    const [a, b, c] = await Promise.all([albSupabase.rpc('alb_pro_ma_fiche'), albSupabase.rpc('alb_pro_confreres'), albSupabase.rpc('alb_pro_mes_papiers')]);
     if (a.error) throw a.error;
     fiche = a.data;
     confreres = b.data || [];
+    papiers = c.data || [];
   }
 
   function styles() {
@@ -270,6 +343,15 @@
       '.pp-mot{font-style:italic;overflow-wrap:anywhere;}',
       '.pp-bloc .message{margin:10px 0 0;}',
       '.pp-enregistrer{margin-top:8px;}',
+      '.pp-papier{border-top:1px dashed #E8E6E1;padding-top:10px;margin-top:10px;}',
+      '.pp-papier-titre{font-weight:600;font-size:.88rem;}',
+      '.pp-ligne-saisie{display:flex;gap:8px;margin-top:6px;}',
+      '.pp-ligne-saisie input{flex:1;min-width:0;padding:10px;border:1px solid #D8D5CE;border-radius:6px;font-family:inherit;font-size:.95rem;}',
+      '.pp-papier .pp-btn{margin-top:6px;}',
+      '.pp-pastille{display:inline-block;font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:12px;margin-left:4px;}',
+      '.pp-attente{background:#FBF3E4;color:#8A6A1F;}',
+      '.pp-ok{background:#EEF6EE;color:#2E6B34;}',
+      '.pp-non{background:#FBECEC;color:#8A2D2D;}',
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -284,7 +366,11 @@
       zone.addEventListener('click', function (ev) {
         const b = ev.target.closest('[data-action]');
         if (!b || b.disabled) return;
+        if (b.dataset.action === 'papier-envoyer') { envoyerPapierTexte(b, profil.id); return; }
         agirRenvoi(b, profil.id);
+      });
+      zone.addEventListener('change', function (ev) {
+        if (ev.target.classList.contains('pp-papier-fichier')) envoyerPapierFichier(ev.target, profil.id);
       });
     }
     try { await charger(); } catch (ex) {
@@ -293,5 +379,9 @@
       return;
     }
     dessiner(profil.id);
+    // Lien « Remplir mon espace » de l'e-mail de validation : on descend jusqu'aux papiers
+    if (location.hash === '#mes-papiers' && el('pp-papiers')) {
+      setTimeout(function () { el('pp-papiers').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+    }
   };
 })();
