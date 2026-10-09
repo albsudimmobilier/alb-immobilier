@@ -305,6 +305,10 @@ function remplacantHtml(pro, classe) {
   return `<p class="${classe}">🔁 En son absence : <a href="espace-alb.html?contacter=${encodeURIComponent(pro.remplace_par.id)}">${echapper(pro.remplace_par.nom)}</a></p>`;
 }
 
+// Badge « Validé ALB » : calculé par la base à partir des avis publiés
+// (au moins 3 avis et 4 étoiles de moyenne ; retiré si la moyenne tombe à 3 ou moins)
+const TEXTE_BADGE = 'Badge « Validé ALB » : au moins 3 avis de particuliers, avec une moyenne d’au moins 4 étoiles.';
+
 function createProCard(pro) {
   const zonesHtml = (pro.zone_intervention || [])
     .map(zone => `<span class="zone-tag">${echapper(zone)}</span>`).join('');
@@ -319,10 +323,10 @@ function createProCard(pro) {
       ${avatarHtml(pro)}
       <div class="pro-name">${echapper(nomAffiche(pro))}</div>
       <div class="pro-role">${echapper(libelleComplet(pro))}</div>
-      <div class="pro-valide">Validé ALB ✓</div>
+      ${pro.badge_alb ? `<div class="pro-valide" title="${echapper(TEXTE_BADGE)}">Validé ALB ✓</div>` : ''}
     </div>
     <div class="pro-body">
-      <p class="pro-presentation">${echapper(pro.presentation || pro.bio || 'Professionnel validé par ALB')}</p>
+      <p class="pro-presentation">${echapper(pro.presentation || pro.bio || 'Professionnel du réseau ALB')}</p>
       <p class="pro-localisation"><strong>📍 ${echapper(localisation)}</strong></p>
       ${zonesHtml ? `<div class="pro-zones">${zonesHtml}</div>` : ''}
       ${rendezVous(pro).length ? `<p class="pro-rdv">Rendez-vous : ${echapper(rendezVous(pro).join(' · '))}</p>` : ''}
@@ -380,7 +384,8 @@ function viewProfile(proIdEncode) {
 
   document.getElementById('fiche-pro-contenu').innerHTML = `
     <h2>${echapper(nomAffiche(pro))}</h2>
-    <p class="fiche-role">${echapper(libelleComplet(pro))} · Validé ALB ✓</p>
+    <p class="fiche-role">${echapper(libelleComplet(pro))}${pro.badge_alb ? ' · Validé ALB ✓' : ''}</p>
+    ${pro.badge_alb ? `<p class="fiche-ligne">🏅 ${echapper(TEXTE_BADGE)}</p>` : ''}
     ${pro.presentation || pro.bio ? `<p class="fiche-ligne">${echapper(pro.presentation || pro.bio)}</p>` : ''}
     ${localisation ? `<p class="fiche-ligne">📍 ${echapper(localisation)}</p>` : ''}
     ${zones ? `<p class="fiche-ligne">🗺️ <strong>Intervient :</strong> ${echapper(zones)}</p>` : ''}
