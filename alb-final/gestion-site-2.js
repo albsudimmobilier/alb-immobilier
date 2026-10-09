@@ -388,6 +388,7 @@ function afficherAValider() {
       (m.nom_entreprise ? '<p class="ligne-info">🏢 ' + albEchapper(m.nom_entreprise) + '</p>' : '') +
       etiquettesDe(m) + messageDe(m) + coordonnees(m) +
       '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + '</p>' +
+      '<div class="papiers-pro" data-pro="' + albEchapper(m.id) + '">' + blocPapiersPro(m.id) + '</div>' +
       '<div class="actions">' + choixMetier +
         '<label class="petit-champ">SIRET (14 chiffres)<input id="siret-' + m.id + '" inputmode="numeric" maxlength="17" value="' + albEchapper(m.siret || '') + '"></label>' +
         '<button class="bouton vert" onclick="validerPro(\'' + m.id + '\', this)">✓ Valider</button>' +
@@ -525,6 +526,72 @@ function afficherRenvois() {
     (anciens.length ? '<details class="historique"><summary>🕘 Anciens remplacements (' + anciens.length + ')</summary><div class="liste-fiches">' + anciens.map(carteRenvoi).join('') + '</div></details>' : '');
 }
 
+// ---------- Papiers des pros (envoyés depuis leur espace) ----------
+let papiersPros = [];
+const STATUTS_PAPIER_GESTION = {
+  a_verifier: '<span class="etiquette or">⏳ À vérifier</span>',
+  verifie: '<span class="etiquette vert">✅ Vérifié</span>',
+  refuse: '<span class="etiquette rouge">✗ Renvoi demandé</span>'
+};
+// Recharge les papiers puis les range dans les cartes des pros (appelé après chaque affichage des pros)
+async function chargerPapiers() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_papiers');
+  if (error) { console.error('[ALB] Papiers des pros :', error); return; }
+  papiersPros = Array.isArray(data) ? data : [];
+  const aVerifier = papiersPros.filter(function (x) { return x.statut === 'a_verifier'; }).length;
+  const compteur = document.getElementById('c-papiers');
+  if (compteur) compteur.textContent = aVerifier;
+  document.querySelectorAll('.papiers-pro').forEach(function (zone) { zone.innerHTML = blocPapiersPro(zone.dataset.pro); });
+}
+function blocPapiersPro(proId) {
+  const liste = papiersPros.filter(function (x) { return x.profile_id === proId; });
+  if (!liste.length) return '<p class="ligne-info" style="color:#7a7a75;">📄 Aucun papier envoyé depuis son espace pour le moment.</p>';
+  const aVerifier = liste.filter(function (x) { return x.statut === 'a_verifier'; }).length;
+  return '<details class="historique" style="color:#4A4A47;font-size:0.88rem;"' + (aVerifier ? ' open' : '') + '><summary style="font-weight:600;color:#5A3A6A;cursor:pointer;">📄 Ses papiers (' + liste.length + (aVerifier ? ', dont ' + aVerifier + ' à vérifier' : '') + ')</summary>' +
+    liste.map(function (x) {
+      return '<div class="' + (x.statut === 'a_verifier' ? 'point-a-faire' : 'ligne-info') + '" style="margin:6px 0;">' +
+        '<strong>' + albEchapper(x.libelle) + '</strong> ' + (STATUTS_PAPIER_GESTION[x.statut] || '') + '<br>' +
+        (x.chemin
+          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>'
+          : '<span style="font-size:1rem;">' + albEchapper(x.valeur || '') + '</span>') +
+        '<br><span style="color:#7a7a75;">Envoyé le ' + dateLisible(x.envoye_le) + (x.verifie_le ? ' · traité le ' + dateLisible(x.verifie_le) : '') + '</span>' +
+        (x.statut === 'refuse' && x.note ? '<br><span class="mot">💬 « ' + albEchapper(x.note) + ' »</span>' : '') +
+        (x.statut === 'a_verifier'
+          ? '<div class="actions" style="margin-top:6px;"><button type="button" class="bouton vert" onclick="verifierPapier(\'' + x.id + '\', \'verifie\', this)">✓ Vérifié</button>' +
+            '<button type="button" class="bouton rouge" onclick="verifierPapier(\'' + x.id + '\', \'refuse\', this)">✗ À renvoyer</button></div>'
+          : '') +
+      '</div>';
+    }).join('') + '</details>';
+}
+// Le fichier est privé : on crée un lien valable 10 minutes
+async function ouvrirPapier(id) {
+  const x = papiersPros.find(function (y) { return y.id === id; });
+  if (!x || !x.chemin) return;
+  const fenetre = window.open('', '_blank');
+  const { data, error } = await albSupabase.storage.from('pro-documents').createSignedUrl(x.chemin, 600);
+  if (error || !data || !data.signedUrl) {
+    if (fenetre) fenetre.close();
+    afficherMessage('message-general', 'erreur', 'Ce fichier n\'a pas pu être ouvert. Réessaie dans un instant.');
+    return;
+  }
+  if (fenetre) fenetre.location.href = data.signedUrl; else window.location.href = data.signedUrl;
+}
+async function verifierPapier(id, decision, bouton) {
+  let note = null;
+  if (decision === 'refuse') {
+    note = window.prompt('Pourquoi faut-il le renvoyer ? Le pro verra ce mot dans son espace (ex. : attestation périmée, numéro incomplet).', '');
+    if (note === null) return;
+  }
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_papier_verifier', { p_id: id, p_decision: decision, p_note: note });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', decision === 'verifie'
+    ? '✓ Papier vérifié. S\'il s\'agit d\'un numéro ORIAS ou de carte T (ou du RGE), il est maintenant sur sa fiche.'
+    : 'C\'est noté : le pro voit « À renvoyer » et ton mot dans son espace.');
+}
+
 // ---------- Pros validés ----------
 function afficherValides() {
   // Les pros validés mais pas encore en ligne passent en premier
@@ -536,6 +603,7 @@ function afficherValides() {
   const pastille = document.getElementById('pastille-valides');
   if (pastille) { pastille.textContent = pasEnLigne; pastille.classList.toggle('cache', !pasEnLigne); }
   const zone = document.getElementById('liste-valides');
+  chargerPapiers();
   if (!liste.length) { zone.innerHTML = '<div class="carte vide">Aucun pro validé pour le moment.</div>'; return; }
 
   zone.innerHTML = liste.map(function (m) {
@@ -548,6 +616,7 @@ function afficherValides() {
       etiquettesDe(m) + messageDe(m) + coordonnees(m) +
       (m.profil_mis_en_ligne ? '' : '<div class="point-a-faire">⏸️ <strong>Validé mais pas encore en ligne</strong> : invisible sur « Nos pros ALB » et ne reçoit aucune demande. Complète sa fiche puis clique sur « 🌐 Mettre en ligne ».</div>') +
       (ficheIncomplete ? '<p class="ligne-info">⚠️ Fiche à compléter (présentation, ville, zones) avant la mise en ligne.</p>' : '') +
+      '<div class="papiers-pro" data-pro="' + albEchapper(m.id) + '">' + blocPapiersPro(m.id) + '</div>' +
       '<div class="actions">' +
         (m.profil_mis_en_ligne
           ? '<button class="bouton rouge" onclick="mettreEnLigne(\'' + m.id + '\', false, this)">Retirer de Nos pros ALB</button>'
