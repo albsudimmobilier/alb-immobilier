@@ -187,6 +187,23 @@
     .sms { background: #F4EEF6; border-radius: 8px; padding: 10px; margin-top: 8px; }
     .sms .actions { margin-top: 6px; }
     .retard { color: #8A2D2D; font-weight: 700; }
+
+    /* À faire aujourd'hui */
+    .a-faire { border-left: 5px solid #B28E3D; }
+    .a-faire h2 { font-size: 1.3rem; margin-bottom: 2px; }
+    .a-faire-date { font-size: 0.85rem; color: #7a7a75; margin-bottom: 12px; }
+    .a-faire-total { font-size: 0.88rem; margin-bottom: 8px; }
+    .a-faire-ligne {
+      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+      background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+      font-family: inherit; font-size: 0.92rem; color: #4A4A47; cursor: pointer;
+    }
+    .a-faire-ligne:hover { border-color: #B28E3D; background: #FBF3E4; }
+    .a-faire-emoji { font-size: 1.2rem; flex: 0 0 auto; }
+    .a-faire-texte { flex: 1; }
+    .a-faire-texte strong { color: #8A6A1F; font-size: 1.05rem; }
+    .a-faire-fleche { color: #B28E3D; font-weight: 700; }
+    .a-faire-vide { font-size: 0.95rem; color: #2E6B34; background: #EEF6EE; border-radius: 8px; padding: 12px; }
   </style>
 </head>
 <body>
@@ -251,7 +268,13 @@
 
     <!-- Tableau de bord -->
     <div class="panneau actif" id="panneau-accueil">
-      <h2 class="titre-section">Aujourd'hui</h2>
+      <div class="carte a-faire">
+        <h2>📋 À faire aujourd'hui</h2>
+        <p class="a-faire-date" id="a-faire-date"></p>
+        <div id="a-faire-liste"><p class="a-faire-total">Chargement…</p></div>
+      </div>
+
+      <h2 class="titre-section">En un coup d'œil</h2>
       <div class="compteurs">
         <div class="compteur alerte" data-aller="a-valider"><div class="valeur" id="c-a-valider">–</div><div class="libelle">Pros à rappeler / valider</div></div>
         <div class="compteur alerte" data-aller="valides"><div class="valeur" id="c-pas-en-ligne">–</div><div class="libelle">⏸️ Pros validés pas encore en ligne</div></div>
@@ -389,7 +412,6 @@
     <div class="panneau" id="panneau-bientot">
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
-        <p class="ligne-info">📋 <strong>Ce que j'ai à faire aujourd'hui</strong> : une liste claire en haut du tableau de bord.</p>
         <p class="ligne-info">🗺️ Les chiffres par département et le temps de vente sont là : bouton <a href="statistiques.html"><strong>📈 Statistiques</strong></a>, en haut.</p>
         <p class="ligne-info">💶 <strong>Prévisionnel financier</strong> d'ALB Sud Immobilier.</p>
       </div>
@@ -399,5 +421,6 @@
 
 <script src="gestion-site-1.js"></script>
 <script src="gestion-site-2.js"></script>
+<script src="gestion-site-3.js"></script>
 </body>
 </html>
