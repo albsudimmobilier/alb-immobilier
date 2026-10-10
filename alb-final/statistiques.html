@@ -102,13 +102,30 @@
     <p class="aide">Prix moyen au m² des biens vendus, et de ceux en ligne aujourd'hui.</p>
     <div class="carte tableau-conteneur" id="t-m2"></div>
 
+    <h2 class="titre-section">🔑 Visites entre particuliers</h2>
+    <p class="aide">Les demandes de visite faites sur les annonces des particuliers vendeurs, selon la date de la demande. « Bien » compte ici, « Vente » non.</p>
+    <div class="compteurs" id="c-visites"></div>
+    <div class="carte tableau-conteneur" id="t-visites"></div>
+
     <h2 class="titre-section">🤝 Projets ALB</h2>
     <p class="aide">Les demandes faites par les particuliers. « Réussite » = part des demandes où au moins un pro a accepté (sans compter celles retirées).</p>
     <div class="carte tableau-conteneur" id="t-projets"></div>
 
+    <h2 class="titre-section">🎯 Suivi des dossiers</h2>
+    <p class="aide">Ce que deviennent les demandes des particuliers, étape par étape. « Signées » = le pro a répondu « signé » à son point du mois.</p>
+    <div class="carte tableau-conteneur" id="t-dossiers"></div>
+
+    <h2 class="titre-section">✅ Résultats concrets</h2>
+    <p class="aide">Ce qu'ALB Immobilier a réellement fait aboutir sur la période. C'est ce qui parle aux pros et aux particuliers.</p>
+    <div class="compteurs" id="c-resultats"></div>
+
     <h2 class="titre-section">🧑‍💼 Les pros</h2>
-    <p class="aide">Combien de demandes chaque pro a reçues, combien il en a acceptées, et en combien de temps il répond. Pratique pour savoir sur qui compter.</p>
+    <p class="aide">Combien de demandes chaque pro a reçues, combien il en a acceptées et signées, et en combien de temps il répond. Pratique pour savoir sur qui compter.</p>
     <div class="carte tableau-conteneur" id="t-pros"></div>
+
+    <h2 class="titre-section">📆 Points du mois et désaccords</h2>
+    <p class="aide">Est-ce que les pros jouent le jeu du point du mois, et est-ce que tout le monde dit la même chose ?</p>
+    <div class="compteurs" id="c-points"></div>
 
     <h2 class="titre-section">👥 Les inscriptions</h2>
     <div class="compteurs" id="c-membres"></div>
@@ -122,8 +139,12 @@
     <div class="carte tableau-conteneur" id="t-mois"></div>
 
     <h2 class="titre-section">💶 Ce que ça rapporterait avec les tarifs 2027</h2>
-    <p class="aide">Simple repère : tout est gratuit jusqu'au 31 décembre 2026. Les abonnements sont comptés sur les annonces en ligne aujourd'hui ; les mises en relation, sur la période choisie.</p>
+    <p class="aide">Simple repère : tout est gratuit jusqu'au 31 décembre 2026. Les abonnements sont comptés sur les annonces en ligne aujourd'hui ; les prêts et travaux signés, sur la période choisie (hors désaccords ouverts).</p>
     <div class="compteurs" id="c-valeur"></div>
+
+    <h2 class="titre-section">🧾 Relevés et factures, mois par mois</h2>
+    <p class="aide">Les brouillons préparés le 1er de chaque mois. Jusqu'au 31/12/2026 ce sont des relevés offerts : ils montrent ce que chacun aurait payé. Le département ne compte pas ici.</p>
+    <div class="carte tableau-conteneur" id="t-factures"></div>
   </div>
 </main>
 
@@ -140,7 +161,8 @@
   const MODULES = { financement: '💶 Financement', travaux: '🔧 Travaux', accompagnement: '🤝 Vente / achat' };
   const METIERS = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', agent: '🏠 Agent', mandataire: '📋 Mandataire', autre: '🤝 Autre' };
   const NOMS_DEP = { '83': 'Var', '13': 'Bouches-du-Rhône', autre: 'Autre' };
-  const TARIF_AGENT_MOIS = 60, TARIF_PARTICULIER_MOIS = 9.9, TAUX_ARTISAN = 10, TARIF_COURTIER = 150;
+  // Tarifs par défaut, remplacés par ceux de Gestion du site (⚙️ Tarifs) au chargement
+  let TARIF_AGENT_MOIS = 60, TARIF_PARTICULIER_MOIS = 9.9, TAUX_ARTISAN = 10, TARIF_COURTIER = 150;
 
   let donnees = null;
   const choix = { periode: '90', dep: 'tous', bien: 'tous', vente: 'tous' };
@@ -207,6 +229,53 @@
       compteur(nb(annonces.filter(function (a) { return dansPeriode(a.depose_le); }).reduce(function (n, a) { return n + a.visites; }, 0)), '👀 Demandes de visite', 'sur les annonces déposées sur la période');
   }
 
+  // ----- Visites entre particuliers -----
+  function bonneVisite(v) { return v.type_vente === 'particulier' && bonDep(v) && (choix.bien === 'tous' || v.type_bien === choix.bien); }
+  function acceptee(v) { return v.statut === 'acceptee' || v.statut === 'effectuee'; }
+  function dessinerVisites() {
+    const toutes = donnees.visites.filter(bonneVisite);
+    const v = toutes.filter(function (x) { return dansPeriode(x.cree_le); });
+    function combien(f) { return v.filter(f).length; }
+    const ok = combien(acceptee);
+    const faites = combien(function (x) { return x.statut === 'effectuee' || (x.statut === 'acceptee' && x.creneau_le && new Date(x.creneau_le) < new Date(new Date().toDateString())); });
+    const attente = combien(function (x) { return x.statut === 'en_attente'; });
+    const autre = combien(function (x) { return x.statut === 'autre_moment'; });
+    const refus = combien(function (x) { return x.statut === 'refusee'; });
+    const annul = combien(function (x) { return x.statut === 'annulee'; });
+    const acheteurs = {}, biens = {};
+    v.forEach(function (x) { acheteurs[x.acheteur] = true; biens[x.annonce] = true; });
+    const avecBudget = v.filter(function (x) { return x.dans_budget != null; });
+    const dansBudget = avecBudget.filter(function (x) { return x.dans_budget; }).length;
+    const courtier = combien(function (x) { return x.courtier_souhaite; });
+    const appel = combien(function (x) { return x.appel_pro; });
+    const vendusPart = donnees.annonces.filter(function (a) { return a.type_vente === 'particulier' && bonDep(a) && (choix.bien === 'tous' || a.type_bien === choix.bien) && a.statut === 'vendu' && dansPeriode(a.vendu_le); });
+    const parVente = moyenne(vendusPart.map(function (a) { return a.visites; }));
+    el('c-visites').innerHTML =
+      compteur(nb(v.length), '📩 Demandes de visite', nb(Object.keys(biens).length) + ' bien' + (Object.keys(biens).length > 1 ? 's' : '') + ' · ' + nb(Object.keys(acheteurs).length) + ' acheteur' + (Object.keys(acheteurs).length > 1 ? 's' : '') + ' différent' + (Object.keys(acheteurs).length > 1 ? 's' : ''), true) +
+      compteur(pourcent(ok, v.length), '✅ Acceptées par le vendeur', nb(ok) + ' visite' + (ok > 1 ? 's' : '') + ' · ' + nb(faites) + ' déjà passée' + (faites > 1 ? 's' : ''), true) +
+      compteur(nb(autre), '🔄 Autre créneau proposé', 'le vendeur a proposé un autre moment') +
+      compteur(nb(attente), '⏳ Sans réponse du vendeur', attente ? 'à surveiller : un vendeur qui ne répond pas fait fuir les acheteurs' : 'tout le monde a répondu 👍') +
+      compteur(nb(refus), '🚫 Refusées par le vendeur') +
+      compteur(nb(annul), '↩️ Annulées par l\'acheteur') +
+      compteur(pourcent(dansBudget, avecBudget.length), '💶 Acheteurs dans leur budget', avecBudget.length ? 'sur ' + nb(avecBudget.length) + ' qui ont fait la simulation' : 'pas encore de simulation') +
+      compteur(nb(courtier), '🏦 Acheteurs qui veulent un courtier', nb(appel) + ' accepte' + (appel > 1 ? 'nt' : '') + ' aussi l\'appel d\'un pro', true) +
+      compteur(parVente != null ? String(Math.round(parVente * 10) / 10).replace('.', ',') : '—', '🎉 Demandes de visite par bien vendu', nb(vendusPart.length) + ' bien' + (vendusPart.length > 1 ? 's' : '') + ' vendu' + (vendusPart.length > 1 ? 's' : '') + ' entre particuliers');
+    // Mois par mois (6 derniers mois ; le département et le bien comptent, pas la période)
+    const mois = [];
+    const now = new Date();
+    for (let i = 0; i < 6; i++) mois.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    function duMois(date, m) { if (!date) return false; const d = new Date(date); return d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth(); }
+    const lignes = mois.map(function (m) {
+      const l = toutes.filter(function (x) { return duMois(x.cree_le, m); });
+      const a = l.filter(acceptee).length;
+      return [m.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), nb(l.length), nb(a) + (l.length ? ' <span class="petit">(' + pourcent(a, l.length) + ')</span>' : ''),
+        nb(l.filter(function (x) { return x.statut === 'refusee'; }).length), nb(l.filter(function (x) { return x.statut === 'en_attente'; }).length),
+        nb(l.filter(function (x) { return x.courtier_souhaite; }).length)];
+    });
+    el('t-visites').innerHTML = toutes.length ? tableau(['Mois', 'Demandes', 'Acceptées', 'Refusées', 'Sans réponse', 'Veulent un courtier'], lignes)
+      : '<div class="vide">Pas encore de demande de visite entre particuliers. 🌿</div>';
+  }
+
   // ----- Temps de vente et prix au m², par type de bien et de vente -----
   const CROISEMENTS = [
     ['maison', 'particulier', '🏡 Maison · entre particuliers'], ['maison', 'accompagnee', '🏡 Maison · accompagnée'],
@@ -258,7 +327,8 @@
     const envois = donnees.envois.filter(function (x) { return bonDep(x) && dansPeriode(x.envoye_le); });
     const parPro = {};
     envois.forEach(function (x) {
-      const p = parPro[x.pro_id] || (parPro[x.pro_id] = { nom: x.pro || 'Pro', metier: x.metier, recues: 0, acceptees: 0, declinees: 0, delais: [] });
+      const p = parPro[x.pro_id] || (parPro[x.pro_id] = { nom: x.pro || 'Pro', metier: x.metier, recues: 0, acceptees: 0, declinees: 0, delais: [],
+        signees: donnees.signatures.filter(function (s) { return s.pro_id === x.pro_id && bonDep(s) && dansPeriode(s.signe_le); }).length });
       p.recues++;
       if (x.statut === 'acceptee') p.acceptees++;
       if (x.statut === 'refusee') p.declinees++;
@@ -266,10 +336,78 @@
     });
     const lignes = Object.keys(parPro).map(function (k) { return parPro[k]; }).sort(function (a, b) { return b.recues - a.recues; }).map(function (p) {
       const d = moyenne(p.delais);
-      return [e(p.nom) + '<span class="petit">' + (METIERS[p.metier] || e(p.metier || '')) + '</span>', nb(p.recues), nb(p.acceptees), pourcent(p.acceptees, p.recues),
+      return [e(p.nom) + '<span class="petit">' + (METIERS[p.metier] || e(p.metier || '')) + '</span>', nb(p.recues), nb(p.acceptees), pourcent(p.acceptees, p.recues), nb(p.signees),
         d == null ? '—' : d < 1 ? 'moins d\'1 h' : d < 48 ? nb(d) + ' h' : nb(d / 24) + ' j'];
     });
-    el('t-pros').innerHTML = tableau(['Pro', 'Reçues', 'Acceptées', 'Taux', 'Répond en'], lignes, 'Aucune demande envoyée aux pros sur cette période. 🌿');
+    el('t-pros').innerHTML = tableau(['Pro', 'Reçues', 'Acceptées', 'Taux', 'Signées', 'Répond en'], lignes, 'Aucune demande envoyée aux pros sur cette période. 🌿');
+  }
+
+  // ----- Suivi des dossiers (de la demande à la signature) -----
+  function dessinerDossiers() {
+    const projets = donnees.projets.filter(function (p) { return bonDep(p) && dansPeriode(p.cree_le) && p.statut !== 'annulee'; });
+    const signes = {};
+    donnees.signatures.forEach(function (s) { signes[s.projet_id] = true; });
+    function ligne(nom, l) {
+      const envoyes = l.filter(function (p) { return p.envoyes > 0; }).length;
+      const acceptes = l.filter(function (p) { return p.acceptes > 0; }).length;
+      const signees = l.filter(function (p) { return signes[p.id]; }).length;
+      return [nom, nb(l.length), nb(envoyes) + '<span class="petit">' + pourcent(envoyes, l.length) + '</span>',
+        nb(acceptes) + '<span class="petit">' + pourcent(acceptes, l.length) + '</span>',
+        nb(signees) + '<span class="petit">' + pourcent(signees, l.length) + '</span>'];
+    }
+    const lignes = Object.keys(MODULES).map(function (m) { return ligne(MODULES[m], projets.filter(function (p) { return p.module === m; })); })
+      .filter(function (l) { return l[1] !== '0'; });
+    if (lignes.length > 1) lignes.push(ligne('<strong>Total</strong>', projets));
+    el('t-dossiers').innerHTML = tableau(['Projet', 'Demandes', 'Envoyées à un pro', 'Acceptées', 'Signées'], lignes, 'Aucune demande sur cette période. 🌿');
+  }
+
+  // ----- Résultats concrets -----
+  function dessinerResultats() {
+    const s = donnees.signatures.filter(function (x) { return bonDep(x) && dansPeriode(x.signe_le); });
+    const prets = s.filter(function (x) { return x.metier === 'courtier'; });
+    const travaux = s.filter(function (x) { return x.metier === 'artisan'; });
+    const somme = function (l) { return l.reduce(function (t, x) { return t + Number(x.montant || 0); }, 0); };
+    const ventes = vendues(donnees.annonces.filter(bonDep));
+    const visitesOk = donnees.annonces.filter(function (a) { return bonDep(a) && dansPeriode(a.depose_le); }).reduce(function (n, a) { return n + (a.visites_confirmees || 0); }, 0);
+    el('c-resultats').innerHTML =
+      compteur(nb(prets.length), '🏦 Prêts signés', somme(prets) ? euros(somme(prets)) + ' empruntés au total' : 'montant pas encore indiqué', true) +
+      compteur(nb(travaux.length), '🔨 Chantiers signés', somme(travaux) ? euros(somme(travaux)) + ' HT de travaux' : 'montant pas encore indiqué', true) +
+      compteur(nb(ventes.length), '🎉 Biens vendus', 'confirmés par toi') +
+      compteur(nb(visitesOk), '🗝️ Visites confirmées', 'sur les annonces déposées sur la période');
+  }
+
+  // ----- Points du mois et désaccords -----
+  function dessinerPoints() {
+    const pts = donnees.points.filter(function (p) { return p.envoye_le && dansPeriode(p.envoye_le); });
+    const repondus = pts.filter(function (p) { return p.repondu_le; }).length;
+    const ouverts = donnees.desaccords.filter(function (d) { return !d.traite_le; }).length;
+    const regles = donnees.desaccords.filter(function (d) { return d.traite_le && dansPeriode(d.traite_le); });
+    el('c-points').innerHTML =
+      compteur(nb(pts.length), '📨 Points du mois envoyés', 'sur la période') +
+      compteur(pts.length ? pourcent(repondus, pts.length) : '—', '✍️ Taux de réponse des pros', nb(repondus) + ' réponse' + (repondus > 1 ? 's' : '')) +
+      compteur(nb(ouverts), '⚠️ Désaccords à trancher', 'aujourd\'hui', ouverts > 0) +
+      compteur(nb(regles.length), '✓ Désaccords réglés', nb(regles.filter(function (d) { return d.regle_seul; }).length) + ' réglé(s) tout seul(s)');
+  }
+
+  // ----- Relevés et factures -----
+  function dessinerFactures() {
+    const parMois = {};
+    donnees.factures.forEach(function (f) {
+      const m = parMois[f.mois] || (parMois[f.mois] = { mois: f.mois, nb: 0, offert: 0, facture: 0, brouillons: 0, pennylane: 0, aSaisir: 0 });
+      m.nb++;
+      if (f.statut === 'brouillon') m.brouillons++;
+      if (f.a_blanc) m.offert += Number(f.total_ht || 0); else m.facture += Number(f.total_ht || 0);
+      if (!f.a_blanc && f.statut === 'validee') { if (f.pennylane) m.pennylane++; else m.aSaisir++; }
+    });
+    const lignes = Object.keys(parMois).sort().reverse().slice(0, 12).map(function (k) {
+      const m = parMois[k];
+      const nom = new Date(m.mois + 'T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      return [nom + (m.brouillons ? '<span class="petit">' + nb(m.brouillons) + ' brouillon(s) à valider</span>' : ''), nb(m.nb),
+        m.offert ? euros(m.offert) + ' HT' : '—', m.facture ? euros(m.facture) + ' HT' : '—',
+        m.facture ? nb(m.pennylane) + ' faite(s)' + (m.aSaisir ? '<span class="petit">' + nb(m.aSaisir) + ' à saisir</span>' : '') : '—'];
+    });
+    el('t-factures').innerHTML = tableau(['Mois', 'Relevés', 'Offert (valeur)', 'Facturé', 'Pennylane'], lignes,
+      'Pas encore de relevé : les premiers brouillons sont préparés le 1er novembre pour octobre. 🌿');
   }
 
   // ----- Inscriptions -----
@@ -325,15 +463,16 @@
     const agents = {};
     enLigne.filter(function (a) { return a.type_vente === 'accompagnee'; }).forEach(function (a) { agents[a.vendeur] = true; });
     const nbAgents = Object.keys(agents).length;
-    const nbParticuliers = enLigne.filter(function (a) { return a.type_vente === 'particulier'; }).length;
-    const envois = donnees.envois.filter(function (x) { return bonDep(x) && dansPeriode(x.envoye_le); });
-    const artisans = envois.filter(function (x) { return x.metier === 'artisan' && x.statut === 'acceptee'; }).length;
-    const courtiers = envois.filter(function (x) { return x.metier === 'courtier' && x.statut === 'acceptee'; }).length;
+    const nbParticuliers = enLigne.filter(function (a) { return a.type_vente === 'particulier'; }).length; // 9,90 € TTC par annonce diffusée
+    const signes = donnees.signatures.filter(function (x) { return bonDep(x) && dansPeriode(x.signe_le) && !x.desaccord; });
+    const travaux = signes.filter(function (x) { return x.metier === 'artisan'; });
+    const montantTravaux = travaux.reduce(function (t, x) { return t + Number(x.montant || 0); }, 0);
+    const courtiers = signes.filter(function (x) { return x.metier === 'courtier'; }).length;
     el('c-valeur').innerHTML =
       compteur(euros(nbAgents * TARIF_AGENT_MOIS) + ' HT', '🏠 Abonnements agents et mandataires, par mois', nb(nbAgents) + ' pro' + (nbAgents > 1 ? 's' : '') + ' avec une annonce en ligne × ' + TARIF_AGENT_MOIS + ' € HT', true) +
-      compteur((nbParticuliers * TARIF_PARTICULIER_MOIS).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' € TTC', '🏡 Abonnements particuliers vendeurs, par mois', nb(nbParticuliers) + ' annonce' + (nbParticuliers > 1 ? 's' : '') + ' en ligne × 9,90 € TTC', true) +
-      compteur(nb(artisans), '🔨 Mises en relation avec les artisans', TAUX_ARTISAN + ' % HT de chaque facture validée (montant connu une fois la facture déclarée)') +
-      compteur(euros(courtiers * TARIF_COURTIER) + ' HT', '🏦 Contacts acceptés par les courtiers', nb(courtiers) + ' × ' + TARIF_COURTIER + ' € HT, seulement si le prêt est signé');
+      compteur((nbParticuliers * TARIF_PARTICULIER_MOIS).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' € TTC', '🏡 Annonces des particuliers vendeurs, par mois', nb(nbParticuliers) + ' annonce' + (nbParticuliers > 1 ? 's' : '') + ' diffusée' + (nbParticuliers > 1 ? 's' : '') + ' × ' + TARIF_PARTICULIER_MOIS.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' € TTC', true) +
+      compteur(euros(montantTravaux * TAUX_ARTISAN / 100) + ' HT', '🔨 Chantiers signés par les artisans', nb(travaux.length) + ' chantier' + (travaux.length > 1 ? 's' : '') + ' · ' + TAUX_ARTISAN + ' % de ' + euros(montantTravaux) + ' HT', true) +
+      compteur(euros(courtiers * TARIF_COURTIER) + ' HT', '🏦 Prêts signés par les courtiers', nb(courtiers) + ' × ' + TARIF_COURTIER + ' € HT', true);
   }
 
   function dessinerTout() {
@@ -341,12 +480,17 @@
     dessinerVentes();
     dessinerTemps();
     dessinerM2();
+    dessinerVisites();
     dessinerProjets();
+    dessinerDossiers();
+    dessinerResultats();
     dessinerPros();
+    dessinerPoints();
     dessinerMembres();
     dessinerVilles();
     dessinerMois();
     dessinerValeur();
+    dessinerFactures();
   }
 
   async function demarrer() {
@@ -357,7 +501,13 @@
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
     const { data, error } = await albSupabase.rpc('alb_gestion_statistiques');
     if (error) { console.error('[ALB DEBUG] statistiques :', error); etat.className = 'message erreur'; etat.textContent = 'Les chiffres n\'ont pas pu être chargés. Recharge la page dans un instant.'; return; }
-    donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [] };
+    donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
+      signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [] };
+    const t = data.tarifs || {};
+    if (t.abonnement_immo != null) TARIF_AGENT_MOIS = Number(t.abonnement_immo);
+    if (t.abonnement_vendeur != null) TARIF_PARTICULIER_MOIS = Number(t.abonnement_vendeur);
+    if (t.taux_artisan != null) TAUX_ARTISAN = Number(t.taux_artisan);
+    if (t.pret_courtier != null) TARIF_COURTIER = Number(t.pret_courtier);
     etat.classList.add('cache');
     el('page').classList.remove('cache');
     dessinerTout();
