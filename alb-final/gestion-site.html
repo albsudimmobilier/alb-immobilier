@@ -258,6 +258,7 @@
       <button type="button" class="onglet" data-onglet="visites" onclick="afficherOnglet('visites')">📅 Visites<span class="pastille" id="pastille-visites">0</span></button>
       <button type="button" class="onglet" data-onglet="projets" onclick="afficherOnglet('projets')">🤝 Projets<span class="pastille" id="pastille-projets">0</span></button>
       <button type="button" class="onglet" data-onglet="points" onclick="afficherOnglet('points')">📆 Points des pros<span class="pastille" id="pastille-points">0</span></button>
+      <button type="button" class="onglet" data-onglet="factures" onclick="afficherOnglet('factures')">💶 Factures<span class="pastille" id="pastille-factures">0</span></button>
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés<span class="pastille cache" id="pastille-valides">0</span></button>
@@ -372,6 +373,23 @@
       <div class="liste-fiches" id="liste-points"></div>
     </div>
 
+    <!-- Factures : brouillons préparés le 1er du mois, validés par Jocelyne -->
+    <div class="panneau" id="panneau-factures">
+      <p class="aide">Le 1er de chaque mois, ALB prépare un brouillon par membre pour le mois précédent : prêts et travaux signés (sans désaccord ouvert), abonnements des agents, mandataires et vendeurs. Vérifie chaque brouillon : tu peux retirer une ligne ou corriger un montant, puis valider. Rien n'est jamais envoyé ni prélevé automatiquement.</p>
+      <p class="ligne-info" id="tarifs-offert" style="color:#2E6B34;font-weight:600;"></p>
+      <div class="actions" style="margin-bottom:14px;">
+        <button type="button" class="bouton" onclick="preparerFactures(-1, this)">🔄 Préparer le mois dernier</button>
+        <button type="button" class="bouton discret" onclick="preparerFactures(0, this)">👀 Aperçu du mois en cours</button>
+      </div>
+      <div class="filtres" id="filtres-factures"></div>
+      <div class="liste-fiches" id="liste-factures"></div>
+      <details class="carte" style="margin-top:16px;">
+        <summary style="cursor:pointer;font-weight:700;color:#5A3A6A;">⚙️ Tarifs</summary>
+        <p class="aide">Un tarif modifié s'applique aux prochains brouillons. Les factures déjà validées ne changent jamais.</p>
+        <div class="grille" id="liste-tarifs" style="margin-top:10px;"></div>
+      </details>
+    </div>
+
     <!-- Messages -->
     <div class="panneau" id="panneau-messages">
       <p class="aide">Toutes les conversations entre membres, en lecture seule, les plus récentes en premier. Rappel : un pro ne peut jamais écrire en premier à un particulier, le site le bloque.</p>
@@ -431,5 +449,6 @@
 <script src="gestion-site-2.js"></script>
 <script src="gestion-site-3.js"></script>
 <script src="gestion-site-4.js"></script>
+<script src="gestion-site-5.js"></script>
 </body>
 </html>
