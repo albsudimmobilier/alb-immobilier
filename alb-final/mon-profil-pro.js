@@ -33,6 +33,8 @@
     VALEUR_MANQUANTE: 'Ce champ est vide.',
     VALEUR_TROP_LONGUE: 'C’est un peu long : 200 caractères au plus.',
     PAPIER_INCONNU: 'Ce papier n’est pas demandé pour votre métier. Rechargez la page.',
+    DATE_MANQUANTE: 'Indiquez d’abord jusqu’à quand ce papier est valable.',
+    DATE_INVALIDE: 'Cette date ne semble pas juste. Vérifiez la date de fin de validité.',
   };
   let fiche = null;
   let confreres = [];
@@ -131,6 +133,31 @@
     verifie: '<span class="pp-pastille pp-ok">✅ Vérifié</span>',
     refuse: '<span class="pp-pastille pp-non">✗ À renvoyer</span>'
   };
+  // Papiers avec une date de fin de validité (assurances, RGE, carte T…)
+  function joursRestants(iso) {
+    const fin = new Date(iso + 'T12:00:00');
+    const auj = new Date(); auj.setHours(12, 0, 0, 0);
+    return Math.round((fin - auj) / 86400000);
+  }
+  function blocValidite(d) {
+    if (!d.expire) return '';
+    let alerte = '';
+    if (d.statut && !d.expire_le) alerte = '<p class="pp-mot pp-alerte">⚠️ Indiquez jusqu’à quand ce papier est valable, puis cliquez « Enregistrer la date ».</p>';
+    else if (d.expire_le && joursRestants(d.expire_le) < 0) alerte = '<p class="pp-mot pp-alerte">❗ Expiré depuis le ' + e(dateAvecAnnee(d.expire_le)) + ' : envoyez la nouvelle attestation.</p>';
+    else if (d.expire_le && joursRestants(d.expire_le) <= 30) alerte = '<p class="pp-mot pp-alerte">⏰ Expire le ' + e(dateAvecAnnee(d.expire_le)) + ' : pensez à envoyer la nouvelle dès que vous l’avez.</p>';
+    return alerte + '<div class="pp-ligne-saisie pp-validite"><label for="pp-date-' + e(d.type) + '">Valable jusqu’au</label>' +
+      '<input type="date" id="pp-date-' + e(d.type) + '" value="' + e(d.expire_le || '') + '">' +
+      (d.statut ? '<button type="button" class="pp-btn" data-action="papier-date" data-type="' + e(d.type) + '">Enregistrer la date</button>' : '') + '</div>';
+  }
+  async function enregistrerDate(type) {
+    const champ = el('pp-date-' + type);
+    const date = champ ? champ.value : '';
+    if (!date) return { error: { message: 'DATE_MANQUANTE' } };
+    return albSupabase.rpc('alb_pro_papier_date', { p_type: type, p_date: date });
+  }
+  function dateAvecAnnee(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
+  function papierDe(type) { return papiers.find(function (x) { return x.type === type; }) || {}; }
+
   function lignePapier(d) {
     const envoye = !!d.statut;
     let saisie;
@@ -146,15 +173,18 @@
     return '<div class="pp-papier">' +
       '<p class="pp-papier-titre">' + e(d.libelle) + (d.facultatif ? ' <span class="pp-leger">— si vous en avez un</span>' : '') + ' ' + (STATUTS_PAPIER[d.statut] || '') + '</p>' +
       (d.statut === 'refuse' && d.note ? '<p class="pp-mot">💬 ' + e(d.note) + '</p>' : '') +
-      saisie + '<div class="message" id="pp-msg-papier-' + e(d.type) + '"></div></div>';
+      blocValidite(d) + saisie + '<div class="message" id="pp-msg-papier-' + e(d.type) + '"></div></div>';
   }
   function blocPapiers() {
     if (!papiers.length) return '';
-    const manquants = papiers.filter(function (d) { return !d.facultatif && (!d.statut || d.statut === 'refuse'); }).length;
+    const manquants = papiers.filter(function (d) {
+      return (!d.facultatif && (!d.statut || d.statut === 'refuse')) || (d.expire && d.statut && !d.expire_le);
+    }).length;
     return '<div class="pp-bloc" id="pp-papiers"><p class="pp-titre">📄 Mes papiers</p>' +
       '<p class="pp-aide">' + (manquants
         ? 'Il nous manque encore ' + manquants + ' élément' + (manquants > 1 ? 's' : '') + '. Ils restent privés : seule Jocelyne les voit, pour vérifier que tout est en règle avant de vous présenter aux particuliers.'
         : 'Merci, tout est là ✅ Seule Jocelyne voit vos papiers. Pensez à renvoyer une attestation quand elle est renouvelée.') + '</p>' +
+      (papiers.some(function (d) { return d.expire; }) ? '<p class="pp-aide">📅 Pour vos assurances et certificats, indiquez la date de fin de validité : vous serez prévenu avant qu’ils expirent.</p>' : '') +
       papiers.map(lignePapier).join('') + '</div>';
   }
 
@@ -244,10 +274,13 @@
     const type = bouton.dataset.type;
     const valeur = el('pp-papier-' + type).value.trim();
     if (!valeur) { message('pp-msg-papier-' + type, 'erreur', ERREURS.VALEUR_MANQUANTE); return; }
+    if (papierDe(type).expire && !(el('pp-date-' + type) || {}).value) { message('pp-msg-papier-' + type, 'erreur', ERREURS.DATE_MANQUANTE); return; }
     bouton.disabled = true;
     const { error } = await albSupabase.rpc('alb_pro_deposer_papier', { p_type: type, p_valeur: valeur, p_chemin: null, p_nom: null });
+    const dateOk = error || !papierDe(type).expire ? { error: null } : await enregistrerDate(type);
     bouton.disabled = false;
     if (error) { console.error('[ALB DEBUG] papier :', error); message('pp-msg-papier-' + type, 'erreur', erreurDe(error)); return; }
+    if (dateOk.error) { console.error('[ALB DEBUG] date papier :', dateOk.error); await charger(); dessiner(profilId); message('pp-msg-papier-' + type, 'erreur', erreurDe(dateOk.error)); return; }
     await charger();
     dessiner(profilId);
     message('pp-msg-papier-' + type, 'succes', 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
@@ -258,6 +291,7 @@
     const type = input.dataset.type;
     const idMsg = 'pp-msg-papier-' + type;
     if (!fichier) return;
+    if (papierDe(type).expire && !(el('pp-date-' + type) || {}).value) { input.value = ''; message(idMsg, 'erreur', ERREURS.DATE_MANQUANTE); return; }
     if (fichier.size > 10 * 1024 * 1024) { message(idMsg, 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
     if (!/^image\//.test(fichier.type) && fichier.type !== 'application/pdf') { message(idMsg, 'erreur', 'Choisissez un PDF ou une photo.'); return; }
     message(idMsg, 'info', 'Envoi en cours…');
@@ -267,9 +301,25 @@
     if (envoi.error) { console.error('[ALB DEBUG] papier fichier :', envoi.error); message(idMsg, 'erreur', 'Le fichier n’a pas pu être envoyé. Réessayez.'); return; }
     const { error } = await albSupabase.rpc('alb_pro_deposer_papier', { p_type: type, p_valeur: null, p_chemin: chemin, p_nom: fichier.name });
     if (error) { console.error('[ALB DEBUG] papier :', error); message(idMsg, 'erreur', erreurDe(error)); return; }
+    if (papierDe(type).expire) {
+      const dateOk = await enregistrerDate(type);
+      if (dateOk.error) { console.error('[ALB DEBUG] date papier :', dateOk.error); await charger(); dessiner(profilId); message(idMsg, 'erreur', erreurDe(dateOk.error)); return; }
+    }
     await charger();
     dessiner(profilId);
     message(idMsg, 'succes', 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
+  }
+
+  async function enregistrerDateSeule(bouton, profilId) {
+    const type = bouton.dataset.type;
+    const idMsg = 'pp-msg-papier-' + type;
+    bouton.disabled = true;
+    const { error } = await enregistrerDate(type);
+    bouton.disabled = false;
+    if (error) { console.error('[ALB DEBUG] date papier :', error); message(idMsg, 'erreur', erreurDe(error)); return; }
+    await charger();
+    dessiner(profilId);
+    message(idMsg, 'succes', 'Date enregistrée ✅ Vous serez prévenu avant l’expiration.');
   }
 
   async function agirRenvoi(bouton, profilId) {
@@ -352,6 +402,10 @@
       '.pp-attente{background:#FBF3E4;color:#8A6A1F;}',
       '.pp-ok{background:#EEF6EE;color:#2E6B34;}',
       '.pp-non{background:#FBECEC;color:#8A2D2D;}',
+      '.pp-validite{align-items:center;flex-wrap:wrap;}',
+      '.pp-validite label{font-size:.85rem;font-weight:600;}',
+      '.pp-validite input{flex:0 1 180px;}',
+      '.pp-alerte{font-style:normal;background:#FBF3E4;border-radius:6px;padding:6px 10px;margin-top:6px;color:#8A6A1F;}',
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -367,6 +421,7 @@
         const b = ev.target.closest('[data-action]');
         if (!b || b.disabled) return;
         if (b.dataset.action === 'papier-envoyer') { envoyerPapierTexte(b, profil.id); return; }
+        if (b.dataset.action === 'papier-date') { enregistrerDateSeule(b, profil.id); return; }
         agirRenvoi(b, profil.id);
       });
       zone.addEventListener('change', function (ev) {
