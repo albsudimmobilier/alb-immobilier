@@ -211,3 +211,49 @@ LIGNES_A_FAIRE.splice(2, 0,
     afficherAFaire();
   };
 })();
+
+// ---------- 🔔 Rappels datés (ex. : tarifs des pros) ----------
+// Ils s'affichent en tête de « À faire aujourd'hui » à partir de leur date,
+// jusqu'à ce que Jocelyne clique « C'est fait ».
+let rappels = [];
+
+async function chargerRappels() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_rappels');
+  if (error) { console.error('[ALB DEBUG] rappels :', error); return; }
+  rappels = data || [];
+}
+
+async function rappelFait(id, bouton) {
+  if (!confirm('C\'est fait ? Le rappel disparaîtra de « À faire aujourd\'hui ».')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_rappel_fait', { p_id: id });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerRappels();
+  afficherAFaire();
+  afficherMessage('message-general', 'succes', 'Rappel terminé ✓');
+}
+
+(function () {
+  const afficherAFaireDeBase = afficherAFaire;
+  afficherAFaire = function () {
+    afficherAFaireDeBase();
+    const zone = document.getElementById('a-faire-liste');
+    if (!zone || !rappels.length) return;
+    const vide = zone.querySelector('.a-faire-vide');
+    if (vide) vide.remove();
+    zone.insertAdjacentHTML('afterbegin', rappels.map(function (r) {
+      return '<div class="a-faire-ligne" style="cursor:default;flex-wrap:wrap;border-color:#B28E3D;background:#FBF3E4;">' +
+        '<span class="a-faire-emoji">🔔</span>' +
+        '<span class="a-faire-texte"><strong>Rappel :</strong> ' + albEchapper(r.titre) +
+          (r.detail ? '<br><span class="aide">' + albEchapper(r.detail) + '</span>' : '') + '</span>' +
+        '<button type="button" class="bouton discret" onclick="rappelFait(\'' + albEchapper(r.id) + '\', this)">✓ C\'est fait</button>' +
+      '</div>';
+    }).join(''));
+  };
+  const toutRechargerAvantRappels = toutRecharger;
+  toutRecharger = async function () {
+    await Promise.all([toutRechargerAvantRappels(), chargerRappels()]);
+    afficherAFaire();
+  };
+})();
