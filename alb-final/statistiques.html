@@ -102,9 +102,10 @@
     <p class="aide">Prix moyen au m² des biens vendus, et de ceux en ligne aujourd'hui.</p>
     <div class="carte tableau-conteneur" id="t-m2"></div>
 
-    <h2 class="titre-section">🔑 Visites entre particuliers</h2>
-    <p class="aide">Les demandes de visite faites sur les annonces des particuliers vendeurs, selon la date de la demande. « Bien » compte ici, « Vente » non.</p>
-    <div class="compteurs" id="c-visites"></div>
+    <h2 class="titre-section">🔑 Les visites : entre particuliers ou avec un pro</h2>
+    <p class="aide">Les demandes de visite selon leur date, côte à côte : annonces des particuliers vendeurs et annonces des agents et mandataires. « Bien » compte ici, « Vente » non (les deux sont toujours affichées).</p>
+    <div class="carte tableau-conteneur" id="t-visites-comp"></div>
+    <p class="aide">Mois par mois (6 derniers mois ; le département et le bien comptent, pas la période).</p>
     <div class="carte tableau-conteneur" id="t-visites"></div>
 
     <h2 class="titre-section">🤝 Projets ALB</h2>
@@ -229,51 +230,62 @@
       compteur(nb(annonces.filter(function (a) { return dansPeriode(a.depose_le); }).reduce(function (n, a) { return n + a.visites; }, 0)), '👀 Demandes de visite', 'sur les annonces déposées sur la période');
   }
 
-  // ----- Visites entre particuliers -----
-  function bonneVisite(v) { return v.type_vente === 'particulier' && bonDep(v) && (choix.bien === 'tous' || v.type_bien === choix.bien); }
+  // ----- Visites : entre particuliers ou avec un agent / mandataire -----
+  const TYPES_VISITE = [['particulier', '🏡 Entre particuliers'], ['accompagnee', '🏠 Avec un agent ou mandataire']];
+  function bonneVisite(v) { return bonDep(v) && (choix.bien === 'tous' || v.type_bien === choix.bien); }
   function acceptee(v) { return v.statut === 'acceptee' || v.statut === 'effectuee'; }
-  function dessinerVisites() {
-    const toutes = donnees.visites.filter(bonneVisite);
-    const v = toutes.filter(function (x) { return dansPeriode(x.cree_le); });
+  function dixieme(n) { return n == null ? '—' : String(Math.round(n * 10) / 10).replace('.', ','); }
+  function chiffresVisites(type) {
+    const v = donnees.visites.filter(function (x) { return x.type_vente === type && bonneVisite(x) && dansPeriode(x.cree_le); });
     function combien(f) { return v.filter(f).length; }
+    function avecPart(n) { return nb(n) + '<span class="petit">' + pourcent(n, v.length) + '</span>'; }
     const ok = combien(acceptee);
-    const faites = combien(function (x) { return x.statut === 'effectuee' || (x.statut === 'acceptee' && x.creneau_le && new Date(x.creneau_le) < new Date(new Date().toDateString())); });
-    const attente = combien(function (x) { return x.statut === 'en_attente'; });
-    const autre = combien(function (x) { return x.statut === 'autre_moment'; });
-    const refus = combien(function (x) { return x.statut === 'refusee'; });
-    const annul = combien(function (x) { return x.statut === 'annulee'; });
+    const passees = combien(function (x) { return x.statut === 'effectuee' || (x.statut === 'acceptee' && x.creneau_le && new Date(x.creneau_le) < new Date(new Date().toDateString())); });
     const acheteurs = {}, biens = {};
     v.forEach(function (x) { acheteurs[x.acheteur] = true; biens[x.annonce] = true; });
     const avecBudget = v.filter(function (x) { return x.dans_budget != null; });
     const dansBudget = avecBudget.filter(function (x) { return x.dans_budget; }).length;
-    const courtier = combien(function (x) { return x.courtier_souhaite; });
-    const appel = combien(function (x) { return x.appel_pro; });
-    const vendusPart = donnees.annonces.filter(function (a) { return a.type_vente === 'particulier' && bonDep(a) && (choix.bien === 'tous' || a.type_bien === choix.bien) && a.statut === 'vendu' && dansPeriode(a.vendu_le); });
-    const parVente = moyenne(vendusPart.map(function (a) { return a.visites; }));
-    el('c-visites').innerHTML =
-      compteur(nb(v.length), '📩 Demandes de visite', nb(Object.keys(biens).length) + ' bien' + (Object.keys(biens).length > 1 ? 's' : '') + ' · ' + nb(Object.keys(acheteurs).length) + ' acheteur' + (Object.keys(acheteurs).length > 1 ? 's' : '') + ' différent' + (Object.keys(acheteurs).length > 1 ? 's' : ''), true) +
-      compteur(pourcent(ok, v.length), '✅ Acceptées par le vendeur', nb(ok) + ' visite' + (ok > 1 ? 's' : '') + ' · ' + nb(faites) + ' déjà passée' + (faites > 1 ? 's' : ''), true) +
-      compteur(nb(autre), '🔄 Autre créneau proposé', 'le vendeur a proposé un autre moment') +
-      compteur(nb(attente), '⏳ Sans réponse du vendeur', attente ? 'à surveiller : un vendeur qui ne répond pas fait fuir les acheteurs' : 'tout le monde a répondu 👍') +
-      compteur(nb(refus), '🚫 Refusées par le vendeur') +
-      compteur(nb(annul), '↩️ Annulées par l\'acheteur') +
-      compteur(pourcent(dansBudget, avecBudget.length), '💶 Acheteurs dans leur budget', avecBudget.length ? 'sur ' + nb(avecBudget.length) + ' qui ont fait la simulation' : 'pas encore de simulation') +
-      compteur(nb(courtier), '🏦 Acheteurs qui veulent un courtier', nb(appel) + ' accepte' + (appel > 1 ? 'nt' : '') + ' aussi l\'appel d\'un pro', true) +
-      compteur(parVente != null ? String(Math.round(parVente * 10) / 10).replace('.', ',') : '—', '🎉 Demandes de visite par bien vendu', nb(vendusPart.length) + ' bien' + (vendusPart.length > 1 ? 's' : '') + ' vendu' + (vendusPart.length > 1 ? 's' : '') + ' entre particuliers');
-    // Mois par mois (6 derniers mois ; le département et le bien comptent, pas la période)
+    const vendus = donnees.annonces.filter(function (a) { return a.type_vente === type && bonDep(a) && (choix.bien === 'tous' || a.type_bien === choix.bien) && a.statut === 'vendu' && dansPeriode(a.vendu_le); });
+    const d = delais(vendus);
+    return {
+      total: v.length,
+      lignes: [
+        nb(v.length), nb(Object.keys(biens).length), nb(Object.keys(acheteurs).length),
+        avecPart(ok), nb(passees),
+        avecPart(combien(function (x) { return x.statut === 'autre_moment'; })),
+        avecPart(combien(function (x) { return x.statut === 'en_attente'; })),
+        avecPart(combien(function (x) { return x.statut === 'refusee'; })),
+        avecPart(combien(function (x) { return x.statut === 'annulee'; })),
+        avecBudget.length ? pourcent(dansBudget, avecBudget.length) + '<span class="petit">sur ' + nb(avecBudget.length) + ' simulation' + (avecBudget.length > 1 ? 's' : '') + '</span>' : '—',
+        nb(combien(function (x) { return x.courtier_souhaite; })), nb(combien(function (x) { return x.appel_pro; })),
+        nb(vendus.length), dixieme(moyenne(vendus.map(function (a) { return a.visites; }))),
+        d.length ? nb(moyenne(d)) + ' j' : '—'
+      ]
+    };
+  }
+  const LIGNES_VISITE = ['📩 Demandes de visite', '🏡 Biens visités', '🙋 Acheteurs différents', '✅ Acceptées', '🗝️ Visites déjà passées',
+    '🔄 Autre créneau proposé', '⏳ Sans réponse', '🚫 Refusées', '↩️ Annulées par l\'acheteur', '💶 Acheteurs dans leur budget',
+    '🏦 Acheteurs qui veulent un courtier', '📞 Acceptent l\'appel d\'un pro', '🎉 Biens vendus', '📅 Demandes de visite par bien vendu', '⏱️ Temps moyen de vente'];
+  function dessinerVisites() {
+    const cols = TYPES_VISITE.map(function (t) { return chiffresVisites(t[0]); });
+    el('t-visites-comp').innerHTML = (cols[0].total || cols[1].total)
+      ? tableau(['Sur la période'].concat(TYPES_VISITE.map(function (t) { return t[1]; })), LIGNES_VISITE.map(function (nom, i) { return [nom, cols[0].lignes[i], cols[1].lignes[i]]; }))
+      : '<div class="vide">Pas encore de demande de visite sur cette période. 🌿</div>';
     const mois = [];
     const now = new Date();
     for (let i = 0; i < 6; i++) mois.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
     function duMois(date, m) { if (!date) return false; const d = new Date(date); return d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth(); }
+    const toutes = donnees.visites.filter(bonneVisite);
     const lignes = mois.map(function (m) {
       const l = toutes.filter(function (x) { return duMois(x.cree_le, m); });
-      const a = l.filter(acceptee).length;
-      return [m.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), nb(l.length), nb(a) + (l.length ? ' <span class="petit">(' + pourcent(a, l.length) + ')</span>' : ''),
-        nb(l.filter(function (x) { return x.statut === 'refusee'; }).length), nb(l.filter(function (x) { return x.statut === 'en_attente'; }).length),
-        nb(l.filter(function (x) { return x.courtier_souhaite; }).length)];
+      return [m.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })].concat(TYPES_VISITE.map(function (t) {
+        const lt = l.filter(function (x) { return x.type_vente === t[0]; });
+        const a = lt.filter(acceptee).length;
+        return nb(lt.length) + (lt.length ? '<span class="petit">' + nb(a) + ' acceptée' + (a > 1 ? 's' : '') + ' (' + pourcent(a, lt.length) + ')</span>' : '');
+      }));
     });
-    el('t-visites').innerHTML = toutes.length ? tableau(['Mois', 'Demandes', 'Acceptées', 'Refusées', 'Sans réponse', 'Veulent un courtier'], lignes)
-      : '<div class="vide">Pas encore de demande de visite entre particuliers. 🌿</div>';
+    el('t-visites').innerHTML = toutes.length ? tableau(['Mois', '🏡 Entre particuliers', '🏠 Avec un pro'], lignes)
+      : '<div class="vide">Pas encore de demande de visite. 🌿</div>';
   }
 
   // ----- Temps de vente et prix au m², par type de bien et de vente -----
