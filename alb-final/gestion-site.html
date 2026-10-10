@@ -257,6 +257,7 @@
       <button type="button" class="onglet" data-onglet="annonces" onclick="afficherOnglet('annonces')">🏡 Annonces<span class="pastille" id="pastille-annonces">0</span></button>
       <button type="button" class="onglet" data-onglet="visites" onclick="afficherOnglet('visites')">📅 Visites<span class="pastille" id="pastille-visites">0</span></button>
       <button type="button" class="onglet" data-onglet="projets" onclick="afficherOnglet('projets')">🤝 Projets<span class="pastille" id="pastille-projets">0</span></button>
+      <button type="button" class="onglet" data-onglet="points" onclick="afficherOnglet('points')">📆 Points des pros<span class="pastille" id="pastille-points">0</span></button>
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés<span class="pastille cache" id="pastille-valides">0</span></button>
@@ -364,6 +365,13 @@
       <div id="liste-projets"></div>
     </div>
 
+    <!-- Points des pros : désaccords, ventes à confirmer, réponses au point du mois -->
+    <div class="panneau" id="panneau-points">
+      <p class="aide">Le 25 de chaque mois, les pros à qui ALB a apporté quelque chose font leur point. Ici, tu vois leurs réponses. Quand un pro et un particulier ne disent pas la même chose, un désaccord apparaît : appelle-les, puis note ce que tu as décidé. Rien n'est facturé tant que tu n'as pas tranché. Une vente annoncée par un pro n'est jamais appliquée sans ta confirmation.</p>
+      <div class="filtres" id="filtres-points"></div>
+      <div class="liste-fiches" id="liste-points"></div>
+    </div>
+
     <!-- Messages -->
     <div class="panneau" id="panneau-messages">
       <p class="aide">Toutes les conversations entre membres, en lecture seule, les plus récentes en premier. Rappel : un pro ne peut jamais écrire en premier à un particulier, le site le bloque.</p>
@@ -422,5 +430,6 @@
 <script src="gestion-site-1.js"></script>
 <script src="gestion-site-2.js"></script>
 <script src="gestion-site-3.js"></script>
+<script src="gestion-site-4.js"></script>
 </body>
 </html>
