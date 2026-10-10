@@ -257,3 +257,72 @@ async function rappelFait(id, bouton) {
     afficherAFaire();
   };
 })();
+
+// ---------- 📅 Papiers des pros : dates de fin de validité ----------
+// Les pros indiquent jusqu'à quand leurs assurances et certificats sont valables.
+// 30 jours avant l'expiration, une ligne apparaît dans « À faire aujourd'hui ».
+ERREURS.DATE_INVALIDE = 'Cette date ne semble pas juste.';
+
+function joursAvant(iso) {
+  const fin = new Date(iso + 'T12:00:00');
+  const auj = new Date(); auj.setHours(12, 0, 0, 0);
+  return Math.round((fin - auj) / 86400000);
+}
+function papierExpireBientot(x) { return x.expire && x.expire_le && x.statut !== 'refuse' && joursAvant(x.expire_le) <= 30; }
+
+function etatValidite(x) {
+  if (!x.expire) return '';
+  if (!x.expire_le) return '<br><span class="etiquette or">📅 Date de validité pas encore indiquée par le pro</span>';
+  const j = joursAvant(x.expire_le);
+  const date = dateLisible(x.expire_le);
+  if (j < 0) return '<br><span class="etiquette rouge">❗ Expiré depuis le ' + albEchapper(date) + '</span>';
+  if (j <= 30) return '<br><span class="etiquette or">⏰ Expire le ' + albEchapper(date) + ' (dans ' + j + ' jour' + (j > 1 ? 's' : '') + ')</span>';
+  return '<br><span class="etiquette vert">📅 Valable jusqu\'au ' + albEchapper(date) + '</span>';
+}
+
+blocPapiersPro = function (proId) {
+  const liste = papiersPros.filter(function (x) { return x.profile_id === proId; });
+  if (!liste.length) return '<p class="ligne-info" style="color:#7a7a75;">📄 Aucun papier envoyé depuis son espace pour le moment.</p>';
+  const aVerifier = liste.filter(function (x) { return x.statut === 'a_verifier'; }).length;
+  const bientot = liste.filter(papierExpireBientot).length;
+  return '<details class="historique" style="color:#4A4A47;font-size:0.88rem;"' + (aVerifier || bientot ? ' open' : '') + '><summary style="font-weight:600;color:#5A3A6A;cursor:pointer;">📄 Ses papiers (' + liste.length +
+      (aVerifier ? ', dont ' + aVerifier + ' à vérifier' : '') + (bientot ? ' · ⏰ ' + bientot + ' qui expire' + (bientot > 1 ? 'nt' : '') : '') + ')</summary>' +
+    liste.map(function (x) {
+      return '<div class="' + (x.statut === 'a_verifier' || papierExpireBientot(x) ? 'point-a-faire' : 'ligne-info') + '" style="margin:6px 0;">' +
+        '<strong>' + albEchapper(x.libelle) + '</strong> ' + (STATUTS_PAPIER_GESTION[x.statut] || '') + etatValidite(x) + '<br>' +
+        (x.chemin
+          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>'
+          : '<span style="font-size:1rem;">' + albEchapper(x.valeur || '') + '</span>') +
+        '<br><span style="color:#7a7a75;">Envoyé le ' + dateLisible(x.envoye_le) + (x.verifie_le ? ' · traité le ' + dateLisible(x.verifie_le) : '') + '</span>' +
+        (x.statut === 'refuse' && x.note ? '<br><span class="mot">💬 « ' + albEchapper(x.note) + ' »</span>' : '') +
+        (x.expire
+          ? '<div class="actions" style="margin-top:6px;"><label class="petit-champ">Valable jusqu\'au<input type="date" id="date-papier-' + x.id + '" value="' + albEchapper(x.expire_le || '') + '"></label>' +
+            '<button type="button" class="bouton discret" onclick="corrigerDatePapier(\'' + x.id + '\', this)">📅 Enregistrer la date</button></div>'
+          : '') +
+        (x.statut === 'a_verifier'
+          ? '<div class="actions" style="margin-top:6px;"><button type="button" class="bouton vert" onclick="verifierPapier(\'' + x.id + '\', \'verifie\', this)">✓ Vérifié</button>' +
+            '<button type="button" class="bouton rouge" onclick="verifierPapier(\'' + x.id + '\', \'refuse\', this)">✗ À renvoyer</button></div>'
+          : '') +
+      '</div>';
+    }).join('') + '</details>';
+};
+
+async function corrigerDatePapier(id, bouton) {
+  const date = document.getElementById('date-papier-' + id).value || null;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_papier_date', { p_id: id, p_date: date });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerPapiers();
+  afficherMessage('message-general', 'succes', date ? 'Date de validité enregistrée ✓' : 'Date de validité effacée.');
+}
+
+// « À faire aujourd'hui » : juste après « papiers de pros à vérifier »
+(function () {
+  const i = LIGNES_A_FAIRE.findIndex(function (l) { return l.compteur === 'c-papiers'; });
+  LIGNES_A_FAIRE.splice(i >= 0 ? i + 1 : LIGNES_A_FAIRE.length, 0,
+    { calcul: function () { return papiersPros.filter(papierExpireBientot).length; },
+      un: 'papier de pro qui expire dans moins de 30 jours (ou déjà expiré) : demande-lui la nouvelle attestation',
+      plusieurs: 'papiers de pros qui expirent dans moins de 30 jours (ou déjà expirés) : demande-leur les nouvelles attestations',
+      emoji: '⏰', onglet: 'valides' });
+})();
