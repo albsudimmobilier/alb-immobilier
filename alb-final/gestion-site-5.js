@@ -3,6 +3,8 @@
 // Brouillons préparés le 1er du mois (pour le mois précédent).
 // Rien n'est envoyé ni facturé sans la validation de Jocelyne.
 // Jusqu'au 31/12/2026 : tout est offert (factures « à blanc »).
+// Les vraies factures sont faites sur Pennylane : une facture validée
+// passe « à saisir sur Pennylane », puis Jocelyne note le numéro Pennylane.
 // ============================================================
 
 let facturation = { tarifs: [], factures: [] };
@@ -31,10 +33,12 @@ function brouillonsAValider() {
   const ceMois = debutMois(0);
   return facturation.factures.filter(function (f) { return f.statut === 'brouillon' && f.mois < ceMois; });
 }
+function aSaisirPennylane(f) { return f.statut === 'validee' && !f.a_blanc && !f.numero_pennylane; }
 
 const FILTRES_FACTURES = [
   ['brouillons', '📝 Brouillons', function (f) { return f.statut === 'brouillon'; }],
-  ['validees', '✅ Validées', function (f) { return f.statut === 'validee'; }],
+  ['pennylane', '⏳ À saisir sur Pennylane', aSaisirPennylane],
+  ['faites', '✅ Faites', function (f) { return f.statut === 'validee' && !aSaisirPennylane(f); }],
   ['annulees', '✗ Annulées', function (f) { return f.statut === 'annulee'; }]
 ];
 
@@ -60,7 +64,7 @@ function afficherTarifs() {
 }
 
 function afficherFactures() {
-  const aValider = brouillonsAValider().length;
+  const aValider = brouillonsAValider().length + facturation.factures.filter(aSaisirPennylane).length;
   document.getElementById('pastille-factures').textContent = aValider;
   afficherTarifs();
 
@@ -96,9 +100,16 @@ function ficheFacture(f) {
       '</div>' : '') +
     '</div>';
   }).join('');
-  const etat = f.statut === 'validee'
-    ? '<span class="etiquette vert">✅ Validée le ' + albEchapper(dateLisible(f.valide_le)) + (f.numero ? ' · n° ' + albEchapper(f.numero) : ' · relevé offert') + '</span>'
-    : f.statut === 'annulee' ? '<span class="etiquette rouge">✗ Annulée</span>' : '<span class="etiquette or">📝 Brouillon</span>';
+  const etat = f.statut === 'annulee' ? '<span class="etiquette rouge">✗ Annulée</span>'
+    : f.statut === 'brouillon' ? '<span class="etiquette or">📝 Brouillon</span>'
+    : f.a_blanc ? '<span class="etiquette vert">✅ Relevé offert validé le ' + albEchapper(dateLisible(f.valide_le)) + '</span>'
+    : f.numero_pennylane ? '<span class="etiquette vert">✅ Saisie sur Pennylane · n° ' + albEchapper(f.numero_pennylane) + '</span>'
+    : '<span class="etiquette or">⏳ Validée le ' + albEchapper(dateLisible(f.valide_le)) + ' · à saisir sur Pennylane</span>';
+  const blocPennylane = f.statut === 'validee' && !f.a_blanc
+    ? '<div class="decision"><div class="decision-titre">' + (f.numero_pennylane ? 'Numéro de la facture sur Pennylane' : 'Une fois la facture faite sur Pennylane, colle son numéro ici') + '</div>' +
+        '<input type="text" id="pennylane-' + albEchapper(f.id) + '" maxlength="60" placeholder="Ex. : F-2027-0001" value="' + albEchapper(f.numero_pennylane || '') + '">' +
+        '<div class="actions"><button type="button" class="bouton vert" onclick="noterPennylane(\'' + albEchapper(f.id) + '\', this)">✓ Enregistrer le numéro</button></div></div>'
+    : '';
   const totaux = '<div class="prive"><p class="ligne-info">Total HT : <strong>' + albEchapper(euros(f.total_ht)) + '</strong> · TVA : ' + albEchapper(euros(f.tva)) +
       ' · TTC : <strong>' + albEchapper(euros(f.total_ttc)) + '</strong></p>' +
       (f.a_blanc ? '<p class="ligne-info" style="color:#2E6B34;"><strong>🎁 Offert : 0 € à payer.</strong> Ce relevé montre ce que ' + albEchapper(f.nom || 'ce membre') + ' aurait payé.</p>' : '') + '</div>';
@@ -109,9 +120,10 @@ function ficheFacture(f) {
     (f.desaccord ? '<div class="point-a-faire">⚠️ Un désaccord est ouvert sur une ligne : règle-le dans « 📆 Points des pros » avant de valider.</div>' : '') +
     lignes + totaux +
     (f.note ? '<p class="ligne-info mot">📝 ' + albEchapper(f.note) + '</p>' : '') +
+    blocPennylane +
     (brouillon ? '<div class="decision"><div class="decision-titre">Ta décision</div>' +
       '<input type="text" id="note-facture-' + albEchapper(f.id) + '" maxlength="1000" placeholder="Une note pour toi (facultatif)">' +
-      '<div class="actions"><button type="button" class="bouton vert" onclick="decisionFacture(\'' + albEchapper(f.id) + '\', \'valider\', this)">✓ Valider' + (f.a_blanc ? ' le relevé offert' : ' la facture') + '</button>' +
+      '<div class="actions"><button type="button" class="bouton vert" onclick="decisionFacture(\'' + albEchapper(f.id) + '\', \'valider\', this)">' + (f.a_blanc ? '✓ Valider le relevé offert' : '✓ Valider : à saisir sur Pennylane') + '</button>' +
       '<button type="button" class="bouton rouge" onclick="decisionFacture(\'' + albEchapper(f.id) + '\', \'annuler\', this)">✗ Annuler</button></div></div>' : '') +
   '</div>';
 }
@@ -147,7 +159,7 @@ function corrigerLigneFacture(id, actuel, bouton) {
 
 async function decisionFacture(id, decision, bouton) {
   const question = decision === 'valider'
-    ? 'Valider ? Une fois validée, elle ne pourra plus être modifiée. Rien n\'est envoyé au membre.'
+    ? 'Valider ? Une fois validée, elle ne pourra plus être modifiée. Rien n\'est envoyé au membre : la facture se fait ensuite sur Pennylane.'
     : 'Annuler ce brouillon ? Ses lignes pourront revenir dans un prochain brouillon.';
   if (!confirm(question)) return;
   const note = (document.getElementById('note-facture-' + id).value || '').trim();
@@ -158,8 +170,20 @@ async function decisionFacture(id, decision, bouton) {
   await chargerFactures();
   afficherAFaire();
   afficherMessage('message-general', decision === 'valider' ? 'succes' : 'info', decision === 'valider'
-    ? (data && data.numero ? 'Facture validée ✓ Numéro ' + data.numero + '.' : 'Relevé offert validé ✓')
+    ? 'Validé ✓ S\'il y a un montant à payer, la facture passe dans « ⏳ À saisir sur Pennylane ».'
     : 'Brouillon annulé.');
+}
+
+async function noterPennylane(id, bouton) {
+  const numero = (document.getElementById('pennylane-' + id).value || '').trim();
+  if (!numero && !confirm('Le champ est vide : effacer le numéro Pennylane de cette facture ?')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_facture_pennylane', { p_id: id, p_numero: numero });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerFactures();
+  afficherAFaire();
+  afficherMessage('message-general', 'succes', numero ? 'Numéro Pennylane enregistré ✓ La facture passe dans « ✅ Faites ».' : 'Numéro Pennylane effacé.');
 }
 
 async function modifierTarif(cle, bouton) {
@@ -176,7 +200,8 @@ async function modifierTarif(cle, bouton) {
 
 // « À faire aujourd'hui » : les brouillons des mois terminés, juste après les ventes à confirmer
 LIGNES_A_FAIRE.splice(2, 0,
-  { calcul: function () { return brouillonsAValider().length; }, un: 'brouillon de facture à vérifier et valider', plusieurs: 'brouillons de facture à vérifier et valider', emoji: '💶', onglet: 'factures', filtre: function () { choisirFiltreFactures('brouillons'); } }
+  { calcul: function () { return brouillonsAValider().length; }, un: 'brouillon de facture à vérifier et valider', plusieurs: 'brouillons de facture à vérifier et valider', emoji: '💶', onglet: 'factures', filtre: function () { choisirFiltreFactures('brouillons'); } },
+  { calcul: function () { return facturation.factures.filter(aSaisirPennylane).length; }, un: 'facture validée à faire sur Pennylane', plusieurs: 'factures validées à faire sur Pennylane', emoji: '🧾', onglet: 'factures', filtre: function () { choisirFiltreFactures('pennylane'); } }
 );
 
 (function () {
