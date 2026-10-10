@@ -4,24 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CGU - ALB Immobilier</title>
+  <meta name="description" content="Conditions générales d'utilisation d'ALB Immobilier : le service, les règles de contact, les tarifs, les avis et vos garanties.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Montserrat', sans-serif;
-      background: #FAF7F2;
-      color: #3d3d3a;
+      background: #F5F3F0;
+      color: #4A4A47;
       line-height: 1.6;
+      /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
 
-    /* Header */
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
     .alb-header {
       background: white;
       border-bottom: 1px solid #E8E6E0;
@@ -31,7 +34,6 @@
       z-index: 1000;
       height: 70px;
     }
-
     .header-wrapper {
       width: 100%;
       padding: 0 40px;
@@ -41,20 +43,17 @@
       gap: 50px;
       height: 100%;
     }
-
     .logo-left {
       display: flex;
       align-items: center;
       flex-shrink: 0;
       height: 100%;
     }
-
     .logo-left img {
       height: 100%;
       object-fit: contain;
       max-width: 200px;
     }
-
     .nav {
       display: flex;
       align-items: center;
@@ -62,7 +61,6 @@
       gap: 45px;
       flex-grow: 1;
     }
-
     .nav a {
       color: #333;
       text-decoration: none;
@@ -73,12 +71,10 @@
       transition: all 0.3s;
       white-space: nowrap;
     }
-
     .nav a:hover {
       color: #B28E3D;
       border-bottom-color: #B28E3D;
     }
-
     .btn-cta {
       background: #4B1A3E !important;
       color: white !important;
@@ -86,387 +82,557 @@
       border-radius: 4px;
       border: none !important;
     }
-
     .btn-cta:hover {
       background: #B28E3D !important;
     }
 
-    /* Main Content */
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+    /* ========== CONTENU LÉGAL (mobile d'abord) ========== */
+    .legal-page { padding: 32px 16px; background: white; flex: 1 0 auto; }
+    .legal-content { max-width: 800px; margin: 0 auto; line-height: 1.8; color: #333; }
+    .legal-content h1 { font-family: 'Playfair Display', serif; font-size: 1.9rem;  line-height: 1.25; color: #4B1A3E; margin-bottom: 10px; border-bottom: 3px solid #B28E3D; padding-bottom: 15px; }
+    .legal-content .date { font-size: 13px; color: #999; margin-bottom: 30px; }
+    .legal-content h2 { font-size: 1.3rem; margin-top: 30px; margin-bottom: 15px; color: #4B1A3E; }
+    .legal-content p, .legal-content li { margin-bottom: 12px; color: #4A4A47; }
+    .legal-content ul { margin-left: 20px; margin-bottom: 15px; }
+    .legal-content li { margin-bottom: 8px; }
+    .legal-content h3 { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; margin-top: 20px; margin-bottom: 10px; color: #5A3A6A; }
+    .legal-content h4 { font-size: 0.98rem; margin-top: 14px; margin-bottom: 8px; color: #4B1A3E; }
+    .legal-content strong { color: #4B1A3E; }
+    .info-box p { margin-bottom: 0; }
+    .info-box { background: #F5F3F0; border-left: 4px solid #B28E3D; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #4A4A47; }
+    @media (min-width: 700px) { .legal-page { padding: 60px 40px; } .legal-content h1 { font-size: 2.5rem; } .legal-content h2 { font-size: 1.4rem; } .legal-content p, .legal-content li { text-align: justify; } }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 40px;
     }
 
-    main {
-      min-height: calc(100vh - 200px);
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
-    .hero {
-      background: white;
-      padding: 60px 0;
-      border-bottom: 1px solid #e8e6e1;
-    }
-
-    .hero h1 {
-      font-size: 42px;
-      margin-bottom: 20px;
-      color: #3d3d3a;
-    }
-
-    .legal-content {
-      background: white;
-      padding: 60px 0;
-    }
-
-    .legal-content h2 {
-      font-size: 24px;
-      margin: 40px 0 20px 0;
-      color: #3d3d3a;
-      border-bottom: 2px solid #b28e3d;
-      padding-bottom: 10px;
-    }
-
-    .legal-content h2:first-child {
-      margin-top: 0;
-    }
-
-    .legal-content h3 {
-      font-size: 16px;
-      margin: 25px 0 12px 0;
-      color: #5d3d28;
+    .footer-col h5 {
+      font-size: 0.95rem;
       font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
     }
 
-    .legal-content p {
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
       margin-bottom: 15px;
       text-align: justify;
     }
 
-    .legal-content ul {
-      margin: 15px 0 15px 30px;
-    }
-
-    .legal-content li {
-      margin-bottom: 10px;
-    }
-
-    .legal-content strong {
-      color: #5d3d28;
-    }
-
-    .info-box {
-      background: rgba(178, 142, 61, 0.08);
-      border-left: 4px solid #b28e3d;
-      padding: 20px;
-      margin: 30px 0;
-      border-radius: 4px;
-    }
-
-    .info-box p {
-      margin-bottom: 0;
-    }
-
-    footer {
-      background: #2a2a28;
-      color: white;
-      padding: 40px 0 20px 0;
-      margin-top: 60px;
-    }
-
-    .footer-content {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 40px;
-      margin-bottom: 30px;
-    }
-
-    .footer-section h3 {
-      font-size: 16px;
-      margin-bottom: 15px;
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .footer-section ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .footer-section li {
-      margin-bottom: 10px;
-    }
-
-    .footer-section a {
-      color: #ccc;
-      text-decoration: none;
-      font-size: 14px;
-      transition: color 0.3s;
-    }
-
-    .footer-section a:hover {
-      color: #b28e3d;
-    }
-
-    .footer-bottom {
-      border-top: 1px solid #444;
-      padding-top: 20px;
+    .modal-buttons {
       text-align: center;
-      font-size: 14px;
-      color: #999;
+      margin-top: 30px;
     }
 
-    .contact-info {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
     }
 
-    .contact-info p {
-      margin: 0;
-      font-size: 14px;
-      color: #ccc;
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
     }
 
     @media (max-width: 768px) {
-      .header-wrapper {
-        flex-wrap: wrap;
-        gap: 15px;
-        padding: 15px;
-        height: auto;
+      .footer {
+        padding: 40px 20px 20px;
       }
-
-      .nav {
-        order: 3;
-        width: 100%;
-        flex-direction: column;
-        gap: 10px;
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
       }
-
-      .hero h1 {
-        font-size: 32px;
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
       }
-
-      .legal-content {
-        padding: 30px 0;
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
       }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
 
-      .footer-content {
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="alb-header">
-    <div class="header-wrapper">
-      <a href="index.html" class="logo-left">
-        <img src="LOGO.png" alt="ALB Sud Immobilier" />
-      </a>
-      <nav class="nav">
-        <a href="index.html">Accueil</a>
-        <a href="annonces.html">Annonces</a>
-        <a href="vitrine-pros.html">Nos pros ALB</a>
-        <a href="projets-alb.html">Projets ALB</a>
-        <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
-      </nav>
-    </div>
-  </header>
 
-  <!-- Main Content -->
-  <main>
-    <section class="hero">
-      <div class="container">
-        <h1>Conditions Générales d'Utilisation</h1>
-      </div>
-    </section>
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
 
-    <section class="legal-content">
-      <div class="container">
+<!-- ========== CONTENU ========== -->
+  <section class="legal-page">
+    <div class="legal-content">
+      <h1>Conditions Générales d'Utilisation</h1>
+      <div class="date">Mise à jour : Octobre 2026</div>
 
-        <h2>Informations légales</h2>
-        <p><strong>Raison sociale :</strong> ALB Sud Immobilier</p>
-        <p><strong>Forme juridique :</strong> SASU (Société par Actions Simplifiée Unipersonnelle)</p>
-        <p><strong>Siège social :</strong> 18 Rue du Langramue, 83143 LE VAL, France</p>
-        <p><strong>Immatriculation :</strong> 130 077 068 R.C.S. Draguignan</p>
-        <p><strong>Capital social :</strong> 100,00€</p>
-        <p><strong>Dirigeante :</strong> Jocelyne Rimlinger</p>
-        <p><strong>Email :</strong> contact@albimmobilier.fr</p>
-        <p><strong>Téléphone :</strong> 07 45 60 28 05</p>
-        <p><strong>Plateforme :</strong> ALB Immobilier</p>
+      <h2>Informations légales</h2>
+      <p><strong>Raison sociale :</strong> ALB Sud Immobilier</p>
+      <p><strong>Forme juridique :</strong> SASU (Société par Actions Simplifiée Unipersonnelle)</p>
+      <p><strong>Siège social :</strong> 18 Rue du Langramue, 83143 LE VAL, France</p>
+      <p><strong>Immatriculation :</strong> 130 077 068 R.C.S. Draguignan</p>
+      <p><strong>Capital social :</strong> 100,00€</p>
+      <p><strong>Dirigeante :</strong> Jocelyne Rimlinger</p>
+      <p><strong>Email :</strong> contact@albimmobilier.fr</p>
+      <p><strong>Téléphone :</strong> 07 45 60 28 05</p>
+      <p><strong>Plateforme :</strong> ALB Immobilier</p>
 
-        <h2>Objet du service</h2>
-        <p>ALB Immobilier est une plateforme de mise en relation spécialisée dans l'immobilier ancien en région PACA. Elle permet aux particuliers (vendeurs, acheteurs, propriétaires) de se connecter directement avec les professionnels de l'immobilier et des services connexes (courtiers, artisans, agents immobiliers).</p>
+      <h2>Objet du service</h2>
+      <p>ALB Immobilier est une plateforme de mise en relation spécialisée dans l'immobilier ancien en région PACA. Elle permet aux particuliers (vendeurs, acheteurs, propriétaires) de se connecter directement avec les professionnels de l'immobilier et des services connexes (courtiers, artisans, agents immobiliers).</p>
 
-        <h3>Principes fondamentaux :</h3>
-        <ul>
-          <li>Les particuliers initient toutes les prises de contact</li>
-          <li>Les professionnels ne peuvent jamais démarcher un particulier en premier</li>
-          <li>Tous les contacts sont directs et transparents</li>
-        </ul>
+      <h3>Principes fondamentaux :</h3>
+      <ul>
+        <li>Les particuliers initient toutes les prises de contact</li>
+        <li>Les professionnels ne peuvent jamais démarcher un particulier en premier</li>
+        <li>Tous les contacts sont directs et transparents</li>
+      </ul>
 
-        <p>ALB Immobilier agit en tant qu'<strong>apporteur d'affaires</strong> — elle met les gens en relation mais n'intervient pas dans les négociations, les contrats ou les transactions.</p>
+      <p>ALB Immobilier agit en tant qu'<strong>apporteur d'affaires</strong> — elle met les gens en relation mais n'intervient pas dans les négociations, les contrats ou les transactions.</p>
 
-        <p>Les tarifs appliqués aux professionnels (à partir du 1er janvier 2027) sont des frais de mise en relation, non des commissions sur les transactions immobilières. ALB Immobilier ne négocie pas, ne signe pas de mandat, ne conclut pas de contrats, et ne perçoit aucune commission sur la valeur des transactions. Ce modèle préserve le statut d'apporteur d'affaires d'ALB Immobilier.</p>
+      <p>Les tarifs appliqués aux professionnels (à partir du 1er janvier 2027) sont des frais de mise en relation, non des commissions sur les transactions immobilières. ALB Immobilier ne négocie pas, ne signe pas de mandat, ne conclut pas de contrats, et ne perçoit aucune commission sur la valeur des transactions. Ce modèle préserve le statut d'apporteur d'affaires d'ALB Immobilier.</p>
 
-        <h2>Définitions</h2>
-        <p><strong>ALB Immobilier :</strong> La plateforme de mise en relation exploitée par ALB Sud Immobilier.</p>
-        <p><strong>Utilisateur :</strong> Toute personne physique majeure accédant à la plateforme (particulier ou professionnel).</p>
-        <p><strong>Particulier :</strong> Personne physique vendeur, acheteur ou en recherche de services immobiliers.</p>
-        <p><strong>Professionnel :</strong> Artisan qualifié, courtier en crédit immobilier, agent immobilier, ou autre professionnel de l'immobilier ayant validé son accès par ALB Immobilier.</p>
-        <p><strong>Projet :</strong> Description d'une demande immobilière (vente, achat, rénovation, financement) saisie par un particulier.</p>
-        <p><strong>Annonce :</strong> Description détaillée d'un bien immobilier en vente publiée par un particulier vendeur ou par un professionnel (agent immobilier, mandataire) sur la plateforme.</p>
-        <p><strong>Badge "Validé ALB" :</strong> Marque de confiance attribuée aux professionnels répondant aux critères de sérieux et de satisfaction.</p>
+      <h2>Définitions</h2>
+      <p><strong>ALB Immobilier :</strong> La plateforme de mise en relation exploitée par ALB Sud Immobilier.</p>
+      <p><strong>Utilisateur :</strong> Toute personne physique majeure accédant à la plateforme (particulier ou professionnel).</p>
+      <p><strong>Particulier :</strong> Personne physique vendeur, acheteur ou en recherche de services immobiliers.</p>
+      <p><strong>Professionnel :</strong> Artisan qualifié, courtier en crédit immobilier, agent immobilier, ou autre professionnel de l'immobilier ayant validé son accès par ALB Immobilier.</p>
+      <p><strong>Projet :</strong> Description d'une demande immobilière (vente, achat, rénovation, financement) saisie par un particulier.</p>
+      <p><strong>Annonce :</strong> Description détaillée d'un bien immobilier en vente publiée par un particulier vendeur ou par un professionnel (agent immobilier, mandataire) sur la plateforme.</p>
+      <p><strong>Badge "Validé ALB" :</strong> Marque de confiance attribuée aux professionnels répondant aux critères de sérieux et de satisfaction.</p>
 
-        <h2>Acceptation et modification des conditions</h2>
-        <p>L'accès à la plateforme implique l'acceptation complète des présentes Conditions Générales d'Utilisation et de la Politique de Confidentialité. Si vous n'acceptez pas ces termes, vous ne pouvez pas utiliser le service.</p>
+      <h2>Acceptation et modification des conditions</h2>
+      <p>L'accès à la plateforme implique l'acceptation complète des présentes Conditions Générales d'Utilisation et de la Politique de Confidentialité. Si vous n'acceptez pas ces termes, vous ne pouvez pas utiliser le service.</p>
 
-        <h3>Modifications des conditions</h3>
-        <p>ALB Immobilier se réserve le droit de modifier ces conditions à tout moment.</p>
-        <p><strong>Pour les modifications substantielles</strong> (changements de tarification, nouvelles restrictions, changements majeurs de fonctionnalités), ALB Immobilier notifiera tous les utilisateurs affectés par email au moins 30 jours avant entrée en vigueur. La poursuite de l'utilisation après cette période implique l'acceptation des nouvelles conditions. Vous avez le droit de fermer votre compte avant l'entrée en vigueur si vous n'acceptez pas les modifications.</p>
-        <p><strong>Pour les modifications mineures</strong> (clarifications, corrections, améliorations techniques sans impact financier), ALB Immobilier peut les appliquer immédiatement et les publier sur cette page.</p>
+      <h3>Modifications des conditions</h3>
+      <p>ALB Immobilier se réserve le droit de modifier ces conditions à tout moment.</p>
+      <p><strong>Pour les modifications substantielles</strong> (changements de tarification, nouvelles restrictions, changements majeurs de fonctionnalités), ALB Immobilier notifiera tous les utilisateurs affectés par email au moins 30 jours avant entrée en vigueur. La poursuite de l'utilisation après cette période implique l'acceptation des nouvelles conditions. Vous avez le droit de fermer votre compte avant l'entrée en vigueur si vous n'acceptez pas les modifications.</p>
+      <p><strong>Pour les modifications mineures</strong> (clarifications, corrections, améliorations techniques sans impact financier), ALB Immobilier peut les appliquer immédiatement et les publier sur cette page.</p>
 
-        <h2>Accès au service</h2>
+      <h2>Accès au service</h2>
 
-        <h3>Utilisateurs concernés</h3>
-        <p>L'utilisation de la plateforme est réservée aux <strong>personnes physiques majeures</strong>. ALB Immobilier se réserve le droit de suspendre ou supprimer immédiatement tout compte d'un utilisateur mineur.</p>
+      <h3>Utilisateurs concernés</h3>
+      <p>L'utilisation de la plateforme est réservée aux <strong>personnes physiques majeures</strong>. ALB Immobilier se réserve le droit de suspendre ou supprimer immédiatement tout compte d'un utilisateur mineur.</p>
 
-        <h3>Disponibilité et accessibilité</h3>
-        <p>ALB Immobilier met ses meilleurs efforts pour maintenir la plateforme accessible 24h/24, 7j/7, indépendamment des opérations de maintenance. Cependant, ALB Immobilier n'offre <strong>aucune garantie d'accessibilité sans interruption</strong>. ALB Immobilier ne peut être tenue responsable des dysfonctionnements dus à :</p>
-        <ul>
-          <li>Défaillance des réseaux publics d'électricité ou de télécommunications</li>
-          <li>Perte de connectivité Internet</li>
-          <li>Interruptions dues à force majeure</li>
-          <li>Maintenance nécessaire du service</li>
-        </ul>
+      <h3>Disponibilité et accessibilité</h3>
+      <p>ALB Immobilier met ses meilleurs efforts pour maintenir la plateforme accessible 24h/24, 7j/7, indépendamment des opérations de maintenance. Cependant, ALB Immobilier n'offre <strong>aucune garantie d'accessibilité sans interruption</strong>. ALB Immobilier ne peut être tenue responsable des dysfonctionnements dus à :</p>
+      <ul>
+        <li>Défaillance des réseaux publics d'électricité ou de télécommunications</li>
+        <li>Perte de connectivité Internet</li>
+        <li>Interruptions dues à force majeure</li>
+        <li>Maintenance nécessaire du service</li>
+      </ul>
 
-        <h2>Consentement et absence de démarchage non sollicité</h2>
+      <h2>Consentement et absence de démarchage non sollicité</h2>
 
-        <h3>Loi n°2025-594</h3>
-        <p>ALB Immobilier est conforme à la loi du 11 août 2026 interdisant les démarchages immobiliers non-sollicités. L'architecture de la plateforme garantit que <strong>seuls les particuliers peuvent initier le contact avec les professionnels.</strong></p>
+      <h3>Loi n°2025-594</h3>
+      <p>ALB Immobilier est conforme à la loi du 11 août 2026 interdisant les démarchages immobiliers non-sollicités. L'architecture de la plateforme garantit que <strong>seuls les particuliers peuvent initier le contact avec les professionnels.</strong></p>
 
-        <h3>Pour les particuliers</h3>
-        <p>Vous contrôlez entièrement qui peut vous contacter. Lorsque vous créez un projet (achat, rénovation, financement), vous pouvez cocher la case « Je souhaite être recontacté pour... ». Seuls les professionnels correspondant à votre demande pourront vous contacter. <strong>Aucun contact ne sera initié sans votre consentement explicite.</strong></p>
+      <h3>Pour les particuliers</h3>
+      <p>Vous contrôlez entièrement qui peut vous contacter. Lorsque vous créez un projet (achat, rénovation, financement), vous pouvez cocher la case « Je souhaite être recontacté pour... ». Seuls les professionnels correspondant à votre demande pourront vous contacter. <strong>Aucun contact ne sera initié sans votre consentement explicite.</strong></p>
 
-        <h2>Tarification</h2>
+      <h2>Tarification</h2>
 
-        <h3>Phase de lancement gratuit (jusqu'au 31 décembre 2026)</h3>
-        <p>Jusqu'au 31 décembre 2026, <strong>l'intégralité de la plateforme est gratuite</strong> pour tous les utilisateurs (particuliers et professionnels). Cette période permet à ALB Immobilier de récolter les retours utilisateurs et d'améliorer la plateforme.</p>
+      <h3>Phase de lancement gratuit (jusqu'au 31 décembre 2026)</h3>
+      <p>Jusqu'au 31 décembre 2026, <strong>l'intégralité de la plateforme est gratuite</strong> pour tous les utilisateurs (particuliers et professionnels). Cette période permet à ALB Immobilier de récolter les retours utilisateurs et d'améliorer la plateforme.</p>
 
-        <h3>À partir du 1er janvier 2027</h3>
+      <h3>À partir du 1er janvier 2027</h3>
 
-        <h4>Pour les particuliers</h4>
-        <ul>
-          <li><strong>Particuliers acheteurs, propriétaires (rénovation, financement) :</strong> Accès gratuit à la plateforme et mise en relation avec les professionnels</li>
-          <li><strong>Particuliers vendeurs :</strong> Accès gratuit à la plateforme et mise en relation avec les professionnels. Publication d'une annonce détaillée (avec organisation de visites et simulateur budget pour l'acquéreur) : <strong>forfait de 9,99 €/mois</strong></li>
-        </ul>
+      <h4>Pour les particuliers</h4>
+      <ul>
+        <li><strong>Particuliers acheteurs, propriétaires (rénovation, financement) :</strong> Accès gratuit à la plateforme et mise en relation avec les professionnels</li>
+        <li><strong>Particuliers vendeurs :</strong> Accès gratuit à la plateforme et mise en relation avec les professionnels. Publication d'une annonce détaillée (avec organisation de visites et simulateur budget pour l'acquéreur) : <strong>forfait de 9,90 € TTC/mois</strong></li>
+      </ul>
 
-        <h4>Pour les professionnels</h4>
-        <p>À partir du 1er janvier 2027, ALB Immobilier appliquera un modèle commercial basé sur les mises en relation concrétisées. Les tarifs exacts (commission ou forfait) seront communiqués aux professionnels avant le 31 décembre 2026, avec au minimum 30 jours de préavis avant entrée en vigueur.</p>
+      <h4>Pour les professionnels</h4>
+      <p>À partir du 1er janvier 2027, ALB Immobilier appliquera un modèle commercial basé sur les mises en relation concrétisées. Les tarifs exacts (commission ou forfait) seront communiqués aux professionnels avant le 31 décembre 2026, avec au minimum 30 jours de préavis avant entrée en vigueur.</p>
 
-        <h2>Avis sur les professionnels</h2>
-        <p>Sur « Nos pros ALB », les utilisateurs peuvent donner un avis (une note de 1 à 5 étoiles et un commentaire) sur un professionnel. Conformément à l'article L. 111-7-2 du Code de la consommation, voici comment ces avis sont recueillis, vérifiés et affichés.</p>
+      <h2>Avis sur les professionnels</h2>
+      <p>Sur « Nos pros ALB », les utilisateurs peuvent donner un avis (une note de 1 à 5 étoiles et un commentaire) sur un professionnel. Conformément à l'article L. 111-7-2 du Code de la consommation, voici comment ces avis sont recueillis, vérifiés et affichés.</p>
 
-        <h3>Qui peut donner un avis</h3>
-        <ul>
-          <li>Seules les personnes qui ont <strong>réellement échangé avec le professionnel via la messagerie ALB</strong>, et à qui il a répondu au moins une fois, peuvent donner un avis. Ces avis portent la mention « Avis vérifié ».</li>
-          <li>Une personne ne peut donner qu'<strong>un seul avis par professionnel</strong>. Elle peut le modifier à tout moment depuis son espace ALB ; l'avis modifié est alors relu à nouveau avant d'être publié.</li>
-          <li>Un professionnel ne peut pas donner d'avis sur lui-même.</li>
-        </ul>
+      <h3>Qui peut donner un avis</h3>
+      <ul>
+        <li>Seules les personnes qui ont <strong>réellement échangé avec le professionnel via la messagerie ALB</strong>, et à qui il a répondu au moins une fois, peuvent donner un avis. Ces avis portent la mention « Avis vérifié ».</li>
+        <li>Une personne ne peut donner qu'<strong>un seul avis par professionnel</strong>. Elle peut le modifier à tout moment depuis son espace ALB ; l'avis modifié est alors relu à nouveau avant d'être publié.</li>
+        <li>Un professionnel ne peut pas donner d'avis sur lui-même.</li>
+      </ul>
 
-        <h3>Comment les avis sont vérifiés</h3>
-        <p><strong>Chaque avis est lu par ALB Sud Immobilier avant d'être publié</strong>, en général sous 48 heures. Rien n'est visible sur la fiche du professionnel tant que cette relecture n'est pas faite. Un avis peut ne pas être publié, ou être retiré, s'il :</p>
-        <ul>
-          <li>contient des propos injurieux, diffamatoires, discriminatoires ou contraires à la loi ;</li>
-          <li>contient des informations personnelles (nom complet, téléphone, adresse…) ;</li>
-          <li>n'a pas de rapport avec le service rendu par le professionnel, ou fait de la publicité ;</li>
-          <li>semble ne pas refléter une expérience réelle, ou provient d'une personne en conflit d'intérêts avec le professionnel.</li>
-        </ul>
-        <p>Un avis n'est jamais refusé parce qu'il est négatif. L'auteur voit dans son espace ALB si son avis est publié, en cours de relecture ou non publié ; il peut nous contacter pour connaître la raison d'un refus.</p>
+      <h3>Comment les avis sont vérifiés</h3>
+      <p><strong>Chaque avis est lu par ALB Sud Immobilier avant d'être publié</strong>, en général sous 48 heures. Rien n'est visible sur la fiche du professionnel tant que cette relecture n'est pas faite. Un avis peut ne pas être publié, ou être retiré, s'il :</p>
+      <ul>
+        <li>contient des propos injurieux, diffamatoires, discriminatoires ou contraires à la loi ;</li>
+        <li>contient des informations personnelles (nom complet, téléphone, adresse…) ;</li>
+        <li>n'a pas de rapport avec le service rendu par le professionnel, ou fait de la publicité ;</li>
+        <li>semble ne pas refléter une expérience réelle, ou provient d'une personne en conflit d'intérêts avec le professionnel.</li>
+      </ul>
+      <p>Un avis n'est jamais refusé parce qu'il est négatif. L'auteur voit dans son espace ALB si son avis est publié, en cours de relecture ou non publié ; il peut nous contacter pour connaître la raison d'un refus.</p>
 
-        <h3>Comment les avis sont affichés</h3>
-        <ul>
-          <li>Chaque avis publié affiche la note, le commentaire, sa date, et le prénom de l'auteur suivi de l'initiale de son nom.</li>
-          <li>Les avis sont classés <strong>du plus récent au plus ancien</strong>. La note moyenne du professionnel est calculée sur tous ses avis publiés.</li>
-          <li><strong>Aucune contrepartie</strong> (argent, cadeau, réduction) n'est proposée pour donner un avis. Un professionnel ne peut ni payer, ni demander à ALB Sud Immobilier de supprimer un avis qui lui déplaît, ni modifier les avis le concernant.</li>
-          <li>Un professionnel qui estime qu'un avis ne respecte pas ces règles peut le signaler à contact@albimmobilier.fr : ALB Sud Immobilier l'examine et le retire si nécessaire.</li>
-        </ul>
+      <h3>Comment les avis sont affichés</h3>
+      <ul>
+        <li>Chaque avis publié affiche la note, le commentaire, sa date, et le prénom de l'auteur suivi de l'initiale de son nom.</li>
+        <li>Les avis sont classés <strong>du plus récent au plus ancien</strong>. La note moyenne du professionnel est calculée sur tous ses avis publiés.</li>
+        <li><strong>Aucune contrepartie</strong> (argent, cadeau, réduction) n'est proposée pour donner un avis. Un professionnel ne peut ni payer, ni demander à ALB Sud Immobilier de supprimer un avis qui lui déplaît, ni modifier les avis le concernant.</li>
+        <li>Un professionnel qui estime qu'un avis ne respecte pas ces règles peut le signaler à contact@albimmobilier.fr : ALB Sud Immobilier l'examine et le retire si nécessaire.</li>
+      </ul>
 
-        <h2>Responsabilité</h2>
+      <h2>Responsabilité</h2>
 
-        <h3>Ce qu'ALB Immobilier garantit</h3>
-        <ul>
-          <li>Vérification du sérieux des professionnels (assurances, qualifications légales)</li>
-          <li>Modération des contenus et avis</li>
-          <li>Protection raisonnable des données</li>
-          <li>Réponse aux réclamations dans les 48 heures</li>
-        </ul>
+      <h3>Ce qu'ALB Immobilier garantit</h3>
+      <ul>
+        <li>Vérification du sérieux des professionnels (assurances, qualifications légales)</li>
+        <li>Modération des contenus et avis</li>
+        <li>Protection raisonnable des données</li>
+        <li>Réponse aux réclamations dans les 48 heures</li>
+      </ul>
 
-        <h3>Limitation de responsabilité</h3>
-        <p>ALB Immobilier décline toute responsabilité pour :</p>
-        <ul>
-          <li><strong>Contenus des utilisateurs :</strong> Avis, descriptions, photos, ou informations fournies par les utilisateurs</li>
-          <li><strong>Transactions et contrats :</strong> Tout accord ou différend entre particuliers et professionnels</li>
-          <li><strong>Qualité professionnelle :</strong> Travail, conseil ou service rendu par un professionnel</li>
-          <li><strong>Dommages indirects :</strong> Perte de temps, perte d'opportunité, frais engagés</li>
-          <li><strong>Dysfonctionnements techniques :</strong> Bugs, indisponibilité, lenteurs</li>
-        </ul>
+      <h3>Limitation de responsabilité</h3>
+      <p>ALB Immobilier décline toute responsabilité pour :</p>
+      <ul>
+        <li><strong>Contenus des utilisateurs :</strong> Avis, descriptions, photos, ou informations fournies par les utilisateurs</li>
+        <li><strong>Transactions et contrats :</strong> Tout accord ou différend entre particuliers et professionnels</li>
+        <li><strong>Qualité professionnelle :</strong> Travail, conseil ou service rendu par un professionnel</li>
+        <li><strong>Dommages indirects :</strong> Perte de temps, perte d'opportunité, frais engagés</li>
+        <li><strong>Dysfonctionnements techniques :</strong> Bugs, indisponibilité, lenteurs</li>
+      </ul>
 
-        <h2>Force majeure</h2>
-        <p>ALB Immobilier ne pourra pas être tenue responsable si l'exécution de ses obligations est empêchée par un cas de force majeure, notamment :</p>
-        <ul>
-          <li>Catastrophes naturelles</li>
-          <li>Défaillance des réseaux d'électricité ou de télécommunications</li>
-          <li>Crises sanitaires ou politiques</li>
-          <li>Toute autre cause échappant à son contrôle raisonnable</li>
-        </ul>
+      <h2>Force majeure</h2>
+      <p>ALB Immobilier ne pourra pas être tenue responsable si l'exécution de ses obligations est empêchée par un cas de force majeure, notamment :</p>
+      <ul>
+        <li>Catastrophes naturelles</li>
+        <li>Défaillance des réseaux d'électricité ou de télécommunications</li>
+        <li>Crises sanitaires ou politiques</li>
+        <li>Toute autre cause échappant à son contrôle raisonnable</li>
+      </ul>
 
-        <h2>Droit applicable et juridiction</h2>
-        <p>Ces conditions sont soumises au droit français. Tout différend sera porté devant les tribunaux compétents du ressort du Var.</p>
+      <h2>Droit applicable et juridiction</h2>
+      <p>Ces conditions sont soumises au droit français. Tout différend sera porté devant les tribunaux compétents du ressort du Var.</p>
 
-        <h2>Contact et support</h2>
-        <p>Pour toute question, réclamation ou signalement d'abus :</p>
-        <p>☎️ <strong>07 45 60 28 05</strong><br>
-        📧 <strong>contact@albimmobilier.fr</strong><br>
-        🕐 <strong>Lundi-vendredi, 9h-18h (heure locale)</strong></p>
-        <p>Nous répondons à toute demande dans les 48 heures.</p>
+      <h2>Contact et support</h2>
+      <p>Pour toute question, réclamation ou signalement d'abus :</p>
+      <p>☎️ <strong>07 45 60 28 05</strong><br>
+      📧 <strong>contact@albimmobilier.fr</strong><br>
+      🕐 <strong>Lundi-vendredi, 9h-18h (heure locale)</strong></p>
+      <p>Nous répondons à toute demande dans les 48 heures.</p>
 
-        <div class="info-box">
-          <p><strong>Dernière mise à jour :</strong> septembre 2026<br>
-          <strong>Entrée en vigueur :</strong> septembre 2026</p>
-        </div>
-
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h3>Documents légaux</h3>
-          <ul>
-            <li><a href="cgu.html">Conditions Générales d'Utilisation</a></li>
-            <li><a href="confidentialite.html">Politique de Confidentialité</a></li>
-          </ul>
-        </div>
-        <div class="footer-section">
-          <h3>Contact</h3>
-          <div class="contact-info">
-            <p>📧 contact@albimmobilier.fr</p>
-            <p>☎️ 07 45 60 28 05</p>
-            <p style="font-size: 12px; margin-top: 10px;">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        © 2026 ALB Sud Immobilier · À la bien, toujours ✨
+      <div class="info-box">
+        <p><strong>Dernière mise à jour :</strong> octobre 2026<br>
+        <strong>Entrée en vigueur :</strong> septembre 2026</p>
       </div>
     </div>
-  </footer>
+  </section>
+
+
+<!-- ========== MODALES OFFICIELLES ========== -->
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
+    }
+  }
+</script>
 </body>
 </html>
