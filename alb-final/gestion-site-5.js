@@ -258,17 +258,29 @@ async function rappelFait(id, bouton) {
   };
 })();
 
-// ---------- 📅 Papiers des pros : dates de fin de validité ----------
+// ---------- 📅 Papiers des pros : dates de fin de validité et relances ----------
 // Les pros indiquent jusqu'à quand leurs assurances et certificats sont valables.
-// 30 jours avant l'expiration, une ligne apparaît dans « À faire aujourd'hui ».
+//  • J-30 : « expire bientôt » (pour info)
+//  • J-15 : mail de relance prêt (objet + texte), Jocelyne l'envoie elle-même puis clique « C'est fait »
+//  • J-5  : si rien n'est arrivé, SMS prêt, même principe
+//  • Jour J : si rien n'est arrivé, Jocelyne retire le pro de « Nos pros ALB »
+// Dès que le pro envoie sa nouvelle attestation, tout repart à zéro.
 ERREURS.DATE_INVALIDE = 'Cette date ne semble pas juste.';
+ERREURS.DATE_MANQUANTE = 'Indique d\'abord la date de fin de validité.';
 
 function joursAvant(iso) {
   const fin = new Date(iso + 'T12:00:00');
   const auj = new Date(); auj.setHours(12, 0, 0, 0);
   return Math.round((fin - auj) / 86400000);
 }
-function papierExpireBientot(x) { return x.expire && x.expire_le && x.statut !== 'refuse' && joursAvant(x.expire_le) <= 30; }
+function papierSuivi(x) { return x.expire && x.expire_le && x.statut !== 'refuse'; }
+function papierExpireBientot(x) { return papierSuivi(x) && joursAvant(x.expire_le) <= 30; }
+function papierInfo30(x) { return papierSuivi(x) && joursAvant(x.expire_le) <= 30 && joursAvant(x.expire_le) > 15; }
+function papierMailAFaire(x) { return papierSuivi(x) && joursAvant(x.expire_le) <= 15 && joursAvant(x.expire_le) > 5 && !x.relance_mail_le; }
+function papierSmsAFaire(x) { return papierSuivi(x) && joursAvant(x.expire_le) <= 5 && joursAvant(x.expire_le) > 0 && !x.relance_sms_le; }
+function papierRetraitAFaire(x) { return papierSuivi(x) && joursAvant(x.expire_le) <= 0 && x.pro_en_ligne; }
+function dateLongue(iso) { return new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+function libelleCourt(x) { const t = String(x.libelle || 'attestation').replace(/\s*\(.*\)\s*$/, ''); return t.charAt(0).toLowerCase() + t.slice(1); }
 
 function etatValidite(x) {
   if (!x.expire) return '';
@@ -276,8 +288,80 @@ function etatValidite(x) {
   const j = joursAvant(x.expire_le);
   const date = dateLisible(x.expire_le);
   if (j < 0) return '<br><span class="etiquette rouge">❗ Expiré depuis le ' + albEchapper(date) + '</span>';
+  if (j === 0) return '<br><span class="etiquette rouge">❗ Expire aujourd\'hui</span>';
   if (j <= 30) return '<br><span class="etiquette or">⏰ Expire le ' + albEchapper(date) + ' (dans ' + j + ' jour' + (j > 1 ? 's' : '') + ')</span>';
   return '<br><span class="etiquette vert">📅 Valable jusqu\'au ' + albEchapper(date) + '</span>';
+}
+
+function texteSmsRelance(x) {
+  const date = dateLongue(x.expire_le);
+  return 'Bonjour ' + (x.pro_prenom || '') + ', votre ' + libelleCourt(x) + ' expire le ' + date + '. ' +
+    'Sans la nouvelle attestation d\'ici là, votre fiche sera retirée de « Nos pros ALB » le ' + date + '. ' +
+    'Vous pouvez l\'envoyer en 2 minutes depuis votre espace : albimmobilier.fr/espace-alb.html#mes-papiers. Jocelyne, ALB Sud Immobilier';
+}
+
+function objetMailRelance(x) { return 'Votre ' + libelleCourt(x) + ' expire le ' + dateLongue(x.expire_le); }
+function texteMailRelance(x) {
+  const date = dateLongue(x.expire_le);
+  return 'Bonjour ' + (x.pro_prenom || '') + ',\n\n' +
+    'Petit rappel : votre ' + libelleCourt(x) + ' enregistrée sur ALB Immobilier est valable jusqu\'au ' + date + '.\n\n' +
+    'Pour rester visible sur « Nos pros ALB » et continuer à recevoir des demandes, merci de m\'envoyer la nouvelle attestation avant cette date. ' +
+    'Ça prend deux minutes depuis votre espace, rubrique « Mes papiers », avec sa nouvelle date de validité :\n' +
+    'https://albimmobilier.fr/espace-alb.html#mes-papiers\n\n' +
+    'Sans nouvelle attestation le ' + date + ', votre fiche sera retirée de « Nos pros ALB » jusqu\'à réception. Elle reviendra dès que je l\'aurai vérifiée.\n\n' +
+    'Une question ? Répondez simplement à ce mail, ou appelez-moi au 07 45 60 28 05.\n\n' +
+    'À la bien, toujours ✨\nJocelyne Rimlinger\nFondatrice · ALB Sud Immobilier';
+}
+// Modèle prêt à copier, avec « C'est fait » qui garde la date d'envoi
+function blocModele(x, quoi, titre, objet, texte, lienOuvrir, envoyeLe) {
+  return '<div class="sms"' + (envoyeLe ? ' style="opacity:0.75;"' : '') + '><strong>' + titre + '</strong>' +
+    (objet ? '<p class="ligne-info" style="margin-top:6px;"><strong>Objet :</strong> ' + albEchapper(objet) + '</p>' : '') +
+    '<textarea class="texte-pret" readonly' + (quoi === 'mail' ? ' style="min-height:220px;"' : '') + '>' + albEchapper(texte) + '</textarea>' +
+    '<div class="actions">' + lienOuvrir +
+      '<button type="button" class="bouton discret" onclick="copier(this)">📋 Copier le texte</button>' +
+      (envoyeLe
+        ? '<span class="etiquette vert">✅ Envoyé le ' + albEchapper(dateLisible(envoyeLe)) + '</span><button type="button" class="bouton discret" onclick="relancerPapier(\'' + x.id + '\', \'' + quoi + '\', false, this)">Annuler</button>'
+        : '<button type="button" class="bouton vert" onclick="relancerPapier(\'' + x.id + '\', \'' + quoi + '\', true, this)">✓ C\'est fait</button>') +
+    '</div></div>';
+}
+
+// Ce qu'il y a à faire pour ce papier, selon la date
+function blocRelances(x) {
+  if (!papierExpireBientot(x)) return '';
+  const j = joursAvant(x.expire_le);
+  let html = '<div class="decision" style="margin-top:8px;"><div class="decision-titre">🔔 Relance du pro</div>';
+  // Mail (à partir de J-15) : modèle prêt, Jocelyne l'envoie de sa messagerie
+  if (j <= 15) {
+    const objet = objetMailRelance(x), texte = texteMailRelance(x);
+    const ouvrir = x.pro_email
+      ? '<a class="bouton" href="mailto:' + albEchapper(x.pro_email) + '?subject=' + encodeURIComponent(objet) + '&body=' + encodeURIComponent(texte) + '">📧 Ouvrir le mail</a>'
+      : '';
+    html += blocModele(x, 'mail', '📧 Mail à ' + (x.pro_prenom || 'ce pro') + (x.pro_email ? ' · ' + x.pro_email : ' (pas d\'e-mail)'), objet, texte, ouvrir, x.relance_mail_le);
+  } else html += '<p class="ligne-info" style="color:#7a7a75;">📧 Le mail de relance sera à envoyer à partir du ' + albEchapper(dateLisible(new Date(new Date(x.expire_le + 'T12:00:00').getTime() - 15 * 86400000).toISOString())) + '.</p>';
+  // SMS (à partir de J-5)
+  if (j <= 5 && j > 0) {
+    const num = String(x.pro_tel || '').replace(/[^0-9+]/g, '');
+    const texte = texteSmsRelance(x);
+    const ouvrir = num ? '<a class="bouton" href="sms:' + albEchapper(num) + '?&body=' + encodeURIComponent(texte) + '">📱 Ouvrir le SMS</a>' : '';
+    html += blocModele(x, 'sms', '📱 SMS à ' + (x.pro_prenom || 'ce pro') + (num ? ' · ' + (x.pro_tel || '') : ' (pas de numéro)'), '', texte, ouvrir, x.relance_sms_le);
+  }
+  // Jour J
+  if (j <= 0) {
+    html += x.pro_en_ligne
+      ? '<div class="point-a-faire">🚫 Rien reçu : retire ' + albEchapper(x.pro || 'ce pro') + ' de « Nos pros ALB » en attendant la nouvelle attestation.' +
+          '<div class="actions" style="margin-top:6px;"><button type="button" class="bouton rouge" onclick="mettreEnLigne(\'' + x.profile_id + '\', false, this)">Retirer de Nos pros ALB</button></div></div>'
+      : '<p class="ligne-info">🚫 Retiré de « Nos pros ALB ». Quand sa nouvelle attestation arrive et que tu l\'as vérifiée, remets-le en ligne.</p>';
+  }
+  return html + '</div>';
+}
+
+async function relancerPapier(id, quoi, fait, bouton) {
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_papier_relance', { p_id: id, p_quoi: quoi, p_fait: fait });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerPapiers();
+  afficherMessage('message-general', 'succes', fait ? 'C\'est noté : ' + (quoi === 'mail' ? 'mail' : 'SMS') + ' envoyé aujourd\'hui ✓' : 'C\'est noté.');
 }
 
 blocPapiersPro = function (proId) {
@@ -295,6 +379,7 @@ blocPapiersPro = function (proId) {
           : '<span style="font-size:1rem;">' + albEchapper(x.valeur || '') + '</span>') +
         '<br><span style="color:#7a7a75;">Envoyé le ' + dateLisible(x.envoye_le) + (x.verifie_le ? ' · traité le ' + dateLisible(x.verifie_le) : '') + '</span>' +
         (x.statut === 'refuse' && x.note ? '<br><span class="mot">💬 « ' + albEchapper(x.note) + ' »</span>' : '') +
+        blocRelances(x) +
         (x.expire
           ? '<div class="actions" style="margin-top:6px;"><label class="petit-champ">Valable jusqu\'au<input type="date" id="date-papier-' + x.id + '" value="' + albEchapper(x.expire_le || '') + '"></label>' +
             '<button type="button" class="bouton discret" onclick="corrigerDatePapier(\'' + x.id + '\', this)">📅 Enregistrer la date</button></div>'
@@ -317,12 +402,21 @@ async function corrigerDatePapier(id, bouton) {
   afficherMessage('message-general', 'succes', date ? 'Date de validité enregistrée ✓' : 'Date de validité effacée.');
 }
 
-// « À faire aujourd'hui » : juste après « papiers de pros à vérifier »
+// « À faire aujourd'hui » : juste après « papiers de pros à vérifier », du plus urgent au moins urgent
 (function () {
   const i = LIGNES_A_FAIRE.findIndex(function (l) { return l.compteur === 'c-papiers'; });
+  function nb(test) { return function () { return papiersPros.filter(test).length; }; }
   LIGNES_A_FAIRE.splice(i >= 0 ? i + 1 : LIGNES_A_FAIRE.length, 0,
-    { calcul: function () { return papiersPros.filter(papierExpireBientot).length; },
-      un: 'papier de pro qui expire dans moins de 30 jours (ou déjà expiré) : demande-lui la nouvelle attestation',
-      plusieurs: 'papiers de pros qui expirent dans moins de 30 jours (ou déjà expirés) : demande-leur les nouvelles attestations',
-      emoji: '⏰', onglet: 'valides' });
+    { calcul: nb(papierRetraitAFaire), emoji: '🚫', onglet: 'valides',
+      un: 'pro dont le papier a expiré sans nouvelle attestation : retire-le de « Nos pros ALB »',
+      plusieurs: 'pros dont un papier a expiré sans nouvelle attestation : retire-les de « Nos pros ALB »' },
+    { calcul: nb(papierSmsAFaire), emoji: '📱', onglet: 'valides',
+      un: 'SMS à envoyer : un papier expire dans 5 jours ou moins et rien n\'est arrivé',
+      plusieurs: 'SMS à envoyer : des papiers expirent dans 5 jours ou moins et rien n\'est arrivé' },
+    { calcul: nb(papierMailAFaire), emoji: '📧', onglet: 'valides',
+      un: 'mail de relance à envoyer : un papier expire dans 15 jours ou moins',
+      plusieurs: 'mails de relance à envoyer : des papiers expirent dans 15 jours ou moins' },
+    { calcul: nb(papierInfo30), emoji: '⏰', onglet: 'valides',
+      un: 'papier de pro qui expire dans moins de 30 jours (pour info)',
+      plusieurs: 'papiers de pros qui expirent dans moins de 30 jours (pour info)' });
 })();
