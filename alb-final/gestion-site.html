@@ -35,7 +35,7 @@
     .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
     .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
     .bandeau-titre { font-weight: 700; font-size: 1rem; }
-    .bandeau-droite { display: flex; gap: 8px; align-items: center; }
+    .bandeau-droite { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; align-items: center; }
     .bandeau a, .bandeau button {
       color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
       border-radius: 6px; padding: 7px 10px; font-family: inherit; font-size: 0.8rem; cursor: pointer; text-decoration: none;
@@ -54,6 +54,12 @@
     }
     .onglet.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
     .pastille { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: #B28E3D; color: #fff; font-size: 0.75rem; text-align: center; }
+    /* Prévisionnel : tableaux sur 12 mois (ils défilent sur le côté sur téléphone) */
+    .tableau-defile { overflow-x: auto; }
+    .tableau-prev { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: #fff; }
+    .tableau-prev th, .tableau-prev td { padding: 8px 10px; border-bottom: 1px solid #F0EEE9; text-align: right; white-space: nowrap; vertical-align: top; }
+    .tableau-prev th { font-size: 0.76rem; color: #7a7a75; background: #FBF8F3; white-space: normal; }
+    .tableau-prev th:first-child, .tableau-prev td:first-child { text-align: left; }
     .panneau { display: none; }
     .panneau.actif { display: block; }
 
@@ -259,6 +265,7 @@
       <button type="button" class="onglet" data-onglet="projets" onclick="afficherOnglet('projets')">🤝 Projets<span class="pastille" id="pastille-projets">0</span></button>
       <button type="button" class="onglet" data-onglet="points" onclick="afficherOnglet('points')">📆 Points des pros<span class="pastille" id="pastille-points">0</span></button>
       <button type="button" class="onglet" data-onglet="factures" onclick="afficherOnglet('factures')">💶 Factures<span class="pastille" id="pastille-factures">0</span></button>
+      <button type="button" class="onglet" data-onglet="previsionnel" onclick="afficherOnglet('previsionnel')">📈 Prévisionnel</button>
       <button type="button" class="onglet" data-onglet="messages" onclick="afficherOnglet('messages')">💬 Messages</button>
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés<span class="pastille cache" id="pastille-valides">0</span></button>
@@ -390,6 +397,39 @@
       </details>
     </div>
 
+    <!-- Prévisionnel financier -->
+    <div class="panneau" id="panneau-previsionnel">
+      <p class="aide">Ce que pourrait rapporter ALB Sud Immobilier sur 12 mois, selon tes hypothèses et tes tarifs. Change un chiffre : tout se recalcule tout de suite. Clique sur « Enregistrer » pour le garder. Dès que des factures sont validées, le réel s'affiche à côté du prévu.</p>
+      <div class="compteurs" id="prev-compteurs"></div>
+      <div class="carte" id="prev-bilan" style="margin-top:14px;"></div>
+      <h2 class="titre-section">📅 Mois par mois</h2>
+      <div class="carte tableau-defile" id="prev-tableau"></div>
+      <details class="carte">
+        <summary style="cursor:pointer;font-weight:700;color:#5A3A6A;">🔍 Détail du chiffre d'affaires par source</summary>
+        <div class="tableau-defile" id="prev-detail" style="margin-top:10px;"></div>
+      </details>
+
+      <h2 class="titre-section">✏️ Tes hypothèses</h2>
+      <div class="carte">
+        <div class="grille" id="prev-general"></div>
+      </div>
+      <div class="carte">
+        <p class="aide" style="margin-bottom:10px;">Combien tu en prévois le premier mois, et combien en plus chaque mois (0 = ça ne bouge pas).</p>
+        <div class="grille" id="prev-hypotheses"></div>
+        <p class="aide" id="prev-tarifs" style="margin-top:10px;"></p>
+      </div>
+      <h2 class="titre-section">🧾 Tes charges par mois</h2>
+      <div class="carte">
+        <p class="aide" style="margin-bottom:10px;">Ce que tu paies chaque mois pour faire tourner ALB Sud Immobilier.</p>
+        <div id="prev-charges"></div>
+        <button type="button" class="bouton discret" onclick="ajouterCharge()">+ Ajouter une charge</button>
+      </div>
+      <div class="actions" style="margin-bottom:10px;">
+        <button type="button" class="bouton vert" onclick="enregistrerPrevisionnel(this)">💾 Enregistrer</button>
+      </div>
+      <p class="aide">Repère simple : le résultat est calculé avant impôt sur les sociétés et avant ta rémunération (et ses cotisations). Ton expert-comptable pourra affiner.</p>
+    </div>
+
     <!-- Messages -->
     <div class="panneau" id="panneau-messages">
       <p class="aide">Toutes les conversations entre membres, en lecture seule, les plus récentes en premier. Rappel : un pro ne peut jamais écrire en premier à un particulier, le site le bloque.</p>
@@ -439,7 +479,6 @@
       <div class="carte">
         <h2>Bientôt dans Gestion du site</h2>
         <p class="ligne-info">🗺️ Les chiffres par département et le temps de vente sont là : bouton <a href="statistiques.html"><strong>📈 Statistiques</strong></a>, en haut.</p>
-        <p class="ligne-info">💶 <strong>Prévisionnel financier</strong> d'ALB Sud Immobilier.</p>
       </div>
     </div>
   </section>
@@ -450,5 +489,6 @@
 <script src="gestion-site-3.js"></script>
 <script src="gestion-site-4.js"></script>
 <script src="gestion-site-5.js"></script>
+<script src="gestion-site-6.js"></script>
 </body>
 </html>
