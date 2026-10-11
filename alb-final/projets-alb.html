@@ -3,11 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projets ALB — Financement, travaux, vente ou achat · ALB Immobilier</title>
-  <meta name="description" content="Un projet immobilier dans l'ancien (Var, Bouches-du-Rhône) ? Financement, travaux, vente ou achat : répondez à quelques questions, ALB Immobilier vous oriente vers des professionnels vérifiés.">
+  <title>Financement, travaux, vente ou achat dans l'ancien · Var et Bouches-du-Rhône · Projets ALB</title>
+  <meta name="description" content="Un projet immobilier dans l'ancien (Var, Bouches-du-Rhône) ? Financement, travaux, vente ou achat : répondez à quelques questions, ALB Immobilier vous oriente vers des professionnels vérifiés. Sans démarchage.">
+  <link rel="canonical" href="https://albimmobilier.fr/projets-alb.html">
+  <link rel="icon" type="image/png" href="https://albimmobilier.fr/logo-signature.png">
+  <!-- Aperçu quand le lien est partagé (Facebook, LinkedIn, WhatsApp, SMS…) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ALB Immobilier">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:url" content="https://albimmobilier.fr/projets-alb.html">
+  <meta property="og:title" content="Projets ALB · Financement, travaux, vente ou achat dans l'ancien">
+  <meta property="og:description" content="Un projet immobilier dans l'ancien (Var, Bouches-du-Rhône) ? Financement, travaux, vente ou achat : répondez à quelques questions, ALB Immobilier vous oriente vers des professionnels vérifiés. Sans démarchage.">
+  <meta property="og:image" content="https://albimmobilier.fr/logo-signature.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
@@ -164,6 +176,19 @@
     .metiers button.choisi .coche { background: #5A3A6A; border-color: #5A3A6A; }
     .metiers button.choisi .coche::after { content: "✓"; }
     .metiers .large { grid-column: 1 / -1; }
+    /* Être rappelé(e) par Jocelyne */
+    .lien-rappel { text-align: center; font-size: 0.9rem; margin-top: 26px; color: #7a7a75; }
+    .lien-rappel button { background: none; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 700; color: #5A3A6A; text-decoration: underline; cursor: pointer; padding: 4px; }
+    .formulaire-rappel { display: flex; flex-direction: column; gap: 14px; }
+    .formulaire-rappel select, .formulaire-rappel textarea { font-family: inherit; font-size: 1rem; padding: 12px 14px; border: 2px solid #E8E6E1; border-radius: 8px; background: #fff; width: 100%; }
+    .formulaire-rappel textarea { min-height: 90px; resize: vertical; }
+    .formulaire-rappel select:focus, .formulaire-rappel textarea:focus { outline: none; border-color: #5A3A6A; }
+    .case { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; cursor: pointer; }
+    .case input { width: 18px; height: 18px; margin-top: 2px; accent-color: #5A3A6A; flex: 0 0 auto; }
+    .piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .message-rappel { padding: 12px 14px; border-radius: 8px; font-size: 0.92rem; background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .merci { background: #fff; border: 1px solid #E8E6E1; border-left: 5px solid #B28E3D; border-radius: 10px; padding: 22px 20px; }
+    .merci p { margin-bottom: 10px; }
     @media (min-width: 700px) {
       .metiers { grid-template-columns: 1fr 1fr 1fr; }
       .page { padding: 40px 24px 20px; }
@@ -504,6 +529,36 @@
       <button type="button" data-aller="financement"><span class="emoji">💶</span><span><strong>Financement</strong> · savoir ce que je peux acheter, avec un courtier</span></button>
       <button type="button" data-aller="travaux"><span class="emoji">🔧</span><span><strong>Travaux</strong> · trouver les bons artisans</span></button>
       <button type="button" data-aller="accompagnement"><span class="emoji">🤝</span><span><strong>Vente ou achat</strong> · être accompagné(e) par un agent ou un mandataire</span></button>
+      <button type="button" data-aller="rappel"><span class="emoji">📞</span><span><strong>Être rappelé(e)</strong> · Jocelyne vous appelle pour faire le point avec vous, gratuitement</span></button>
+    </div>
+  </section>
+
+  <!-- Être rappelé(e) : pour la personne qui ne sait pas par où commencer -->
+  <section class="question" id="q-rappel">
+    <h2>Jocelyne vous rappelle pour faire le point</h2>
+    <p class="intro" style="margin-bottom:16px;">Pas besoin de créer de compte. Laissez votre prénom et votre numéro : Jocelyne, la fondatrice d'ALB Sud Immobilier, vous appelle du lundi au vendredi pour comprendre votre projet et vous orienter. C'est gratuit et sans engagement.</p>
+    <form class="formulaire-rappel" id="form-rappel" novalidate>
+      <div class="champ"><label for="r-prenom">Votre prénom</label><input type="text" id="r-prenom" maxlength="60" autocomplete="given-name"></div>
+      <div class="champ"><label for="r-tel">Votre numéro de téléphone</label><input type="tel" id="r-tel" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="06 12 34 56 78"></div>
+      <div class="champ"><label for="r-cp">Code postal <span style="font-weight:500;color:#7a7a75;">(facultatif)</span></label><input type="text" id="r-cp" maxlength="5" inputmode="numeric" autocomplete="postal-code" placeholder="Ex. : 83170"></div>
+      <div class="champ"><label for="r-moment">Le meilleur moment pour vous joindre</label>
+        <select id="r-moment"><option value="peu_importe">Peu importe</option><option value="matin">Le matin</option><option value="midi">Entre midi et deux</option><option value="apres_midi">L'après-midi</option><option value="soir">En fin de journée</option></select></div>
+      <div class="champ"><label for="r-message">En quelques mots, votre projet <span style="font-weight:500;color:#7a7a75;">(facultatif)</span></label>
+        <textarea id="r-message" maxlength="600" placeholder="Ex. : on pense vendre notre maison pour acheter plus grand, mais on ne sait pas par quoi commencer."></textarea></div>
+      <div class="piege" aria-hidden="true"><label>Ne pas remplir<input type="text" id="r-site" tabindex="-1" autocomplete="off"></label></div>
+      <label class="case"><input type="checkbox" id="r-accord"><span>J'accepte que Jocelyne d'ALB Sud Immobilier m'appelle au sujet de mon projet. Mon numéro n'est jamais transmis à un professionnel sans mon accord.</span></label>
+      <div class="message-rappel cache" id="r-erreur"></div>
+      <button type="submit" class="bouton bouton-suite" id="r-envoyer" style="margin-left:0;">📞 Je veux être rappelé(e)</button>
+    </form>
+  </section>
+
+  <!-- Merci -->
+  <section class="question" id="q-merci">
+    <div class="merci">
+      <h2 id="merci-titre">Merci !</h2>
+      <p>Votre demande est bien arrivée. Jocelyne vous appelle très vite, du lundi au vendredi, au moment que vous avez choisi.</p>
+      <p>En attendant, vous pouvez regarder <a href="annonces.html">les annonces</a> ou <a href="vitrine-pros.html">nos pros ALB</a>.</p>
+      <p style="color:#B28E3D;font-weight:600;margin-bottom:0;">À la bien, toujours ✨</p>
     </div>
   </section>
 
@@ -511,6 +566,7 @@
     <button type="button" class="bouton bouton-retour cache" id="bouton-retour">← Retour</button>
     <button type="button" class="bouton bouton-suite cache" id="bouton-suite" disabled>Continuer →</button>
   </div>
+  <p class="lien-rappel" id="lien-rappel">Vous ne savez pas par où commencer ? <button type="button" onclick="allerA('rappel')">📞 Être rappelé(e) par Jocelyne</button></p>
 </main>
 
 <!-- ========== MODALES OFFICIELLES ========== -->
@@ -608,7 +664,7 @@
   //  • vendre ou acheter accompagné(e) → vente ou achat seulement
   const etat = { module: '', objet: '', metiers: [] };
   const chemin = ['depart'];          // les questions déjà vues, pour le bouton « Retour »
-  const ETAPE = { depart: 1, hesite: 1, 'acheter-vendre': 1, financement: 2, travaux: 2, accompagnement: 2, tout: 2, cp: 3 };
+  const ETAPE = { depart: 1, hesite: 1, 'acheter-vendre': 1, financement: 2, travaux: 2, accompagnement: 2, tout: 2, rappel: 2, cp: 3, merci: 3 };
   const TITRES_CP = {
     financement: 'Où cherchez-vous ? (code postal)',
     travaux: 'Le code postal du logement',
@@ -621,7 +677,9 @@
     document.querySelectorAll('.question').forEach(function (q) { q.classList.toggle('active', q.id === 'q-' + nom); });
     const etape = ETAPE[nom] || 1;
     document.querySelectorAll('.point').forEach(function (p, i) { p.classList.toggle('actif', i < etape); });
-    el('bouton-retour').classList.toggle('cache', chemin.length < 2);
+    el('bouton-retour').classList.toggle('cache', chemin.length < 2 || nom === 'merci');
+    el('lien-rappel').classList.toggle('cache', nom === 'rappel' || nom === 'merci');
+    if (nom === 'rappel') setTimeout(function () { el('r-prenom').focus(); }, 300);
     el('bouton-suite').classList.toggle('cache', nom !== 'cp' && nom !== 'travaux');
     if (nom === 'travaux') el('bouton-suite').disabled = !etat.metiers.length;
     if (nom === 'cp') {
@@ -702,6 +760,47 @@
     if (etat.objet) params.set('objet', etat.objet);
     if (etat.module === 'travaux' && etat.metiers.length) params.set('metiers', etat.metiers.join(','));
     location.href = 'projet-demande.html?' + params.toString();
+  });
+
+  // ========== Être rappelé(e) par Jocelyne ==========
+  const ERREURS_RAPPEL = {
+    PRENOM_MANQUANT: 'Indiquez votre prénom, pour que Jocelyne sache qui appeler.',
+    TELEPHONE_INVALIDE: 'Ce numéro ne semble pas complet. Vérifiez-le (10 chiffres, ex. : 06 12 34 56 78).',
+    CODE_POSTAL_INVALIDE: 'Le code postal doit contenir 5 chiffres (ou laissez-le vide).',
+    CONSENTEMENT_MANQUANT: 'Cochez la case pour que Jocelyne puisse vous appeler.',
+    TROP_DE_DEMANDES: 'Beaucoup de demandes en ce moment : réessayez dans un petit moment, ou appelez directement le 07 45 60 28 05.'
+  };
+  function erreurRappel(code) {
+    const zone = el('r-erreur');
+    zone.textContent = ERREURS_RAPPEL[code] || 'La demande n\'a pas pu partir. Réessayez dans un instant, ou appelez directement le 07 45 60 28 05.';
+    zone.classList.remove('cache');
+  }
+  el('r-cp').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); });
+  el('form-rappel').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    el('r-erreur').classList.add('cache');
+    if (el('r-site').value) { allerA('merci'); return; }   // robot : on fait comme si de rien n'était
+    const prenom = el('r-prenom').value.trim();
+    const tel = el('r-tel').value.replace(/[^0-9+]/g, '');
+    if (!prenom) { erreurRappel('PRENOM_MANQUANT'); el('r-prenom').focus(); return; }
+    if (!/^(0[1-9][0-9]{8}|\+33[1-9][0-9]{8})$/.test(tel)) { erreurRappel('TELEPHONE_INVALIDE'); el('r-tel').focus(); return; }
+    if (el('r-cp').value && !/^[0-9]{5}$/.test(el('r-cp').value)) { erreurRappel('CODE_POSTAL_INVALIDE'); return; }
+    if (!el('r-accord').checked) { erreurRappel('CONSENTEMENT_MANQUANT'); return; }
+    const bouton = el('r-envoyer');
+    bouton.disabled = true; bouton.textContent = 'Envoi…';
+    const { error } = await window.albSupabase.rpc('alb_rappel_demander', {
+      p_prenom: prenom, p_telephone: tel, p_code_postal: el('r-cp').value || null,
+      p_moment: el('r-moment').value, p_message: el('r-message').value, p_consentement: true
+    });
+    bouton.disabled = false; bouton.textContent = '📞 Je veux être rappelé(e)';
+    if (error) {
+      const code = Object.keys(ERREURS_RAPPEL).find(function (k) { return String(error.message || '').indexOf(k) !== -1; });
+      console.error('[ALB DEBUG] rappel :', error);
+      erreurRappel(code);
+      return;
+    }
+    el('merci-titre').textContent = 'Merci ' + prenom + ' !';
+    allerA('merci');
   });
 </script>
 </body>
