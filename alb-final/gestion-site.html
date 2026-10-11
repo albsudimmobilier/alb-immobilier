@@ -270,7 +270,7 @@
       <button type="button" class="onglet" data-onglet="a-valider" onclick="afficherOnglet('a-valider')">📞 Pros à valider<span class="pastille" id="pastille-a-valider">0</span></button>
       <button type="button" class="onglet" data-onglet="valides" onclick="afficherOnglet('valides')">✅ Pros validés<span class="pastille cache" id="pastille-valides">0</span></button>
       <button type="button" class="onglet" data-onglet="avis" onclick="afficherOnglet('avis')">⭐ Avis<span class="pastille" id="pastille-avis">0</span></button>
-      <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Membres</button>
+      <button type="button" class="onglet" data-onglet="membres" onclick="afficherOnglet('membres')">👥 Suivi des membres</button>
       <button type="button" class="onglet" data-onglet="acces" onclick="afficherOnglet('acces')">🔑 Accès<span class="pastille" id="pastille-acces">0</span></button>
       <button type="button" class="onglet" data-onglet="bientot" onclick="afficherOnglet('bientot')">🔜 À venir</button>
     </nav>
@@ -462,15 +462,30 @@
       <div class="liste-fiches" id="liste-avis"></div>
     </div>
 
-    <!-- Membres -->
+    <!-- Membres : suivi par membre -->
     <div class="panneau" id="panneau-membres">
-      <input type="search" class="recherche" id="recherche-membres" placeholder="Rechercher un nom, un e-mail, une ville…" oninput="afficherMembres()">
-      <div class="carte" id="liste-membres"></div>
+      <p class="aide">Ce que fait chaque membre sur la plateforme, et où tu en es avec lui. Pour un SMS ou un mail, le texte est prêt : tu l'envoies toi-même, puis tu cliques « C'est fait » et la date est gardée. Indique quand le relancer : il apparaîtra ce jour-là dans « À faire aujourd'hui ».</p>
+      <input type="search" class="recherche" id="recherche-membres" placeholder="Rechercher un nom, un e-mail, un téléphone, une ville, une note…" oninput="afficherMembres()">
+      <div class="filtres" id="filtres-membres"></div>
+      <div class="filtres" id="filtres-membres-sous"></div>
+      <div class="filtres" id="filtres-membres-etape"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <strong id="compte-membres" style="color:#5A3A6A;"></strong>
+        <label class="petit-champ" style="flex-direction:row;align-items:center;gap:6px;">Trier
+          <select id="tri-membres" onchange="afficherMembres()" style="width:auto;">
+            <option value="recents">Inscrits récemment</option>
+            <option value="connexion">Connectés récemment</option>
+            <option value="contact">Contactés il y a le plus longtemps</option>
+            <option value="nom">Par prénom</option>
+          </select>
+        </label>
+      </div>
+      <div class="liste-fiches" id="liste-membres"></div>
     </div>
 
     <!-- Accès : demandes de changement d'adresse / d'accès -->
     <div class="panneau" id="panneau-acces">
-      <p class="aide">Les membres qui veulent changer d'adresse e-mail ou qui n'ont plus accès à leur compte. Rappelle-les pour vérifier que c'est bien eux, puis prépare leur lien. Pour un simple nouveau code PIN, laisse l'adresse vide. Tu peux aussi le faire depuis « Membres », bouton 🔑 Accès.</p>
+      <p class="aide">Les membres qui veulent changer d'adresse e-mail ou qui n'ont plus accès à leur compte. Rappelle-les pour vérifier que c'est bien eux, puis prépare leur lien. Pour un simple nouveau code PIN, laisse l'adresse vide. Tu peux aussi le faire depuis « Suivi des membres », bouton 🔑 Accès.</p>
       <div class="liste-fiches" id="liste-acces"></div>
     </div>
 
@@ -490,5 +505,6 @@
 <script src="gestion-site-4.js"></script>
 <script src="gestion-site-5.js"></script>
 <script src="gestion-site-6.js"></script>
+<script src="gestion-site-7.js"></script>
 </body>
 </html>
