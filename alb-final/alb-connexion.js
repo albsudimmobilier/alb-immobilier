@@ -13,6 +13,8 @@
 const ALB_SUPABASE_URL = "https://kutbxyinpokebjdemlnq.supabase.co";
 const ALB_CLE_PUBLIQUE = "sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ";
 const ALB_GUICHET_CONNEXION = ALB_SUPABASE_URL + "/functions/v1/alb-connexion";
+// Guichet des espaces créés par Jocelyne (création pendant un appel + activation par la personne)
+const ALB_GUICHET_ESPACES = ALB_SUPABASE_URL + "/functions/v1/alb-espaces";
 
 // Client Supabase unique, partagé par toute la page
 window.albSupabase = window.supabase.createClient(ALB_SUPABASE_URL, ALB_CLE_PUBLIQUE, {
@@ -51,12 +53,12 @@ function albMessageErreur(code) {
 }
 
 // Appel au guichet serveur (si la personne est connectée, le guichet sait qui elle est)
-async function albAppelerGuichet(donnees) {
+async function albAppelerGuichet(donnees, adresse) {
   try {
     const entetes = { "Content-Type": "application/json", "apikey": ALB_CLE_PUBLIQUE };
     const { data: session } = await window.albSupabase.auth.getSession();
     if (session?.session?.access_token) entetes["Authorization"] = "Bearer " + session.session.access_token;
-    const reponse = await fetch(ALB_GUICHET_CONNEXION, {
+    const reponse = await fetch(adresse || ALB_GUICHET_CONNEXION, {
       method: "POST",
       headers: entetes,
       body: JSON.stringify(donnees)
@@ -123,6 +125,26 @@ async function albUtiliserLien(jeton, pin) {
   if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
   const session = await albOuvrirSession(resultat.jeton);
   return { ...session, email: resultat.email };
+}
+
+// ---------- Espace créé par Jocelyne ----------
+// Lit un lien d'activation (espace créé par Jocelyne pendant un appel)
+async function albLireActivation(jeton) {
+  const resultat = await albAppelerGuichet({ action: "lire_activation", jeton }, ALB_GUICHET_ESPACES);
+  return resultat.ok ? resultat : { ok: false, message: albMessageErreur(resultat.code) };
+}
+
+// La personne active son espace : code PIN + conditions générales acceptées, puis connexion
+async function albActiverEspace(jeton, pin, cguAcceptees) {
+  const resultat = await albAppelerGuichet({ action: "activer", jeton, pin, cgu_acceptees: cguAcceptees === true }, ALB_GUICHET_ESPACES);
+  if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
+  const session = await albOuvrirSession(resultat.jeton);
+  return { ...session, email: resultat.email };
+}
+
+// Gestion du site : Jocelyne crée l'espace d'une personne
+async function albCreerEspace(donnees) {
+  return albAppelerGuichet({ action: "creer_espace", ...donnees }, ALB_GUICHET_ESPACES);
 }
 
 // Demande de changement d'adresse / « je n'ai plus accès » (Jocelyne rappelle)
