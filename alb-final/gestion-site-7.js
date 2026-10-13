@@ -4,6 +4,8 @@
 // et tes SMS, mails, appels et notes. Tu envoies toi-même (ton téléphone,
 // ta messagerie), puis tu cliques « C'est fait » : la date est gardée.
 // Remplace l'ancienne liste des membres (partie 2).
+// Tu peux aussi suspendre un membre (il ne peut plus se connecter, sa fiche
+// et ses annonces ne sont plus visibles) puis le remettre comme avant.
 // ============================================================
 
 let suiviMembres = {};          // id du membre → activité, étape, contacts
@@ -11,11 +13,15 @@ let filtreQui = 'tous';         // tous | particuliers | pros | relancer
 let filtreSous = 'tous';        // vendeurs, acheteurs, clients_pro / courtier, artisan, agent, mandataire, autre
 let filtreEtape = 'toutes';
 let triMembres = 'recents';
-let panneauOuvert = {};         // id du membre → panneau ouvert (sms, mail, appel, note, suivi)
+let panneauOuvert = {};         // id du membre → panneau ouvert (sms, mail, appel, note, suivi, suspendre)
+let suspensions = {};           // id du membre → { le, motif, nb_annonces }
 
 ERREURS.TROP_TARD = 'Ce contact a plus de 24 h : il ne peut plus être effacé. Ajoute plutôt une note.';
 ERREURS.TEXTE_MANQUANT = 'Écris d\'abord ta note.';
 ERREURS.MEMBRE_INTROUVABLE = 'Ce membre n\'existe plus.';
+ERREURS.SUSPENSION_ADMIN = 'Tu ne peux pas suspendre ton propre compte.';
+ERREURS.DEJA_SUSPENDU = 'Ce membre est déjà suspendu.';
+ERREURS.PAS_SUSPENDU = 'Ce membre n\'est pas suspendu.';
 
 const ETAPES = {
   a_contacter: ['🆕 À contacter', ''],
@@ -27,10 +33,14 @@ const ETAPES = {
 const CANAUX = { sms: '📱 SMS', mail: '📧 Mail', appel: '📞 Appel', note: '📝 Note' };
 
 async function chargerSuiviMembres() {
-  const { data, error } = await albSupabase.rpc('alb_gestion_suivi_membres');
-  if (error) { console.error('[ALB DEBUG] suivi membres :', error); return; }
-  suiviMembres = {};
-  (data || []).forEach(function (s) { suiviMembres[s.id] = s; });
+  const [suivi, susp] = await Promise.all([
+    albSupabase.rpc('alb_gestion_suivi_membres'),
+    albSupabase.rpc('alb_gestion_suspensions')
+  ]);
+  if (suivi.error) console.error('[ALB DEBUG] suivi membres :', suivi.error);
+  else { suiviMembres = {}; (suivi.data || []).forEach(function (s) { suiviMembres[s.id] = s; }); }
+  if (susp.error) console.error('[ALB DEBUG] suspensions :', susp.error);
+  else { suspensions = {}; (susp.data || []).forEach(function (x) { suspensions[x.id] = x; }); }
   afficherMembres();
 }
 
@@ -38,9 +48,10 @@ async function chargerSuiviMembres() {
 function estPro(m) { return m.role && m.role !== 'particulier'; }
 function suiviDe(m) { return suiviMembres[m.id] || { activite: {}, contacts: [], etape: 'a_contacter' }; }
 function aujourdhuiIso() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function estSuspendu(m) { return !!suspensions[m.id]; }
 function aRelancer(m) {
   const s = suiviDe(m);
-  return !!s.relancer_le && s.relancer_le <= aujourdhuiIso() && s.etape !== 'ok' && s.etape !== 'pause';
+  return !estSuspendu(m) && !!s.relancer_le && s.relancer_le <= aujourdhuiIso() && s.etape !== 'ok' && s.etape !== 'pause';
 }
 function membresAffichables() { return membres.filter(function (m) { return !m.est_admin; }); }
 
@@ -65,6 +76,12 @@ function choisirFiltreMembres(cle, valeur) {
   if (cle === 'etape') filtreEtape = valeur;
   afficherMembres();
 }
+// « Tout afficher » : on enlève la recherche et tous les filtres
+function toutAfficherMembres() {
+  document.getElementById('recherche-membres').value = '';
+  filtreQui = 'tous'; filtreSous = 'tous'; filtreEtape = 'toutes';
+  afficherMembres();
+}
 
 function boutonsFiltre(cle, options, actif) {
   return options.map(function (o) {
@@ -81,21 +98,31 @@ afficherMembres = function () {
   const nbPart = tous.filter(function (m) { return !estPro(m); }).length;
   const nbPros = tous.length - nbPart;
   const nbRelance = tous.filter(aRelancer).length;
+  const nbSusp = tous.filter(estSuspendu).length;
+  if (filtreQui === 'suspendus' && !nbSusp) filtreQui = 'tous';
   document.getElementById('filtres-membres').innerHTML =
-    boutonsFiltre('qui', [['tous', '👥 Tous', tous.length], ['particuliers', '🙋 Particuliers', nbPart], ['pros', '🧑‍💼 Professionnels', nbPros], ['relancer', '⏰ À relancer', nbRelance]], filtreQui);
+    boutonsFiltre('qui', [['tous', '👥 Tous', tous.length], ['particuliers', '🙋 Particuliers', nbPart], ['pros', '🧑‍💼 Professionnels', nbPros], ['relancer', '⏰ À relancer', nbRelance]]
+      .concat(nbSusp ? [['suspendus', '⛔ Suspendus', nbSusp]] : []), filtreQui);
   document.getElementById('filtres-membres-sous').innerHTML = SOUS_FILTRES[filtreQui] ? boutonsFiltre('sous', SOUS_FILTRES[filtreQui], filtreSous) : '';
+  // L'étape : une simple liste déroulante (moins de boutons, moins de pièges)
   document.getElementById('filtres-membres-etape').innerHTML =
-    boutonsFiltre('etape', [['toutes', 'Toutes les étapes']].concat(Object.keys(ETAPES).map(function (k) { return [k, ETAPES[k][0]]; })), filtreEtape);
+    '<label class="petit-champ" style="flex-direction:row;align-items:center;gap:6px;">Étape' +
+      '<select style="width:auto;" onchange="choisirFiltreMembres(\'etape\', this.value)">' +
+        [['toutes', 'Toutes les étapes']].concat(Object.keys(ETAPES).map(function (k) { return [k, ETAPES[k][0]]; })).map(function (o) {
+          return '<option value="' + o[0] + '"' + (filtreEtape === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select></label>';
 
   const recherche = (document.getElementById('recherche-membres').value || '').toLowerCase().trim();
   let liste = tous.filter(function (m) {
     if (filtreQui === 'particuliers' && estPro(m)) return false;
     if (filtreQui === 'pros' && !estPro(m)) return false;
     if (filtreQui === 'relancer' && !aRelancer(m)) return false;
+    if (filtreQui === 'suspendus' && !estSuspendu(m)) return false;
     if (!passeSousFiltre(m)) return false;
     if (filtreEtape !== 'toutes' && suiviDe(m).etape !== filtreEtape) return false;
     if (!recherche) return true;
-    return [m.prenom, m.nom, m.email, m.telephone, m.nom_entreprise, m.ville, m.code_postal, m.besoin_autre, m.message_inscription, m.metier_autre]
+    return [m.prenom, m.nom, (m.prenom || '') + ' ' + (m.nom || ''), m.email, m.telephone, String(m.telephone || '').replace(/[^0-9]/g, ''),
+            m.nom_entreprise, m.ville, m.code_postal, m.besoin_autre, m.message_inscription, m.metier_autre, (suspensions[m.id] || {}).motif]
       .concat((suiviDe(m).contacts || []).map(function (c) { return (c.objet || '') + ' ' + (c.texte || ''); }))
       .some(function (v) { return String(v || '').toLowerCase().includes(recherche); });
   });
@@ -106,8 +133,11 @@ afficherMembres = function () {
     if (triMembres === 'nom') return ((a.prenom || '') + (a.nom || '')).localeCompare((b.prenom || '') + (b.nom || ''), 'fr');
     return String(b.date_creation || '').localeCompare(String(a.date_creation || ''));
   });
-  document.getElementById('compte-membres').textContent = liste.length + ' membre' + (liste.length > 1 ? 's' : '');
-  zone.innerHTML = liste.length ? liste.map(carteMembre).join('') : '<div class="vide">Aucun membre trouvé.</div>';
+  const filtresActifs = !!recherche || filtreQui !== 'tous' || filtreSous !== 'tous' || filtreEtape !== 'toutes';
+  document.getElementById('compte-membres').innerHTML = liste.length + ' membre' + (liste.length > 1 ? 's' : '') +
+    (filtresActifs ? ' <button type="button" class="filtre" style="margin-left:6px;" onclick="toutAfficherMembres()">✖ Tout afficher</button>' : '');
+  zone.innerHTML = liste.length ? liste.map(carteMembre).join('')
+    : '<div class="vide">Aucun membre ne correspond' + (filtresActifs ? ' à ta recherche ou à tes filtres.<br><button type="button" class="bouton" style="margin-top:10px;" onclick="toutAfficherMembres()">Tout afficher</button>' : '.') + '</div>';
 };
 
 function dernierContact(m) { const c = (suiviDe(m).contacts || [])[0]; return c ? c.le : null; }
@@ -152,12 +182,16 @@ function carteMembre(m) {
   const qui = estPro(m) ? '<span class="badge-qui agent">🧑‍💼 Pro</span>' : '<span class="badge-qui particulier">🙋 Particulier</span>';
   const contacts = s.contacts || [];
   const dernier = contacts[0];
-  return '<div class="carte membre-suivi" id="membre-' + m.id + '">' +
+  const susp = suspensions[m.id];
+  return '<div class="carte membre-suivi" id="membre-' + m.id + '"' + (susp ? ' style="border-color:#F0CACA;background:#FFFBFB;"' : '') + '>' +
     '<div class="proprio-tete" style="margin-bottom:6px;">' + qui +
       '<span class="proprio-nom">' + albEchapper(((m.prenom || '') + ' ' + (m.nom || '')).trim() || 'Sans nom') + '</span>' +
       (m.nom_entreprise ? '<span class="etiquette or">' + albEchapper(m.nom_entreprise) + '</span>' : '') +
-      '<span class="etiquette ' + etape[1] + '">' + etape[0] + '</span>' + relance +
+      (susp ? '<span class="etiquette rouge">⛔ Suspendu depuis le ' + albEchapper(dateLisible(susp.le)) + '</span>' : '<span class="etiquette ' + etape[1] + '">' + etape[0] + '</span>' + relance) +
     '</div>' +
+    (susp ? '<p class="ligne-info" style="color:#8A2D2D;">⛔ Connexion impossible' + (estPro(m) ? ' · fiche retirée de « Nos pros ALB » (plus de nouvelles demandes)' : '') +
+      (susp.nb_annonces ? ' · ' + susp.nb_annonces + ' annonce' + (susp.nb_annonces > 1 ? 's' : '') + ' en pause' : '') + '.' +
+      (susp.motif ? '<br>📝 Pourquoi : ' + albEchapper(susp.motif) : '') + '</p>' : '') +
     etiquettesDe(m) + messageDe(m) + coordonnees(m) +
     '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + (m.ville ? ' · 📍 ' + albEchapper(m.ville) : '') +
       ' · ' + (s.derniere_connexion ? '🔓 Dernière connexion ' + depuis(s.derniere_connexion) : '🔒 Jamais connecté') + '</p>' +
@@ -174,6 +208,9 @@ function carteMembre(m) {
       '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'suivi\')">📋 Où j\'en suis</button>' +
       '<button type="button" class="bouton discret" onclick="basculerAcces(\'' + m.id + '\')">🔑 Accès</button>' +
       (m.compte_bloque ? '<button type="button" class="bouton discret" onclick="debloquer(\'' + m.id + '\', this)">🔓 Débloquer</button>' : '') +
+      (susp
+        ? '<button type="button" class="bouton vert" onclick="reactiverMembre(\'' + m.id + '\', this)">▶️ Remettre ce membre</button>'
+        : '<button type="button" class="bouton rouge" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'suspendre\')">⛔ Suspendre</button>') +
     '</div>' +
     '<div id="panneau-membre-' + m.id + '">' + (panneauOuvert[m.id] ? panneauMembre(m, panneauOuvert[m.id]) : '') + '</div>' +
     blocAcces(m.id, '') +
@@ -271,6 +308,19 @@ function panneauMembre(m, quoi) {
       '<textarea class="texte-pret" id="texte-' + id + '" placeholder="' + (quoi === 'appel' ? 'Ce que vous vous êtes dit (facultatif)' : 'Ta note') + '"></textarea>' +
       '<div class="actions"><button type="button" class="bouton vert" onclick="noterContact(\'' + id + '\', \'' + quoi + '\', this)">💾 Enregistrer</button></div></div>';
   }
+  if (quoi === 'suspendre') {
+    const nbAnn = annonces.filter(function (a) { return a.proprietaire && a.proprietaire.id === id && ['disponible', 'sous_offre', 'compromis'].indexOf(a.statut) !== -1; }).length;
+    return '<div class="decision" style="border-color:#F0CACA;background:#FFFBFB;"><div class="decision-titre">⛔ Suspendre ' + albEchapper(((m.prenom || '') + ' ' + (m.nom || '')).trim() || 'ce membre') + '</div>' +
+      '<p class="ligne-info">Ce qui va se passer :</p><ul style="margin:4px 0 8px 18px;color:#4A4A47;font-size:0.9rem;">' +
+        '<li>plus aucune connexion possible (si la personne est connectée en ce moment, elle sera déconnectée au plus tard dans l\'heure) ;</li>' +
+        (estPro(m) ? '<li>sa fiche sort de « Nos pros ALB » et plus aucune nouvelle demande ne lui est envoyée ;</li>' : '') +
+        (nbAnn ? '<li>' + (nbAnn > 1 ? 'ses ' + nbAnn + ' annonces en ligne passent' : 'son annonce en ligne passe') + ' « en pause » ;</li>' : '') +
+        '<li>rien n\'est effacé : messages, suivi et historique restent là.</li>' +
+      '</ul><p class="ligne-info">Quand tu le remets, tout revient exactement comme avant. Aucun message automatique n\'est envoyé : c\'est toi qui préviens la personne si tu veux.</p>' +
+      '<label class="petit-champ" style="margin-top:8px;">Pourquoi (pour toi, facultatif)<textarea id="motif-' + id + '" maxlength="500" style="min-height:60px;"></textarea></label>' +
+      '<div class="actions"><button type="button" class="bouton rouge" onclick="suspendreMembre(\'' + id + '\', this)">⛔ Oui, suspendre</button>' +
+      '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + id + '\', \'suspendre\')">Annuler</button></div></div>';
+  }
   // Où j'en suis
   const s = suiviDe(m);
   return '<div class="decision"><div class="decision-titre">📋 Où tu en es avec ' + albEchapper(m.prenom || 'ce membre') + '</div>' +
@@ -344,6 +394,28 @@ async function enregistrerSuivi(id, bouton) {
   await chargerSuiviMembres();
   afficherAFaire();
   afficherMessage('message-general', 'succes', 'Suivi enregistré ✓');
+}
+
+// ----- Suspendre / remettre -----
+async function suspendreMembre(id, bouton) {
+  const motif = document.getElementById('motif-' + id).value;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_suspendre', { p_id: id, p_motif: motif });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  panneauOuvert[id] = null;
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', 'Membre suspendu ⛔ Tu peux le remettre quand tu veux.');
+}
+
+async function reactiverMembre(id, bouton) {
+  if (!confirm('Remettre ce membre ? La connexion redevient possible, et sa fiche et ses annonces reviennent comme avant.')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_reactiver', { p_id: id });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', 'Membre remis ✓ La connexion est de nouveau possible.');
 }
 
 // « À faire aujourd'hui » : les membres à relancer
