@@ -503,8 +503,8 @@
 
 <main class="espace">
   <div class="intro">
-    <h1>Votre nouveau code PIN</h1>
-    <p>Encore une petite étape et vous retrouvez votre espace ALB.</p>
+    <h1 id="titre-page">Votre nouveau code PIN</h1>
+    <p id="sous-titre-page">Encore une petite étape et vous retrouvez votre espace ALB.</p>
   </div>
 
   <div class="carte">
@@ -534,6 +534,11 @@
           <input type="password" id="nouveau-pin-confirmation" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required>
         </div>
       </div>
+      <!-- Seulement pour un espace créé par Jocelyne : la personne accepte elle-même les conditions -->
+      <label class="case case-cgu cache" id="bloc-cgu">
+        <input type="checkbox" id="activation-cgu">
+        <span>J'ai lu et j'accepte les <a href="cgu.html" class="lien-pourpre">conditions générales</a> et la <a href="confidentialite.html" class="lien-pourpre">politique de confidentialité</a>.</span>
+      </label>
       <button type="submit" class="bouton" id="bouton-enregistrer">J'enregistre mon nouveau code</button>
     </form>
 
@@ -653,13 +658,29 @@
   }
 
   let nouvelEmail = '';
+  let activation = false; // espace créé par Jocelyne, pas encore activé
 
   async function demarrer() {
     if (!/^[0-9a-f]{20,}$/.test(jeton)) { montrer('zone-invalide'); return; }
-    const lien = await albLireLien(jeton);
-    if (!lien.ok) { montrer('zone-invalide'); return; }
+    let lien = await albLireLien(jeton);
+    if (!lien.ok) {
+      // Ce n'est pas un lien « code PIN » : peut-être un lien d'activation (espace créé par Jocelyne)
+      lien = await albLireActivation(jeton);
+      if (!lien.ok) { montrer('zone-invalide'); return; }
+      activation = true;
+    }
     document.getElementById('texte-bonjour').textContent =
       'Bonjour ' + (lien.prenom || '') + ', choisissez votre nouveau code PIN : 4 chiffres faciles à retenir pour vous, mais difficiles à deviner pour les autres.';
+    if (activation) {
+      document.title = 'Activer mon espace — ALB Immobilier';
+      document.getElementById('titre-page').textContent = 'Activez votre espace ALB';
+      document.getElementById('sous-titre-page').textContent = 'Comme convenu au téléphone, votre espace est prêt. Il ne reste qu\'une petite étape.';
+      document.getElementById('texte-bonjour').textContent =
+        'Bonjour ' + (lien.prenom || '') + ', choisissez votre code PIN : 4 chiffres faciles à retenir pour vous, mais difficiles à deviner pour les autres. Avec votre e-mail, il vous servira à vous connecter.';
+      document.querySelector('label[for="nouveau-pin"]').textContent = 'Choisissez votre code PIN';
+      document.getElementById('bloc-cgu').classList.remove('cache');
+      document.getElementById('bouton-enregistrer').textContent = 'J\'active mon espace';
+    }
     const bloc = document.getElementById('bloc-nouvel-email');
     if (lien.type === 'changement_email' && lien.nouvel_email) {
       nouvelEmail = lien.nouvel_email;
@@ -675,20 +696,24 @@
     const confirmation = document.getElementById('nouveau-pin-confirmation').value.trim();
     if (!/^[0-9]{4}$/.test(pin)) { afficherMessage('message-code', 'erreur', 'Votre code PIN doit contenir exactement 4 chiffres.'); return; }
     if (pin !== confirmation) { afficherMessage('message-code', 'erreur', 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?'); return; }
+    const cgu = document.getElementById('activation-cgu').checked;
+    if (activation && !cgu) { afficherMessage('message-code', 'erreur', 'Pour activer votre espace, merci d\'accepter les conditions générales.'); return; }
 
     const bouton = document.getElementById('bouton-enregistrer');
     bouton.disabled = true;
     bouton.textContent = 'Un instant…';
-    const resultat = await albUtiliserLien(jeton, pin);
+    const resultat = activation ? await albActiverEspace(jeton, pin, cgu) : await albUtiliserLien(jeton, pin);
     bouton.disabled = false;
-    bouton.textContent = "J'enregistre mon nouveau code";
+    bouton.textContent = activation ? "J'active mon espace" : "J'enregistre mon nouveau code";
 
     if (!resultat.ok) {
       if ((resultat.message || '').indexOf("n'est plus valable") !== -1) { montrer('zone-invalide'); return; }
       afficherMessage('message-code', 'erreur', resultat.message);
       return;
     }
-    if (nouvelEmail) {
+    if (activation) {
+      document.getElementById('texte-succes').textContent = 'Bienvenue ! Votre espace ALB est activé. 💜';
+    } else if (nouvelEmail) {
       document.getElementById('texte-succes').textContent =
         'C\'est tout bon ! Votre nouvelle adresse (' + nouvelEmail + ') et votre nouveau code PIN sont enregistrés. 💜';
     }
