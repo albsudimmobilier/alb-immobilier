@@ -193,6 +193,8 @@ function carteMembre(m) {
       (susp.nb_annonces ? ' · ' + susp.nb_annonces + ' annonce' + (susp.nb_annonces > 1 ? 's' : '') + ' en pause' : '') + '.' +
       (susp.motif ? '<br>📝 Pourquoi : ' + albEchapper(susp.motif) : '') + '</p>' : '') +
     etiquettesDe(m) + messageDe(m) + coordonnees(m) +
+    (!susp && estPro(m) && m.statut_verifie && !m.profil_mis_en_ligne
+      ? '<p class="ligne-info" style="color:#8A6D1F;">⏸️ <strong>Pas en ligne</strong> : invisible sur « Nos pros ALB », ne reçoit aucune demande.</p>' : '') +
     '<p class="ligne-info">🗓️ Inscrit le ' + dateLisible(m.date_creation) + (m.ville ? ' · 📍 ' + albEchapper(m.ville) : '') +
       ' · ' + (s.derniere_connexion ? '🔓 Dernière connexion ' + depuis(s.derniere_connexion) : '🔒 Jamais connecté') + '</p>' +
     (m.compte_bloque ? '<p class="ligne-info">⛔ <strong>Compte en pause</strong> (trop de codes PIN faux)</p>' : '') +
@@ -208,6 +210,12 @@ function carteMembre(m) {
       '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'suivi\')">📋 Où j\'en suis</button>' +
       '<button type="button" class="bouton discret" onclick="basculerAcces(\'' + m.id + '\')">🔑 Accès</button>' +
       (m.compte_bloque ? '<button type="button" class="bouton discret" onclick="debloquer(\'' + m.id + '\', this)">🔓 Débloquer</button>' : '') +
+      // Pro validé : le mettre en ligne sur « Nos pros ALB » ou l'en retirer, directement d'ici
+      (!susp && estPro(m) && m.statut_verifie
+        ? (m.profil_mis_en_ligne
+          ? '<button type="button" class="bouton discret" onclick="mettreEnLigne(\'' + m.id + '\', false, this)">🙈 Retirer de Nos pros ALB</button>'
+          : '<button type="button" class="bouton vert" onclick="mettreEnLigne(\'' + m.id + '\', true, this)">🌐 Remettre en ligne</button>')
+        : '') +
       (susp
         ? '<button type="button" class="bouton vert" onclick="reactiverMembre(\'' + m.id + '\', this)">▶️ Remettre ce membre</button>'
         : '<button type="button" class="bouton rouge" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'suspendre\')">⛔ Suspendre</button>') +
@@ -417,6 +425,25 @@ async function reactiverMembre(id, bouton) {
   await toutRecharger();
   afficherMessage('message-general', 'succes', 'Membre remis ✓ La connexion est de nouveau possible.');
 }
+
+// ----- Pas de remplissage automatique du navigateur -----
+// Chrome prenait les cases « Nouveau code PIN » (cachées dans chaque carte)
+// pour un formulaire de connexion, et remplissait la recherche avec ton e-mail.
+// Ces cases ne sont donc plus des cases « mot de passe » (les chiffres restent masqués).
+(function () {
+  const blocAccesAvantRemplissage = blocAcces;
+  blocAcces = function (id, emailPropose) {
+    return blocAccesAvantRemplissage(id, emailPropose)
+      .replace(/type="password"/g, 'type="text" autocomplete="off" style="-webkit-text-security:disc;"')
+      .replace(/type="email"/g, 'type="email" autocomplete="off"');
+  };
+  const recherche = document.getElementById('recherche-membres');
+  if (recherche) {
+    recherche.setAttribute('autocomplete', 'off');
+    recherche.setAttribute('name', 'recherche-membres-alb');
+    recherche.value = '';
+  }
+})();
 
 // « À faire aujourd'hui » : les membres à relancer
 LIGNES_A_FAIRE.push({
