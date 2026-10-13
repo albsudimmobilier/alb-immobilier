@@ -23,6 +23,7 @@ window.albSupabase = window.supabase.createClient(ALB_SUPABASE_URL, ALB_CLE_PUBL
 const ALB_MESSAGES = {
   IDENTIFIANTS_INCORRECTS: "L'e-mail ou le code PIN ne correspond pas. Prenez le temps de vérifier, on est là.",
   BLOQUE: "Par sécurité, votre compte est en pause pendant 15 minutes après plusieurs essais. Revenez un peu plus tard, ou cliquez sur « J'ai oublié mon code PIN ».",
+  SUSPENDU: "Votre compte est en pause pour le moment. Pour en savoir plus, appelez Jocelyne : 07 45 60 28 05.",
   BLOQUE_LONG: "Par sécurité, votre compte est en pause pendant 24 heures après de nombreux essais. Jocelyne est prévenue et peut vous aider : 07 45 60 28 05. Vous pouvez aussi cliquer sur « J'ai oublié mon code PIN ».",
   LIEN_INVALIDE: "Ce lien n'est plus valable : il a peut-être déjà servi, ou son délai est dépassé. Pas de souci, demandez-en un nouveau.",
   NON_CONNECTE: "Votre session s'est terminée. Reconnectez-vous, puis recommencez.",
@@ -72,6 +73,10 @@ async function albOuvrirSession(jeton) {
   const { error } = await window.albSupabase.auth.verifyOtp({ token_hash: jeton, type: "magiclink" });
   if (error) {
     console.error("[ALB DEBUG] ouverture de session :", error);
+    // Compte suspendu par Jocelyne depuis Gestion du site
+    if (error.code === "user_banned" || /banned/i.test(error.message || "")) {
+      return { ok: false, code: "SUSPENDU", message: albMessageErreur("SUSPENDU") };
+    }
     return { ok: false, message: albMessageErreur("ERREUR_SERVEUR") };
   }
   return { ok: true };
