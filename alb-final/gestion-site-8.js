@@ -6,12 +6,17 @@
 // Pendant l'appel, Jocelyne peut aussi lui créer son espace (particulier ou pro) :
 // la personne reçoit ensuite (de Jocelyne) un lien pour choisir son code PIN
 // et accepter elle-même les conditions générales.
+// Le même formulaire sert dans 👥 Suivi des membres : « ➕ Ajouter un membre »
+// (par exemple un pro qu'elle a au téléphone), avec la liste des espaces
+// pas encore activés pour pouvoir relancer leur lien.
 // ============================================================
 
 let demandesRappel = [];
 let espacesCrees = {};      // id de la demande → { profile_id, prenom, nom, email, active }
 let liensActivation = {};   // id de la demande → lien d'activation tout juste préparé
 let formulaireEspace = {};  // id de la demande → formulaire « Créer son espace » ouvert
+let espacesNonActives = []; // membres créés par Jocelyne qui n'ont pas encore activé leur espace
+const AJOUT = 'nouveau';    // clé du formulaire « Ajouter un membre » (Suivi des membres)
 ERREURS.DEMANDE_INTROUVABLE = 'Cette demande n\'existe plus.';
 ERREURS.DEJA_ACTIVE = 'Cette personne a déjà activé son espace : elle peut se connecter.';
 ERREURS.PROFIL_INTROUVABLE = 'Ce membre n\'existe plus.';
@@ -88,7 +93,7 @@ function ouvrirFormulaireEspace(id) {
 function formulaireCreerEspace(d) {
   const id = d.id;
   const coche = function (nom, texte) { return '<label class="case-ligne" style="display:flex;gap:6px;align-items:center;margin:4px 12px 4px 0;"><input type="checkbox" style="width:auto;flex:none;" id="es-' + nom + '-' + id + '"> ' + texte + '</label>'; };
-  return '<div class="decision" id="form-espace-' + id + '"><div class="decision-titre">👤 Créer l\'espace de ' + albEchapper(d.prenom) + '</div>' +
+  return '<div class="decision" id="form-espace-' + id + '"><div class="decision-titre">' + (id === AJOUT ? '➕ Ajouter un membre' : '👤 Créer l\'espace de ' + albEchapper(d.prenom)) + '</div>' +
     '<p class="aide">Remplis pendant l\'appel. Aucun mail ne part tout seul : tu reçois ensuite un lien d\'activation à lui envoyer toi-même. ' +
       'C\'est en l\'ouvrant qu\'il choisit son code PIN et accepte les conditions générales.</p>' +
     '<div class="grille">' +
@@ -114,7 +119,7 @@ function formulaireCreerEspace(d) {
     '</div><p class="aide">Il arrivera dans « Pros à valider », comme une inscription normale.</p></div>' +
     '<label class="petit-champ" style="margin-top:8px;">Ce que tu retiens de l\'appel (facultatif, visible seulement par toi)<textarea id="es-note-' + id + '" maxlength="1000" style="min-height:60px;">' + albEchapper(d.message || '') + '</textarea></label>' +
     '<div class="actions"><button type="button" class="bouton vert" onclick="creerEspace(\'' + id + '\', this)">✅ Créer son espace</button>' +
-    '<button type="button" class="bouton discret" onclick="ouvrirFormulaireEspace(\'' + id + '\')">Annuler</button></div>' +
+    '<button type="button" class="bouton discret" onclick="' + (id === AJOUT ? 'ouvrirAjoutMembre()' : 'ouvrirFormulaireEspace(\'' + id + '\')') + '">Annuler</button></div>' +
     '<div class="message" id="es-message-' + id + '"></div></div>';
 }
 
@@ -130,7 +135,7 @@ async function creerEspace(id, bouton) {
   const coche = function (nom) { return document.getElementById('es-' + nom + '-' + id).checked; };
   const pro = document.querySelector('input[name="es-qui-' + id + '"]:checked').value === 'pro';
   const donnees = {
-    demande_rappel: id,
+    demande_rappel: id === AJOUT ? '' : id,
     prenom: v('prenom'), nom: v('nom'), email: v('email'), telephone: v('tel'), note: v('note'),
     metier_pro: pro ? v('metier') : '',
     metier_autre: pro ? v('metier-autre') : '',
@@ -152,7 +157,12 @@ async function creerEspace(id, bouton) {
     return;
   }
   formulaireEspace[id] = false;
-  liensActivation[id] = { jeton: resultat.jeton, email: resultat.email, prenom: donnees.prenom };
+  if (id === AJOUT) {
+    // Le lien s'affiche dans la liste « pas encore activés », sous le nom de la personne
+    liensActivation['p-' + resultat.profile_id] = { jeton: resultat.jeton, email: resultat.email, prenom: donnees.prenom, telephone: donnees.telephone };
+  } else {
+    liensActivation[id] = { jeton: resultat.jeton, email: resultat.email, prenom: donnees.prenom, telephone: donnees.telephone };
+  }
   await toutRecharger();
   afficherMessage('message-general', 'succes', 'Espace créé ✓ Envoie-lui maintenant son lien d\'activation.');
 }
@@ -171,7 +181,7 @@ async function refaireLienActivation(id, bouton) {
 function blocLienActivation(d) {
   const l = liensActivation[d.id];
   const lien = location.origin + '/nouveau-code.html#jeton=' + l.jeton;
-  const tel = String(d.telephone || '').replace(/[^0-9+]/g, '');
+  const tel = String(l.telephone || d.telephone || '').replace(/[^0-9+]/g, '');
   const sms = 'Bonjour ' + (l.prenom || '') + ', c\'est Jocelyne d\'ALB Immobilier. Comme convenu, votre espace est prêt ! Pour l\'activer, choisissez votre code PIN ici (lien valable 7 jours) : ' + lien + ' À la bien !';
   const mail = 'Bonjour ' + (l.prenom || '') + ',\n\nMerci pour notre échange ! Comme convenu, votre espace ALB Immobilier est prêt.\n\n' +
     'Pour l\'activer, il vous suffit de choisir votre code PIN (4 chiffres) en cliquant sur ce lien :\n' + lien + '\n\n' +
@@ -188,7 +198,7 @@ function blocLienActivation(d) {
     '<div class="actions">' +
       '<a class="bouton" href="mailto:' + albEchapper(l.email || '') + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(mail) + '">📧 Ouvrir le mail</a>' +
       '<button type="button" class="bouton discret" onclick="copierActivation(\'mail-activation-' + d.id + '\', this)">📋 Copier</button></div>' +
-    '<p class="aide">Une fois envoyé, tu peux cliquer « C\'est fait, je l\'ai rappelé » plus bas (ou plus tard).</p></div>';
+    '<p class="aide">' + (/^p-/.test(d.id) ? 'Une fois envoyé, plus rien à faire : la personne sort de cette liste dès qu\'elle a activé son espace.' : 'Une fois envoyé, tu peux cliquer « C\'est fait, je l\'ai rappelé » plus bas (ou plus tard).') + '</p></div>';
 }
 
 async function copierActivation(idChamp, bouton) {
@@ -196,6 +206,60 @@ async function copierActivation(idChamp, bouton) {
   try { await navigator.clipboard.writeText(t.value); } catch (e) { t.select(); document.execCommand('copy'); }
   const avant = bouton.textContent; bouton.textContent = '✓ Copié';
   setTimeout(function () { bouton.textContent = avant; }, 1500);
+}
+
+// ----- « ➕ Ajouter un membre » dans Suivi des membres -----
+async function chargerEspacesNonActives() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_espaces_non_actives');
+  if (error) { console.error('[ALB DEBUG] espaces non activés :', error); return; }
+  espacesNonActives = data || [];
+}
+
+function ouvrirAjoutMembre() {
+  formulaireEspace[AJOUT] = !formulaireEspace[AJOUT];
+  afficherAjoutMembre();
+}
+
+function afficherAjoutMembre() {
+  const panneau = document.getElementById('panneau-membres');
+  if (!panneau) return;
+  let zone = document.getElementById('zone-ajout-membre');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'zone-ajout-membre';
+    zone.style.marginBottom = '14px';
+    const recherche = document.getElementById('recherche-membres');
+    panneau.insertBefore(zone, recherche);
+  }
+  zone.innerHTML =
+    '<div class="actions" style="margin-top:0;">' +
+      '<button type="button" class="bouton vert" onclick="ouvrirAjoutMembre()">' + (formulaireEspace[AJOUT] ? '✖ Fermer' : '➕ Ajouter un membre') + '</button>' +
+    '</div>' +
+    (formulaireEspace[AJOUT] ? formulaireCreerEspace({ id: AJOUT, prenom: '', telephone: '', message: '' }) : '') +
+    (espacesNonActives.length
+      ? '<details class="historique"' + (Object.keys(liensActivation).some(function (k) { return /^p-/.test(k); }) ? ' open' : '') + '><summary>⏳ Espaces créés, pas encore activés (' + espacesNonActives.length + ')</summary>' +
+          espacesNonActives.map(function (m) {
+            const cle = 'p-' + m.id;
+            const d = { id: cle, telephone: m.telephone };
+            return '<div class="carte" style="margin-top:8px;">' +
+              '<p class="ligne-info"><strong>' + albEchapper(((m.prenom || '') + ' ' + (m.nom || '')).trim()) + '</strong>' +
+                (m.nom_entreprise ? ' · ' + albEchapper(m.nom_entreprise) : '') + ' · ' + albEchapper(m.email || '') +
+                ' · créé le ' + albEchapper(dateLisible(m.date_creation)) + '</p>' +
+              (liensActivation[cle] ? blocLienActivation(d)
+                : '<div class="actions"><button type="button" class="bouton discret" onclick="lienActivationMembre(\'' + m.id + '\', this)">🔗 Préparer son lien d\'activation</button></div>') +
+            '</div>';
+          }).join('') + '</details>'
+      : '');
+}
+
+async function lienActivationMembre(profileId, bouton) {
+  const m = espacesNonActives.find(function (x) { return x.id === profileId; }) || {};
+  bouton.disabled = true;
+  const { data, error } = await albSupabase.rpc('alb_gestion_lien_activation', { p_id: profileId });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  liensActivation['p-' + profileId] = { jeton: data.jeton, email: data.email, prenom: m.prenom, telephone: m.telephone };
+  afficherAjoutMembre();
 }
 
 async function demandeRappelTraitee(id, fait, bouton) {
@@ -218,7 +282,8 @@ LIGNES_A_FAIRE.unshift({
 (function () {
   const toutRechargerAvantRappelsDemandes = toutRecharger;
   toutRecharger = async function () {
-    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel()]);
+    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel(), chargerEspacesNonActives()]);
+    afficherAjoutMembre();
     afficherAFaire();
   };
 })();
