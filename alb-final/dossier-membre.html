@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dossier d'un membre — ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+  <!--
+    Dossier d'un membre — page réservée à Jocelyne.
+    On cherche une personne par son nom, son e-mail ou son téléphone, et on voit
+    TOUT ce qu'ALB Immobilier garde sur elle (protection des données personnelles :
+    droit d'accès). On peut l'imprimer en PDF ou le télécharger pour le lui envoyer.
+    Lecture seule : rien n'est modifié ni effacé depuis cette page.
+  -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.55; }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    .bandeau { background: #4B1A3E; color: #fff; padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .bandeau strong { font-size: 1.1rem; }
+    .bandeau a { color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.4); padding: 7px 12px; border-radius: 6px; font-size: 0.85rem; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 60px; }
+    .carte { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+    .aide { font-size: 0.88rem; color: #6a6a66; margin-bottom: 12px; }
+    input[type="search"] { width: 100%; padding: 12px; border: 1px solid #D8D5CE; border-radius: 8px; font: inherit; font-size: 1rem; background: #fff; }
+    input[type="search"]:focus { outline: 2px solid #B28E3D; border-color: #B28E3D; }
+    .resultats { margin-top: 10px; display: grid; gap: 8px; }
+    .resultat { text-align: left; width: 100%; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; }
+    .resultat:hover { border-color: #B28E3D; }
+    .resultat small { color: #7a7a75; }
+    .bouton { display: inline-block; background: #B28E3D; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton.discret { background: #fff; color: #4A4A47; border: 1px solid #D8D5CE; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .etiquette { display: inline-block; background: #F4EEF6; color: #5A3A6A; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin: 2px 4px 2px 0; }
+    .etiquette.rouge { background: #FBECEC; color: #8A2D2D; }
+    .section h3 { font-size: 1.1rem; margin-bottom: 4px; }
+    .section .nb { font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: #7a7a75; font-weight: 500; }
+    .ligne { border-top: 1px solid #F0EEE9; padding: 10px 0; }
+    .ligne:first-of-type { border-top: none; }
+    dl { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 3px 12px; font-size: 0.88rem; }
+    dt { color: #7a7a75; }
+    dd { word-break: break-word; white-space: pre-line; }
+    .vide { text-align: center; color: #7a7a75; padding: 18px; }
+    .message { padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
+    .cache { display: none !important; }
+    .rgpd { background: #F4EEF6; border: 1px solid #E2D6E8; color: #4A4A47; font-size: 0.88rem; }
+    @media (max-width: 560px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
+    @media print {
+      .bandeau, #zone-recherche, .actions, .rgpd { display: none !important; }
+      body { background: #fff; }
+      .carte { border: none; padding: 0 0 12px; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bandeau">
+  <strong>📂 Dossier d'un membre</strong>
+  <a href="gestion-site.html">← Gestion du site</a>
+</div>
+
+<main>
+  <div id="zone-message" class="message cache"></div>
+  <p id="zone-chargement" class="vide">Un instant…</p>
+
+  <div id="zone-recherche" class="cache">
+    <div class="carte">
+      <h2 style="font-size:1.3rem;margin-bottom:6px;">Qui cherches-tu ?</h2>
+      <p class="aide">Tape un prénom, un nom, une entreprise, un e-mail ou un téléphone. Tu verras tout ce qu'ALB Immobilier garde sur cette personne. Rien n'est modifié ni effacé depuis cette page.</p>
+      <input type="search" id="recherche" placeholder="Ex. : Martin, 06 12…, paul@…" autocomplete="off" oninput="afficherResultats()">
+      <div class="resultats" id="resultats"></div>
+    </div>
+    <div class="carte rgpd">
+      <strong>🔒 Si quelqu'un te demande « ce que vous avez sur moi »</strong> : ouvre son dossier, clique sur « 🖨️ Imprimer ou enregistrer en PDF », puis envoie-lui le PDF. Tu as un mois pour répondre. Vérifie d'abord que c'est bien lui qui demande (appel au numéro connu, ou mail depuis son adresse enregistrée).
+    </div>
+  </div>
+
+  <div id="zone-dossier" class="cache"></div>
+</main>
+
+<script>
+  let lesMembres = [];
+  let dossierCourant = null;
+
+  // Les noms des rubriques, en français
+  const RUBRIQUES = {
+    'alb_historique_compte · profile_id': '🕘 Historique du compte',
+    'alb_suivi_contacts · profile_id': '📒 Tes contacts avec lui (SMS, mails, appels, notes)',
+    'alb_suivi_membres · profile_id': '📋 Où tu en es avec lui',
+    'alb_demandes_rappel · profile_id': '📞 Ses demandes de rappel',
+    'alb_demandes_rappel · telephone': '📞 Demandes de rappel faites avec son numéro',
+    'alb_demandes_acces · profile_id': '🔑 Ses demandes d\'accès / changement d\'adresse',
+    'alb_liens_acces · profile_id': '🔗 Liens envoyés (code PIN, activation)',
+    'alb_suspensions · profile_id': '⛔ Suspension',
+    'annonces · vendeur_id': '🏡 Ses annonces',
+    'annonces_prive · annonce': '🏡 Informations privées de ses annonces',
+    'annonce_medias · annonce': '📷 Photos et vidéos de ses annonces',
+    'alb_rappels_mandat · profile_id': '📝 Rappels de mandat',
+    'alb_demandes_visite · acheteur_id': '🔑 Visites qu\'il a demandées',
+    'alb_projets · particulier_id': '🤝 Ses projets (financement, travaux, accompagnement)',
+    'alb_projet_pros · pro_id': '🤝 Projets reçus (en tant que pro)',
+    'alb_conversations · initiateur_id': '💬 Conversations qu\'il a commencées',
+    'alb_conversations · destinataire_id': '💬 Conversations reçues',
+    'alb_messages · auteur_id': '💬 Messages qu\'il a écrits',
+    'alb_avis · auteur_id': '⭐ Avis qu\'il a donnés',
+    'alb_avis · pro_id': '⭐ Avis reçus (en tant que pro)',
+    'alb_badges · pro_id': '🏅 Badges',
+    'alb_points_pros · pro_id': '📆 Points du mois (pro)',
+    'alb_pro_papiers · profile_id': '📄 Papiers déposés (pro)',
+    'alb_renvois · pro_id': '↪️ Renvois vers un confrère',
+    'alb_renvois · remplacant_id': '↪️ Renvois reçus d\'un confrère',
+    'alb_factures · profile_id': '💶 Factures',
+    'alb_alertes · profile_id': '🔔 Notifications préparées pour lui',
+    'alb_desaccords · profile_id': '⚠️ Désaccords'
+  };
+
+  // Les noms des informations, en français (les autres gardent leur nom technique)
+  const CHAMPS = {
+    prenom: 'Prénom', nom: 'Nom', email: 'E-mail', telephone: 'Téléphone', role: 'Rôle', sous_role_immo: 'Agent ou mandataire',
+    nom_entreprise: 'Entreprise', siret: 'SIRET', ville: 'Ville', code_postal: 'Code postal', presentation: 'Présentation',
+    est_acquereur: 'Acheteur', est_vendeur: 'Vendeur', est_client_pro: 'Cherche un pro', date_creation: 'Inscrit le',
+    cgu_acceptees_le: 'Conditions générales acceptées le', accepte_contacts: 'Accepte d\'être recontacté', accepte_contacts_le: 'Accord de recontact le',
+    message_inscription: 'Message à l\'inscription', besoin_autre: 'Besoin (autre)', metier_autre: 'Métier (autre)', statut_verifie: 'Pro validé',
+    profil_mis_en_ligne: 'Visible sur « Nos pros ALB »', zone_intervention: 'Zones d\'intervention', photo_url: 'Photo',
+    numero_orias: 'N° ORIAS', numero_carte_t: 'Carte T', numero_carte_btp: 'Carte BTP', label_rge: 'Label RGE',
+    cree_le: 'Le', evenement: 'Événement', detail: 'Détail', canal: 'Canal', objet: 'Objet', texte: 'Texte', fait_le: 'Fait le',
+    etape: 'Étape', relancer_le: 'À relancer le', titre: 'Titre', description: 'Description', prix: 'Prix', statut: 'Statut',
+    type_bien: 'Type de bien', surface_m2: 'Surface (m²)', nb_pieces: 'Pièces', adresse: 'Adresse', message: 'Message',
+    moment: 'Moment souhaité', traitee_le: 'Traitée le', note: 'Note', motif: 'Motif', suspendu_le: 'Suspendu le',
+    type: 'Type', expire_le: 'Expire le', utilise_le: 'Utilisé le', nouvel_email: 'Nouvelle adresse', contenu: 'Contenu'
+  };
+
+  function echapper(t) { return albEchapper(t); }
+  function nomChamp(k) { return CHAMPS[k] || k.replace(/_/g, ' '); }
+  function valeurLisible(v) {
+    if (v === true) return 'Oui';
+    if (v === false) return 'Non';
+    if (Array.isArray(v)) return v.map(function (x) { return typeof x === 'object' ? JSON.stringify(x) : x; }).join(', ');
+    if (v && typeof v === 'object') return JSON.stringify(v, null, 1);
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) return new Date(v).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return String(v);
+  }
+  function estVide(v) { return v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length) || (v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length); }
+  function fiche(obj) {
+    const lignes = Object.keys(obj).filter(function (k) { return !estVide(obj[k]) && k !== 'id' && !/_id$/.test(k); });
+    if (!lignes.length) return '<p class="aide">(aucune information)</p>';
+    return '<dl>' + lignes.map(function (k) { return '<dt>' + echapper(nomChamp(k)) + '</dt><dd>' + echapper(valeurLisible(obj[k])) + '</dd>'; }).join('') + '</dl>';
+  }
+  function montrerErreur(texte) {
+    const z = document.getElementById('zone-message');
+    z.textContent = texte; z.classList.remove('cache');
+  }
+
+  async function demarrer() {
+    const { data: session } = await albSupabase.auth.getSession();
+    if (!session || !session.session) {
+      document.getElementById('zone-chargement').classList.add('cache');
+      montrerErreur('Connecte-toi d\'abord dans Gestion du site, puis reviens sur cette page.');
+      return;
+    }
+    const { data: admin } = await albSupabase.rpc('alb_est_admin');
+    if (admin !== true) {
+      document.getElementById('zone-chargement').classList.add('cache');
+      montrerErreur('Cette page est réservée à Jocelyne.');
+      return;
+    }
+    const { data, error } = await albSupabase.rpc('alb_gestion_membres');
+    document.getElementById('zone-chargement').classList.add('cache');
+    if (error) { montrerErreur('Impossible de charger les membres pour le moment. Réessaie dans un instant.'); return; }
+    lesMembres = (data || []).filter(function (m) { return !m.est_admin; });
+    document.getElementById('zone-recherche').classList.remove('cache');
+    afficherResultats();
+  }
+
+  function afficherResultats() {
+    const q = document.getElementById('recherche').value.toLowerCase().trim();
+    const chiffres = q.replace(/\D/g, '');
+    const liste = lesMembres.filter(function (m) {
+      if (!q) return true;
+      const tel = String(m.telephone || '').replace(/\D/g, '');
+      return [m.prenom, m.nom, (m.prenom || '') + ' ' + (m.nom || ''), (m.nom || '') + ' ' + (m.prenom || ''), m.email, m.nom_entreprise, m.ville]
+        .some(function (v) { return String(v || '').toLowerCase().includes(q); }) || (chiffres.length >= 4 && tel.includes(chiffres.replace(/^33/, '0').replace(/^0/, '')));
+    }).slice(0, 30);
+    document.getElementById('resultats').innerHTML = liste.length ? liste.map(function (m) {
+      const qui = m.role && m.role !== 'particulier' ? '🧑‍💼 Pro' : '🙋 Particulier';
+      return '<button type="button" class="resultat" onclick="ouvrirDossier(\'' + m.id + '\')"><strong>' + echapper(((m.prenom || '') + ' ' + (m.nom || '')).trim() || 'Sans nom') + '</strong>' +
+        (m.nom_entreprise ? ' · ' + echapper(m.nom_entreprise) : '') + '<br><small>' + qui + ' · ' + echapper(m.email || '') + (m.telephone ? ' · ' + echapper(m.telephone) : '') + '</small></button>';
+    }).join('') : '<p class="vide">Personne ne correspond.</p>';
+  }
+
+  async function ouvrirDossier(id) {
+    const zone = document.getElementById('zone-dossier');
+    zone.classList.remove('cache');
+    zone.innerHTML = '<p class="vide">Je rassemble son dossier…</p>';
+    const { data, error } = await albSupabase.rpc('alb_gestion_dossier_membre', { p_id: id });
+    if (error) { zone.innerHTML = '<div class="message">Impossible d\'ouvrir ce dossier pour le moment.</div>'; return; }
+    dossierCourant = data;
+    const p = data.profil || {};
+    const nom = ((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Sans nom';
+    const sections = data.sections || {};
+    const cles = Object.keys(sections).sort(function (a, b) { return (RUBRIQUES[a] || 'z' + a).localeCompare(RUBRIQUES[b] || 'z' + b, 'fr'); });
+    zone.innerHTML =
+      '<div class="carte">' +
+        '<h2 style="font-size:1.5rem;">' + echapper(nom) + '</h2>' +
+        '<p>' + (p.role && p.role !== 'particulier' ? '<span class="etiquette">🧑‍💼 Pro</span>' : '<span class="etiquette">🙋 Particulier</span>') +
+          (data.suspendu ? '<span class="etiquette rouge">⛔ Suspendu</span>' : '') + '</p>' +
+        '<p class="aide" style="margin-top:6px;">Dossier établi le ' + echapper(valeurLisible(data.fait_le)) + ' par ALB Sud Immobilier.' +
+          (data.connexion ? ' Compte créé le ' + echapper(valeurLisible(data.connexion.cree_le)) + (data.connexion.derniere_connexion ? ', dernière connexion le ' + echapper(valeurLisible(data.connexion.derniere_connexion)) : ', jamais connecté') + '.' : '') + '</p>' +
+        '<div class="actions">' +
+          '<button type="button" class="bouton" onclick="window.print()">🖨️ Imprimer ou enregistrer en PDF</button>' +
+          '<button type="button" class="bouton discret" onclick="telecharger()">📥 Télécharger (fichier complet)</button>' +
+          '<button type="button" class="bouton discret" onclick="retourRecherche()">← Chercher quelqu\'un d\'autre</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="carte section"><h3>👤 Ses informations</h3>' + fiche(p) + '</div>' +
+      (cles.length ? cles.map(function (k) {
+        const lignes = sections[k];
+        return '<div class="carte section"><h3>' + echapper(RUBRIQUES[k] || k) + ' <span class="nb">(' + lignes.length + ')</span></h3>' +
+          lignes.map(function (l) { return '<div class="ligne">' + fiche(l) + '</div>'; }).join('') + '</div>';
+      }).join('') : '<div class="carte"><p class="vide">Aucune autre information enregistrée pour cette personne.</p></div>');
+    document.getElementById('zone-recherche').classList.add('cache');
+    window.scrollTo(0, 0);
+  }
+
+  function retourRecherche() {
+    document.getElementById('zone-dossier').classList.add('cache');
+    document.getElementById('zone-recherche').classList.remove('cache');
+    document.getElementById('recherche').focus();
+  }
+
+  function telecharger() {
+    if (!dossierCourant) return;
+    const p = dossierCourant.profil || {};
+    const nom = ((p.prenom || '') + '-' + (p.nom || '')).replace(/[^a-zA-Z0-9À-ÿ-]/g, '') || 'membre';
+    const blob = new Blob([JSON.stringify(dossierCourant, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Dossier ALB - ' + nom + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>
