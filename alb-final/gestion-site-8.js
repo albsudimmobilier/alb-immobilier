@@ -9,6 +9,9 @@
 // Le même formulaire sert dans 👥 Suivi des membres : « ➕ Ajouter un membre »
 // (par exemple un pro qu'elle a au téléphone), avec la liste des espaces
 // pas encore activés pour pouvoir relancer leur lien.
+// Et sur chaque carte de membre : « ✏️ Corriger son profil » (prénom, nom,
+// téléphone, particulier ou pro, et quel métier), par exemple quand quelqu'un
+// s'est trompé ou a coché « Autre » en s'inscrivant.
 // ============================================================
 
 let demandesRappel = [];
@@ -271,6 +274,95 @@ async function demandeRappelTraitee(id, fait, bouton) {
   await chargerDemandesRappel();
   afficherAFaire();
   afficherMessage('message-general', 'succes', fait ? 'Rappel noté ✓' : 'C\'est de nouveau à rappeler.');
+}
+
+// ----- « ✏️ Corriger son profil » (Suivi des membres) -----
+ERREURS.ENTREPRISE_MANQUANTE = 'Indique le nom de son entreprise.';
+ERREURS.CASQUETTE_MANQUANTE = 'Coche au moins une case : il achète, il vend ou il cherche un pro.';
+ERREURS.NOM_MANQUANT = 'Le prénom et le nom sont obligatoires.';
+ERREURS.TELEPHONE_INVALIDE = 'Le numéro de téléphone ne semble pas complet.';
+ERREURS.METIER_INVALIDE = 'Choisis son métier dans la liste.';
+
+// Le bouton s'ajoute sur chaque carte, juste avant « 🔑 Accès »
+(function () {
+  const carteMembreAvantCorriger = carteMembre;
+  carteMembre = function (m) {
+    return carteMembreAvantCorriger(m).replace(
+      '<button type="button" class="bouton discret" onclick="basculerAcces(',
+      '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'corriger\')">✏️ Corriger son profil</button>' +
+      '<button type="button" class="bouton discret" onclick="basculerAcces(');
+  };
+  const panneauMembreAvantCorriger = panneauMembre;
+  panneauMembre = function (m, quoi) {
+    return quoi === 'corriger' ? panneauCorriger(m) : panneauMembreAvantCorriger(m, quoi);
+  };
+})();
+
+function panneauCorriger(m) {
+  const id = m.id;
+  const pro = m.role && m.role !== 'particulier';
+  const metier = metierDe(m) || (pro ? 'autre' : 'courtier');
+  const coche = function (nom, texte, valeur) {
+    return '<label style="display:flex;gap:6px;align-items:center;margin:4px 12px 4px 0;"><input type="checkbox" style="width:auto;flex:none;" id="co-' + nom + '-' + id + '"' + (valeur ? ' checked' : '') + '> ' + texte + '</label>';
+  };
+  const option = function (v, t) { return '<option value="' + v + '"' + (metier === v ? ' selected' : '') + '>' + t + '</option>'; };
+  return '<div class="decision"><div class="decision-titre">✏️ Corriger le profil de ' + albEchapper(m.prenom || 'ce membre') + '</div>' +
+    (m.besoin_autre || m.metier_autre ? '<p class="ligne-info mot">💬 Ce qu\'il a écrit en s\'inscrivant : « ' + albEchapper(m.metier_autre || m.besoin_autre) + ' »</p>' : '') +
+    '<div class="grille">' +
+      '<label class="petit-champ">Prénom<input type="text" id="co-prenom-' + id + '" maxlength="80" value="' + albEchapper(m.prenom || '') + '"></label>' +
+      '<label class="petit-champ">Nom<input type="text" id="co-nom-' + id + '" maxlength="80" value="' + albEchapper(m.nom || '') + '"></label>' +
+      '<label class="petit-champ">Téléphone<input type="tel" id="co-tel-' + id + '" maxlength="20" value="' + albEchapper(m.telephone || '') + '"></label>' +
+    '</div>' +
+    '<p class="aide" style="margin-top:4px;">L\'e-mail se change avec le bouton 🔑 Accès (il faut un lien pour la nouvelle adresse).</p>' +
+    '<p class="ligne-info" style="font-weight:700;margin-top:10px;">C\'est…</p>' +
+    '<div class="actions" style="margin-top:4px;">' +
+      '<label style="display:flex;gap:6px;align-items:center;margin-right:14px;"><input type="radio" style="width:auto;flex:none;" name="co-qui-' + id + '" value="particulier"' + (pro ? '' : ' checked') + ' onchange="basculerQuiCorriger(\'' + id + '\')"> 🙋 Un particulier</label>' +
+      '<label style="display:flex;gap:6px;align-items:center;"><input type="radio" style="width:auto;flex:none;" name="co-qui-' + id + '" value="pro"' + (pro ? ' checked' : '') + ' onchange="basculerQuiCorriger(\'' + id + '\')"> 🧑‍💼 Un professionnel</label>' +
+    '</div>' +
+    '<div id="co-part-' + id + '"' + (pro ? ' class="cache"' : '') + '><p class="aide" style="margin:6px 0 2px;">Son projet (plusieurs choix possibles) :</p><div style="display:flex;flex-wrap:wrap;">' +
+      coche('acheteur', '🔎 Il achète', m.est_acquereur) + coche('vendeur', '🏡 Il vend', m.est_vendeur) + coche('clientpro', '🛠️ Il cherche un pro', m.est_client_pro) + '</div></div>' +
+    '<div id="co-pro-' + id + '"' + (pro ? '' : ' class="cache"') + '><div class="grille">' +
+      '<label class="petit-champ">Métier<select id="co-metier-' + id + '" onchange="basculerQuiCorriger(\'' + id + '\')">' +
+        option('courtier', '🏦 Courtier') + option('artisan', '🔨 Artisan') + option('agent', '🏠 Agent immobilier') + option('mandataire', '📋 Mandataire') + option('autre', '🤝 Autre métier') + '</select></label>' +
+      '<label class="petit-champ" id="co-metier-autre-bloc-' + id + '"' + (metier === 'autre' ? '' : ' style="display:none;"') + '>Nom du métier (affiché dans les filtres)<input type="text" id="co-metier-autre-' + id + '" maxlength="100" value="' + albEchapper(m.metier_autre || '') + '"></label>' +
+      '<label class="petit-champ">Entreprise<input type="text" id="co-entreprise-' + id + '" maxlength="150" value="' + albEchapper(m.nom_entreprise || '') + '"></label>' +
+    '</div></div>' +
+    '<p class="aide">' + (pro
+      ? 'Si tu le passes en particulier : sa fiche sort de « Nos pros ALB » et il ne reçoit plus de demandes.'
+      : 'Si tu le passes en professionnel : il arrive dans « Pros à valider », comme une inscription normale.') +
+      ' Aucun message ne lui est envoyé. Tout est noté dans son historique.</p>' +
+    '<div class="actions"><button type="button" class="bouton vert" onclick="enregistrerCorrection(\'' + id + '\', this)">💾 Enregistrer</button>' +
+    '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + id + '\', \'corriger\')">Annuler</button></div></div>';
+}
+
+function basculerQuiCorriger(id) {
+  const pro = document.querySelector('input[name="co-qui-' + id + '"]:checked').value === 'pro';
+  document.getElementById('co-part-' + id).classList.toggle('cache', pro);
+  document.getElementById('co-pro-' + id).classList.toggle('cache', !pro);
+  document.getElementById('co-metier-autre-bloc-' + id).style.display = document.getElementById('co-metier-' + id).value === 'autre' ? '' : 'none';
+}
+
+async function enregistrerCorrection(id, bouton) {
+  const v = function (nom) { const c = document.getElementById('co-' + nom + '-' + id); return c ? c.value.trim() : ''; };
+  const c = function (nom) { return document.getElementById('co-' + nom + '-' + id).checked; };
+  const pro = document.querySelector('input[name="co-qui-' + id + '"]:checked').value === 'pro';
+  const m = membres.find(function (x) { return x.id === id; }) || {};
+  const fiche = {
+    qui: pro ? 'pro' : 'particulier',
+    prenom: v('prenom'), nom: v('nom'), telephone: v('tel'),
+    metier: pro ? v('metier') : '', metier_autre: pro ? v('metier-autre') : '', nom_entreprise: pro ? v('entreprise') : '',
+    est_acquereur: !pro && c('acheteur'), est_vendeur: !pro && c('vendeur'), est_client_pro: !pro && c('clientpro'),
+    besoin_autre: pro ? '' : (m.besoin_autre || '')
+  };
+  const etaitPro = m.role && m.role !== 'particulier';
+  if (etaitPro && !pro && m.statut_verifie && !confirm('Passer ce pro validé en particulier ? Sa fiche sortira de « Nos pros ALB ».')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_corriger_membre', { p_id: id, p_fiche: fiche });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  panneauOuvert[id] = null;
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', !etaitPro && pro ? 'Profil corrigé ✓ Il est maintenant dans « Pros à valider ».' : 'Profil corrigé ✓');
 }
 
 // « À faire aujourd'hui » : en tête, car la personne attend un appel
