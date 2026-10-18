@@ -12,6 +12,9 @@
 // Et sur chaque carte de membre : « ✏️ Corriger son profil » (prénom, nom,
 // téléphone, particulier ou pro, et quel métier), par exemple quand quelqu'un
 // s'est trompé ou a coché « Autre » en s'inscrivant.
+// Dans 🤝 Projets : « 💬 Nouveaux venus via Nos pros ALB » — les personnes
+// sans espace qui ont écrit à un pro (leur espace a été créé en même temps).
+// Jocelyne leur envoie elle-même son message de bienvenue, puis fait le suivi.
 // ============================================================
 
 let demandesRappel = [];
@@ -365,16 +368,124 @@ async function enregistrerCorrection(id, bouton) {
   afficherMessage('message-general', 'succes', !etaitPro && pro ? 'Profil corrigé ✓ Il est maintenant dans « Pros à valider ».' : 'Profil corrigé ✓');
 }
 
+
+// ----- « 💬 Nouveaux venus via Nos pros ALB » (onglet 🤝 Projets) -----
+let contactsVitrine = [];
+
+async function chargerContactsVitrine() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_contacts_vitrine');
+  if (error) { console.error('[ALB DEBUG] contacts Nos pros ALB :', error); return; }
+  contactsVitrine = data || [];
+  afficherContactsVitrine();
+}
+
+function contactsVitrineASuivre() { return contactsVitrine.filter(function (c) { return !c.traite_le; }); }
+
+function nomProContact(c) { return c.pro_entreprise || ((c.pro_prenom || '') + ' ' + (c.pro_nom || '')).trim() || 'le pro'; }
+
+function afficherContactsVitrine() {
+  const panneau = document.getElementById('panneau-projets');
+  if (!panneau) return;
+  let zone = document.getElementById('zone-contacts-vitrine');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'zone-contacts-vitrine';
+    const rappels = document.getElementById('zone-demandes-rappel');
+    panneau.insertBefore(zone, rappels ? rappels.nextSibling : panneau.firstChild);
+  }
+  const aSuivre = contactsVitrineASuivre();
+  const faits = contactsVitrine.filter(function (c) { return c.traite_le; });
+  zone.innerHTML = '<h2 class="titre-section">💬 Nouveaux venus via « Nos pros ALB »' + (aSuivre.length ? ' (' + aSuivre.length + ' à contacter)' : '') + '</h2>' +
+    '<p class="aide">Des personnes qui n\'avaient pas d\'espace ALB et ont écrit à un pro : leur espace a été créé en même temps, avec le code PIN qu\'elles ont choisi. ' +
+      'Aucun mail ne leur est parti : envoie-leur ton message de bienvenue (prêt ci-dessous), contacte-les, puis clique « C\'est fait ».</p>' +
+    (contactsVitrine.length
+      ? '<div class="liste-fiches">' + aSuivre.map(carteContactVitrine).join('') + '</div>' +
+        (faits.length ? '<details class="historique"><summary>✅ Déjà contactés (' + faits.length + ')</summary><div class="liste-fiches" style="margin-top:8px;">' + faits.map(carteContactVitrine).join('') + '</div></details>' : '')
+      : '<div class="vide">Personne pour l\'instant. 🌿</div>');
+}
+
+function carteContactVitrine(c) {
+  const num = String(c.telephone || '').replace(/[^0-9+]/g, '');
+  const heures = Math.floor((Date.now() - new Date(c.cree_le).getTime()) / 3600000);
+  const pro = nomProContact(c);
+  return '<div class="carte"' + (c.traite_le ? ' style="opacity:0.8;"' : '') + '>' +
+    '<h3 style="font-family:Montserrat,sans-serif;font-size:1.05rem;">' + albEchapper(((c.prenom || '') + ' ' + (c.nom || '')).trim()) +
+      (c.traite_le ? ' <span class="etiquette vert">✅ Contacté le ' + albEchapper(dateLisible(c.traite_le)) + '</span>'
+        : (heures >= 24 ? ' <span class="etiquette rouge">⏳ Depuis ' + Math.floor(heures / 24) + ' j</span>' : ' <span class="etiquette or">🆕 À contacter</span>')) + '</h3>' +
+    '<p class="ligne-info">📱 <a href="tel:' + albEchapper(num) + '"><strong>' + albEchapper(c.telephone || '') + '</strong></a> · 📧 ' + albEchapper(c.email || '') + '</p>' +
+    '<p class="ligne-info">💬 A écrit à <strong>' + albEchapper(pro) + '</strong> le ' + albEchapper(new Date(c.cree_le).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })) + '</p>' +
+    (c.message ? '<p class="ligne-info mot">« ' + albEchapper(c.message) + ' »</p>' : '') +
+    '<p class="ligne-info">' + (c.message_parti ? '<span class="etiquette vert">✅ Message bien arrivé chez le pro</span>' : '<span class="etiquette rouge">⚠️ Message pas encore parti : la personne doit le renvoyer depuis son espace</span>') +
+      ' ' + (c.pro_a_repondu ? '<span class="etiquette vert">✅ Le pro a répondu</span>' : '<span class="etiquette or">⏳ Le pro n\'a pas encore répondu</span>') + '</p>' +
+    blocBienvenueContact(c) +
+    (c.traite_le
+      ? (c.note ? '<p class="ligne-info">📝 ' + albEchapper(c.note) + '</p>' : '') +
+        '<div class="actions"><button type="button" class="bouton discret" onclick="contactVitrineMaj(\'' + c.id + '\', \'suivi\', false, this)">Annuler « c\'est fait »</button></div>'
+      : '<label class="petit-champ" style="margin-top:8px;">Ce que vous vous êtes dit (facultatif)<textarea id="note-contact-' + c.id + '" maxlength="1000" style="min-height:70px;"></textarea></label>' +
+        '<div class="actions">' + (num ? '<a class="bouton" href="tel:' + albEchapper(num) + '">📞 Appeler</a>' : '') +
+        '<button type="button" class="bouton vert" onclick="contactVitrineMaj(\'' + c.id + '\', \'suivi\', true, this)">✓ C\'est fait, je l\'ai contacté</button></div>') +
+  '</div>';
+}
+
+// Le message de bienvenue : prêt à envoyer par SMS ou par mail, c'est Jocelyne qui l'envoie
+function blocBienvenueContact(c) {
+  if (c.bienvenue_le) {
+    return '<p class="ligne-info"><span class="etiquette vert">💜 Bienvenue envoyée le ' + albEchapper(dateLisible(c.bienvenue_le)) + '</span> ' +
+      '<button type="button" class="bouton discret" onclick="contactVitrineMaj(\'' + c.id + '\', \'bienvenue\', false, this)">Annuler</button></p>';
+  }
+  const pro = nomProContact(c);
+  const num = String(c.telephone || '').replace(/[^0-9+]/g, '');
+  const lien = 'https://albimmobilier.fr/espace-alb.html';
+  const sms = 'Bonjour ' + (c.prenom || '') + ', c\'est Jocelyne, fondatrice d\'ALB Immobilier. Merci pour votre message à ' + pro + ', il l\'a bien reçu ! ' +
+    'Votre espace ALB est prêt : connectez-vous sur ' + lien + ' avec votre e-mail (' + (c.email || '') + ') et le code PIN que vous avez choisi. ' +
+    'Vous y trouverez sa réponse. Je vous appelle très vite pour faire connaissance. À la bien !';
+  const sujet = 'Bienvenue chez ALB Sud Immobilier, ' + (c.prenom || '');
+  const mail = 'Bonjour ' + (c.prenom || '') + ',\n\n' +
+    'Merci pour votre message à ' + pro + ' via ALB Immobilier, et bienvenue !\n\n' +
+    'Votre espace ALB est prêt. Pour vous connecter, rendez-vous sur ' + lien + ' avec votre adresse e-mail (' + (c.email || '') + ') et le code PIN que vous avez choisi.\n\n' +
+    'C\'est là que vous retrouverez la réponse de ' + pro + ', dans la rubrique « Mes messages ». Vous pourrez aussi y suivre vos projets et vos demandes.\n\n' +
+    'Je vous appellerai très vite pour faire connaissance et voir comment vous accompagner.\n\n' +
+    'Code PIN oublié ? Cliquez simplement sur « J\'ai oublié mon code PIN » sur la page de connexion.\n\n' +
+    'À la bien, toujours ✨\nJocelyne Rimlinger\nFondatrice · ALB Sud Immobilier\n07 45 60 28 05';
+  return '<div class="decision"><div class="decision-titre">💜 Son message de bienvenue</div>' +
+    '<p class="aide">Envoie-le toi-même, par SMS ou par mail (ou les deux), puis clique « C\'est fait ».</p>' +
+    '<p class="ligne-info"><strong>📱 SMS</strong></p><textarea class="texte-pret" id="sms-bienvenue-' + c.id + '" readonly>' + albEchapper(sms) + '</textarea>' +
+    '<div class="actions">' +
+      (num ? '<a class="bouton" href="sms:' + albEchapper(num) + '?&body=' + encodeURIComponent(sms) + '">📱 Ouvrir le SMS</a>' : '') +
+      '<button type="button" class="bouton discret" onclick="copierActivation(\'sms-bienvenue-' + c.id + '\', this)">📋 Copier</button></div>' +
+    '<p class="ligne-info" style="margin-top:8px;"><strong>📧 Mail à ' + albEchapper(c.email || '') + '</strong></p><textarea class="texte-pret" id="mail-bienvenue-' + c.id + '" readonly style="min-height:180px;">' + albEchapper(mail) + '</textarea>' +
+    '<div class="actions">' +
+      '<a class="bouton" href="mailto:' + albEchapper(c.email || '') + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(mail) + '">📧 Ouvrir le mail</a>' +
+      '<button type="button" class="bouton discret" onclick="copierActivation(\'mail-bienvenue-' + c.id + '\', this)">📋 Copier</button>' +
+      '<button type="button" class="bouton vert" onclick="contactVitrineMaj(\'' + c.id + '\', \'bienvenue\', true, this)">✓ C\'est fait, bienvenue envoyée</button></div></div>';
+}
+
+async function contactVitrineMaj(id, quoi, fait, bouton) {
+  const champ = document.getElementById('note-contact-' + id);
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_contact_vitrine_maj', { p_id: id, p_quoi: quoi, p_fait: fait, p_note: champ ? champ.value : null });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerContactsVitrine();
+  afficherAFaire();
+  afficherMessage('message-general', 'succes', !fait ? 'C\'est noté.' : quoi === 'bienvenue' ? 'Bienvenue notée ✓' : 'Suivi noté ✓');
+}
+
 // « À faire aujourd'hui » : en tête, car la personne attend un appel
 LIGNES_A_FAIRE.unshift({
   calcul: function () { return demandesRappelEnAttente().length; },
   un: 'personne à rappeler (demande faite sur Projets ALB)', plusieurs: 'personnes à rappeler (demandes faites sur Projets ALB)', emoji: '📞', onglet: 'projets', ancre: 'zone-demandes-rappel'
 });
+// Juste après : les nouveaux venus via Nos pros ALB
+LIGNES_A_FAIRE.splice(1, 0, {
+  calcul: function () { return contactsVitrineASuivre().length; },
+  un: 'nouveau venu via « Nos pros ALB » à contacter (message de bienvenue + suivi)', plusieurs: 'nouveaux venus via « Nos pros ALB » à contacter (message de bienvenue + suivi)', emoji: '💬', onglet: 'projets', ancre: 'zone-contacts-vitrine'
+});
 
 (function () {
   const toutRechargerAvantRappelsDemandes = toutRecharger;
   toutRecharger = async function () {
-    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel(), chargerEspacesNonActives()]);
+    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel(), chargerEspacesNonActives(), chargerContactsVitrine()]);
     afficherAjoutMembre();
     afficherAFaire();
   };
