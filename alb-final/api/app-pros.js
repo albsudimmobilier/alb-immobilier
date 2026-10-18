@@ -15,6 +15,13 @@
 // Avis : seule une personne qui a échangé avec le pro via ALB (et à qui
 // il a répondu) peut donner son avis. Chaque avis est relu par ALB avant
 // d'être publié. On n'affiche que le prénom et l'initiale du nom.
+//
+// « Envoyer un message » : si la personne est connectée, elle écrit depuis
+// son espace ALB. Sinon, une petite fenêtre lui demande juste son nom, son
+// e-mail, son téléphone, un code PIN et son message : son espace est créé
+// en même temps (aucun e-mail automatique), le pro reçoit son message comme
+// d'habitude, et la personne arrive dans Gestion du site pour que Jocelyne
+// la contacte et lui envoie elle-même son message de bienvenue.
 // ============================================================
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -91,7 +98,25 @@ stylesPros.textContent = '.pro-rdv{font-size:.85rem;color:#4A4A47;margin:8px 0 0
   '.modal-content p.avis-titre-note{margin-bottom:0;}.modal-content p.avis-apres-texte{margin-top:10px;}' +
   '.modal-buttons .modal-btn + .modal-btn{margin-left:8px;}' +
   '.modal-btn.discret{background:white;color:#5A3A6A;border:1px solid #D8D5CE;}' +
-  '.modal-btn.discret:hover{background:#F5F3F0;color:#5A3A6A;}';
+  '.modal-btn.discret:hover{background:#F5F3F0;color:#5A3A6A;}' +
+  // Fenêtre « Envoyer un message » (sans espace ALB)
+  '.contact-form{display:flex;flex-direction:column;gap:12px;text-align:left;}' +
+  '.contact-grille{display:grid;grid-template-columns:1fr;gap:12px;}' +
+  '@media (min-width:560px){.contact-grille{grid-template-columns:1fr 1fr;}}' +
+  '.contact-form label.champ{display:flex;flex-direction:column;gap:4px;font-size:.88rem;font-weight:600;color:#4A4A47;}' +
+  '.contact-form input[type=text],.contact-form input[type=email],.contact-form input[type=tel],.contact-form input[type=password],.contact-form textarea{width:100%;padding:10px 12px;border:1px solid #D8D5CE;border-radius:6px;font-family:inherit;font-size:1rem;font-weight:400;color:#2a2a28;background:#fff;}' +
+  '.contact-form textarea{min-height:120px;line-height:1.5;resize:vertical;}' +
+  '.contact-form input:focus,.contact-form textarea:focus{outline:2px solid #B28E3D;border-color:#B28E3D;}' +
+  '.contact-form label.case{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.45;color:#4A4A47;font-weight:400;}' +
+  '.contact-form label.case input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:#5A3A6A;}' +
+  '.contact-form label.case a{color:#5A3A6A;font-weight:600;}' +
+  '.contact-aide{font-size:.82rem;color:#7a7a75;font-weight:400;}' +
+  '.modal-content p.contact-deja{background:#FBF8F3;border-radius:8px;padding:10px 12px;font-size:.88rem;color:#4A4A47;text-align:left;line-height:1.5;margin-bottom:0;}' +
+  '.contact-deja a{color:#5A3A6A;font-weight:600;}' +
+  '.modal-content .contact-form p,.modal-content p.contact-intro{text-align:left;line-height:1.55;margin-bottom:0;}' +
+  '.modal-content p.contact-intro{margin-bottom:14px;}' +
+  '#contact-envoyer{width:100%;font-weight:700;}' +
+  '#contact-envoyer:disabled{opacity:.6;cursor:wait;}';
 document.head.appendChild(stylesPros);
 
 // ★★★★☆ pour une note de 1 à 5
@@ -302,7 +327,7 @@ function rendezVous(pro) {
 // Pro indisponible qui a organisé son remplacement
 function remplacantHtml(pro, classe) {
   if (!pro.remplace_par || !pro.remplace_par.id) return '';
-  return `<p class="${classe}">🔁 En son absence : <a href="espace-alb.html?contacter=${encodeURIComponent(pro.remplace_par.id)}">${echapper(pro.remplace_par.nom)}</a></p>`;
+  return `<p class="${classe}">🔁 En son absence : <a href="espace-alb.html?contacter=${encodeURIComponent(pro.remplace_par.id)}" onclick="return contacterPro(event, '${encodeURIComponent(pro.remplace_par.id)}')">${echapper(pro.remplace_par.nom)}</a></p>`;
 }
 
 // Badge « Validé ALB » : calculé par la base à partir des avis publiés
@@ -334,7 +359,7 @@ function createProCard(pro) {
       <div class="pro-status ${classeDispo}">${echapper(disponibilite)}</div>
       ${remplacantHtml(pro, 'pro-remplacant')}
       <div class="pro-action">
-        <a href="espace-alb.html?contacter=${encodeURIComponent(pro.id)}" class="btn btn-primary">💬 Envoyer un message</a>
+        <a href="espace-alb.html?contacter=${encodeURIComponent(pro.id)}" class="btn btn-primary" onclick="return contacterPro(event, '${encodeURIComponent(pro.id)}')">💬 Envoyer un message</a>
         <button type="button" class="btn btn-secondary" onclick="ouvrirAvis('${encodeURIComponent(pro.id)}')">⭐ Donner son avis</button>
         <button type="button" class="btn btn-secondary" onclick="viewProfile('${encodeURIComponent(pro.id)}')">📋 Profil</button>
       </div>
@@ -398,6 +423,7 @@ function viewProfile(proIdEncode) {
   const contacter = document.getElementById('fiche-pro-contacter');
   contacter.href = 'espace-alb.html?contacter=' + encodeURIComponent(pro.id);
   contacter.textContent = '💬 Envoyer un message';
+  contacter.onclick = (ev) => { closeFenetre('fiche-pro-modal'); return contacterPro(ev, encodeURIComponent(pro.id)); };
   // Bouton « Donner son avis » à côté (ajouté une seule fois)
   let boutonAvis = document.getElementById('fiche-pro-avis');
   if (!boutonAvis) {
@@ -513,7 +539,7 @@ async function ouvrirAvis(proIdEncode) {
   if (!etat.possible) {
     contenu.innerHTML = titre +
       '<p>Pour que chaque avis soit vérifié, vous pourrez donner le vôtre dès que vous aurez échangé avec ce pro via ALB et qu\'il vous aura répondu.</p>' +
-      `<div class="modal-buttons"><a class="modal-btn" href="${lienMessage}">💬 Envoyer un message</a></div>`;
+      `<div class="modal-buttons"><a class="modal-btn" href="${lienMessage}" onclick="closeFenetre('avis-modal'); return contacterPro(event, '${encodeURIComponent(proId)}')">💬 Envoyer un message</a></div>`;
     return;
   }
 
@@ -556,6 +582,148 @@ async function envoyerAvis(proIdEncode) {
     '<div class="modal-buttons"><button type="button" class="modal-btn" onclick="closeFenetre(\'avis-modal\')">Fermer</button></div>';
 }
 
+// ---------- « Envoyer un message » sans espace ALB ----------
+const GUICHET_ESPACES = SUPABASE_URL + '/functions/v1/alb-espaces';
+const MESSAGES_CONTACT = {
+  NOM_MANQUANT: 'Indiquez votre prénom et votre nom, pour que le pro sache à qui il parle.',
+  EMAIL_INVALIDE: 'L\'adresse e-mail ne semble pas complète. Pouvez-vous la vérifier ?',
+  TELEPHONE_INVALIDE: 'Le numéro de téléphone ne semble pas complet. Pouvez-vous le vérifier ?',
+  PIN_INVALIDE: 'Votre code PIN doit contenir exactement 4 chiffres.',
+  PIN_DIFFERENTS: 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?',
+  MESSAGE_VIDE: 'Écrivez votre message avant de l\'envoyer.',
+  MESSAGE_TROP_LONG: 'Votre message est un peu long : 2 000 caractères au maximum.',
+  CGU_NON_ACCEPTEES: 'Pour continuer, merci d\'accepter les conditions générales.',
+  RECONTACT_NON_ACCEPTE: 'Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.',
+  PRO_INTROUVABLE: 'Ce pro n\'est plus présent sur Nos pros ALB.',
+  RESEAU: 'On n\'arrive pas à joindre le serveur. Vérifiez votre connexion internet.'
+};
+function messageContact(code) {
+  return MESSAGES_CONTACT[code] || 'Un petit souci technique nous empêche de continuer. Réessayez dans un instant.';
+}
+
+// Clic sur « Envoyer un message » : connecté → son espace ; sinon → la petite fenêtre
+function contacterPro(ev, proIdEncode) {
+  if (ev) ev.preventDefault();
+  const proId = decodeURIComponent(proIdEncode);
+  supabase.auth.getSession().then(({ data }) => {
+    if (data && data.session) location.href = 'espace-alb.html?contacter=' + encodeURIComponent(proId);
+    else ouvrirContact(proId);
+  });
+  return false;
+}
+
+function fenetreContact() {
+  let fenetre = document.getElementById('contact-modal');
+  if (fenetre) return fenetre;
+  fenetre = document.createElement('div');
+  fenetre.id = 'contact-modal';
+  fenetre.className = 'modal';
+  fenetre.innerHTML = '<div class="modal-content"><span class="modal-close" onclick="closeFenetre(\'contact-modal\')">&times;</span><div id="contact-contenu"></div></div>';
+  document.body.appendChild(fenetre);
+  return fenetre;
+}
+
+function ouvrirContact(proId) {
+  const pro = allPros.find(p => p.id === proId);
+  const nom = pro ? nomAffiche(pro) : 'ce pro';
+  const lienConnexion = 'espace-alb.html?contacter=' + encodeURIComponent(proId);
+  const fenetre = fenetreContact();
+  document.getElementById('contact-contenu').innerHTML =
+    `<h2>Écrire à ${echapper(nom)}</h2>` +
+    '<p class="contact-intro">Votre message part directement au pro, et sa réponse arrivera dans votre espace ALB. ' +
+      'Pas encore d\'espace ? Il est créé en même temps, avec votre e-mail et le code PIN que vous choisissez ici. Vos coordonnées restent protégées.</p>' +
+    `<p class="contact-deja">Vous avez déjà un espace ALB ? <a href="${lienConnexion}">Connectez-vous ici</a> pour lui écrire.</p>` +
+    '<form class="contact-form" id="contact-form" novalidate style="margin-top:14px;">' +
+      '<div class="avis-message" id="contact-message"></div>' +
+      '<div class="contact-grille">' +
+        '<label class="champ">Prénom<input type="text" id="contact-prenom" maxlength="80" autocomplete="given-name" required></label>' +
+        '<label class="champ">Nom<input type="text" id="contact-nom" maxlength="80" autocomplete="family-name" required></label>' +
+        '<label class="champ">E-mail<input type="email" id="contact-email" maxlength="200" autocomplete="email" required></label>' +
+        '<label class="champ">Téléphone<input type="tel" id="contact-telephone" maxlength="20" autocomplete="tel" required></label>' +
+        '<label class="champ">Code PIN (4 chiffres)<input type="password" id="contact-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required></label>' +
+        '<label class="champ">Confirmez le code PIN<input type="password" id="contact-pin2" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" required></label>' +
+      '</div>' +
+      '<p class="contact-aide">Votre code PIN vous servira à vous connecter à votre espace ALB, avec votre e-mail. Gardez-le bien.</p>' +
+      `<label class="champ">Votre message<textarea id="contact-texte" maxlength="2000" placeholder="Bonjour, je vous contacte au sujet de…" required></textarea></label>` +
+      '<label class="case"><input type="checkbox" id="contact-cgu"> <span>J\'accepte les <a href="cgu.html" target="_blank" rel="noopener">conditions générales</a> et la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</span></label>' +
+      '<label class="case"><input type="checkbox" id="contact-recontact"> <span>J\'accepte d\'être recontacté(e) par ALB Sud Immobilier pour m\'accompagner dans mon projet.</span></label>' +
+      `<button type="submit" class="modal-btn" id="contact-envoyer">💬 Envoyer mon message</button>` +
+    '</form>';
+  document.getElementById('contact-form').onsubmit = (ev) => { ev.preventDefault(); envoyerContact(proId, nom); };
+  fenetre.classList.add('active');
+}
+
+async function envoyerContact(proId, nomPro) {
+  const v = id => document.getElementById(id).value.trim();
+  const zone = document.getElementById('contact-message');
+  const erreur = (texte) => { zone.className = 'avis-message erreur'; zone.innerHTML = texte; zone.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  const donnees = {
+    action: 'contact_pro', pro_id: proId,
+    prenom: v('contact-prenom'), nom: v('contact-nom'), email: v('contact-email'), telephone: v('contact-telephone'),
+    pin: v('contact-pin'), message: v('contact-texte'),
+    cgu_acceptees: document.getElementById('contact-cgu').checked,
+    accepte_recontact: document.getElementById('contact-recontact').checked
+  };
+  // Vérifications simples avant d'envoyer (le serveur vérifie tout de nouveau)
+  if (!donnees.prenom || !donnees.nom) return erreur(echapper(messageContact('NOM_MANQUANT')));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donnees.email)) return erreur(echapper(messageContact('EMAIL_INVALIDE')));
+  if (donnees.telephone.replace(/\D/g, '').length < 10) return erreur(echapper(messageContact('TELEPHONE_INVALIDE')));
+  if (!/^[0-9]{4}$/.test(donnees.pin)) return erreur(echapper(messageContact('PIN_INVALIDE')));
+  if (donnees.pin !== v('contact-pin2')) return erreur(echapper(messageContact('PIN_DIFFERENTS')));
+  if (!donnees.message) return erreur(echapper(messageContact('MESSAGE_VIDE')));
+  if (!donnees.cgu_acceptees) return erreur(echapper(messageContact('CGU_NON_ACCEPTEES')));
+  if (!donnees.accepte_recontact) return erreur(echapper(messageContact('RECONTACT_NON_ACCEPTE')));
+
+  const bouton = document.getElementById('contact-envoyer');
+  bouton.disabled = true;
+  bouton.textContent = 'Un instant…';
+  const lienEspace = 'espace-alb.html?contacter=' + encodeURIComponent(proId);
+
+  // 1. Création de l'espace
+  let resultat;
+  try {
+    const r = await fetch(GUICHET_ESPACES, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify(donnees)
+    });
+    resultat = await r.json();
+  } catch (e) {
+    console.error('[ALB DEBUG] Contact pro (guichet) :', e);
+    resultat = { ok: false, code: 'RESEAU' };
+  }
+  if (!resultat.ok) {
+    bouton.disabled = false;
+    bouton.textContent = '💬 Envoyer mon message';
+    if (resultat.code === 'EMAIL_DEJA_UTILISE') {
+      return erreur(`Vous avez déjà un espace ALB avec cette adresse e-mail. <a href="${lienEspace}">Connectez-vous ici</a> pour écrire à ce pro (votre message sera à recopier). Code PIN oublié ? Vous pourrez en choisir un nouveau sur la page de connexion.`);
+    }
+    return erreur(echapper(messageContact(resultat.code)));
+  }
+
+  // 2. Connexion à son nouvel espace, puis 3. le message au pro
+  const { error: erreurSession } = await supabase.auth.verifyOtp({ token_hash: resultat.jeton, type: 'magiclink' });
+  let messageParti = false;
+  if (erreurSession) console.error('[ALB DEBUG] Contact pro (session) :', erreurSession);
+  else {
+    const { error: erreurMessage } = await supabase.rpc('alb_message_ecrire', { p_texte: donnees.message, p_destinataire: proId });
+    if (erreurMessage) console.error('[ALB DEBUG] Contact pro (message) :', erreurMessage);
+    else messageParti = true;
+  }
+
+  document.getElementById('contact-contenu').innerHTML = messageParti
+    ? `<h2>Votre message est parti ! 💜</h2>` +
+      `<p class="contact-intro">${echapper(nomPro)} va le recevoir et vous répondra dans votre espace ALB, rubrique « Mes messages ».</p>` +
+      `<p class="contact-intro">Votre espace ALB est créé. Pour vous y connecter, il vous suffit de votre e-mail (<strong>${echapper(donnees.email)}</strong>) et de votre code PIN.</p>` +
+      '<p class="contact-intro">Jocelyne, fondatrice d\'ALB Sud Immobilier, prendra contact avec vous très vite pour faire connaissance.</p>' +
+      '<div class="modal-buttons"><a class="modal-btn" href="espace-alb.html#messages">Voir mon espace ALB</a>' +
+      '<button type="button" class="modal-btn discret" onclick="closeFenetre(\'contact-modal\')">Fermer</button></div>'
+    : '<h2>Votre espace ALB est créé</h2>' +
+      '<p class="contact-intro">Votre message n\'a pas pu partir tout de suite. Pas d\'inquiétude : ouvrez votre espace, il vous suffira de le renvoyer.</p>' +
+      `<p class="contact-intro">Pour vous connecter : votre e-mail (<strong>${echapper(donnees.email)}</strong>) et votre code PIN.</p>` +
+      `<div class="modal-buttons"><a class="modal-btn" href="${lienEspace}">Ouvrir mon espace et écrire au pro</a></div>`;
+}
+
 function showError(message) {
   document.getElementById('pros-grid').innerHTML = `<p class="vitrine-erreur">${echapper(message)}</p>`;
 }
@@ -571,5 +739,6 @@ window.ouvrirAvis = ouvrirAvis;
 window.envoyerAvis = envoyerAvis;
 window.choisirNote = choisirNote;
 window.closeFenetre = closeFenetre;
+window.contacterPro = contacterPro;
 window.clearFilters = clearFilters;
 window.loadPros = loadPros;
