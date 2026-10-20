@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Contacts du salon — ALB Immobilier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.5; }
+    h1, h2 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    .cache { display: none !important; }
+
+    /* Bandeau (le même que Gestion du site) */
+    .bandeau { background: #4B1A3E; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
+    .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
+    .bandeau-titre { font-weight: 700; font-size: 1rem; }
+    .bandeau-droite { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; align-items: center; }
+    .bandeau a { color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem; text-decoration: none; }
+    .bandeau a:hover { background: #B28E3D; border-color: #B28E3D; }
+
+    .contenu { max-width: 800px; margin: 0 auto; padding: 20px 16px 60px; }
+    .aide { font-size: 0.8rem; color: #7a7a75; margin: 4px 0 12px; }
+    .message { padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 0.9rem; background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border-color: #F0CACA; }
+
+    /* Chiffres */
+    .compteurs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; }
+    .compteur { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 12px; }
+    .compteur .valeur { font-size: 1.6rem; font-weight: 700; color: #5A3A6A; line-height: 1.1; }
+    .compteur .libelle { font-size: 0.8rem; margin-top: 4px; }
+    .compteur.or { border-color: #B28E3D; background: #FBF3E4; }
+    .compteur.or .valeur { color: #8A6A1F; }
+
+    /* Filtres */
+    .ligne-filtres { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .filtre { border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 16px; padding: 7px 14px; font-family: inherit; font-size: 0.84rem; font-weight: 600; cursor: pointer; }
+    .filtre.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
+
+    /* Fiches de contact */
+    .contact { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .contact.rappele { background: #F7F7F4; }
+    .contact-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .contact-nom { font-weight: 700; font-size: 1.02rem; color: #4B1A3E; }
+    .contact-metier { font-size: 0.88rem; color: #7a7a75; }
+    .contact-coordonnees { margin: 10px 0; font-size: 0.95rem; font-weight: 600; word-break: break-word; }
+    .contact-date { font-size: 0.76rem; color: #7a7a75; }
+    .badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 10px; }
+    .badge-test { background: #FBF3E4; color: #8A6A1F; border: 1px solid #B28E3D; }
+    .badge-fait { background: #EEF6EE; color: #2E6B34; }
+    .contact-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .bouton-petit { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A3A6A; background: #5A3A6A; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+    .bouton-petit.clair { background: #fff; color: #5A3A6A; }
+    .bouton-petit.or { background: #B28E3D; border-color: #B28E3D; }
+    .contact textarea { width: 100%; margin-top: 10px; padding: 9px; font-family: inherit; font-size: 0.88rem; border: 1px solid #E8E6E1; border-radius: 8px; min-height: 56px; resize: vertical; }
+    .vide { text-align: center; padding: 24px 10px; color: #7a7a75; font-size: 0.92rem; background: #fff; border-radius: 10px; border: 1px solid #E8E6E1; }
+  </style>
+</head>
+<body>
+
+<header class="bandeau">
+  <div class="bandeau-gauche">
+    <img src="logo-signature.png" alt="ALB Sud Immobilier">
+    <span class="bandeau-titre">Contacts du salon</span>
+  </div>
+  <div class="bandeau-droite">
+    <a href="gestion-site.html">← Gestion du site</a>
+    <a href="statistiques.html">📈 Statistiques</a>
+    <a href="index.html" target="_blank">Voir le site</a>
+  </div>
+</header>
+
+<main class="contenu">
+  <div id="etat" class="message">Chargement des contacts…</div>
+
+  <div id="page" class="cache">
+    <h1>📇 Contacts du salon RENT 2026</h1>
+    <p class="aide">Les personnes qui ont rempli le formulaire après avoir scanné ton QR code. Appuie sur « J'ai rappelé » quand c'est fait : la personne passe dans « Déjà rappelés ».</p>
+
+    <div class="compteurs" id="compteurs"></div>
+
+    <div class="ligne-filtres" id="filtres"></div>
+
+    <div id="liste"></div>
+  </div>
+</main>
+
+<script>
+  // ============================================================
+  // Contacts du salon : réservé à Jocelyne (même accès que Gestion du site)
+  // La liste vient d'une fonction Supabase qui vérifie que tu es bien admin.
+  // ============================================================
+  const FILTRES_ETAT = [['arappeler', 'À rappeler'], ['rappeles', 'Déjà rappelés'], ['tous', 'Tous']];
+  const choix = { etat: 'arappeler', seulementTest: false };
+  let contacts = [];
+
+  function e(texte) { return albEchapper(texte); }
+  function el(id) { return document.getElementById(id); }
+
+  // Date en français, par exemple « 20 octobre, 22:14 »
+  function formatDateFr(iso) {
+    return new Date(iso).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Cherche une adresse e-mail dans le texte des coordonnées
+  function extraireEmail(texte) {
+    const trouve = String(texte).match(/[^\s@·,;]+@[^\s@·,;]+\.[^\s@·,;]+/);
+    return trouve ? trouve[0] : null;
+  }
+
+  // Cherche un numéro de téléphone dans le texte des coordonnées (en ignorant l'e-mail)
+  function extraireTelephone(texte) {
+    const sansEmail = String(texte).replace(/[^\s@·,;]+@[^\s@·,;]+\.[^\s@·,;]+/g, ' ');
+    const trouve = sansEmail.match(/\+?\d[\d .\-]{7,}\d/);
+    return trouve ? trouve[0].replace(/[^\d+]/g, '') : null;
+  }
+
+  // Applique les filtres choisis et trie : ceux qui veulent tester d'abord, puis les plus anciens
+  function contactsAffiches() {
+    const liste = contacts.filter(function (c) {
+      const bonEtat = choix.etat === 'tous' || (choix.etat === 'arappeler' ? !c.traite_le : !!c.traite_le);
+      const bonTest = !choix.seulementTest || c.test_gratuit;
+      return bonEtat && bonTest;
+    });
+    if (choix.etat === 'arappeler') {
+      liste.sort(function (a, b) {
+        if (a.test_gratuit !== b.test_gratuit) { return a.test_gratuit ? -1 : 1; }
+        return new Date(a.cree_le) - new Date(b.cree_le);
+      });
+    }
+    return liste;
+  }
+
+  function dessinerCompteurs() {
+    const aRappeler = contacts.filter(function (c) { return !c.traite_le; });
+    const aRappelerTest = aRappeler.filter(function (c) { return c.test_gratuit; });
+    const dejaRappeles = contacts.length - aRappeler.length;
+    el('compteurs').innerHTML =
+      '<div class="compteur or"><div class="valeur">' + aRappeler.length + '</div><div class="libelle">À rappeler</div></div>' +
+      '<div class="compteur or"><div class="valeur">' + aRappelerTest.length + '</div><div class="libelle">À rappeler qui veulent tester</div></div>' +
+      '<div class="compteur"><div class="valeur">' + dejaRappeles + '</div><div class="libelle">Déjà rappelés</div></div>' +
+      '<div class="compteur"><div class="valeur">' + contacts.length + '</div><div class="libelle">Contacts au total</div></div>';
+  }
+
+  function dessinerFiltres() {
+    el('filtres').innerHTML = FILTRES_ETAT.map(function (f) {
+      return '<button type="button" class="filtre' + (choix.etat === f[0] ? ' actif' : '') + '" data-etat="' + f[0] + '">' + e(f[1]) + '</button>';
+    }).join('') +
+      '<button type="button" class="filtre' + (choix.seulementTest ? ' actif' : '') + '" data-test="1">⭐ Veulent tester</button>' +
+      '<button type="button" class="filtre" data-actualiser="1">🔄 Actualiser</button>';
+  }
+
+  function dessinerFiche(c) {
+    const email = extraireEmail(c.coordonnees);
+    const telephone = extraireTelephone(c.coordonnees);
+    const rappele = !!c.traite_le;
+    let actionsContact = '';
+    if (telephone) { actionsContact += '<a class="bouton-petit clair" href="tel:' + e(telephone) + '">📞 Appeler</a>'; }
+    if (email) { actionsContact += '<a class="bouton-petit clair" href="mailto:' + e(email) + '">✉️ Écrire</a>'; }
+    const boutonEtat = rappele
+      ? '<button type="button" class="bouton-petit clair" data-action="remettre" data-id="' + e(c.id) + '">↩️ Remettre à rappeler</button>'
+      : '<button type="button" class="bouton-petit or" data-action="rappele" data-id="' + e(c.id) + '">✅ J\'ai rappelé</button>';
+    return '<div class="contact' + (rappele ? ' rappele' : '') + '">' +
+      '<div class="contact-tete"><div><div class="contact-nom">' + e(c.nom) + '</div><div class="contact-metier">' + e(c.metier) + '</div></div>' +
+      '<div>' + (c.test_gratuit ? '<span class="badge badge-test">⭐ Veut tester</span> ' : '') + (rappele ? '<span class="badge badge-fait">Rappelé</span>' : '') + '</div></div>' +
+      '<div class="contact-coordonnees">' + e(c.coordonnees) + '</div>' +
+      '<div class="contact-date">Reçu le ' + e(formatDateFr(c.cree_le)) + (rappele ? ' · rappelé le ' + e(formatDateFr(c.traite_le)) : '') + '</div>' +
+      '<textarea id="note-' + e(c.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, quand rappeler…)">' + e(c.note || '') + '</textarea>' +
+      '<div class="contact-actions">' + actionsContact + boutonEtat +
+      '<button type="button" class="bouton-petit clair" data-action="note" data-id="' + e(c.id) + '">💾 Enregistrer la note</button></div>' +
+      '</div>';
+  }
+
+  function dessinerListe() {
+    const liste = contactsAffiches();
+    if (!liste.length) {
+      el('liste').innerHTML = '<div class="vide">' + (choix.etat === 'arappeler' ? 'Personne à rappeler pour le moment. 🌿' : 'Aucun contact ici pour le moment.') + '</div>';
+      return;
+    }
+    el('liste').innerHTML = liste.map(dessinerFiche).join('');
+  }
+
+  function dessinerTout() {
+    dessinerCompteurs();
+    dessinerFiltres();
+    dessinerListe();
+  }
+
+  // Récupère la liste depuis Supabase
+  async function chargerContacts() {
+    const { data, error } = await albSupabase.rpc('alb_gestion_contacts_salon');
+    if (error) {
+      console.log('[ALB DEBUG] contacts salon : chargement impossible', error);
+      el('etat').className = 'message erreur';
+      el('etat').textContent = 'La liste n\'a pas pu être chargée. Recharge la page dans un instant.';
+      el('etat').classList.remove('cache');
+      return false;
+    }
+    contacts = data || [];
+    return true;
+  }
+
+  // Marque un contact comme rappelé (ou à rappeler), et enregistre la note si on en donne une
+  async function marquerContact(id, rappele, note) {
+    const { error } = await albSupabase.rpc('alb_gestion_marquer_contact_salon', { p_id: id, p_rappele: rappele, p_note: note });
+    if (error) {
+      console.log('[ALB DEBUG] contacts salon : mise à jour impossible', error);
+      el('etat').className = 'message erreur';
+      el('etat').textContent = 'Le changement n\'a pas été enregistré. Réessaie dans un instant.';
+      el('etat').classList.remove('cache');
+      return;
+    }
+    el('etat').classList.add('cache');
+    if (await chargerContacts()) { dessinerTout(); }
+  }
+
+  document.addEventListener('click', async function (evenement) {
+    const bouton = evenement.target.closest('button');
+    if (!bouton) { return; }
+
+    if (bouton.dataset.etat) { choix.etat = bouton.dataset.etat; dessinerTout(); return; }
+    if (bouton.dataset.test) { choix.seulementTest = !choix.seulementTest; dessinerTout(); return; }
+    if (bouton.dataset.actualiser) { if (await chargerContacts()) { dessinerTout(); } return; }
+
+    const id = bouton.dataset.id;
+    if (!id) { return; }
+    const zoneNote = document.getElementById('note-' + id);
+    const note = zoneNote ? zoneNote.value : null;
+    const contact = contacts.find(function (c) { return c.id === id; });
+
+    if (bouton.dataset.action === 'rappele') { await marquerContact(id, true, note); }
+    if (bouton.dataset.action === 'remettre') { await marquerContact(id, false, note); }
+    if (bouton.dataset.action === 'note') { await marquerContact(id, !!(contact && contact.traite_le), note); }
+  });
+
+  async function demarrer() {
+    const etat = el('etat');
+    const { data: session } = await albSupabase.auth.getSession();
+    if (!session?.session) {
+      etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.';
+      return;
+    }
+    const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
+    if (estAdmin !== true) {
+      etat.className = 'message erreur';
+      etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.';
+      return;
+    }
+    if (!(await chargerContacts())) { return; }
+    etat.classList.add('cache');
+    el('page').classList.remove('cache');
+    dessinerTout();
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>
