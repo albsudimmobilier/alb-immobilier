@@ -16,7 +16,9 @@
 // sans espace qui ont écrit à un pro (leur espace a été créé en même temps).
 // Jocelyne leur envoie elle-même son message de bienvenue, puis fait le suivi.
 // Dans la fiche d'un pro (✅ Pros validés) : « ⭐ Lien vers ses avis Google »,
-// affiché ensuite sur sa fiche « Nos pros ALB ». Seule Jocelyne l'enregistre.
+// affiché ensuite sur sa fiche « Nos pros ALB ». Seule Jocelyne l'enregistre :
+// soit directement dans la fiche, soit en vérifiant le lien proposé par le pro
+// dans « Mes papiers » (📄 Ses papiers → ✓ Vérifié).
 // ============================================================
 
 let demandesRappel = [];
@@ -516,6 +518,19 @@ async function chargerLiensAvisGoogle() {
       }
     }
     return enregistrerFicheAvantGoogle(event, id);
+  };
+
+  // 📄 Ses papiers : le lien proposé par le pro devient cliquable, pour le vérifier
+  const blocPapiersProAvantGoogle = blocPapiersPro;
+  blocPapiersPro = function (proId) {
+    let html = blocPapiersProAvantGoogle(proId);
+    papiersPros.filter(function (x) { return x.profile_id === proId && x.type === 'avis_google' && /^https:\/\//i.test(x.valeur || ''); })
+      .forEach(function (x) {
+        html = html.replace('<span style="font-size:1rem;">' + albEchapper(x.valeur) + '</span>',
+          '<a href="' + albEchapper(x.valeur) + '" target="_blank" rel="noopener noreferrer" style="font-size:1rem;word-break:break-all;">' + albEchapper(x.valeur) + ' ↗</a>' +
+          (x.statut === 'a_verifier' ? '<br><span style="color:#7a7a75;">Ouvre-le pour vérifier que c\'est bien sa fiche Google. « ✓ Vérifié » = le bouton « Voir ses avis Google » apparaît sur sa fiche.</span>' : ''));
+      });
+    return html;
   };
 })();
 
