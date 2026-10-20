@@ -22,6 +22,9 @@
 // en même temps (aucun e-mail automatique), le pro reçoit son message comme
 // d'habitude, et la personne arrive dans Gestion du site pour que Jocelyne
 // la contacte et lui envoie elle-même son message de bienvenue.
+//
+// Avis Google : si Jocelyne a enregistré le lien vers les avis Google d'un pro
+// (depuis Gestion du site), un bouton « Voir ses avis Google » apparaît sur sa fiche.
 // ============================================================
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -65,6 +68,7 @@ const LIBELLES_DISPONIBILITE = {
 };
 
 let allPros = [];
+let liensAvisGoogle = {};   // id du pro → lien vers ses avis Google (enregistré par Jocelyne)
 let filteredPros = [];
 let currentPage = 1;
 const ITEMS_PER_PAGE = 9;
@@ -99,6 +103,10 @@ stylesPros.textContent = '.pro-rdv{font-size:.85rem;color:#4A4A47;margin:8px 0 0
   '.modal-buttons .modal-btn + .modal-btn{margin-left:8px;}' +
   '.modal-btn.discret{background:white;color:#5A3A6A;border:1px solid #D8D5CE;}' +
   '.modal-btn.discret:hover{background:#F5F3F0;color:#5A3A6A;}' +
+  // Bouton « Voir ses avis Google » dans la fiche
+  '.modal-content p.fiche-google{text-align:left;margin:14px 0 0;}' +
+  '.fiche-google a{display:inline-block;padding:9px 16px;border:1px solid #D8D5CE;border-radius:20px;color:#4B1A3E;font-weight:600;font-size:.9rem;text-decoration:none;background:#fff;}' +
+  '.fiche-google a:hover{border-color:#B28E3D;background:#FBF8F3;}' +
   // Fenêtre « Envoyer un message » (sans espace ALB)
   '.contact-form{display:flex;flex-direction:column;gap:12px;text-align:left;}' +
   '.contact-grille{display:grid;grid-template-columns:1fr;gap:12px;}' +
@@ -176,7 +184,12 @@ function libelleComplet(pro) {
 }
 
 async function loadPros() {
-  const { data, error } = await supabase.rpc('alb_pros_publics2');
+  const [{ data, error }, liens] = await Promise.all([
+    supabase.rpc('alb_pros_publics2'),
+    supabase.rpc('alb_pros_liens_avis_google')
+  ]);
+  if (liens.error) console.error('[ALB DEBUG] Liens avis Google :', liens.error);
+  else liensAvisGoogle = liens.data || {};
 
   if (error) {
     console.error('[ALB DEBUG] Nos pros ALB :', error);
@@ -418,6 +431,7 @@ function viewProfile(proIdEncode) {
     <p class="fiche-ligne">🕒 ${echapper(LIBELLES_DISPONIBILITE[pro.status_disponibilite] || 'Disponible')}</p>
     ${remplacantHtml(pro, 'fiche-ligne')}
     ${numeros.length ? `<div class="fiche-numeros">${numeros.join('')}</div>` : ''}
+    ${lienAvisGoogle(pro)}
     <div class="fiche-avis" id="fiche-avis"><h3>Avis</h3><p class="avis-info">Chargement…</p></div>
   `;
   const contacter = document.getElementById('fiche-pro-contacter');
@@ -436,6 +450,13 @@ function viewProfile(proIdEncode) {
   boutonAvis.onclick = () => { closeFenetre('fiche-pro-modal'); ouvrirAvis(encodeURIComponent(pro.id)); return false; };
   document.getElementById('fiche-pro-modal').classList.add('active');
   chargerAvisFiche(pro);
+}
+
+// Bouton « Voir ses avis Google » (seulement une adresse https, vérifiée par Jocelyne)
+function lienAvisGoogle(pro) {
+  const lien = liensAvisGoogle[pro.id];
+  if (!lien || !/^https:\/\//i.test(lien)) return '';
+  return `<p class="fiche-google"><a href="${echapper(lien)}" target="_blank" rel="noopener noreferrer">⭐ Voir ses avis Google <span aria-hidden="true">↗</span></a></p>`;
 }
 
 // ---------- Avis publiés, dans la fiche ----------
