@@ -15,6 +15,8 @@
 // Dans 🤝 Projets : « 💬 Nouveaux venus via Nos pros ALB » — les personnes
 // sans espace qui ont écrit à un pro (leur espace a été créé en même temps).
 // Jocelyne leur envoie elle-même son message de bienvenue, puis fait le suivi.
+// Dans la fiche d'un pro (✅ Pros validés) : « ⭐ Lien vers ses avis Google »,
+// affiché ensuite sur sa fiche « Nos pros ALB ». Seule Jocelyne l'enregistre.
 // ============================================================
 
 let demandesRappel = [];
@@ -471,6 +473,52 @@ async function contactVitrineMaj(id, quoi, fait, bouton) {
   afficherMessage('message-general', 'succes', !fait ? 'C\'est noté.' : quoi === 'bienvenue' ? 'Bienvenue notée ✓' : 'Suivi noté ✓');
 }
 
+// ----- « ⭐ Lien vers ses avis Google » dans la fiche d'un pro -----
+let liensAvisGoogle = {};   // id du pro → lien vers ses avis Google
+ERREURS.LIEN_GOOGLE_INVALIDE = 'Ce lien ne vient pas de Google. Copie le lien de partage de sa fiche Google (il commence par https://maps.app.goo.gl/, https://g.page/, https://share.google/ ou https://www.google.com/).';
+
+async function chargerLiensAvisGoogle() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_liens_avis_google');
+  if (error) { console.error('[ALB DEBUG] liens avis Google :', error); return; }
+  liensAvisGoogle = data || {};
+  // Les fiches déjà affichées reçoivent leur lien
+  document.querySelectorAll('input[name="avis_google"]').forEach(function (champ) {
+    if (!champ.dataset.touche) champ.value = liensAvisGoogle[champ.dataset.pro] || '';
+  });
+}
+
+(function () {
+  // Le champ s'ajoute dans la fiche, juste avant « 💾 Enregistrer la fiche »
+  const formulaireFicheAvantGoogle = formulaireFiche;
+  formulaireFiche = function (m, metier) {
+    const lien = liensAvisGoogle[m.id] || '';
+    return formulaireFicheAvantGoogle(m, metier).replace(
+      '<div class="actions"><button type="submit" class="bouton">💾 Enregistrer la fiche</button>',
+      '<div class="grille" style="margin-top:14px;"><div class="champ large"><label>⭐ Lien vers ses avis Google (facultatif)</label>' +
+        '<input name="avis_google" type="url" maxlength="500" data-pro="' + m.id + '" oninput="this.dataset.touche=1" placeholder="https://maps.app.goo.gl/…" value="' + albEchapper(lien) + '">' +
+        '<div class="aide">Sur Google Maps, ouvre sa fiche, clique sur « Partager », puis « Copier le lien ». ' +
+          'Un bouton « Voir ses avis Google » apparaîtra sur sa fiche « Nos pros ALB ». Laisse vide pour le retirer.' +
+          (lien ? ' <a href="' + albEchapper(lien) + '" target="_blank" rel="noopener noreferrer">Vérifier le lien ↗</a>' : '') + '</div></div></div>' +
+      '<div class="actions"><button type="submit" class="bouton">💾 Enregistrer la fiche</button>');
+  };
+
+  // À l'enregistrement : d'abord le lien (s'il a changé), puis le reste de la fiche
+  const enregistrerFicheAvantGoogle = enregistrerFiche;
+  enregistrerFiche = async function (event, id) {
+    event.preventDefault();
+    const champ = event.target.elements['avis_google'];
+    if (champ) {
+      const nouveau = champ.value.trim();
+      if (nouveau !== (liensAvisGoogle[id] || '')) {
+        const { error } = await albSupabase.rpc('alb_gestion_lien_avis_google', { p_id: id, p_lien: nouveau });
+        if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+        if (nouveau) liensAvisGoogle[id] = nouveau; else delete liensAvisGoogle[id];
+      }
+    }
+    return enregistrerFicheAvantGoogle(event, id);
+  };
+})();
+
 // « À faire aujourd'hui » : en tête, car la personne attend un appel
 LIGNES_A_FAIRE.unshift({
   calcul: function () { return demandesRappelEnAttente().length; },
@@ -485,7 +533,7 @@ LIGNES_A_FAIRE.splice(1, 0, {
 (function () {
   const toutRechargerAvantRappelsDemandes = toutRecharger;
   toutRecharger = async function () {
-    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel(), chargerEspacesNonActives(), chargerContactsVitrine()]);
+    await Promise.all([toutRechargerAvantRappelsDemandes(), chargerDemandesRappel(), chargerEspacesNonActives(), chargerContactsVitrine(), chargerLiensAvisGoogle()]);
     afficherAjoutMembre();
     afficherAFaire();
   };
