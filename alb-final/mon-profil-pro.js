@@ -4,7 +4,8 @@
 //    types de rendez-vous, disponibilité (en ligne tout de suite,
 //    Jocelyne est prévenue par e-mail)
 //  • Mes papiers : numéros et attestations demandés selon le métier,
-//    vérifiés ensuite par Jocelyne dans Gestion du site
+//    vérifiés ensuite par Jocelyne dans Gestion du site (dont le lien
+//    vers ses avis Google, affiché sur sa fiche une fois vérifié)
 //  • Mon remplaçant : demander à un confrère de prendre mes
 //    nouvelles demandes quand je suis indisponible (il doit accepter)
 //  • Les confrères qui me demandent de les remplacer
@@ -32,6 +33,7 @@
     FICHIER_INVALIDE: 'Le fichier n’a pas pu être enregistré. Réessayez.',
     VALEUR_MANQUANTE: 'Ce champ est vide.',
     VALEUR_TROP_LONGUE: 'C’est un peu long : 200 caractères au plus.',
+    LIEN_GOOGLE_INVALIDE: 'Ce lien ne vient pas de Google. Sur Google Maps, ouvrez votre fiche, cliquez sur « Partager », puis « Copier le lien », et collez-le ici.',
     PAPIER_INCONNU: 'Ce papier n’est pas demandé pour votre métier. Rechargez la page.',
     DATE_MANQUANTE: 'Indiquez d’abord jusqu’à quand ce papier est valable.',
     DATE_INVALIDE: 'Cette date ne semble pas juste. Vérifiez la date de fin de validité.',
@@ -166,8 +168,9 @@
         '<label class="pp-btn">📎 ' + (envoye ? 'Envoyer un nouveau fichier' : 'Choisir le fichier (PDF ou photo)') +
         '<input type="file" class="pp-papier-fichier" data-type="' + e(d.type) + '" accept="application/pdf,image/*" hidden></label>';
     } else {
-      saisie = '<div class="pp-ligne-saisie"><input id="pp-papier-' + e(d.type) + '" maxlength="200" value="' + e(d.valeur || '') + '"' +
-        (d.type === 'corps_metier' ? ' placeholder="Ex. : plomberie, chauffage"' : '') + '>' +
+      saisie = '<div class="pp-ligne-saisie"><input id="pp-papier-' + e(d.type) + '" maxlength="' + (d.type === 'avis_google' ? 500 : 200) + '" value="' + e(d.valeur || '') + '"' +
+        (d.type === 'corps_metier' ? ' placeholder="Ex. : plomberie, chauffage"' : '') +
+        (d.type === 'avis_google' ? ' type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…"' : '') + '>' +
         '<button type="button" class="pp-btn" data-action="papier-envoyer" data-type="' + e(d.type) + '">' + (envoye ? 'Mettre à jour' : 'Envoyer') + '</button></div>';
     }
     return '<div class="pp-papier">' +
