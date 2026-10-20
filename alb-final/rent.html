@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Échangeons « À la bien » - RENT 2026 | ALB Sud Immobilier</title>
+  <link rel="stylesheet" href="rent.css">
+</head>
+<body>
+  <main class="rent">
+
+    <header class="rent-marque">
+      <img src="logo-salon.png" alt="ALB Sud Immobilier" width="900" height="492">
+      <p class="rent-signature">À la bien, toujours</p>
+    </header>
+
+    <section class="rent-carte" aria-labelledby="rent-contact-titre">
+      <p class="rent-nom" id="rent-contact-titre">Jocelyne Rimlinger</p>
+      <p class="rent-role">Fondatrice, ALB Sud Immobilier</p>
+
+      <dl class="rent-infos">
+        <div class="rent-ligne"><dt>Zone</dt><dd>Var, Bouches-du-Rhône, PACA</dd></div>
+        <div class="rent-ligne"><dt>Téléphone</dt><dd><a href="tel:+33745602805">07 45 60 28 05</a></dd></div>
+        <div class="rent-ligne"><dt>E-mail</dt><dd><a href="mailto:contact@albimmobilier.fr">contact@albimmobilier.fr</a></dd></div>
+        <div class="rent-ligne"><dt>Site</dt><dd><a href="https://albimmobilier.fr/">https://albimmobilier.fr</a></dd></div>
+      </dl>
+
+      <a class="rent-bouton" href="jocelyne-rimlinger.vcf" download="jocelyne-rimlinger.vcf">Enregistrer mon contact</a>
+    </section>
+
+    <section class="rent-carte" aria-labelledby="rent-form-titre">
+      <h1 id="rent-form-titre">Échangeons « À la bien » ! RENT 2026</h1>
+      <p class="rent-intro">Ravie d'avoir échangé avec vous au salon RENT ! Laissez-moi vos coordonnées pour recevoir vos accès et rester en contact.</p>
+
+      <form id="rent-formulaire" novalidate>
+        <div class="rent-champ">
+          <label for="rent-nom">Nom et prénom</label>
+          <input type="text" id="rent-nom" name="nom" autocomplete="name" placeholder="Marie Dupont" maxlength="200">
+          <p class="rent-erreur" id="rent-nom-erreur" role="alert"></p>
+        </div>
+
+        <div class="rent-champ">
+          <label for="rent-metier">Métier et enseigne</label>
+          <input type="text" id="rent-metier" name="metier" placeholder="Courtier, agent Orpi, artisan…" maxlength="200">
+          <p class="rent-erreur" id="rent-metier-erreur" role="alert"></p>
+        </div>
+
+        <div class="rent-champ">
+          <label for="rent-coordonnees">Téléphone et e-mail</label>
+          <input type="text" id="rent-coordonnees" name="coordonnees" autocomplete="off" placeholder="06 12 34 56 78 · marie@exemple.fr" maxlength="300">
+          <p class="rent-erreur" id="rent-coordonnees-erreur" role="alert"></p>
+        </div>
+
+        <div class="rent-piege" aria-hidden="true">
+          <label for="rent-site-web">Ne pas remplir ce champ</label>
+          <input type="text" id="rent-site-web" name="site_web" tabindex="-1" autocomplete="off">
+        </div>
+
+        <label class="rent-case" for="rent-test">
+          <input type="checkbox" id="rent-test" name="test_gratuit">
+          <span>Je souhaite tester gratuitement la plateforme ALB Immobilier en PACA jusqu'à fin 2026</span>
+        </label>
+
+        <button type="submit" class="rent-bouton rent-bouton-envoi" id="rent-envoi">Envoyer</button>
+        <p class="rent-message" id="rent-message" role="status"></p>
+        <p class="rent-legal">Vos informations servent uniquement à vous recontacter. <a href="confidentialite.html">Politique de confidentialité</a></p>
+      </form>
+    </section>
+
+    <footer class="rent-pied">
+      <p class="rent-pied-nom">ALB Sud Immobilier</p>
+      <p>Quand l'ancien se met à la bien</p>
+    </footer>
+
+  </main>
+
+  <script>
+    // Adresse de la base et clé publique (la clé publique est faite pour être visible,
+    // la sécurité est assurée par les règles de la table alb_contacts_salon)
+    var RENT_SUPABASE_URL = 'https://kutbxyinpokebjdemlnq.supabase.co';
+    var RENT_SUPABASE_CLE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dGJ4eWlucG9rZWJqZGVtbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzQxOTcsImV4cCI6MjA5ODExMDE5N30.2gF1rl7fP0v6rxlo_b5nWWOXET51UZ6PLxv-QA7MuKk';
+
+    var formulaire = document.getElementById('rent-formulaire');
+    var boutonEnvoi = document.getElementById('rent-envoi');
+    var zoneMessage = document.getElementById('rent-message');
+
+    // Affiche un message d'erreur sous un champ
+    function showFieldError(idChamp, texte) {
+      document.getElementById(idChamp).setAttribute('aria-invalid', 'true');
+      document.getElementById(idChamp + '-erreur').textContent = texte;
+    }
+
+    // Efface le message d'erreur d'un champ
+    function clearFieldError(idChamp) {
+      document.getElementById(idChamp).removeAttribute('aria-invalid');
+      document.getElementById(idChamp + '-erreur').textContent = '';
+    }
+
+    // Vérifie que les coordonnées contiennent un e-mail ou un numéro de téléphone
+    function validateCoordonnees(valeur) {
+      var contientEmail = valeur.indexOf('@') > 0;
+      var nombreChiffres = (valeur.match(/\d/g) || []).length;
+      return contientEmail || nombreChiffres >= 8;
+    }
+
+    // Vérifie tout le formulaire, renvoie true si tout est correct
+    function validateFormulaireSalon() {
+      var tout_est_bon = true;
+      var nom = document.getElementById('rent-nom').value.trim();
+      var metier = document.getElementById('rent-metier').value.trim();
+      var coordonnees = document.getElementById('rent-coordonnees').value.trim();
+
+      if (nom.length < 2) {
+        showFieldError('rent-nom', 'Indiquez votre nom et prénom.');
+        tout_est_bon = false;
+      }
+      if (metier.length < 2) {
+        showFieldError('rent-metier', 'Indiquez votre métier ou votre enseigne.');
+        tout_est_bon = false;
+      }
+      if (!validateCoordonnees(coordonnees)) {
+        showFieldError('rent-coordonnees', 'Indiquez au moins un téléphone ou un e-mail.');
+        tout_est_bon = false;
+      }
+      return tout_est_bon;
+    }
+
+    // Envoie les informations dans la table alb_contacts_salon
+    function sendContactSalon() {
+      var corps = {
+        nom: document.getElementById('rent-nom').value.trim(),
+        metier: document.getElementById('rent-metier').value.trim(),
+        coordonnees: document.getElementById('rent-coordonnees').value.trim(),
+        test_gratuit: document.getElementById('rent-test').checked,
+        salon: 'RENT 2026'
+      };
+      return fetch(RENT_SUPABASE_URL + '/rest/v1/alb_contacts_salon', {
+        method: 'POST',
+        headers: {
+          'apikey': RENT_SUPABASE_CLE,
+          'Authorization': 'Bearer ' + RENT_SUPABASE_CLE,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(corps)
+      });
+    }
+
+    // Affiche le remerciement à la place du formulaire
+    function showMerci() {
+      formulaire.innerHTML = '<p class="rent-merci">Merci, vos coordonnées sont bien reçues. Je reviens vers vous très vite.</p>';
+    }
+
+    ['rent-nom', 'rent-metier', 'rent-coordonnees'].forEach(function (idChamp) {
+      document.getElementById(idChamp).addEventListener('input', function () {
+        clearFieldError(idChamp);
+      });
+    });
+
+    formulaire.addEventListener('submit', function (evenement) {
+      evenement.preventDefault();
+      zoneMessage.textContent = '';
+      zoneMessage.className = 'rent-message';
+
+      // Champ piège : si un robot l'a rempli, on fait semblant que tout va bien
+      if (document.getElementById('rent-site-web').value !== '') {
+        console.log('[ALB DEBUG] formulaire salon : robot détecté, envoi ignoré');
+        showMerci();
+        return;
+      }
+
+      if (!validateFormulaireSalon()) { return; }
+
+      boutonEnvoi.textContent = 'Envoi en cours…';
+      boutonEnvoi.disabled = true;
+
+      sendContactSalon()
+        .then(function (reponse) {
+          if (!reponse.ok) { throw new Error('Réponse ' + reponse.status); }
+          console.log('[ALB DEBUG] formulaire salon : contact envoyé');
+          showMerci();
+        })
+        .catch(function (erreur) {
+          console.log('[ALB DEBUG] formulaire salon : échec de l\'envoi', erreur);
+          boutonEnvoi.textContent = 'Envoyer';
+          boutonEnvoi.disabled = false;
+          zoneMessage.className = 'rent-message rent-message-erreur';
+          zoneMessage.textContent = 'L\'envoi n\'a pas fonctionné. Vérifiez votre connexion et réessayez, ou écrivez-moi à contact@albimmobilier.fr.';
+        });
+    });
+  </script>
+</body>
+</html>
