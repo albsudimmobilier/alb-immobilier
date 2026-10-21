@@ -1,12 +1,15 @@
 // ============================================================
-// Gestion du site — partie 9 : 📅 Agenda et 📇 Carnet
-// Deux onglets ajoutés par ce fichier (rien à changer dans la page) :
+// Gestion du site — partie 9 : 📅 Agenda, 📇 Carnet et 🚪 Départs
+// Trois onglets ajoutés par ce fichier (rien à changer dans la page) :
 //  • 📅 Agenda : les rendez-vous de Jocelyne + les dates du site
 //    (visites, relances, fins de validité, fins de mandat, rappels,
 //    contacts du carnet à relancer), en liste par jour.
 //  • 📇 Carnet : les personnes qui ne sont pas (encore) inscrites sur
 //    ALB Immobilier (pros rencontrés en visio, en salon, au téléphone…),
 //    avec ses notes datées et la date à laquelle les relancer.
+//  • 🚪 Départs : les membres qui demandent à quitter ALB Immobilier (depuis
+//    leur espace) et les comptes fermés par Jocelyne. Sur chaque carte de
+//    « Suivi des membres » : « 🚪 Fermer son compte ».
 // Rien n'est envoyé à personne : ce sont ses outils à elle.
 // Chargé par gestion-site.html, après gestion-site-8.js
 // ============================================================
@@ -51,6 +54,7 @@ function ajouterOnglet(nom, libelle, apres) {
 function preparerOngletAgenda() {
   ajouterOnglet('agenda', '📅 Agenda', 'accueil');
   ajouterOnglet('carnet', '📇 Carnet', 'agenda');
+  ajouterOnglet('departs', '🚪 Départs', 'membres');
 }
 
 function heureCourte(h) { return h ? String(h).slice(0, 5).replace(':', 'h') : ''; }
@@ -491,6 +495,137 @@ LIGNES_A_FAIRE.splice(1, 0, {
     await Promise.all([toutRechargerAvantCarnet(), chargerCarnet()]);
     afficherCarnet();
     afficherAgenda();
+    afficherAFaire();
+  };
+})();
+
+// ----- 🚪 Départs (onglet juste après « Suivi des membres ») -----
+// Un membre clique « Quitter ALB Immobilier » dans son espace : sa demande arrive
+// ici (et dans « À faire aujourd'hui »). Jocelyne l'appelle si elle veut, puis
+// « 🚪 Fermer son compte » : plus de connexion possible, annonces en pause, fiche
+// hors de « Nos pros ALB » (comme une suspension), et c'est noté.
+// Elle peut aussi fermer le compte de quelqu'un d'elle-même, depuis « Suivi des membres ».
+// Rien n'est effacé automatiquement : l'effacement des données se fait à part.
+let departs = [];
+ERREURS.DEPART_INTROUVABLE = 'Cette demande a déjà été traitée.';
+ERREURS.SUSPENSION_ADMIN = 'Impossible de fermer un compte de l\'équipe ALB.';
+
+async function chargerDeparts() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_departs');
+  if (error) { console.error('[ALB DEBUG] départs :', error); return; }
+  departs = data || [];
+}
+
+function departsEnAttente() { return departs.filter(function (d) { return d.statut === 'en_attente'; }); }
+function compteFerme(id) { return departs.some(function (d) { return d.profile_id === id && d.statut === 'ferme'; }); }
+
+function carteDepart(d) {
+  const num = String(d.telephone || '').replace(/[^0-9+]/g, '');
+  const nom = ((d.prenom || '') + ' ' + (d.nom || '')).trim() || 'Membre';
+  const qui = d.role && d.role !== 'particulier' ? '🧑‍💼 Pro' + (d.nom_entreprise ? ' · ' + d.nom_entreprise : '') : '🙋 Particulier';
+  const enAttente = d.statut === 'en_attente';
+  return '<div class="carte"' + (enAttente ? '' : ' style="opacity:0.8;"') + '>' +
+    '<h3 style="font-family:Montserrat,sans-serif;font-size:1.05rem;">' + albEchapper(nom) + ' ' +
+      (enAttente ? '<span class="etiquette rouge">🚪 Veut quitter ALB</span>'
+        : d.statut === 'ferme' ? '<span class="etiquette">🔒 Compte fermé le ' + albEchapper(dateLisible(d.traite_le)) + '</span>'
+        : '<span class="etiquette vert">↩️ Reste sur ALB</span>') + '</h3>' +
+    '<p class="ligne-info"><span class="etiquette">' + albEchapper(qui) + '</span></p>' +
+    (num ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(num) + '"><strong>' + albEchapper(d.telephone) + '</strong></a></p>' : '') +
+    (d.email ? '<p class="ligne-info">✉️ <a href="mailto:' + albEchapper(d.email) + '">' + albEchapper(d.email) + '</a></p>' : '') +
+    '<p class="ligne-info">' + (d.par === 'membre' ? '📩 Demandé par le membre le ' : '✋ Décidé par toi le ') + albEchapper(dateLisible(d.cree_le)) + '</p>' +
+    (d.raison && d.par === 'membre' ? '<p class="ligne-info mot">💬 « ' + albEchapper(d.raison) + ' »</p>' : '') +
+    (d.note ? '<p class="ligne-info">📝 ' + albEchapper(d.note) + '</p>' : '') +
+    (enAttente
+      ? '<p class="ligne-info">' + (d.en_ligne ? '🌐 Sa fiche est en ligne sur « Nos pros ALB ». ' : '') + (d.nb_annonces ? '🏡 ' + d.nb_annonces + ' annonce' + (d.nb_annonces > 1 ? 's' : '') + '. ' : '') + '</p>' +
+        '<label class="petit-champ" style="margin-top:8px;">Ta note (facultatif)<textarea id="depart-note-' + d.id + '" maxlength="500" style="min-height:60px;" placeholder="Ex. : appelé, confirme son départ"></textarea></label>' +
+        '<div class="actions">' + (num ? '<a class="bouton" href="tel:' + albEchapper(num) + '">📞 Appeler</a>' : '') +
+          '<button type="button" class="bouton rouge" onclick="fermerCompte(\'' + d.profile_id + '\', \'' + d.id + '\', this)">🚪 Fermer son compte</button>' +
+          '<button type="button" class="bouton discret" onclick="annulerDepart(\'' + d.id + '\', this)">↩️ Il reste sur ALB</button></div>'
+      : d.statut === 'ferme'
+        ? '<p class="aide">Plus de connexion possible, annonces en pause, fiche hors ligne. Ses données sont toujours enregistrées : leur effacement se fait à part (délai légal : un mois après sa demande). Pour le remettre : « ▶️ Remettre ce membre » dans Suivi des membres.</p>'
+        : '') +
+  '</div>';
+}
+
+function afficherDeparts() {
+  preparerOngletAgenda();
+  const panneau = document.getElementById('panneau-departs');
+  if (!panneau) return;
+  const attente = departsEnAttente();
+  const autres = departs.filter(function (d) { return d.statut !== 'en_attente'; });
+  const pastille = document.getElementById('pastille-departs');
+  if (pastille) { pastille.textContent = attente.length; pastille.classList.toggle('cache', !attente.length); }
+  panneau.innerHTML =
+    '<p class="aide">Les membres qui ont demandé à quitter ALB Immobilier depuis leur espace. Appelle-les si tu veux, puis ferme leur compte, ou note qu\'ils restent. ' +
+      'Pour retirer quelqu\'un toi-même : « 🚪 Fermer son compte » sur sa carte, dans Suivi des membres. Aucun message n\'est envoyé automatiquement.</p>' +
+    (attente.length ? '<div class="liste-fiches">' + attente.map(carteDepart).join('') + '</div>' : '<div class="vide">Aucune demande de départ. 🌿</div>') +
+    (autres.length ? '<details class="historique" style="margin-top:12px;"><summary>📜 Déjà traités (' + autres.length + ')</summary><div class="liste-fiches" style="margin-top:8px;">' + autres.map(carteDepart).join('') + '</div></details>' : '');
+}
+
+async function fermerCompte(profileId, departId, bouton, motif) {
+  const champ = departId ? document.getElementById('depart-note-' + departId) : document.getElementById('fermer-motif-' + profileId);
+  const note = motif !== undefined ? motif : (champ ? champ.value : '');
+  if (!confirm('Fermer ce compte ? La personne ne pourra plus se connecter, ses annonces passent en pause et sa fiche sort de « Nos pros ALB ». Tu pourras le remettre plus tard si besoin.')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_fermer_compte', { p_profile: profileId, p_depart: departId || null, p_motif: note });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  if (typeof panneauOuvert !== 'undefined') panneauOuvert[profileId] = null;
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', 'Compte fermé ✓ La personne ne peut plus se connecter. Aucun message ne lui a été envoyé.');
+}
+
+async function annulerDepart(departId, bouton) {
+  const champ = document.getElementById('depart-note-' + departId);
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_depart_annuler', { p_id: departId, p_note: champ ? champ.value : null });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerDeparts();
+  afficherDeparts();
+  afficherAFaire();
+  afficherMessage('message-general', 'succes', 'C\'est noté : il reste sur ALB ✓');
+}
+
+// Sur chaque carte de « Suivi des membres » : « 🚪 Fermer son compte », juste après « ⛔ Suspendre »
+(function () {
+  const carteMembreAvantDepart = carteMembre;
+  carteMembre = function (m) {
+    const html = carteMembreAvantDepart(m);
+    if (m.est_admin || (compteFerme(m.id) && html.indexOf('▶️ Remettre ce membre</button>') !== -1)) return html;
+    const bouton = '<button type="button" class="bouton rouge" onclick="ouvrirPanneauMembre(\'' + m.id + '\', \'fermer\')">🚪 Fermer son compte</button>';
+    const apres = html.indexOf('⛔ Suspendre</button>') !== -1 ? '⛔ Suspendre</button>' : '▶️ Remettre ce membre</button>';
+    return html.replace(apres, apres + bouton);
+  };
+  const panneauMembreAvantDepart = panneauMembre;
+  panneauMembre = function (m, quoi) {
+    if (quoi !== 'fermer') return panneauMembreAvantDepart(m, quoi);
+    const id = m.id;
+    return '<div class="decision" style="border-color:#F0CACA;background:#FFFBFB;"><div class="decision-titre">🚪 Fermer le compte de ' + albEchapper(((m.prenom || '') + ' ' + (m.nom || '')).trim() || 'ce membre') + '</div>' +
+      '<p class="ligne-info">Pour retirer quelqu\'un de la plateforme. Ce qui va se passer :</p><ul style="margin:4px 0 8px 18px;color:#4A4A47;font-size:0.9rem;">' +
+        '<li>plus aucune connexion possible ;</li>' +
+        '<li>ses annonces en ligne passent « en pause » et sa fiche sort de « Nos pros ALB » ;</li>' +
+        '<li>la fermeture est notée dans 🚪 Départs et dans son historique ;</li>' +
+        '<li>rien n\'est effacé pour l\'instant, et aucun message ne lui est envoyé.</li>' +
+      '</ul>' +
+      '<label class="petit-champ">Pourquoi (pour toi, facultatif)<textarea id="fermer-motif-' + id + '" maxlength="500" style="min-height:60px;"></textarea></label>' +
+      '<div class="actions"><button type="button" class="bouton rouge" onclick="fermerCompte(\'' + id + '\', null, this)">🚪 Oui, fermer son compte</button>' +
+      '<button type="button" class="bouton discret" onclick="ouvrirPanneauMembre(\'' + id + '\', \'fermer\')">Annuler</button></div></div>';
+  };
+})();
+
+// « À faire aujourd'hui » : les demandes de départ, juste après les rendez-vous du jour
+LIGNES_A_FAIRE.splice(1, 0, {
+  calcul: function () { return departsEnAttente().length; },
+  un: 'membre qui demande à quitter ALB Immobilier', plusieurs: 'membres qui demandent à quitter ALB Immobilier', emoji: '🚪', onglet: 'departs'
+});
+
+(function () {
+  const toutRechargerAvantDeparts = toutRecharger;
+  toutRecharger = async function () {
+    await Promise.all([toutRechargerAvantDeparts(), chargerDeparts()]);
+    afficherDeparts();
+    if (typeof afficherMembres === 'function') afficherMembres();
     afficherAFaire();
   };
 })();
