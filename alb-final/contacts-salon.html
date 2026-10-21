@@ -30,6 +30,7 @@
     .aide { font-size: 0.8rem; color: #7a7a75; margin: 4px 0 12px; }
     .message { padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 0.9rem; background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
     .message.erreur { background: #FBECEC; color: #8A2D2D; border-color: #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border-color: #CFE4CF; }
 
     /* Chiffres */
     .compteurs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; }
@@ -59,8 +60,21 @@
     .bouton-petit { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A3A6A; background: #5A3A6A; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
     .bouton-petit.clair { background: #fff; color: #5A3A6A; }
     .bouton-petit.or { background: #B28E3D; border-color: #B28E3D; }
+    .bouton-petit.vert { background: #2E6B34; border-color: #2E6B34; }
+    .bouton-petit:disabled { opacity: 0.6; cursor: wait; }
     .contact textarea { width: 100%; margin-top: 10px; padding: 9px; font-family: inherit; font-size: 0.88rem; border: 1px solid #E8E6E1; border-radius: 8px; min-height: 56px; resize: vertical; }
     .vide { text-align: center; padding: 24px 10px; color: #7a7a75; font-size: 0.92rem; background: #fff; border-radius: 10px; border: 1px solid #E8E6E1; }
+
+    /* Création de l'espace ALB */
+    .bloc-espace { margin-top: 12px; padding: 12px; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 10px; }
+    .titre-espace { font-weight: 700; color: #4B1A3E; margin-bottom: 2px; }
+    .grille { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 8px 0; }
+    .petit-champ { display: flex; flex-direction: column; gap: 3px; font-size: 0.78rem; font-weight: 600; color: #7a7a75; }
+    .petit-champ input, .petit-champ select { font-family: inherit; font-size: 0.9rem; padding: 9px; border: 1px solid #E8E6E1; border-radius: 8px; background: #fff; color: #4A4A47; width: 100%; }
+    .bloc-espace textarea.texte-pret { min-height: 90px; background: #fff; }
+    .bloc-espace textarea.texte-pret.long { min-height: 170px; }
+    .sous-titre { font-size: 0.84rem; font-weight: 700; margin-top: 10px; }
+    @media (min-width: 600px) { .grille { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -82,7 +96,7 @@
 
   <div id="page" class="cache">
     <h1>📇 Contacts du salon RENT 2026</h1>
-    <p class="aide">Les personnes qui ont rempli le formulaire après avoir scanné ton QR code. Appuie sur « J'ai rappelé » quand c'est fait : la personne passe dans « Déjà rappelés ».</p>
+    <p class="aide">Les personnes qui ont rempli le formulaire après avoir scanné ton QR code. Appuie sur « J'ai rappelé » quand c'est fait : la personne passe dans « Déjà rappelés ». Si elle veut rejoindre ALB Immobilier, appuie sur « Créer son espace » pendant l'appel.</p>
 
     <div class="compteurs" id="compteurs"></div>
 
@@ -96,10 +110,15 @@
   // ============================================================
   // Contacts du salon : réservé à Jocelyne (même accès que Gestion du site)
   // La liste vient d'une fonction Supabase qui vérifie que tu es bien admin.
+  // La création d'espace utilise la même fonction que « Ajouter un membre ».
   // ============================================================
   const FILTRES_ETAT = [['arappeler', 'À rappeler'], ['rappeles', 'Déjà rappelés'], ['tous', 'Tous']];
   const choix = { etat: 'arappeler', seulementTest: false };
   let contacts = [];
+
+  const espaces = {};           // espaces créés pendant cette visite : id du contact -> infos du lien
+  const formulaireOuvert = {};  // id du contact -> true si le formulaire de création est ouvert
+  const notesEnCours = {};      // notes tapées mais pas encore enregistrées
 
   function e(texte) { return albEchapper(texte); }
   function el(id) { return document.getElementById(id); }
@@ -120,6 +139,24 @@
     const sansEmail = String(texte).replace(/[^\s@·,;]+@[^\s@·,;]+\.[^\s@·,;]+/g, ' ');
     const trouve = sansEmail.match(/\+?\d[\d .\-]{7,}\d/);
     return trouve ? trouve[0].replace(/[^\d+]/g, '') : null;
+  }
+
+  // Devine le métier à partir de ce que la personne a écrit (tu peux le corriger dans le formulaire)
+  function devinerMetier(texte) {
+    const t = String(texte || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (/courtier|credit|pret/.test(t)) { return 'courtier'; }
+    if (/mandataire/.test(t)) { return 'mandataire'; }
+    if (/artisan|plomb|electric|macon|peintre|menuisier|couvreur|carreleur|chauffag|paysag|renovation/.test(t)) { return 'artisan'; }
+    if (/agent|agence|orpi|immobilier|century|laforet|safti|iad/.test(t)) { return 'agent'; }
+    return 'autre';
+  }
+
+  // Retient les notes déjà tapées, pour ne pas les perdre quand la liste se redessine
+  function memoriserNotes() {
+    contacts.forEach(function (c) {
+      const zone = document.getElementById('note-' + c.id);
+      if (zone) { notesEnCours[c.id] = zone.value; }
+    });
   }
 
   // Applique les filtres choisis et trie : ceux qui veulent tester d'abord, puis les plus anciens
@@ -157,13 +194,82 @@
       '<button type="button" class="filtre" data-actualiser="1">🔄 Actualiser</button>';
   }
 
+  // ----- Création de l'espace ALB depuis la fiche -----
+  function formulaireCreerEspace(c, email, telephone) {
+    const id = c.id;
+    const mots = String(c.nom).trim().split(/\s+/);
+    const prenom = mots[0] || '';
+    const nomFamille = mots.slice(1).join(' ');
+    const metier = devinerMetier(c.metier);
+    const option = function (valeur, texte) {
+      return '<option value="' + valeur + '"' + (metier === valeur ? ' selected' : '') + '>' + texte + '</option>';
+    };
+    return '<div class="bloc-espace" id="form-espace-' + e(id) + '">' +
+      '<p class="titre-espace">👤 Créer l\'espace de ' + e(prenom) + '</p>' +
+      '<p class="aide">Remplis pendant l\'appel. Aucun e-mail ne part tout seul : tu reçois ensuite un lien d\'activation à lui envoyer toi-même. C\'est en l\'ouvrant qu\'il choisit son code PIN et accepte les conditions générales.</p>' +
+      '<div class="grille">' +
+        '<label class="petit-champ">Prénom<input type="text" id="es-prenom-' + e(id) + '" maxlength="80" value="' + e(prenom) + '"></label>' +
+        '<label class="petit-champ">Nom<input type="text" id="es-nom-' + e(id) + '" maxlength="80" value="' + e(nomFamille) + '"></label>' +
+        '<label class="petit-champ">E-mail<input type="email" id="es-email-' + e(id) + '" maxlength="200" autocomplete="off" value="' + e(email || '') + '"></label>' +
+        '<label class="petit-champ">Téléphone<input type="tel" id="es-tel-' + e(id) + '" maxlength="20" value="' + e(telephone || '') + '"></label>' +
+        '<label class="petit-champ">Métier<select id="es-metier-' + e(id) + '" data-metier="' + e(id) + '">' +
+          option('courtier', '🏦 Courtier') + option('artisan', '🔨 Artisan') + option('agent', '🏠 Agent immobilier') +
+          option('mandataire', '📋 Mandataire') + option('autre', '🤝 Autre métier') + '</select></label>' +
+        '<label class="petit-champ' + (metier === 'autre' ? '' : ' cache') + '" id="es-autre-bloc-' + e(id) + '">Lequel ?<input type="text" id="es-metier-autre-' + e(id) + '" maxlength="100" value="' + (metier === 'autre' ? e(c.metier) : '') + '"></label>' +
+        '<label class="petit-champ">Entreprise<input type="text" id="es-entreprise-' + e(id) + '" maxlength="150" value="' + e(c.metier) + '"></label>' +
+        '<label class="petit-champ">SIRET (facultatif)<input type="text" id="es-siret-' + e(id) + '" maxlength="17" inputmode="numeric"></label>' +
+      '</div>' +
+      '<p class="aide">Il arrivera dans « Pros à valider », comme une inscription normale. Ce que tu as noté dans la case « note » ci-dessus est gardé avec sa fiche.</p>' +
+      '<div class="contact-actions"><button type="button" class="bouton-petit vert" data-action="creer-espace" data-id="' + e(id) + '">✅ Créer son espace</button>' +
+      '<button type="button" class="bouton-petit clair" data-action="ouvrir-espace" data-id="' + e(id) + '">Annuler</button></div>' +
+      '<div class="message cache" id="es-message-' + e(id) + '"></div>' +
+    '</div>';
+  }
+
+  // SMS et e-mail prêts à envoyer, avec le lien d'activation (valable 7 jours)
+  function blocLienActivation(id) {
+    const infos = espaces[id];
+    const lien = location.origin + '/nouveau-code.html#jeton=' + infos.jeton;
+    const tel = String(infos.telephone || '').replace(/[^0-9+]/g, '');
+    const sms = 'Bonjour ' + (infos.prenom || '') + ', c\'est Jocelyne d\'ALB Immobilier. Comme convenu, votre espace est prêt ! Pour l\'activer, choisissez votre code PIN ici (lien valable 7 jours) : ' + lien + ' À la bien !';
+    const mail = 'Bonjour ' + (infos.prenom || '') + ',\n\nMerci pour notre échange ! Comme convenu, votre espace ALB Immobilier est prêt.\n\n' +
+      'Pour l\'activer, il vous suffit de choisir votre code PIN (4 chiffres) en cliquant sur ce lien :\n' + lien + '\n\n' +
+      'Ce lien est valable 7 jours et ne sert qu\'une seule fois. Ensuite, vous vous connecterez avec votre adresse e-mail (' + (infos.email || '') + ') et votre code PIN.\n\n' +
+      'À la bien, toujours ✨\nJocelyne Rimlinger\nFondatrice · ALB Sud Immobilier\n07 45 60 28 05';
+    const sujet = 'Votre espace ALB Immobilier est prêt';
+    return '<div class="bloc-espace">' +
+      '<p class="titre-espace">✅ Espace créé pour ' + e(infos.prenom) + ' · ' + e(infos.email) + ' · ⏳ pas encore activé</p>' +
+      '<p class="aide">Envoie-lui son lien toi-même, par SMS ou par e-mail. Tant qu\'il ne l\'a pas ouvert, son espace reste « pas encore activé ». Le lien est valable 7 jours.</p>' +
+      '<p class="sous-titre">📱 SMS</p>' +
+      '<textarea class="texte-pret" id="sms-' + e(id) + '" readonly>' + e(sms) + '</textarea>' +
+      '<div class="contact-actions">' +
+        (tel ? '<a class="bouton-petit" href="sms:' + e(tel) + '?&body=' + encodeURIComponent(sms) + '">📱 Ouvrir le SMS</a>' : '') +
+        '<button type="button" class="bouton-petit clair" data-action="copier" data-cible="sms-' + e(id) + '">📋 Copier</button></div>' +
+      '<p class="sous-titre">📧 E-mail à ' + e(infos.email) + '</p>' +
+      '<textarea class="texte-pret long" id="mail-' + e(id) + '" readonly>' + e(mail) + '</textarea>' +
+      '<div class="contact-actions">' +
+        '<a class="bouton-petit" href="mailto:' + e(infos.email) + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(mail) + '">📧 Ouvrir l\'e-mail</a>' +
+        '<button type="button" class="bouton-petit clair" data-action="copier" data-cible="mail-' + e(id) + '">📋 Copier</button></div>' +
+      '<p class="aide">Si tu fermes cette page, retrouve-le dans Gestion du site, onglet « Suivi des membres », rubrique « Espaces créés, pas encore activés » : bouton « Préparer son lien d\'activation ».</p>' +
+    '</div>';
+  }
+
+  function blocEspace(c, email, telephone) {
+    if (espaces[c.id]) { return blocLienActivation(c.id); }
+    if (formulaireOuvert[c.id]) { return formulaireCreerEspace(c, email, telephone); }
+    return '';
+  }
+
   function dessinerFiche(c) {
     const email = extraireEmail(c.coordonnees);
     const telephone = extraireTelephone(c.coordonnees);
     const rappele = !!c.traite_le;
+    const noteTexte = (notesEnCours[c.id] !== undefined) ? notesEnCours[c.id] : (c.note || '');
     let actionsContact = '';
     if (telephone) { actionsContact += '<a class="bouton-petit clair" href="tel:' + e(telephone) + '">📞 Appeler</a>'; }
     if (email) { actionsContact += '<a class="bouton-petit clair" href="mailto:' + e(email) + '">✉️ Écrire</a>'; }
+    const boutonEspace = espaces[c.id] ? '' :
+      '<button type="button" class="bouton-petit clair" data-action="ouvrir-espace" data-id="' + e(c.id) + '">' + (formulaireOuvert[c.id] ? '✖ Fermer' : '👤 Créer son espace') + '</button>';
     const boutonEtat = rappele
       ? '<button type="button" class="bouton-petit clair" data-action="remettre" data-id="' + e(c.id) + '">↩️ Remettre à rappeler</button>'
       : '<button type="button" class="bouton-petit or" data-action="rappele" data-id="' + e(c.id) + '">✅ J\'ai rappelé</button>';
@@ -172,13 +278,15 @@
       '<div>' + (c.test_gratuit ? '<span class="badge badge-test">⭐ Veut tester</span> ' : '') + (rappele ? '<span class="badge badge-fait">Rappelé</span>' : '') + '</div></div>' +
       '<div class="contact-coordonnees">' + e(c.coordonnees) + '</div>' +
       '<div class="contact-date">Reçu le ' + e(formatDateFr(c.cree_le)) + (rappele ? ' · rappelé le ' + e(formatDateFr(c.traite_le)) : '') + '</div>' +
-      '<textarea id="note-' + e(c.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, quand rappeler…)">' + e(c.note || '') + '</textarea>' +
-      '<div class="contact-actions">' + actionsContact + boutonEtat +
+      '<textarea id="note-' + e(c.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, quand rappeler…)">' + e(noteTexte) + '</textarea>' +
+      '<div class="contact-actions">' + actionsContact + boutonEspace + boutonEtat +
       '<button type="button" class="bouton-petit clair" data-action="note" data-id="' + e(c.id) + '">💾 Enregistrer la note</button></div>' +
+      blocEspace(c, email, telephone) +
       '</div>';
   }
 
   function dessinerListe() {
+    memoriserNotes();
     const liste = contactsAffiches();
     if (!liste.length) {
       el('liste').innerHTML = '<div class="vide">' + (choix.etat === 'arappeler' ? 'Personne à rappeler pour le moment. 🌿' : 'Aucun contact ici pour le moment.') + '</div>';
@@ -221,6 +329,75 @@
     if (await chargerContacts()) { dessinerTout(); }
   }
 
+  // Crée l'espace ALB de la personne avec la même fonction que « Ajouter un membre » de Gestion du site
+  async function creerEspaceContact(id, bouton) {
+    const valeur = function (nom) {
+      const champ = document.getElementById('es-' + nom + '-' + id);
+      return champ ? champ.value.trim() : '';
+    };
+    const zoneNote = document.getElementById('note-' + id);
+    const donnees = {
+      demande_rappel: '',
+      prenom: valeur('prenom'),
+      nom: valeur('nom'),
+      email: valeur('email'),
+      telephone: valeur('tel'),
+      note: zoneNote ? zoneNote.value.trim() : '',
+      metier_pro: valeur('metier'),
+      metier_autre: valeur('metier-autre'),
+      nom_entreprise: valeur('entreprise'),
+      siret: valeur('siret'),
+      est_acquereur: false,
+      est_vendeur: false,
+      est_client_pro: false
+    };
+    const zoneMessage = document.getElementById('es-message-' + id);
+    if (!donnees.prenom || !donnees.nom) {
+      zoneMessage.className = 'message erreur';
+      zoneMessage.textContent = 'Le prénom et le nom sont obligatoires.';
+      return;
+    }
+    if (!donnees.email) {
+      zoneMessage.className = 'message erreur';
+      zoneMessage.textContent = 'Il faut son adresse e-mail pour créer son espace. Demande-la-lui pendant l\'appel.';
+      return;
+    }
+    bouton.disabled = true;
+    const resultat = await albCreerEspace(donnees);
+    bouton.disabled = false;
+    if (!resultat.ok) {
+      console.log('[ALB DEBUG] contacts salon : création d\'espace impossible', resultat.code);
+      zoneMessage.className = 'message erreur';
+      zoneMessage.textContent = resultat.code === 'EMAIL_DEJA_UTILISE'
+        ? 'Cette adresse e-mail a déjà un espace ALB. Cherche-la dans « Suivi des membres » de Gestion du site.'
+        : albMessageErreur(resultat.code);
+      return;
+    }
+    espaces[id] = { jeton: resultat.jeton, email: resultat.email || donnees.email, prenom: donnees.prenom, telephone: donnees.telephone };
+    formulaireOuvert[id] = false;
+    el('etat').className = 'message succes';
+    el('etat').textContent = 'Espace créé ✓ Envoie-lui maintenant son lien d\'activation.';
+    el('etat').classList.remove('cache');
+    dessinerTout();
+  }
+
+  // Copie un texte prêt à envoyer
+  async function copierTexte(idChamp, bouton) {
+    const zone = document.getElementById(idChamp);
+    try { await navigator.clipboard.writeText(zone.value); } catch (erreur) { zone.select(); document.execCommand('copy'); }
+    const avant = bouton.textContent;
+    bouton.textContent = '✓ Copié';
+    setTimeout(function () { bouton.textContent = avant; }, 1500);
+  }
+
+  // Montre ou cache la case « Lequel ? » quand on choisit « Autre métier »
+  document.addEventListener('change', function (evenement) {
+    const liste = evenement.target.closest('select[data-metier]');
+    if (!liste) { return; }
+    const id = liste.dataset.metier;
+    document.getElementById('es-autre-bloc-' + id).classList.toggle('cache', liste.value !== 'autre');
+  });
+
   document.addEventListener('click', async function (evenement) {
     const bouton = evenement.target.closest('button');
     if (!bouton) { return; }
@@ -229,8 +406,14 @@
     if (bouton.dataset.test) { choix.seulementTest = !choix.seulementTest; dessinerTout(); return; }
     if (bouton.dataset.actualiser) { if (await chargerContacts()) { dessinerTout(); } return; }
 
+    if (bouton.dataset.action === 'copier') { await copierTexte(bouton.dataset.cible, bouton); return; }
+
     const id = bouton.dataset.id;
     if (!id) { return; }
+
+    if (bouton.dataset.action === 'ouvrir-espace') { formulaireOuvert[id] = !formulaireOuvert[id]; dessinerListe(); return; }
+    if (bouton.dataset.action === 'creer-espace') { await creerEspaceContact(id, bouton); return; }
+
     const zoneNote = document.getElementById('note-' + id);
     const note = zoneNote ? zoneNote.value : null;
     const contact = contacts.find(function (c) { return c.id === id; });
