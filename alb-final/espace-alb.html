@@ -811,6 +811,26 @@
         </div>
         <button type="submit" class="bouton bouton-discret" id="bouton-email">Demander le changement</button>
       </form>
+
+      <!-- Quitter ALB Immobilier : la demande arrive chez Jocelyne, c'est elle qui ferme le compte -->
+      <div class="sous-bloc cache" id="bloc-depart">
+        <h3>🚪 Quitter ALB Immobilier</h3>
+        <div class="message" id="message-depart"></div>
+        <form class="formulaire" id="formulaire-depart" onsubmit="gererDemandeDepart(event)">
+          <p class="aide-bloc">Vous ne souhaitez plus être sur la plateforme ? Envoyez votre demande : Jocelyne s'en occupe personnellement. Une fois votre compte fermé, vous ne pourrez plus vous connecter, vos annonces ne seront plus visibles et votre fiche pro sera retirée de « Nos pros ALB ».</p>
+          <div class="champ">
+            <label for="depart-raison">Pourquoi nous quittez-vous ? <span class="leger">(facultatif)</span></label>
+            <textarea id="depart-raison" maxlength="1000" rows="2" placeholder="Ça nous aide à nous améliorer"></textarea>
+          </div>
+          <label class="case" style="margin-bottom:14px;"><input type="checkbox" id="depart-confirme" required> Je confirme vouloir quitter ALB Immobilier</label>
+          <button type="submit" class="bouton bouton-discret" id="bouton-depart">Envoyer ma demande</button>
+        </form>
+        <div id="depart-en-cours" class="cache">
+          <p id="depart-recu"></p>
+          <p class="aide-bloc">Jocelyne va s'en occuper. Vous avez changé d'avis ? Pas de souci :</p>
+          <button type="button" class="bouton bouton-discret" id="bouton-annuler-depart" onclick="annulerMaDemandeDepart()">Annuler ma demande, je reste</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1032,6 +1052,54 @@
     if (!resultat.ok) { afficherMessage('message-email', 'erreur', resultat.message); return; }
     document.getElementById('formulaire-email').reset();
     afficherMessage('message-email', 'succes', 'Votre demande est bien arrivée. Jocelyne vous rappelle très vite, puis vous envoie le lien pour valider votre nouvelle adresse. 💜');
+  }
+
+  // ----- 🚪 Quitter ALB Immobilier -----
+  const ERREURS_DEPART = {
+    DEPART_DEJA_DEMANDE: 'Votre demande est déjà arrivée chez Jocelyne. 💜',
+    DEPART_INTROUVABLE: 'Votre demande a déjà été traitée par Jocelyne.',
+    ACCES_REFUSE: 'Cette action n\'est pas possible depuis ce compte.'
+  };
+  function messageDepart(error) {
+    const code = Object.keys(ERREURS_DEPART).find(function (c) { return String(error.message || '').indexOf(c) !== -1; });
+    return code ? ERREURS_DEPART[code] : 'Un souci est survenu. Pouvez-vous réessayer dans un instant ?';
+  }
+
+  async function afficherDepart(profil) {
+    const bloc = document.getElementById('bloc-depart');
+    if (profil.est_admin) { bloc.classList.add('cache'); return; }
+    const { data, error } = await window.albSupabase.rpc('alb_mon_depart');
+    if (error) { bloc.classList.add('cache'); return; }
+    bloc.classList.remove('cache');
+    document.getElementById('formulaire-depart').classList.toggle('cache', !!data);
+    document.getElementById('depart-en-cours').classList.toggle('cache', !data);
+    if (data) {
+      document.getElementById('depart-recu').textContent = '✓ Votre demande pour quitter ALB Immobilier est bien arrivée le ' +
+        new Date(data.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
+    }
+  }
+
+  async function gererDemandeDepart(event) {
+    event.preventDefault();
+    if (!document.getElementById('depart-confirme').checked) return;
+    const bouton = document.getElementById('bouton-depart');
+    bouton.disabled = true;
+    const { error } = await window.albSupabase.rpc('alb_demander_depart', { p_raison: document.getElementById('depart-raison').value });
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-depart', 'erreur', messageDepart(error)); return; }
+    document.getElementById('formulaire-depart').reset();
+    afficherMessage('message-depart', 'succes', 'Votre demande est bien arrivée. Jocelyne s\'en occupe et peut vous appeler pour en parler. Merci pour ce bout de chemin ensemble. 💜');
+    await afficherDepart({});
+  }
+
+  async function annulerMaDemandeDepart() {
+    const bouton = document.getElementById('bouton-annuler-depart');
+    bouton.disabled = true;
+    const { error } = await window.albSupabase.rpc('alb_annuler_mon_depart');
+    bouton.disabled = false;
+    if (error) { afficherMessage('message-depart', 'erreur', messageDepart(error)); return; }
+    afficherMessage('message-depart', 'succes', 'C\'est noté, vous restez avec nous ! 💜');
+    await afficherDepart({});
   }
 
   function afficherBlocPro() {
@@ -1297,6 +1365,7 @@
     document.getElementById('zone-accueil').classList.add('cache');
     document.getElementById('zone-connecte').classList.remove('cache');
     window.scrollTo({ top: 0 });
+    afficherDepart(profil);
   }
 
   // Au chargement : si la personne est déjà connectée, on ouvre directement son espace
