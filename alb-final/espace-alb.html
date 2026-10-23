@@ -685,6 +685,9 @@
               <input type="text" id="insc-siret" inputmode="numeric" maxlength="17">
               <div class="aide">Jocelyne vous appellera pour faire connaissance avant de vous faire apparaître sur « Nos pros ALB ».</div>
             </div>
+            <label class="case"><input type="checkbox" id="insc-transmission">
+              <span>J'accepte que mon nom, mon téléphone, mon e-mail et mon entreprise soient transmis aux particuliers que je dois recontacter. ALB Sud Immobilier décide de chaque envoi, jamais de façon automatique.</span>
+            </label>
           </div>
 
           <div class="champ">
@@ -1323,6 +1326,10 @@
       afficherMessage('message-inscription', 'erreur', 'Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.');
       return;
     }
+    if (estPro && !document.getElementById('insc-transmission').checked) {
+      afficherMessage('message-inscription', 'erreur', 'Pour vous inscrire comme professionnel, merci d\'accepter la transmission de vos coordonnées aux particuliers que vous devez recontacter.');
+      return;
+    }
     if (!document.getElementById('insc-cgu').checked) {
       afficherMessage('message-inscription', 'erreur', 'Pour rejoindre ALB, merci d\'accepter les conditions générales.');
       return;
@@ -1355,7 +1362,8 @@
       nom_entreprise: estPro ? document.getElementById('insc-entreprise').value : '',
       siret: estPro ? document.getElementById('insc-siret').value : '',
       cgu_acceptees: document.getElementById('insc-cgu').checked,
-      accepte_recontact: document.getElementById('insc-recontact').checked
+      accepte_recontact: document.getElementById('insc-recontact').checked,
+      accepte_transmission: estPro && document.getElementById('insc-transmission').checked
     });
 
     bouton.disabled = false;
