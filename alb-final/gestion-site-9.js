@@ -56,8 +56,74 @@ const MOTS_THEMES = [
 ];
 function themeDe(r) {
   if (r.theme && THEMES_AGENDA[r.theme]) return r.theme;
+  // Lié à quelqu'un : le thème vient de la personne
+  if (r.lien_type === 'carnet') return 'Réseau et prospection';
+  if (r.lien_type === 'membre') {
+    const m = personneLiee(r);
+    if (m) return m.role && m.role !== 'particulier' ? 'Pros' : 'Particuliers';
+  }
   const m = MOTS_THEMES.find(function (x) { return x[1].test((r.titre || '') + ' ' + (r.note || '')); });
   return m ? m[0] : 'Organisation et perso';
+}
+
+// ---------- Lier un rendez-vous ou une tâche à une personne ----------
+// La personne liée (un membre du site ou un contact du carnet), ou null
+function personneLiee(r) {
+  if (!r || !r.lien_id) return null;
+  if (r.lien_type === 'membre') return (typeof membres !== 'undefined' ? membres : []).find(function (m) { return m.id === r.lien_id; }) || null;
+  if (r.lien_type === 'carnet') return (typeof carnet !== 'undefined' ? carnet : []).find(function (c) { return c.id === r.lien_id; }) || null;
+  return null;
+}
+// Le nom à afficher, avec son métier ou « particulier »
+function nomLien(r) {
+  const p = personneLiee(r);
+  if (!p) return r.lien_nom || '';
+  if (r.lien_type === 'carnet') return nomContact(p) + (p.metier ? ' (' + (METIERS_CARNET[p.metier] || p.metier).replace(/^\S+\s/, '') + ')' : '') + ' · carnet';
+  const metier = typeof metierDe === 'function' ? metierDe(p) : null;
+  return nomAgenda(p) + (metier && typeof METIERS !== 'undefined' ? ' (' + METIERS[metier].replace(/^\S+\s/, '') + ')' : p.role === 'particulier' ? ' (particulier)' : '');
+}
+// La liste « Avec qui ? » du formulaire, rangée par catégorie
+function choixPersonnes(r) {
+  const actuel = r.lien_type && r.lien_id ? r.lien_type + ':' + r.lien_id : '';
+  const opt = function (val, texte) { return '<option value="' + albEchapper(val) + '"' + (val === actuel ? ' selected' : '') + '>' + albEchapper(texte) + '</option>'; };
+  const tri = function (a, b) { return a[1].localeCompare(b[1], 'fr'); };
+  const liste = typeof membres !== 'undefined' ? membres : [];
+  const pros = liste.filter(function (m) { return m.role && m.role !== 'particulier'; }).map(function (m) { return ['membre:' + m.id, nomLien({ lien_type: 'membre', lien_id: m.id })]; }).sort(tri);
+  const parts = liste.filter(function (m) { return !m.role || m.role === 'particulier'; }).map(function (m) { return ['membre:' + m.id, nomAgenda(m)]; }).sort(tri);
+  const contacts = (typeof carnet !== 'undefined' ? carnet : []).map(function (c) { return ['carnet:' + c.id, nomContact(c) + (c.entreprise && c.entreprise !== nomContact(c) ? ' · ' + c.entreprise : '')]; }).sort(tri);
+  const groupe = function (titre, items) { return items.length ? '<optgroup label="' + titre + '">' + items.map(function (x) { return opt(x[0], x[1]); }).join('') + '</optgroup>' : ''; };
+  // Si la personne n'existe plus dans les listes, on garde quand même son nom
+  const disparu = actuel && !pros.concat(parts, contacts).some(function (x) { return x[0] === actuel; }) ? opt(actuel, (r.lien_nom || 'Personne liée') + ' (plus dans les listes)') : '';
+  return '<option value="">Personne en particulier</option>' + disparu + groupe('🤝 Pros', pros) + groupe('🏡 Particuliers', parts) + groupe('📇 Carnet', contacts);
+}
+// Ouvre la fiche de la personne liée
+function voirPersonneLiee(type, id) {
+  const r = { lien_type: type, lien_id: id };
+  const p = personneLiee(r);
+  if (!p) { afficherMessage('message-general', 'erreur', 'Cette personne n\'est plus dans la liste.'); return; }
+  if (type === 'membre') {
+    afficherOnglet('membres');
+    if (typeof toutAfficherMembres === 'function') toutAfficherMembres();
+    const champ = document.getElementById('recherche-membres');
+    if (champ) { champ.value = p.email || nomAgenda(p); afficherMembres(); }
+  } else {
+    afficherOnglet('carnet');
+    const champ = document.getElementById('recherche-carnet');
+    if (champ) { champ.value = p.telephone || nomContact(p); afficherListeCarnet(); }
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+// Ce qui est dans l'agenda pour un contact du carnet (pour sa fiche)
+function agendaDeContact(id) {
+  const liste = (agenda.rdv || []).filter(function (r) { return r.lien_type === 'carnet' && r.lien_id === id; })
+    .sort(function (a, b) { return String(b.le).localeCompare(String(a.le)); });
+  if (!liste.length) return '';
+  return '<details class="historique" open><summary>📅 Dans ton agenda (' + liste.length + ')</summary>' +
+    liste.map(function (r) {
+      return '<div class="ligne-info" style="overflow-wrap:anywhere;">' + (r.fait_le ? '✓ ' : r.le < jourIso(0) ? '⚠️ ' : '⏳ ') +
+        albEchapper(dateLisible(r.le + 'T12:00:00')) + ' · ' + albEchapper(r.titre) +
+        (r.fait_le ? (r.note_fait ? ' — 📝 ' + albEchapper(r.note_fait) : ' — fait') : r.le < jourIso(0) ? ' — en retard' : '') + '</div>';
+    }).join('') + '</details>';
 }
 ERREURS.TITRE_MANQUANT = 'Écris un titre (ex. : « Café avec Pauline »).';
 ERREURS.RDV_DATE_MANQUANTE = 'Choisis la date du rendez-vous.';
@@ -168,6 +234,7 @@ function ligneAgenda(e) {
       (r && r.genre === 'tache' ? ' <span class="etiquette or">tâche</span>' : '') +
       (r && REPETITIONS[r.repete] ? ' <span class="etiquette">🔁 ' + REPETITIONS[r.repete] + '</span>' : '') +
       (r ? '' : ' <span class="etiquette">site</span>') +
+      (r && r.lien_id ? '<br><span style="overflow-wrap:anywhere;">👤 <strong>' + albEchapper(nomLien(r)) + '</strong> <button type="button" class="bouton discret" style="padding:2px 8px;" onclick="voirPersonneLiee(\'' + r.lien_type + '\', \'' + r.lien_id + '\')">Voir la fiche →</button></span>' : '') +
       (e.detail ? '<br><span style="color:#6a6a65;overflow-wrap:anywhere;">' + albEchapper(e.detail) + '</span>' : '') +
       (fait ? '<br><span style="color:#2E7D32;overflow-wrap:anywhere;">✓ Fait le ' + albEchapper(dateLisible(r.fait_le)) + (r.note_fait ? ' · 📝 ' + albEchapper(r.note_fait) : '') + '</span>' : '') +
       (r && agendaFaitOuvert === r.id && !fait ?
@@ -204,6 +271,7 @@ function formulaireAgenda() {
       '<label class="petit-champ">Date<input type="date" id="ag-le" value="' + albEchapper(r.le || jourIso(0)) + '"></label>' +
       '<label class="petit-champ">Heure (facultatif)<input type="time" id="ag-heure" value="' + albEchapper(String(r.heure || '').slice(0, 5)) + '"></label>' +
       '<label class="petit-champ">Quoi ?<input type="text" id="ag-titre" maxlength="200" placeholder="Ex. : Café avec Pauline, appeler un courtier…" value="' + albEchapper(r.titre || '') + '"></label>' +
+      '<label class="petit-champ">Avec qui ? (facultatif)<select id="ag-lien">' + choixPersonnes(r) + '</select></label>' +
       '<label class="petit-champ">Répéter<select id="ag-repete"><option value="">Non, une seule fois</option>' + Object.keys(REPETITIONS).map(function (k) { return '<option value="' + k + '"' + (r.repete === k ? ' selected' : '') + '>🔁 ' + REPETITIONS[k].charAt(0).toUpperCase() + REPETITIONS[k].slice(1) + '</option>'; }).join('') + '</select></label>' +
       '<label class="petit-champ">Où ? (facultatif)<input type="text" id="ag-lieu" maxlength="200" placeholder="Ex. : Saint-Maximin, en visio…" value="' + albEchapper(r.lieu || '') + '"></label>' +
     '</div>' +
@@ -235,7 +303,7 @@ function afficherAgenda() {
   };
   // On garde ce qui est en cours de saisie si la liste se redessine
   const noteFaitEnCours = (document.getElementById('ag-note-fait') || {}).value || '';
-  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete'].map(function (id) { return document.getElementById(id).value; }) : null;
+  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete', 'ag-lien'].map(function (id) { return document.getElementById(id).value; }) : null;
   panneau.innerHTML =
     '<p class="aide">Tes rendez-vous (📌) et tes tâches (📝), et les dates du site ajoutées toutes seules (visites confirmées, membres à relancer, fins de validité, fins de mandat, rappels). Rien n\'est envoyé à personne : c\'est ton agenda.</p>' +
     '<div class="actions" style="margin-top:0;">' +
@@ -250,7 +318,7 @@ function afficherAgenda() {
     (aVenir.length ? blocJours(aVenir) : '<div class="vide" style="margin-top:10px;">Rien de prévu sur cette période. 🌿</div>') +
     (passes.length ? '<details class="historique" style="margin-top:12px;"><summary>📜 Rendez-vous passés (30 derniers jours)</summary>' + blocJours(passes) + '</details>' : '');
   if (enCours && document.getElementById('agenda-formulaire')) {
-    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
+    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete', 'ag-lien'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
   }
   if (noteFaitEnCours && document.getElementById('ag-note-fait')) document.getElementById('ag-note-fait').value = noteFaitEnCours;
 }
@@ -263,6 +331,11 @@ function agendaFermer() { agendaFormulaire = null; afficherAgenda(); }
 async function agendaEnregistrer(bouton) {
   const v = function (id) { return document.getElementById(id).value.trim(); };
   const rdv = { le: v('ag-le'), heure: v('ag-heure'), titre: v('ag-titre'), lieu: v('ag-lieu'), note: v('ag-note'), genre: v('ag-genre') || 'rdv', theme: v('ag-theme'), repete: v('ag-repete') };
+  // La personne liée : « membre:id » ou « carnet:id »
+  const lien = v('ag-lien').split(':');
+  rdv.lien_type = lien.length === 2 ? lien[0] : '';
+  rdv.lien_id = lien.length === 2 ? lien[1] : '';
+  rdv.lien_nom = rdv.lien_id ? nomLien({ lien_type: rdv.lien_type, lien_id: rdv.lien_id }).replace(/ · carnet$/, '') : '';
   if (!rdv.titre) { afficherMessage('message-general', 'erreur', ERREURS.TITRE_MANQUANT); return; }
   if (!rdv.le) { afficherMessage('message-general', 'erreur', ERREURS.RDV_DATE_MANQUANTE); return; }
   bouton.disabled = true;
@@ -405,6 +478,7 @@ function carteContact(c) {
     (num ? '<p class="ligne-info">📱 <a href="tel:' + albEchapper(num) + '"><strong>' + albEchapper(c.telephone) + '</strong></a></p>' : '') +
     (c.email ? '<p class="ligne-info">✉️ <a href="mailto:' + albEchapper(c.email) + '">' + albEchapper(c.email) + '</a></p>' : '') +
     (c.ville || c.origine ? '<p class="ligne-info">' + [c.ville ? '📍 ' + albEchapper(c.ville) : '', c.origine ? '🧭 ' + albEchapper(c.origine) : ''].filter(Boolean).join(' · ') + '</p>' : '') +
+    agendaDeContact(c.id) +
     (c.journal ? '<details class="historique"' + (ouverte ? '' : ' open') + '><summary>📝 Notes</summary><div class="ligne-info" style="white-space:pre-line;overflow-wrap:anywhere;">' + albEchapper(c.journal) + '</div></details>' : '') +
     (ouverte
       ? '<div class="decision"><div class="decision-titre">📝 Après votre échange</div>' +
