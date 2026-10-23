@@ -15,6 +15,8 @@
     On cherche une personne par son nom, son e-mail ou son téléphone, et on voit
     TOUT ce qu'ALB Immobilier garde sur elle (protection des données personnelles :
     droit d'accès). On peut l'imprimer en PDF ou le télécharger pour le lui envoyer.
+    Deux recherches : les membres (avec compte) et les personnes sans compte
+    (salon, demande de rappel, carnet de contacts…).
     Lecture seule : rien n'est modifié ni effacé depuis cette page.
   -->
   <style>
@@ -54,6 +56,8 @@
     .infos h3 { font-size: 1.1rem; margin-bottom: 8px; }
     .infos p { font-size: 0.88rem; margin-bottom: 8px; }
     .infos ul { font-size: 0.88rem; margin: 0 0 8px 20px; }
+    .ligne-recherche { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ligne-recherche input { flex: 1 1 240px; }
     @media (max-width: 560px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
     @media print {
       .bandeau, #zone-recherche, .actions, .rgpd { display: none !important; }
@@ -75,11 +79,21 @@
 
   <div id="zone-recherche" class="cache">
     <div class="carte">
-      <h2 style="font-size:1.3rem;margin-bottom:6px;">Qui cherches-tu ?</h2>
+      <h2 style="font-size:1.3rem;margin-bottom:6px;">Qui cherches-tu ? (membre avec un compte)</h2>
       <p class="aide">Tape un prénom, un nom, une entreprise, un e-mail ou un téléphone. Tu verras tout ce qu'ALB Immobilier garde sur cette personne. Rien n'est modifié ni effacé depuis cette page.</p>
       <input type="search" id="recherche" placeholder="Ex. : Martin, 06 12…, paul@…" autocomplete="off" oninput="afficherResultats()">
       <div class="resultats" id="resultats"></div>
     </div>
+
+    <div class="carte">
+      <h2 style="font-size:1.3rem;margin-bottom:6px;">Une personne sans compte ?</h2>
+      <p class="aide">Personne rencontrée au salon, demande de rappel, carnet de contacts… Tape un nom, un e-mail ou un téléphone (3 caractères au minimum), puis clique sur « Chercher ».</p>
+      <div class="ligne-recherche">
+        <input type="search" id="recherche-contact" placeholder="Ex. : Dupont, 06 12 34 56 78, paul@…" autocomplete="off" onkeydown="if (event.key === 'Enter') chercherContact()">
+        <button type="button" class="bouton" onclick="chercherContact()">Chercher</button>
+      </div>
+    </div>
+
     <div class="carte rgpd">
       <strong>🔒 Si quelqu'un te demande « ce que vous avez sur moi »</strong> : ouvre son dossier, clique sur « 🖨️ Imprimer ou enregistrer en PDF », puis envoie-lui le PDF. Tu as un mois pour répondre. Vérifie d'abord que c'est bien lui qui demande (appel au numéro connu, ou mail depuis son adresse enregistrée).
     </div>
@@ -91,6 +105,7 @@
 <script>
   let lesMembres = [];
   let dossierCourant = null;
+  let dossierEstContact = false;
 
   // Les noms des rubriques, en français
   const RUBRIQUES = {
@@ -99,7 +114,9 @@
     'alb_suivi_membres · profile_id': '📋 Où tu en es avec lui',
     'alb_demandes_rappel · profile_id': '📞 Ses demandes de rappel',
     'alb_demandes_rappel · telephone': '📞 Demandes de rappel faites avec son numéro',
+    'alb_demandes_rappel · contact': '📞 Demandes de rappel (sans compte)',
     'alb_demandes_acces · profile_id': '🔑 Ses demandes d\'accès / changement d\'adresse',
+    'alb_demandes_acces · contact': '🔑 Demandes d\'accès / changement d\'adresse (sans compte)',
     'alb_liens_acces · profile_id': '🔗 Liens envoyés (code PIN, activation)',
     'alb_suspensions · profile_id': '⛔ Suspension',
     'annonces · vendeur_id': '🏡 Ses annonces',
@@ -161,7 +178,8 @@
     type_mission: 'Type de mission', budget: 'Budget', delai: 'Délai', mandat_exclusif_existant: 'Mandat exclusif en cours',
     date_fin_mandat_existant: 'Fin du mandat en cours', titre_bien: 'Titre du bien', mobile: 'Mobile', adresse_complement: 'Complément d\'adresse',
     pays: 'Pays', notes: 'Notes', source: 'Source', date_ajout: 'Ajouté le', derniere_relance: 'Dernière relance',
-    created_at: 'Créé le', updated_at: 'Mis à jour le', lue: 'Lue'
+    created_at: 'Créé le', updated_at: 'Mis à jour le', lue: 'Lue', email_actuel: 'Adresse actuelle', consentement: 'A donné son accord',
+    nom_commercial: 'Nom commercial', raison_sociale: 'Raison sociale'
   };
 
   function echapper(t) { return albEchapper(t); }
@@ -185,8 +203,18 @@
     z.textContent = texte; z.classList.remove('cache');
   }
 
+  // Les rubriques d'un dossier (membre ou personne sans compte)
+  function htmlSections(sections) {
+    const cles = Object.keys(sections).sort(function (a, b) { return (RUBRIQUES[a] || 'z' + a).localeCompare(RUBRIQUES[b] || 'z' + b, 'fr'); });
+    return cles.map(function (k) {
+      const lignes = sections[k];
+      return '<div class="carte section"><h3>' + echapper(RUBRIQUES[k] || k) + ' <span class="nb">(' + lignes.length + ')</span></h3>' +
+        lignes.map(function (l) { return '<div class="ligne">' + fiche(l) + '</div>'; }).join('') + '</div>';
+    }).join('');
+  }
+
   // Les informations qui doivent accompagner toute copie de dossier (elles s'impriment avec le PDF)
-    function blocInfos() {
+  function blocInfos() {
     return '<div class="carte infos">' +
       '<h3>ℹ️ Informations sur l\'utilisation de vos données</h3>' +
       '<p><strong>Qui garde vos données :</strong> ALB Sud Immobilier (Jocelyne Rimlinger), contact@albimmobilier.fr.</p>' +
@@ -248,10 +276,10 @@
     const { data, error } = await albSupabase.rpc('alb_gestion_dossier_membre', { p_id: id });
     if (error) { zone.innerHTML = '<div class="message">Impossible d\'ouvrir ce dossier pour le moment.</div>'; return; }
     dossierCourant = data;
+    dossierEstContact = false;
     const p = data.profil || {};
     const nom = ((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Sans nom';
     const sections = data.sections || {};
-    const cles = Object.keys(sections).sort(function (a, b) { return (RUBRIQUES[a] || 'z' + a).localeCompare(RUBRIQUES[b] || 'z' + b, 'fr'); });
     zone.innerHTML =
       '<div class="carte">' +
         '<h2 style="font-size:1.5rem;">' + echapper(nom) + '</h2>' +
@@ -266,12 +294,40 @@
         '</div>' +
       '</div>' +
       '<div class="carte section"><h3>👤 Ses informations</h3>' + fiche(p) + '</div>' +
-      (cles.length ? cles.map(function (k) {
-        const lignes = sections[k];
-        return '<div class="carte section"><h3>' + echapper(RUBRIQUES[k] || k) + ' <span class="nb">(' + lignes.length + ')</span></h3>' +
-          lignes.map(function (l) { return '<div class="ligne">' + fiche(l) + '</div>'; }).join('') + '</div>';
-      }).join('') : '<div class="carte"><p class="vide">Aucune autre information enregistrée pour cette personne.</p></div>') +
+      (Object.keys(sections).length ? htmlSections(sections) : '<div class="carte"><p class="vide">Aucune autre information enregistrée pour cette personne.</p></div>') +
       blocInfos();
+    document.getElementById('zone-recherche').classList.add('cache');
+    window.scrollTo(0, 0);
+  }
+
+  // Recherche d'une personne qui n'a pas de compte (salon, rappel, carnet…)
+  async function chercherContact() {
+    const q = document.getElementById('recherche-contact').value.trim();
+    if (q.length < 3) { alert('Tape au moins 3 caractères.'); return; }
+    const zone = document.getElementById('zone-dossier');
+    zone.classList.remove('cache');
+    zone.innerHTML = '<p class="vide">Je cherche…</p>';
+    const { data, error } = await albSupabase.rpc('alb_gestion_dossier_contact', { p_q: q });
+    if (error) {
+      zone.innerHTML = '<div class="message">' + echapper(String(error.message || '').indexOf('RECHERCHE_TROP_COURTE') >= 0 ? 'Tape au moins 3 caractères.' : 'Impossible de faire cette recherche pour le moment.') + '</div>' +
+        '<div class="actions"><button type="button" class="bouton discret" onclick="retourRecherche()">← Retour</button></div>';
+      return;
+    }
+    dossierCourant = data;
+    dossierEstContact = true;
+    const sections = data.sections || {};
+    zone.innerHTML =
+      '<div class="carte">' +
+        '<h2 style="font-size:1.5rem;">Personne sans compte : « ' + echapper(data.recherche) + ' »</h2>' +
+        '<p class="aide" style="margin-top:6px;">Dossier établi le ' + echapper(valeurLisible(data.fait_le)) + ' par ALB Sud Immobilier.</p>' +
+        '<div class="actions">' +
+          (Object.keys(sections).length ? '<button type="button" class="bouton" onclick="window.print()">🖨️ Imprimer ou enregistrer en PDF</button>' +
+          '<button type="button" class="bouton discret" onclick="telecharger()">📥 Télécharger (fichier complet)</button>' : '') +
+          '<button type="button" class="bouton discret" onclick="retourRecherche()">← Chercher quelqu\'un d\'autre</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="carte rgpd"><strong>⚠️ Avant d\'envoyer :</strong> vérifie que toutes les fiches ci-dessous concernent bien la même personne (deux personnes peuvent avoir le même nom). Retire ou ne garde pas ce qui parle de quelqu\'un d\'autre.</div>' +
+      (Object.keys(sections).length ? htmlSections(sections) + blocInfos() : '<div class="carte"><p class="vide">Aucune fiche sans compte ne correspond à cette recherche.</p></div>');
     document.getElementById('zone-recherche').classList.add('cache');
     window.scrollTo(0, 0);
   }
@@ -284,8 +340,13 @@
 
   function telecharger() {
     if (!dossierCourant) return;
-    const p = dossierCourant.profil || {};
-    const nom = ((p.prenom || '') + '-' + (p.nom || '')).replace(/[^a-zA-Z0-9À-ÿ-]/g, '') || 'membre';
+    let nom;
+    if (dossierEstContact) {
+      nom = String(dossierCourant.recherche || '').replace(/[^a-zA-Z0-9À-ÿ-]/g, '') || 'contact';
+    } else {
+      const p = dossierCourant.profil || {};
+      nom = ((p.prenom || '') + '-' + (p.nom || '')).replace(/[^a-zA-Z0-9À-ÿ-]/g, '') || 'membre';
+    }
     const blob = new Blob([JSON.stringify(dossierCourant, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
