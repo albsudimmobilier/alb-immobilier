@@ -851,7 +851,7 @@ function pointPieces(m) {
     else if (x.statut === 'refuse') { etat = '✗ à renvoyer'; manque = !p.facultatif; }
     else if (x.statut === 'a_verifier') { etat = '⏳ reçu, à vérifier'; manque = false; }
     else if (x.expire_le && x.expire_le < auj) { etat = '⚠️ expiré le ' + dateLisible(x.expire_le + 'T12:00:00'); manque = !p.facultatif; }
-    else { etat = '✅ vérifié' + (x.expire_le ? ' · valable jusqu\'au ' + dateLisible(x.expire_le + 'T12:00:00') : (p.expire ? ' · date de fin à noter' : '')); manque = false; }
+    else { etat = '✅ vérifié' + (x.expire_le ? ' · valable jusqu\'au ' + dateLisible(x.expire_le + 'T12:00:00') : (p.expire || DOIT_AVOIR_DATE.indexOf(p.type) !== -1 ? ' · ⚠️ date de fin à noter (pas de rappel)' : '')); manque = false; }
     return { libelle: String(p.libelle || p.type).replace(/\s*\(.*\)\s*$/, ''), etat: etat, manque: manque, facultatif: !!p.facultatif, aVerifier: !!x && x.statut === 'a_verifier' };
   });
 }
@@ -1025,6 +1025,8 @@ async function texteDuPdf(fichier) {
 
 // ---------- Ajouter un document pour un pro (reçu par mail, en main propre…) ----------
 let papiersHorsSite = null;     // Kbis, SIRENE, URSSAF, CNI, contrat, RIB…
+// Les documents qui ont toujours une date de fin (l'ORIAS se renouvelle chaque année) : sans date, pas de rappel possible
+const DOIT_AVOIR_DATE = ['orias', 'rc_pro', 'decennale', 'garantie', 'carte_t', 'habilitation', 'rge', 'urssaf', 'cni', 'fluides'];
 let ajoutDocOuvert = null;      // id du pro dont le formulaire est ouvert
 async function chargerPapiersHorsSite() {
   if (papiersHorsSite) return;
@@ -1091,6 +1093,8 @@ async function enregistrerDocument(proId, bouton) {
   const numero = document.getElementById('ad-numero-' + proId).value.trim();
   const date = document.getElementById('ad-date-' + proId).value || null;
   if (!fichier && !numero) { afficherMessage('message-general', 'erreur', 'Choisis un fichier ou écris un numéro.'); return; }
+  if (!date && DOIT_AVOIR_DATE.indexOf(type) !== -1 &&
+      !confirm('Il n\'y a pas de date de fin : aucun rappel ne sera prévu pour ce document.\n\nEnregistrer quand même ? (Tu pourras ajouter la date plus tard sur sa carte.)')) return;
   if (fichier && fichier.size > 10 * 1024 * 1024) { afficherMessage('message-general', 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
   bouton.disabled = true;
   let chemin = null;
@@ -1113,6 +1117,18 @@ async function enregistrerDocument(proId, bouton) {
 (function () {
   const chargerAvantHorsSite = chargerPapiersAttendus;
   chargerPapiersAttendus = async function () { await Promise.all([chargerAvantHorsSite(), chargerPapiersHorsSite()]); };
+  // Après chaque chargement : un document qui doit avoir une date de fin affiche la case « Valable jusqu'au » sur sa carte
+  const chargerPapiersAvantDate = chargerPapiers;
+  chargerPapiers = async function () {
+    await chargerPapiersAvantDate();
+    let change = false;
+    (typeof papiersPros !== 'undefined' ? papiersPros : []).forEach(function (x) { if (!x.expire && DOIT_AVOIR_DATE.indexOf(x.type) !== -1) { x.expire = true; change = true; } });
+    if (change) {
+      document.querySelectorAll('.papiers-pro').forEach(function (zone) { zone.innerHTML = blocPapiersPro(zone.dataset.pro); });
+      afficherPointPieces();
+      if (typeof afficherAFaire === 'function') afficherAFaire();
+    }
+  };
   const blocPointAvantAjout = blocPointPieces;
   blocPointPieces = function (m) {
     const recus = (typeof papiersPros !== 'undefined' ? papiersPros : []).filter(function (x) { return x.profile_id === m.id; });
