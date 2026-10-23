@@ -809,3 +809,117 @@ LIGNES_A_FAIRE.splice(1, 0, {
     return html;
   };
 })();
+
+// =====================================================================
+// 📋 Point des pièces : pour chaque pro, ce qui est demandé à son métier,
+// ce qui est arrivé, vérifié, expiré… et surtout ce qui MANQUE
+// (la liste des pièces par métier vient de Supabase : alb_papiers_metier)
+// =====================================================================
+let papiersAttendus = {};   // « role|sous_role » → liste des pièces demandées
+
+function clePapiers(m) { return (m.role || '') + '|' + (m.role === 'immo' ? (m.sous_role_immo || '') : ''); }
+
+async function chargerPapiersAttendus() {
+  const cles = {};
+  (typeof membres !== 'undefined' ? membres : []).forEach(function (m) { if (estUnPro(m)) cles[clePapiers(m)] = m; });
+  await Promise.all(Object.keys(cles).filter(function (k) { return !papiersAttendus[k]; }).map(async function (k) {
+    const m = cles[k];
+    const { data, error } = await albSupabase.rpc('alb_papiers_metier', { p_role: m.role, p_sous_role: m.sous_role_immo || null });
+    if (error) { console.error('[ALB DEBUG] pièces par métier :', error); return; }
+    papiersAttendus[k] = Array.isArray(data) ? data : [];
+  }));
+}
+
+function estUnPro(m) { return !!(m && m.role && m.role !== 'particulier' && !m.est_admin); }
+
+// L'état de chaque pièce demandée à ce pro
+function pointPieces(m) {
+  const auj = jourIso(0);
+  const attendues = papiersAttendus[clePapiers(m)] || [];
+  const recus = (typeof papiersPros !== 'undefined' ? papiersPros : []).filter(function (x) { return x.profile_id === m.id; });
+  return attendues.filter(function (p) { return p.type !== 'avis_google'; }).map(function (p) {
+    // S'il y a plusieurs envois du même papier, on garde le plus récent
+    const x = recus.filter(function (y) { return y.type === p.type; })
+      .sort(function (a, b) { return String(b.envoye_le || '').localeCompare(String(a.envoye_le || '')); })[0];
+    let etat, manque;
+    if (!x) { etat = p.facultatif ? '○ pas reçu (facultatif)' : '❌ pas reçu'; manque = !p.facultatif; }
+    else if (x.statut === 'refuse') { etat = '✗ à renvoyer'; manque = !p.facultatif; }
+    else if (x.statut === 'a_verifier') { etat = '⏳ reçu, à vérifier'; manque = false; }
+    else if (x.expire_le && x.expire_le < auj) { etat = '⚠️ expiré le ' + dateLisible(x.expire_le + 'T12:00:00'); manque = !p.facultatif; }
+    else { etat = '✅ vérifié' + (x.expire_le ? ' · valable jusqu\'au ' + dateLisible(x.expire_le + 'T12:00:00') : (p.expire ? ' · date de fin à noter' : '')); manque = false; }
+    return { libelle: String(p.libelle || p.type).replace(/\s*\(.*\)\s*$/, ''), etat: etat, manque: manque, facultatif: !!p.facultatif, aVerifier: !!x && x.statut === 'a_verifier' };
+  });
+}
+function piecesManquantes(m) { return pointPieces(m).filter(function (p) { return p.manque; }); }
+
+// Sur la carte du pro, juste au-dessus de « Ses papiers »
+function blocPointPieces(m) {
+  const liste = pointPieces(m);
+  if (!liste.length) return '';
+  const manque = liste.filter(function (p) { return p.manque; });
+  return '<div class="' + (manque.length ? 'point-a-faire' : 'ligne-info') + '" style="margin:6px 0;">' +
+    '<strong>📋 Point des pièces</strong> ' + (manque.length
+      ? '<span class="etiquette rouge">' + manque.length + ' manquante' + (manque.length > 1 ? 's' : '') + '</span>'
+      : '<span class="etiquette vert">complet</span>') +
+    liste.map(function (p) {
+      return '<br><span style="' + (p.manque ? 'color:#8A2D2D;font-weight:600;' : '') + '">' + albEchapper(p.etat.split(' ')[0]) + ' ' + albEchapper(p.libelle) +
+        ' <span style="font-weight:400;color:#7a7a75;">— ' + albEchapper(p.etat.split(' ').slice(1).join(' ')) + '</span></span>';
+    }).join('') + '</div>';
+}
+
+// En haut de « Pros validés » : le tableau de tous les pros
+function afficherPointPieces() {
+  const panneau = document.getElementById('panneau-valides');
+  const liste = document.getElementById('liste-valides');
+  if (!panneau || !liste) return;
+  let zone = document.getElementById('point-pieces');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'point-pieces';
+    liste.parentNode.insertBefore(zone, liste);
+  }
+  const pros = (typeof membres !== 'undefined' ? membres : []).filter(estUnPro)
+    .map(function (m) { return { m: m, manque: piecesManquantes(m), point: pointPieces(m) }; })
+    .sort(function (a, b) { return (b.m.profil_mis_en_ligne && b.manque.length ? 2 : b.manque.length ? 1 : 0) - (a.m.profil_mis_en_ligne && a.manque.length ? 2 : a.manque.length ? 1 : 0); });
+  if (!pros.length) { zone.innerHTML = ''; return; }
+  const nbManque = pros.filter(function (p) { return p.manque.length; }).length;
+  zone.innerHTML = '<details class="historique carte" style="margin-bottom:14px;"' + (nbManque ? ' open' : '') + '>' +
+    '<summary style="font-weight:700;color:#5A3A6A;cursor:pointer;">📋 Point des pièces par pro ' +
+      (nbManque ? '<span class="etiquette rouge">' + nbManque + ' pro' + (nbManque > 1 ? 's' : '') + ' incomplet' + (nbManque > 1 ? 's' : '') + '</span>' : '<span class="etiquette vert">tout est complet</span>') + '</summary>' +
+    '<p class="aide">Ce que le site demande à chaque métier. Les pros envoient leurs pièces depuis leur espace ; c\'est toi qui les vérifies (dans leur carte, plus bas).</p>' +
+    pros.map(function (p) {
+      const m = p.m;
+      const metier = typeof metierDe === 'function' && metierDe(m) && typeof METIERS !== 'undefined' ? METIERS[metierDe(m)] : '';
+      return '<div class="ligne-info" style="padding:8px 0;border-top:1px dashed #E8E6E1;overflow-wrap:anywhere;">' +
+        '<strong>' + albEchapper(nomAgenda(m)) + '</strong> ' + (metier ? '<span class="etiquette">' + albEchapper(metier) + '</span> ' : '') +
+        (m.profil_mis_en_ligne ? '<span class="etiquette vert">en ligne</span> ' : m.statut_verifie ? '<span class="etiquette">validé, pas en ligne</span> ' : '<span class="etiquette or">pas encore validé</span> ') +
+        (p.manque.length
+          ? '<br><span style="color:#8A2D2D;font-weight:600;">' + (m.profil_mis_en_ligne ? '⚠️ En ligne sans : ' : '❌ Manque : ') + albEchapper(p.manque.map(function (x) { return x.libelle; }).join(' · ')) + '</span>'
+          : '<br><span style="color:#2E7D32;">✅ Pièces obligatoires complètes</span>') +
+        (p.point.some(function (x) { return x.aVerifier; }) ? ' <span class="etiquette or">⏳ à vérifier</span>' : '') +
+        '<br><button type="button" class="bouton discret" style="margin-top:4px;" onclick="agendaPour(\'membre\', \'' + m.id + '\')">📅 Prévoir une relance</button>' +
+      '</div>';
+    }).join('') + '</details>';
+}
+
+// On branche le point des pièces sur le chargement des papiers
+(function () {
+  const chargerPapiersAvantPoint = chargerPapiers;
+  chargerPapiers = async function () {
+    await Promise.all([chargerPapiersAvantPoint(), chargerPapiersAttendus()]);
+    document.querySelectorAll('.papiers-pro').forEach(function (zone) { zone.innerHTML = blocPapiersPro(zone.dataset.pro); });
+    afficherPointPieces();
+    if (typeof afficherAFaire === 'function') afficherAFaire();
+  };
+  const blocPapiersAvantPoint = blocPapiersPro;
+  blocPapiersPro = function (proId) {
+    const m = (typeof membres !== 'undefined' ? membres : []).find(function (x) { return x.id === proId; });
+    return (m && estUnPro(m) ? blocPointPieces(m) : '') + blocPapiersAvantPoint(proId);
+  };
+})();
+
+// « À faire aujourd'hui » : les pros EN LIGNE à qui il manque une pièce obligatoire
+LIGNES_A_FAIRE.push({
+  calcul: function () { return (typeof membres !== 'undefined' ? membres : []).filter(function (m) { return estUnPro(m) && m.profil_mis_en_ligne && piecesManquantes(m).length; }).length; },
+  un: 'pro en ligne à qui il manque une pièce obligatoire (assurance, numéro…)', plusieurs: 'pros en ligne à qui il manque une pièce obligatoire (assurance, numéro…)', emoji: '📋', onglet: 'valides'
+});
