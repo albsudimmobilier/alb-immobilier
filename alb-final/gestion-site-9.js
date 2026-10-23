@@ -1142,3 +1142,46 @@ async function enregistrerDocument(proId, bouton) {
         : '<div class="actions" style="margin-top:4px;"><button type="button" class="bouton discret" onclick="ouvrirAjoutDoc(\'' + m.id + '\')">➕ Ajouter un document</button></div>');
   };
 })();
+
+// =====================================================================
+// 💶 Bilan de chaque pro sur sa carte (Suivi des membres) :
+// ce qu'ALB lui a apporté (mises en relation, dossiers signés, montants)
+// et ce qui lui est facturé, ou offert (« non facturé ») pendant la période gratuite
+// =====================================================================
+let bilanPros = { offert_jusqu_au: null, parPro: {} };
+async function chargerBilanPros() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_bilan_pros');
+  if (error) { console.error('[ALB DEBUG] bilan des pros :', error); return; }
+  bilanPros = { offert_jusqu_au: data && data.offert_jusqu_au, parPro: {} };
+  ((data && data.pros) || []).forEach(function (b) { bilanPros.parPro[b.pro_id] = b; });
+}
+function eurosBilan(n) { return Math.round(Number(n || 0)).toLocaleString('fr-FR') + ' €'; }
+function blocBilanPro(m) {
+  const b = bilanPros.parPro[m.id];
+  if (!b) return '';
+  const offertEnCours = bilanPros.offert_jusqu_au && jourIso(0) <= bilanPros.offert_jusqu_au;
+  const morceaux = [];
+  morceaux.push(b.mises_en_relation + ' mise' + (b.mises_en_relation > 1 ? 's' : '') + ' en relation');
+  if (b.signes) morceaux.push(b.signes + ' dossier' + (b.signes > 1 ? 's' : '') + ' signé' + (b.signes > 1 ? 's' : '') + (Number(b.montant_signe) ? ' (' + eurosBilan(b.montant_signe) + ')' : ''));
+  if (b.ventes) morceaux.push(b.ventes + ' vente' + (b.ventes > 1 ? 's' : '') + (Number(b.montant_ventes) ? ' (' + eurosBilan(b.montant_ventes) + ')' : ''));
+  const facture = Number(b.facture_ht), offert = Number(b.offert_ht);
+  let argent;
+  if (facture) argent = '🧾 Facturé : <strong>' + eurosBilan(facture) + ' HT</strong>' + (offert ? ' · 🎁 offert : ' + eurosBilan(offert) + ' HT' : '');
+  else if (offert) argent = '🎁 <strong>Non facturé</strong> : ' + eurosBilan(offert) + ' HT offerts' + (offertEnCours ? ' (gratuit jusqu\'au ' + dateLisible(bilanPros.offert_jusqu_au + 'T12:00:00') + ')' : '');
+  else argent = offertEnCours ? '🎁 <strong>Non facturé</strong> : gratuit jusqu\'au ' + dateLisible(bilanPros.offert_jusqu_au + 'T12:00:00') : '🧾 Rien de facturé pour l\'instant';
+  return '<p class="ligne-info" style="margin-top:6px;">💶 <strong>Avec ALB</strong> : ' + albEchapper(morceaux.join(' · ')) + '<br>' + argent + '</p>';
+}
+(function () {
+  const carteMembreAvantBilan = carteMembre;
+  carteMembre = function (m) {
+    const html = carteMembreAvantBilan(m);
+    if (!(m.role && m.role !== 'particulier')) return html;
+    const repere = '<p class="ligne-info" style="margin-top:6px;">📒 ';
+    return html.indexOf(repere) !== -1 ? html.replace(repere, blocBilanPro(m) + repere) : html;
+  };
+  const toutRechargerAvantBilan = toutRecharger;
+  toutRecharger = async function () {
+    await chargerBilanPros();
+    await toutRechargerAvantBilan();
+  };
+})();
