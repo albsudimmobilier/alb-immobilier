@@ -24,6 +24,7 @@ let agendaPeriode = 30;        // nombre de jours à venir affichés (0 = tout)
 let agendaDatesSite = true;    // afficher aussi les dates du site
 let agendaFormulaire = null;   // null, 'nouveau' ou l'id du rendez-vous en cours de modification
 let agendaTheme = '';          // thème affiché ('' = tous les thèmes)
+let agendaLienPrevu = '';      // personne déjà choisie quand on ouvre l'agenda depuis une fiche (« membre:id » ou « carnet:id »)
 let agendaFaitOuvert = null;   // id de l'élément dont on est en train de cocher « fait » (zone de note ouverte)
 const REPETITIONS = { semaine: 'chaque semaine', mois: 'chaque mois', an: 'chaque année' };
 // Les thèmes de l'agenda : ce qu'une fondatrice a à gérer (emoji + couleur)
@@ -84,7 +85,7 @@ function nomLien(r) {
 }
 // La liste « Avec qui ? » du formulaire, rangée par catégorie
 function choixPersonnes(r) {
-  const actuel = r.lien_type && r.lien_id ? r.lien_type + ':' + r.lien_id : '';
+  const actuel = r.lien_type && r.lien_id ? r.lien_type + ':' + r.lien_id : (r.id ? '' : agendaLienPrevu);
   const opt = function (val, texte) { return '<option value="' + albEchapper(val) + '"' + (val === actuel ? ' selected' : '') + '>' + albEchapper(texte) + '</option>'; };
   const tri = function (a, b) { return a[1].localeCompare(b[1], 'fr'); };
   const liste = typeof membres !== 'undefined' ? membres : [];
@@ -113,9 +114,10 @@ function voirPersonneLiee(type, id) {
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-// Ce qui est dans l'agenda pour un contact du carnet (pour sa fiche)
-function agendaDeContact(id) {
-  const liste = (agenda.rdv || []).filter(function (r) { return r.lien_type === 'carnet' && r.lien_id === id; })
+// Ce qui est dans l'agenda pour une personne (pour sa fiche) : type = 'membre' ou 'carnet'
+function agendaDeContact(id) { return agendaDePersonne('carnet', id); }
+function agendaDePersonne(type, id) {
+  const liste = (agenda.rdv || []).filter(function (r) { return r.lien_type === type && r.lien_id === id; })
     .sort(function (a, b) { return String(b.le).localeCompare(String(a.le)); });
   if (!liste.length) return '';
   return '<details class="historique" open><summary>📅 Dans ton agenda (' + liste.length + ')</summary>' +
@@ -124,6 +126,20 @@ function agendaDeContact(id) {
         albEchapper(dateLisible(r.le + 'T12:00:00')) + ' · ' + albEchapper(r.titre) +
         (r.fait_le ? (r.note_fait ? ' — 📝 ' + albEchapper(r.note_fait) : ' — fait') : r.le < jourIso(0) ? ' — en retard' : '') + '</div>';
     }).join('') + '</details>';
+}
+// Depuis une fiche : ouvre l'agenda avec le formulaire déjà rempli pour cette personne
+function agendaPour(type, id) {
+  agendaLienPrevu = type + ':' + id;
+  agendaFormulaire = 'nouveau';
+  afficherOnglet('agenda');
+  afficherAgenda();
+  const choix = document.getElementById('ag-lien');
+  if (choix) choix.value = agendaLienPrevu;
+  agendaLienPrevu = '';
+  const form = document.getElementById('agenda-formulaire');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const titre = document.getElementById('ag-titre');
+  if (titre) titre.focus();
 }
 ERREURS.TITRE_MANQUANT = 'Écris un titre (ex. : « Café avec Pauline »).';
 ERREURS.RDV_DATE_MANQUANTE = 'Choisis la date du rendez-vous.';
@@ -493,6 +509,7 @@ function carteContact(c) {
     '<div class="actions">' +
       (num ? '<a class="bouton" href="tel:' + albEchapper(num) + '">📞 Appeler</a>' : '') +
       (ouverte ? '' : '<button type="button" class="bouton vert" onclick="carnetOuvrirNote(\'' + c.id + '\')">📝 Ajouter une note</button>') +
+      '<button type="button" class="bouton discret" onclick="agendaPour(\'carnet\', \'' + c.id + '\')">📅 Prévoir dans l\'agenda</button>' +
       '<button type="button" class="bouton discret" onclick="carnetModifier(\'' + c.id + '\')">✏️ Modifier</button>' +
       (c.etape !== 'inscrit' ? '<button type="button" class="bouton discret" onclick="carnetInscrire(\'' + c.id + '\')">✅ L\'inscrire sur ALB</button>' : '') +
       '<button type="button" class="bouton discret" onclick="carnetRetirer(\'' + c.id + '\', this)">🗑️ Retirer</button>' +
@@ -776,5 +793,19 @@ LIGNES_A_FAIRE.splice(1, 0, {
     afficherDeparts();
     if (typeof afficherMembres === 'function') afficherMembres();
     afficherAFaire();
+  };
+})();
+
+// Sur chaque carte de « Suivi des membres » : ce qui est prévu ou fait avec lui dans l'agenda,
+// et un bouton « 📅 Agenda » pour prévoir quelque chose avec lui
+(function () {
+  const carteMembreAvantAgenda = carteMembre;
+  carteMembre = function (m) {
+    let html = carteMembreAvantAgenda(m);
+    const repere = '<div id="panneau-membre-' + m.id + '">';
+    if (html.indexOf(repere) !== -1) html = html.replace(repere, agendaDePersonne('membre', m.id) + repere);
+    const bouton = '📋 Où j\'en suis</button>';
+    if (html.indexOf(bouton) !== -1) html = html.replace(bouton, bouton + '<button type="button" class="bouton discret" onclick="agendaPour(\'membre\', \'' + m.id + '\')">📅 Agenda</button>');
+    return html;
   };
 })();
