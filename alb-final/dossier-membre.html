@@ -186,20 +186,21 @@
   }
 
   // Les informations qui doivent accompagner toute copie de dossier (elles s'impriment avec le PDF)
-  function blocInfos() {
+   function blocInfos() {
     return '<div class="carte infos">' +
       '<h3>ℹ️ Informations sur l\'utilisation de vos données</h3>' +
       '<p><strong>Qui garde vos données :</strong> ALB Sud Immobilier (Jocelyne Rimlinger), contact@albimmobilier.fr.</p>' +
-      '<p><strong>À quoi elles servent :</strong> créer et gérer votre compte, vous mettre en relation avec les professionnels que vous choisissez, suivre l\'avancement de vos projets et de vos annonces, préparer la facturation des professionnels, et respecter les obligations légales.</p>' +
+      '<p><strong>À quoi elles servent :</strong> créer et gérer votre compte, vous mettre en relation avec les professionnels ou les particuliers concernés, suivre l\'avancement de vos projets et de vos annonces, préparer la facturation des professionnels, et respecter les obligations légales.</p>' +
       '<p><strong>D\'où elles viennent :</strong> de vous (formulaires du site, échanges par téléphone, e-mail ou lors d\'un salon) et des suites données à vos projets.</p>' +
       '<p><strong>Qui peut les recevoir :</strong></p>' +
       '<ul>' +
-        '<li>les professionnels que vous avez choisis, uniquement avec votre accord ;</li>' +
+        '<li>si vous êtes un particulier : les professionnels que vous avez choisis, uniquement avec votre accord ;</li>' +
+        '<li>si vous êtes un professionnel : les particuliers que vous devez recontacter, qui reçoivent vos coordonnées professionnelles (nom, téléphone, e-mail). C\'est ALB Sud Immobilier qui décide de cet envoi, jamais de façon automatique ;</li>' +
         '<li>nos prestataires techniques : Supabase (base de données, hébergée à Londres, Royaume-Uni), Brevo (envoi d\'e-mails), Netlify (hébergement du site), Pennylane (facturation, uniquement pour les professionnels facturés).</li>' +
       '</ul>' +
       '<p><strong>Combien de temps :</strong> tant que le compte est actif ; suppression après 2 ans sans utilisation ; réponses au suivi des mises en relation : 3 ans après la fin de la mise en relation ; factures : 10 ans (obligation légale).</p>' +
       '<p><strong>Vos droits :</strong> accéder à vos données (c\'est ce document), les corriger, les faire supprimer, les récupérer, vous opposer à leur utilisation, demander d\'en limiter l\'usage, et retirer à tout moment un accord que vous avez donné. Pour cela : contact@albimmobilier.fr.</p>' +
-      '<p><strong>Réclamation :</strong> si vous pensez que vos droits ne sont pas respectés, vous pouvez écrire à la CNIL (www.cnil.fr).</p>' +
+      '<p><strong>Réclamation :</strong> si vous pensez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (Commission nationale de l\'informatique et des libertés) sur son site internet.</p>' +
     '</div>';
   }
 
