@@ -212,7 +212,14 @@
         <div class="checkbox-group">
           <input type="checkbox" id="cgu" name="cgu" required />
           <label for="cgu">
-            J'accepte les <a href="/conditions-generales">conditions générales</a> et la <a href="/confidentialite">politique de confidentialité</a>
+            J'accepte les <a href="cgu.html">conditions générales</a> et la <a href="confidentialite.html">politique de confidentialité</a>
+          </label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="accepte-transmission" name="accepte-transmission" required />
+          <label for="accepte-transmission">
+            J'accepte que mon nom, mon téléphone, mon e-mail et mon entreprise soient transmis aux particuliers que je dois recontacter. ALB Sud Immobilier décide de chaque envoi, jamais de façon automatique.
           </label>
         </div>
 
@@ -261,6 +268,11 @@
         return;
       }
 
+      if (!document.getElementById('accepte-transmission').checked) {
+        showError('Vous devez accepter la transmission de vos coordonnées aux particuliers que vous devez recontacter');
+        return;
+      }
+
       try {
         const response = await fetch('/.netlify/functions/create-account', {
           method: 'POST',
@@ -272,6 +284,7 @@
             siret,
             zones: zones || null,
             profil,  // ← courtier, artisan, agent, mandataire
+            accepte_transmission: true,
             profession: metiers.length ? metiers : null
           })
         });
