@@ -1,8 +1,8 @@
 // ============================================================
 // Gestion du site — partie 10 : 📄 Suivi des devis
-// Un onglet « 📄 Devis » (juste après « Projets »), rangé par particulier
-// (3 devis au plus chacun). Pour chaque devis : l'artisan, le type de projet,
-// le montant, la date d'envoi, le statut (envoyé / en discussion / signé /
+// Un onglet « 📄 Devis » (juste après « Projets »), rangé au choix par
+// particulier (3 devis au plus chacun) ou par artisan (avec ses chiffres).
+// Pour chaque devis : l'artisan, le type de projet, le montant, la date d'envoi, le statut (envoyé / en discussion / signé /
 // perdu), la prochaine action et sa date, et tes notes.
 // Les relances se proposent toutes seules :
 //   J+2  : vérifier qu'il a bien reçu le devis
@@ -15,6 +15,7 @@
 let devisSuivi = [];
 let filtreDevis = null;          // a_faire | en_cours | signes | perdus | tous
 let devisOuvert = {};            // id du devis → panneau « Mettre à jour » ouvert
+let vueDevis = 'particulier';    // particulier | artisan
 const SUIVIS_DEVIS = { envoye: '📨 Envoyé', en_discussion: '💬 En discussion', signe: '✍️ Signé', perdu: '❌ Perdu' };
 const ETAPES_DEVIS = [
   { j: 2, champ: 'j2_fait_le', titre: 'J+2 : vérifier qu\'il a bien reçu le devis' },
@@ -71,7 +72,7 @@ function smsDevis(d, action) {
 }
 
 // ----- Une ligne de devis -----
-function carteDevis(d, historique) {
+function carteDevis(d, historique, vue) {
   const pa = d.particulier || {}, pr = d.pro || {};
   const action = prochaineActionDevis(d);
   const due = action && action.le <= jourIso(0);
@@ -86,7 +87,9 @@ function carteDevis(d, historique) {
   return '<div class="carte" style="margin-top:10px;' + (historique ? 'opacity:.6;' : '') + (due && !historique ? 'border-color:#B28E3D;' : '') + '">' +
     '<div class="etiquettes"><span class="etiquette' + (d.suivi === 'signe' ? ' vert' : d.suivi === 'perdu' ? '' : ' or') + '">' + albEchapper(SUIVIS_DEVIS[d.suivi] || d.suivi) + '</span>' + reponse +
       (historique ? '<span class="etiquette">Ancienne version</span>' : '') + '</div>' +
-    '<h3 style="font-family:Montserrat,sans-serif;font-size:1rem;margin-top:6px;">🔨 ' + albEchapper(nomArtisan(d)) + '</h3>' +
+    '<h3 style="font-family:Montserrat,sans-serif;font-size:1rem;margin-top:6px;">' + (vue === 'artisan'
+      ? '🙋 ' + albEchapper(((pa.prenom || '') + ' ' + (pa.nom || '')).trim() || 'Particulier')
+      : '🔨 ' + albEchapper(nomArtisan(d))) + '</h3>' +
     '<p class="ligne-info">📝 ' + albEchapper(typeProjetDevis(d)) + ((d.projet || {}).zone ? ' · 📍 ' + albEchapper(d.projet.zone) : '') + '</p>' +
     '<p class="ligne-info">💶 <strong>' + albEchapper(montantDevisTexte(d.montant)) + '</strong> · envoyé le ' + albEchapper(dateLisible(d.cree_le)) + '</p>' +
     (d.note ? '<p class="ligne-info mot">💬 L\'artisan : « ' + albEchapper(d.note) + ' »</p>' : '') +
@@ -152,6 +155,15 @@ function blocChiffresDevis() {
   '</div>';
 }
 
+// Les chiffres d'un artisan (sur ses devis actuels)
+function chiffresArtisan(liste) {
+  const signes = liste.filter(function (d) { return d.suivi === 'signe'; });
+  const perdus = liste.filter(function (d) { return d.suivi === 'perdu'; });
+  const montantSigne = signes.reduce(function (n, d) { return n + Number(d.montant || 0); }, 0);
+  return { total: liste.length, enCours: liste.filter(devisEnCours).length, signes: signes.length, perdus: perdus.length, montantSigne: montantSigne,
+    taux: signes.length + perdus.length ? Math.round(100 * signes.length / (signes.length + perdus.length)) + ' %' : '–' };
+}
+
 // ----- L'onglet -----
 const FILTRES_DEVIS = [
   ['a_faire', '⏰ À faire aujourd\'hui', function (g) { return g.items.some(actionDue); }],
@@ -176,6 +188,23 @@ function groupesDevis() {
   return groupes.sort(function (a, b) { return (b.items.some(actionDue) ? 1 : 0) - (a.items.some(actionDue) ? 1 : 0); });
 }
 
+function groupesDevisArtisans() {
+  const groupes = [], index = {};
+  devisActuels().forEach(function (d) {
+    const cle = d.pro_id || 'inconnu';
+    if (!index[cle]) { index[cle] = { p: d.pro || {}, nom: nomArtisan(d), items: [], anciens: [] }; groupes.push(index[cle]); }
+    index[cle].items.push(d);
+  });
+  devisSuivi.filter(function (d) { return d.statut === 'remplace'; }).forEach(function (d) {
+    const g = index[d.pro_id || 'inconnu'];
+    if (g) g.anciens.push(d);
+  });
+  return groupes.sort(function (a, b) {
+    return (b.items.some(actionDue) ? 1 : 0) - (a.items.some(actionDue) ? 1 : 0) || b.items.length - a.items.length;
+  });
+}
+function choisirVueDevis(v) { vueDevis = v; afficherDevisSuivi(); }
+
 function afficherDevisSuivi() {
   if (typeof ajouterOnglet === 'function') ajouterOnglet('devis', '📄 Devis', 'projets');
   const panneau = document.getElementById('panneau-devis');
@@ -183,13 +212,13 @@ function afficherDevisSuivi() {
   const aFaire = devisActuels().filter(actionDue).length;
   const pastille = document.getElementById('pastille-devis');
   if (pastille) { pastille.textContent = aFaire; pastille.classList.toggle('cache', !aFaire); }
-  const groupes = groupesDevis();
+  const groupes = vueDevis === 'artisan' ? groupesDevisArtisans() : groupesDevis();
   if (!filtreDevis) filtreDevis = aFaire ? 'a_faire' : 'en_cours';
   const test = (FILTRES_DEVIS.find(function (f) { return f[0] === filtreDevis; }) || FILTRES_DEVIS[FILTRES_DEVIS.length - 1])[2];
   const recherche = ((document.getElementById('recherche-devis') || {}).value || '').trim().toLowerCase();
   const liste = groupes.filter(test).filter(function (g) {
     if (!recherche) return true;
-    return [g.p.prenom, g.p.nom, g.p.telephone, g.p.email].concat(g.items.map(function (d) { return nomArtisan(d) + ' ' + typeProjetDevis(d) + ' ' + ((d.projet || {}).zone || ''); }))
+    return [g.p.prenom, g.p.nom, g.p.telephone, g.p.email, g.p.nom_entreprise].concat(g.items.map(function (d) { const pa = d.particulier || {}; return nomArtisan(d) + ' ' + (pa.prenom || '') + ' ' + (pa.nom || '') + ' ' + typeProjetDevis(d) + ' ' + ((d.projet || {}).zone || ''); }))
       .some(function (x) { return String(x || '').toLowerCase().indexOf(recherche) !== -1; });
   });
   // On garde ce qui est en cours de saisie si la liste se redessine
@@ -200,8 +229,11 @@ function afficherDevisSuivi() {
   });
   const focus = document.activeElement && document.activeElement.id === 'recherche-devis';
   panneau.innerHTML =
-    '<p class="aide">Tous les devis envoyés par les artisans, rangés par particulier (3 devis au plus chacun). Les relances J+2, J+7 et J+14 se proposent toutes seules, avec le SMS prêt : c\'est toi qui l\'envoies, puis tu cliques « ✓ Relance faite ». Rien ne part automatiquement.</p>' +
+    '<p class="aide">Tous les devis envoyés par les artisans, rangés par particulier (3 devis au plus chacun) ou par artisan (avec ses chiffres). Les relances J+2, J+7 et J+14 se proposent toutes seules, avec le SMS prêt : c\'est toi qui l\'envoies, puis tu cliques « ✓ Relance faite ». Rien ne part automatiquement.</p>' +
     blocChiffresDevis() +
+    '<div class="filtres" style="margin-bottom:12px;"><span style="font-size:0.82rem;font-weight:700;align-self:center;">Ranger :</span>' +
+      '<button type="button" class="filtre' + (vueDevis === 'particulier' ? ' actif' : '') + '" onclick="choisirVueDevis(\'particulier\')">🙋 Par particulier</button>' +
+      '<button type="button" class="filtre' + (vueDevis === 'artisan' ? ' actif' : '') + '" onclick="choisirVueDevis(\'artisan\')">🔨 Par artisan</button></div>' +
     '<input type="search" class="recherche" id="recherche-devis" autocomplete="off" placeholder="Rechercher un particulier, un artisan, un secteur…" oninput="afficherDevisSuivi()" value="' + albEchapper(recherche) + '">' +
     '<div class="filtres">' + FILTRES_DEVIS.map(function (f) {
       return '<button type="button" class="filtre' + (filtreDevis === f[0] ? ' actif' : '') + '" onclick="choisirFiltreDevis(\'' + f[0] + '\')">' + f[1] + ' <span class="nb">(' + groupes.filter(f[2]).length + ')</span></button>';
@@ -210,6 +242,7 @@ function afficherDevisSuivi() {
       const p = g.p;
       const items = filtreDevis === 'tous' || filtreDevis === 'en_cours' || filtreDevis === 'a_faire' ? g.items
         : g.items.filter(function (d) { return d.suivi === (filtreDevis === 'signes' ? 'signe' : 'perdu'); });
+      if (vueDevis === 'artisan') return blocArtisanDevis(g, items);
       return '<div class="proprio">' +
         '<div class="proprio-tete"><span class="badge-qui particulier">🙋 Particulier</span>' +
           '<span class="proprio-nom">' + albEchapper(((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Particulier') + '</span>' +
@@ -224,6 +257,25 @@ function afficherDevisSuivi() {
     ['dv-suivi-', 'dv-le-', 'dv-action-', 'dv-note-'].forEach(function (p, i) { const el = document.getElementById(p + id); if (el) el.value = saisies[id][i]; });
   });
   if (focus) { const r = document.getElementById('recherche-devis'); r.focus(); r.setSelectionRange(r.value.length, r.value.length); }
+}
+
+// Une carte par artisan : ses chiffres, puis ses devis (le particulier en titre)
+function blocArtisanDevis(g, items) {
+  const p = g.p, c = chiffresArtisan(g.items);
+  const num = String(p.telephone || '').replace(/[^0-9+]/g, '');
+  return '<div class="proprio pro">' +
+    '<div class="proprio-tete"><span class="badge-qui agent">🔨 Artisan</span>' +
+      '<span class="proprio-nom">' + albEchapper(g.nom) + '</span>' +
+      (p.nom_entreprise && ((p.prenom || '') + (p.nom || '')) ? '<span class="etiquette">' + albEchapper(((p.prenom || '') + ' ' + (p.nom || '')).trim()) + '</span>' : '') +
+      '<span class="compte">' + c.total + ' devis</span>' +
+      '<div class="proprio-coord">' + (num ? '<a href="tel:' + albEchapper(num) + '">📱 ' + albEchapper(p.telephone) + '</a>' : '') +
+        (p.email ? '<a href="mailto:' + albEchapper(p.email) + '">✉️ ' + albEchapper(p.email) + '</a>' : '') + '</div></div>' +
+    '<div class="etiquettes"><span class="etiquette or">💬 ' + c.enCours + ' en cours</span><span class="etiquette vert">✍️ ' + c.signes + ' signé' + (c.signes > 1 ? 's' : '') + '</span>' +
+      '<span class="etiquette">❌ ' + c.perdus + ' perdu' + (c.perdus > 1 ? 's' : '') + '</span><span class="etiquette vert">💶 ' + eurosCourts(c.montantSigne) + ' signés</span>' +
+      '<span class="etiquette">🎯 Taux de signature : ' + c.taux + '</span></div>' +
+    items.map(function (d) { return carteDevis(d, false, 'artisan'); }).join('') +
+    (g.anciens.length ? '<details class="historique" style="margin-top:8px;"><summary>🕘 Anciennes versions (' + g.anciens.length + ')</summary>' + g.anciens.map(function (d) { return carteDevis(d, true, 'artisan'); }).join('') + '</details>' : '') +
+  '</div>';
 }
 
 function choisirFiltreDevis(f) { filtreDevis = f; afficherDevisSuivi(); }
