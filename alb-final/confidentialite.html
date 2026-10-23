@@ -389,7 +389,7 @@
       <div class="date">Mise à jour : Octobre 2026</div>
 
       <h2>Qui sommes-nous ?</h2>
-      <p><strong>SAS ALB Sud Immobilier</strong> — SIRET : 13 007 706 800 018</p>
+      <p><strong>SASU ALB Sud Immobilier</strong> — SIRET : 13 007 706 800 018</p>
       <p><strong>Responsable :</strong> Jocelyne RIMLINGER</p>
       <p><strong>Contact :</strong> contact@albimmobilier.fr</p>
 
@@ -400,9 +400,14 @@
         <li>Votre adresse email</li>
         <li>Votre numéro de téléphone</li>
         <li>Votre ville</li>
-        <li>Pour les annonces : localité, type de bien, description, photos, prix, superficie</li>
-        <li>Pour les professionnels : numéro SIRET et papiers professionnels (ORIAS, carte professionnelle, assurances…)</li>
+        <li>Selon votre projet : votre profession, la région qui vous intéresse, le type de résidence, l'adresse du bien</li>
+        <li>Pour les annonces : localité, type de bien, description, photos, vidéos, prix, superficie</li>
+        <li>Pour les professionnels : entreprise, numéro SIRET et papiers professionnels (ORIAS, carte professionnelle, assurances…)</li>
         <li>Le suivi de vos mises en relation : vos réponses aux questions de suivi (où en est votre projet), les montants indiqués (travaux, prêt) et vos commentaires</li>
+        <li>Vos messages et vos avis échangés sur la plateforme</li>
+        <li>Nos échanges avec vous (appels, messages, notes de suivi)</li>
+        <li>Pour la facturation : votre identité, votre adresse de facturation et les factures émises</li>
+        <li>Si vous nous rencontrez lors d'un salon ou demandez à être rappelé sans créer de compte : vos coordonnées et votre métier</li>
       </ul>
 
       <h2>Pourquoi collectons-nous ces données ?</h2>
@@ -411,11 +416,19 @@
         <li>Vous créer un compte et vous permettre de vous connecter</li>
         <li>Vous envoyer des emails importants (confirmations, messages)</li>
         <li>Vous contacter par téléphone si nécessaire</li>
-        <li>Vous connecter avec les professionnels de notre réseau</li>
+        <li>Vous connecter avec les professionnels de notre réseau, ou avec les particuliers qu'un professionnel doit recontacter</li>
         <li>Faire le point chaque mois sur l'avancement de vos mises en relation et de vos annonces</li>
         <li>Vérifier que le professionnel et le particulier disent la même chose : si ce n'est pas le cas, Jocelyne vous appelle pour clarifier</li>
-        <li>Préparer la facturation des professionnels (vérifiée et validée à la main par Jocelyne)</li>
+        <li>Préparer la facturation des professionnels et des particuliers vendeurs (abonnement mensuel pour diffuser une annonce), vérifiée et validée à la main par Jocelyne</li>
         <li>Respecter les lois françaises en vigueur</li>
+      </ul>
+
+      <h2>Pourquoi la loi nous autorise à utiliser vos données</h2>
+      <ul>
+        <li><strong>Pour rendre le service que vous demandez :</strong> compte, mise en relation, annonce, abonnement et facturation.</li>
+        <li><strong>Avec votre accord :</strong> transmettre vos informations aux professionnels que vous choisissez, vous recontacter. Vous pouvez retirer cet accord à tout moment.</li>
+        <li><strong>Parce que la loi nous y oblige :</strong> conserver les factures et la comptabilité.</li>
+        <li><strong>Pour un intérêt légitime :</strong> vérifier que professionnel et particulier sont d'accord, assurer la sécurité de la plateforme, rappeler les personnes rencontrées lors d'un salon. Vous pouvez vous y opposer à tout moment.</li>
       </ul>
 
       <h2>Qui peut voir vos données ?</h2>
@@ -423,13 +436,15 @@
         <strong>Règle simple :</strong> Seule Jocelyne RIMLINGER peut décider de partager vos données avec quelqu'un d'autre. Jamais automatique.
       </div>
       <p><strong>Vos réponses au suivi restent confidentielles :</strong> le professionnel ne voit pas ce que répond le particulier, et le particulier ne voit pas ce que répond le professionnel. Seule Jocelyne voit les deux.</p>
-      <p><strong>Vos données JAMAIS publiques :</strong></p>
+      <p><strong>Si vous êtes particulier :</strong> vos informations ne sont transmises qu'aux professionnels que vous avez choisis, avec votre accord.</p>
+      <p><strong>Si vous êtes professionnel :</strong> lorsqu'un particulier doit être recontacté par vous, nous lui transmettons votre nom, votre téléphone, votre email et votre entreprise. C'est toujours Jocelyne qui décide de cet envoi, jamais de façon automatique.</p>
+      <p><strong>Jamais affichées sur le site :</strong></p>
       <ul>
         <li>Votre numéro de téléphone</li>
         <li>Votre email</li>
         <li>Votre adresse complète</li>
       </ul>
-      <p><strong>Vos données PARFOIS visibles</strong> (si vous êtes pro validé) :</p>
+      <p><strong>Vos données PARFOIS visibles sur le site</strong> (si vous êtes pro validé) :</p>
       <ul>
         <li>Votre prénom et nom</li>
         <li>Votre ville</li>
@@ -444,6 +459,7 @@
         <li><strong>Compte actif :</strong> Aussi longtemps que vous l'utilisez</li>
         <li><strong>Compte inactif :</strong> Suppression après 2 ans sans utilisation</li>
         <li><strong>Réponses au suivi des mises en relation :</strong> 3 ans après la fin de la mise en relation</li>
+        <li><strong>Personnes sans compte (rencontre en salon, demande de rappel) :</strong> 3 ans après le dernier contact</li>
         <li><strong>Factures et éléments qui ont servi à les établir :</strong> 10 ans (obligation légale)</li>
         <li><strong>Demande de suppression :</strong> Traitée sous 30 jours (sauf ce que la loi nous oblige à garder, comme les factures)</li>
       </ul>
@@ -451,16 +467,18 @@
       <h2>Nos partenaires techniques</h2>
       <p>Vos données sont stockées et traitées par :</p>
       <ul>
-        <li><strong>Supabase</strong> — hébergement sécurisé en Europe</li>
-        <li><strong>Brevo</strong> — envoi d'emails confirmés</li>
-        <li><strong>Netlify</strong> — hébergement du site</li>
-        <li><strong>Pennylane</strong> — logiciel de facturation (uniquement pour les professionnels facturés)</li>
+        <li><strong>Supabase</strong> — base de données, hébergée à Londres (Royaume-Uni), pays reconnu par la Commission européenne comme protégeant bien les données personnelles</li>
+        <li><strong>Brevo</strong> — envoi d'emails (société française)</li>
+        <li><strong>Netlify</strong> — hébergement du site (société américaine)</li>
+        <li><strong>Pennylane</strong> — logiciel de facturation, uniquement pour les personnes facturées (société française)</li>
       </ul>
-      <p>Tous ces partenaires respectent les normes de sécurité européennes.</p>
+      <p>Quand un partenaire est installé hors de l'Union européenne, nous nous assurons qu'il offre des garanties reconnues par la loi.</p>
+      <p>Les paiements se font par virement bancaire : nous ne vous demandons pas de numéro de carte bancaire.</p>
 
       <h2>Cookies et suivi</h2>
       <p>Nous n'utilisons <strong>pas Google Analytics</strong> ni aucun système de suivi comportemental.</p>
-      <p>Le seul cookie que nous utilisons est nécessaire pour vous identifier et vous maintenir connecté. Rien de plus.</p>
+      <p>Le seul élément enregistré sur votre appareil sert à vous identifier et à vous maintenir connecté. Rien de plus.</p>
+      <p>Pour afficher les polices de caractères du site, votre navigateur les demande à Google, qui reçoit alors l'adresse de connexion de votre appareil.</p>
 
       <h2>Quand on vous demande d'accepter quelque chose</h2>
       <p>Selon ce que vous faites sur ALB Immobilier, vous verrez différentes cases à cocher. Voici ce que chacune signifie :</p>
@@ -474,6 +492,9 @@
       <p><strong>✅ Quand vous simulez un budget ou un financement</strong></p>
       <p>Si vous cochez "Demander qu'un courtier me contacte", vous acceptez qu'un expert en financement vous aide. Si vous cochez "Partager mon résultat avec le vendeur", le vendeur verra votre budget.</p>
 
+      <p><strong>✅ Quand vous êtes professionnel</strong></p>
+      <p>Vous acceptez que votre nom, votre téléphone, votre email et votre entreprise soient transmis aux particuliers que vous devez recontacter.</p>
+
       <h2>Vos droits</h2>
       <p>Vous avez le droit de :</p>
       <ul>
@@ -481,8 +502,11 @@
         <li>Corriger vos données si elles sont inexactes</li>
         <li>Nous demander de supprimer vos données</li>
         <li>Récupérer vos données dans un format standard</li>
+        <li>Vous opposer à l'utilisation de vos données</li>
+        <li>Demander de limiter l'utilisation de vos données</li>
+        <li>Retirer à tout moment un accord que vous avez donné</li>
       </ul>
-      <p>Pour exercer ces droits : <strong>contact@albimmobilier.fr</strong></p>
+      <p>Pour exercer ces droits : <strong>contact@albimmobilier.fr</strong>. Nous vous répondons dans un délai d'un mois. Nous pouvons vous demander de confirmer votre identité.</p>
 
       <h2>Sécurité</h2>
       <p>Nous protégeons vos données par :</p>
@@ -494,11 +518,11 @@
       </ul>
 
       <h2>Problème de sécurité ?</h2>
-      <p>Si vos données sont compromises, nous vous préviendrons dans les 72 heures avec tous les détails.</p>
+      <p>Si vos données sont compromises et que cela présente un risque pour vous, nous vous préviendrons dans les meilleurs délais, avec tous les détails, et nous préviendrons la CNIL.</p>
 
-      <h2>Besoin de plus de détails ?</h2>
+      <h2>Besoin de plus de détails ou une réclamation ?</h2>
       <p>Contactez-nous : <strong>contact@albimmobilier.fr</strong></p>
-      <p>Si vous avez des questions sur vos droits, la CNIL peut aussi vous accompagner : <strong>www.cnil.fr</strong></p>
+      <p>Si vous pensez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (Commission nationale de l'informatique et des libertés) sur son site internet.</p>
     </div>
   </section>
 
@@ -558,8 +582,8 @@
       <div class="footer-col legal">
         <h5>Légal</h5>
         <p>
-          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
-          <a href="https://albimmobilier.fr/cgu">Conditions générales</a>
+          <a href="confidentialite.html">Politique de confidentialité</a><br>
+          <a href="cgu.html">Conditions générales</a>
         </p>
       </div>
       <div class="footer-col">
