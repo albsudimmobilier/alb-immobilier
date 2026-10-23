@@ -50,6 +50,10 @@
     .message { padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
     .cache { display: none !important; }
     .rgpd { background: #F4EEF6; border: 1px solid #E2D6E8; color: #4A4A47; font-size: 0.88rem; }
+    .infos { background: #FBF8F3; border: 1px solid #E8E6E1; }
+    .infos h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .infos p { font-size: 0.88rem; margin-bottom: 8px; }
+    .infos ul { font-size: 0.88rem; margin: 0 0 8px 20px; }
     @media (max-width: 560px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
     @media print {
       .bandeau, #zone-recherche, .actions, .rgpd { display: none !important; }
@@ -117,7 +121,16 @@
     'alb_renvois · remplacant_id': '↪️ Renvois reçus d\'un confrère',
     'alb_factures · profile_id': '💶 Factures',
     'alb_alertes · profile_id': '🔔 Notifications préparées pour lui',
-    'alb_desaccords · profile_id': '⚠️ Désaccords'
+    'alb_desaccords · profile_id': '⚠️ Désaccords',
+    'alb_carnet · contact': '📒 Fiche dans ton carnet de contacts',
+    'alb_contacts_salon · contact': '🎪 Rencontré lors d\'un salon',
+    'demandes_annonce_vendeur · contact': '🏡 Demandes d\'annonce faites avec ses coordonnées',
+    'demandes_accompagnement · contact': '🤝 Demandes d\'accompagnement faites avec ses coordonnées',
+    'demandes_contact · contact': '✉️ Demandes de contact faites avec ses coordonnées',
+    'crm_leads · contact': '📇 Fiche de suivi (prospect)',
+    'crm_pros · contact': '📇 Fiche de suivi (professionnel)',
+    'personnes · contact': '📇 Fiche personne',
+    'societes · contact': '📇 Fiche société'
   };
 
   // Les noms des informations, en français (les autres gardent leur nom technique)
@@ -133,7 +146,22 @@
     etape: 'Étape', relancer_le: 'À relancer le', titre: 'Titre', description: 'Description', prix: 'Prix', statut: 'Statut',
     type_bien: 'Type de bien', surface_m2: 'Surface (m²)', nb_pieces: 'Pièces', adresse: 'Adresse', message: 'Message',
     moment: 'Moment souhaité', traitee_le: 'Traitée le', note: 'Note', motif: 'Motif', suspendu_le: 'Suspendu le',
-    type: 'Type', expire_le: 'Expire le', utilise_le: 'Utilisé le', nouvel_email: 'Nouvelle adresse', contenu: 'Contenu'
+    type: 'Type', expire_le: 'Expire le', utilise_le: 'Utilisé le', nouvel_email: 'Nouvelle adresse', contenu: 'Contenu',
+    message_initial: 'Message de départ', status_disponibilite: 'Disponibilité', status_updated_at: 'Disponibilité mise à jour le',
+    bio: 'Présentation courte', particulier_type: 'Type de particulier', profession: 'Profession', region_interet: 'Région qui l\'intéresse',
+    depuis_combien_temps: 'Depuis combien de temps', type_residence: 'Type de résidence', adresse_bien: 'Adresse du bien',
+    adresse_complete: 'Adresse complète', email_verified: 'E-mail vérifié', accepte_avis: 'Accepte de recevoir des avis',
+    temps_reponse_moyen: 'Temps de réponse moyen', horaires_disponibilite: 'Horaires de disponibilité', disponibilites_rdv: 'Disponibilités pour un rendez-vous',
+    reseau_agence: 'Réseau ou agence', assurance_pro_num: 'N° d\'assurance professionnelle', assurance_pro: 'Assurance professionnelle',
+    modes_contact: 'Façons d\'être contacté', corps_metier: 'Métier', metiers_artisan: 'Métiers d\'artisan', artisan_autre: 'Autre métier d\'artisan',
+    type_client: 'Type de client', zones_intervention: 'Zones d\'intervention', video_bien_url: 'Vidéo du bien', annonce_photos: 'Photos de l\'annonce',
+    youtube_videos: 'Vidéos', disponibilites_vendeur: 'Disponibilités (vendeur)', disponibilites_pro: 'Disponibilités (pro)',
+    entreprise: 'Entreprise', metier: 'Métier', origine: 'D\'où vient le contact', journal: 'Notes et échanges', maj_le: 'Mis à jour le',
+    coordonnees: 'Coordonnées', test_gratuit: 'Test gratuit', salon: 'Salon', traite_le: 'Traité le', localisation: 'Lieu',
+    type_mission: 'Type de mission', budget: 'Budget', delai: 'Délai', mandat_exclusif_existant: 'Mandat exclusif en cours',
+    date_fin_mandat_existant: 'Fin du mandat en cours', titre_bien: 'Titre du bien', mobile: 'Mobile', adresse_complement: 'Complément d\'adresse',
+    pays: 'Pays', notes: 'Notes', source: 'Source', date_ajout: 'Ajouté le', derniere_relance: 'Dernière relance',
+    created_at: 'Créé le', updated_at: 'Mis à jour le', lue: 'Lue'
   };
 
   function echapper(t) { return albEchapper(t); }
@@ -155,6 +183,24 @@
   function montrerErreur(texte) {
     const z = document.getElementById('zone-message');
     z.textContent = texte; z.classList.remove('cache');
+  }
+
+  // Les informations qui doivent accompagner toute copie de dossier (elles s'impriment avec le PDF)
+  function blocInfos() {
+    return '<div class="carte infos">' +
+      '<h3>ℹ️ Informations sur l\'utilisation de vos données</h3>' +
+      '<p><strong>Qui garde vos données :</strong> ALB Sud Immobilier (Jocelyne Rimlinger), contact@albimmobilier.fr.</p>' +
+      '<p><strong>À quoi elles servent :</strong> créer et gérer votre compte, vous mettre en relation avec les professionnels que vous choisissez, suivre l\'avancement de vos projets et de vos annonces, préparer la facturation des professionnels, et respecter les obligations légales.</p>' +
+      '<p><strong>D\'où elles viennent :</strong> de vous (formulaires du site, échanges par téléphone, e-mail ou lors d\'un salon) et des suites données à vos projets.</p>' +
+      '<p><strong>Qui peut les recevoir :</strong></p>' +
+      '<ul>' +
+        '<li>les professionnels que vous avez choisis, uniquement avec votre accord ;</li>' +
+        '<li>nos prestataires techniques : Supabase (base de données, hébergée à Londres, Royaume-Uni), Brevo (envoi d\'e-mails), Netlify (hébergement du site), Pennylane (facturation, uniquement pour les professionnels facturés).</li>' +
+      '</ul>' +
+      '<p><strong>Combien de temps :</strong> tant que le compte est actif ; suppression après 2 ans sans utilisation ; réponses au suivi des mises en relation : 3 ans après la fin de la mise en relation ; factures : 10 ans (obligation légale).</p>' +
+      '<p><strong>Vos droits :</strong> accéder à vos données (c\'est ce document), les corriger, les faire supprimer, les récupérer, vous opposer à leur utilisation, demander d\'en limiter l\'usage, et retirer à tout moment un accord que vous avez donné. Pour cela : contact@albimmobilier.fr.</p>' +
+      '<p><strong>Réclamation :</strong> si vous pensez que vos droits ne sont pas respectés, vous pouvez écrire à la CNIL (www.cnil.fr).</p>' +
+    '</div>';
   }
 
   async function demarrer() {
@@ -223,7 +269,8 @@
         const lignes = sections[k];
         return '<div class="carte section"><h3>' + echapper(RUBRIQUES[k] || k) + ' <span class="nb">(' + lignes.length + ')</span></h3>' +
           lignes.map(function (l) { return '<div class="ligne">' + fiche(l) + '</div>'; }).join('') + '</div>';
-      }).join('') : '<div class="carte"><p class="vide">Aucune autre information enregistrée pour cette personne.</p></div>');
+      }).join('') : '<div class="carte"><p class="vide">Aucune autre information enregistrée pour cette personne.</p></div>') +
+      blocInfos();
     document.getElementById('zone-recherche').classList.add('cache');
     window.scrollTo(0, 0);
   }
