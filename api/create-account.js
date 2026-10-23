@@ -120,7 +120,7 @@ export default async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
-    const { prenom, nom, email, telephone, siret, zones, profil, profession } = body;
+    const { prenom, nom, email, telephone, siret, zones, profil, profession, accepte_transmission } = body;
 
     console.log('[ALB DEBUG] Inscription reçue:', { prenom, nom, siret, profil, email });
 
@@ -132,6 +132,11 @@ export default async (req) => {
 
     if (isPro && !siret) {
       return json({ error: 'Le SIRET est obligatoire pour les professionnels' }, 400);
+    }
+
+    // Un professionnel doit accepter que ses coordonnées soient transmises aux particuliers à recontacter
+    if (isPro && accepte_transmission !== true) {
+      return json({ error: 'Vous devez accepter la transmission de vos coordonnées aux particuliers que vous devez recontacter' }, 400);
     }
 
     const { data: existingProfile, error: existingError } = await supabase
@@ -185,6 +190,11 @@ export default async (req) => {
       statut_verifie,
       zone_intervention: zones ? [zones] : null
     };
+
+    if (isPro) {
+      // Preuve de l'accord du professionnel (date et heure)
+      profileData.accepte_transmission_le = new Date().toISOString();
+    }
 
     if (isPro && (profil === 'agent' || profil === 'mandataire')) {
       profileData.sous_role_immo = profil;

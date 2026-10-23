@@ -347,8 +347,18 @@
             placeholder="Draguignan, Var"
           >
         </div>
+
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="accepte-transmission"
+          >
+          <label for="accepte-transmission">
+            J'accepte que mon nom, mon téléphone, mon e-mail et mon entreprise soient transmis aux particuliers que je dois recontacter. ALB Sud Immobilier décide de chaque envoi, jamais de façon automatique.
+          </label>
+        </div>
       </div>
-      
+
       <div class="checkbox-group">
         <input 
           type="checkbox" 
@@ -402,13 +412,17 @@
     const profession = document.getElementById('profession').value;
     const proFields = document.getElementById('pro-fields');
     const siretField = document.getElementById('siret');
-    
+    const transmissionField = document.getElementById('accepte-transmission');
+
     if (profession === 'agent' || profession === 'courtier' || profession === 'artisan') {
       proFields.classList.remove('hidden');
       siretField.required = true;
+      transmissionField.required = true;
     } else {
       proFields.classList.add('hidden');
       siretField.required = false;
+      transmissionField.required = false;
+      transmissionField.checked = false;
     }
   }
   
@@ -470,7 +484,9 @@
     const profession = document.getElementById('profession').value;
     const siret = document.getElementById('siret').value || null;
     const zones = document.getElementById('zones').value || null;
-    
+    const estPro = (profession === 'agent' || profession === 'courtier' || profession === 'artisan');
+    const accepteTransmission = estPro && document.getElementById('accepte-transmission').checked;
+
     const errorEl = document.getElementById('error-inscription');
     const successEl = document.getElementById('success-inscription');
     const loadingEl = document.getElementById('loading-inscription');
@@ -493,6 +509,7 @@
           siret,
           zones,
           profil: profession,
+          accepte_transmission: accepteTransmission,
         }),
       });
       
