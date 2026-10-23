@@ -23,6 +23,40 @@ let agenda = { rdv: [], rappels: [] };
 let agendaPeriode = 30;        // nombre de jours à venir affichés (0 = tout)
 let agendaDatesSite = true;    // afficher aussi les dates du site
 let agendaFormulaire = null;   // null, 'nouveau' ou l'id du rendez-vous en cours de modification
+let agendaTheme = '';          // thème affiché ('' = tous les thèmes)
+// Les thèmes de l'agenda : ce qu'une fondatrice a à gérer (emoji + couleur)
+const THEMES_AGENDA = {
+  'Pros': { e: '🤝', c: '#1E88E5' },
+  'Particuliers': { e: '🏡', c: '#D81B60' },
+  'Réseau et prospection': { e: '🌱', c: '#C78A00' },
+  'Compta et factures': { e: '🧾', c: '#2E7D32' },
+  'Banque et trésorerie': { e: '🏦', c: '#00838F' },
+  'TVA et impôts': { e: '🏛️', c: '#827717' },
+  'Juridique et administratif': { e: '⚖️', c: '#5E35B1' },
+  'Assurances': { e: '🛡️', c: '#3949AB' },
+  'Site ALB Immobilier': { e: '💻', c: '#546E7A' },
+  'Communication et réseaux sociaux': { e: '📣', c: '#EC407A' },
+  'Accompagnement et formation': { e: '🎓', c: '#7E57C2' },
+  'Organisation et perso': { e: '🗂️', c: '#78909C' }
+};
+// Pour une tâche sans thème : on devine d'après le titre
+const MOTS_THEMES = [
+  ['TVA et impôts', /(tva|impôt|impot|cfe|urssaf)/i],
+  ['Compta et factures', /(pennylane|factur|compta|advyse|justificatif|fournisseur)/i],
+  ['Banque et trésorerie', /(qonto|banque|rib|trésorerie|virement|prélèvement|sepa)/i],
+  ['Assurances', /(assurance|rc pro|mutuelle|prévoyance)/i],
+  ['Juridique et administratif', /(juriste|avocat|contrat|kbis|statuts|rgpd|cgv|cgu|médiateur|greffe|charte)/i],
+  ['Site ALB Immobilier', /(site|netlify|supabase|github|brevo|plateforme)/i],
+  ['Communication et réseaux sociaux', /(post|linkedin|instagram|facebook|vidéo|video|flyer|publication)/i],
+  ['Réseau et prospection', /(notaire|bni|issole|réseau|salon|rent|café pro|afterwork|prospect)/i],
+  ['Accompagnement et formation', /(scale ?lab|coach|formation|masterclass|webinaire|mentor)/i],
+  ['Pros', /(courtier|artisan|agent|mandataire|pros?\b)/i]
+];
+function themeDe(r) {
+  if (r.theme && THEMES_AGENDA[r.theme]) return r.theme;
+  const m = MOTS_THEMES.find(function (x) { return x[1].test((r.titre || '') + ' ' + (r.note || '')); });
+  return m ? m[0] : 'Organisation et perso';
+}
 ERREURS.TITRE_MANQUANT = 'Écris un titre (ex. : « Café avec Pauline »).';
 ERREURS.RDV_DATE_MANQUANTE = 'Choisis la date du rendez-vous.';
 ERREURS.RDV_INTROUVABLE = 'Ce rendez-vous n\'existe plus.';
@@ -65,40 +99,43 @@ function elementsAgenda() {
   const auj = jourIso(0);
   const liste = [];
   (agenda.rdv || []).forEach(function (r) {
-    liste.push({ le: r.le, heure: r.heure, emoji: '📌', titre: r.titre, detail: [r.lieu ? '📍 ' + r.lieu : '', r.note || ''].filter(Boolean).join(' · '), rdv: r });
+    // Un rendez-vous ou une tâche pas fait dont la date est passée remonte à aujourd'hui, en retard
+    const enRetard = !r.fait_le && r.le < auj;
+    liste.push({ le: enRetard ? auj : r.le, heure: enRetard ? '' : r.heure, emoji: r.genre === 'tache' ? '📝' : '📌', titre: r.titre, theme: themeDe(r), retard: enRetard ? r.le : '',
+      detail: [r.lieu ? '📍 ' + r.lieu : '', r.note || ''].filter(Boolean).join(' · '), rdv: r });
   });
   if (!agendaDatesSite) return liste;
   (agenda.rappels || []).forEach(function (r) {
-    liste.push({ le: r.le < auj ? auj : r.le, emoji: '🔔', titre: 'Rappel : ' + r.titre, detail: r.detail || '', onglet: 'accueil' });
+    liste.push({ le: r.le < auj ? auj : r.le, emoji: '🔔', titre: 'Rappel : ' + r.titre, detail: r.detail || '', onglet: 'accueil', theme: themeDe(r) });
   });
   (typeof visites !== 'undefined' ? visites : []).forEach(function (v) {
     if (v.statut !== 'acceptee' || !v.creneau_date) return;
     const a = v.annonce || {}, b = v.acheteur || {};
-    liste.push({ le: v.creneau_date, heure: v.creneau_heure, emoji: '🏡', titre: 'Visite « ' + (a.titre || 'bien') + ' »',
+    liste.push({ le: v.creneau_date, heure: v.creneau_heure, emoji: '🏡', titre: 'Visite « ' + (a.titre || 'bien') + ' »', theme: 'Particuliers',
       detail: [nomAgenda(b) !== 'un membre' ? 'Visiteur : ' + nomAgenda(b) : '', a.ville || ''].filter(Boolean).join(' · '), onglet: 'visites' });
   });
   (typeof membres !== 'undefined' ? membres : []).forEach(function (m) {
     const s = (typeof suiviMembres !== 'undefined' && suiviMembres[m.id]) || {};
     if (!s.relancer_le || s.etape === 'ok' || s.etape === 'pause' || (typeof estSuspendu === 'function' && estSuspendu(m))) return;
     const enRetard = s.relancer_le < auj;
-    liste.push({ le: enRetard ? auj : s.relancer_le, emoji: '⏰', titre: 'Relancer ' + nomAgenda(m),
+    liste.push({ le: enRetard ? auj : s.relancer_le, emoji: '⏰', titre: 'Relancer ' + nomAgenda(m), theme: m.role && m.role !== 'particulier' ? 'Pros' : 'Particuliers', retard: enRetard ? s.relancer_le : '',
       detail: enRetard ? 'Prévu le ' + dateLisible(s.relancer_le + 'T12:00:00') + ' (en retard)' : (m.telephone || ''), onglet: 'membres' });
   });
   (typeof papiersPros !== 'undefined' ? papiersPros : []).forEach(function (x) {
     if (!x.expire || !x.expire_le || x.statut === 'refuse' || x.expire_le < auj) return;
-    liste.push({ le: x.expire_le, emoji: '📄', titre: 'Fin de validité : ' + String(x.libelle || 'papier').replace(/\s*\(.*\)\s*$/, ''), detail: x.pro || '', onglet: 'valides' });
+    liste.push({ le: x.expire_le, emoji: '📄', theme: 'Pros', titre: 'Fin de validité : ' + String(x.libelle || 'papier').replace(/\s*\(.*\)\s*$/, ''), detail: x.pro || '', onglet: 'valides' });
   });
   (typeof rappelsMandat !== 'undefined' ? rappelsMandat : []).forEach(function (r) {
     if (!r.fin_mandat) return;
     const date = String(r.fin_mandat).slice(0, 10);
-    liste.push({ le: date < auj ? auj : date, emoji: '🔔', titre: 'Fin du mandat exclusif de ' + nomAgenda(r),
+    liste.push({ le: date < auj ? auj : date, emoji: '🔔', theme: 'Particuliers', titre: 'Fin du mandat exclusif de ' + nomAgenda(r),
       detail: (date < auj ? 'Terminé le ' + dateLisible(date + 'T12:00:00') + ' : c\'est le moment d\'appeler. ' : '') + (r.telephone || ''), onglet: 'annonces' });
   });
   // Les contacts du carnet à relancer (ceux en retard apparaissent aujourd'hui)
   (typeof carnet !== 'undefined' ? carnet : []).forEach(function (c) {
     if (!c.relancer_le || c.etape === 'inscrit' || c.etape === 'pas_interesse') return;
     const enRetard = c.relancer_le < auj;
-    liste.push({ le: enRetard ? auj : c.relancer_le, emoji: '📇', titre: 'Relancer ' + nomContact(c) + (c.metier ? ' (' + (METIERS_CARNET[c.metier] || c.metier).replace(/^\S+\s/, '') + ')' : ''),
+    liste.push({ le: enRetard ? auj : c.relancer_le, emoji: '📇', theme: 'Réseau et prospection', retard: enRetard ? c.relancer_le : '', titre: 'Relancer ' + nomContact(c) + (c.metier ? ' (' + (METIERS_CARNET[c.metier] || c.metier).replace(/^\S+\s/, '') + ')' : ''),
       detail: [enRetard ? 'Prévu le ' + dateLisible(c.relancer_le + 'T12:00:00') + ' (en retard)' : '', c.telephone || ''].filter(Boolean).join(' · '), onglet: 'carnet' });
   });
   return liste;
@@ -106,7 +143,7 @@ function elementsAgenda() {
 
 function rdvDuJour() {
   const auj = jourIso(0);
-  return (agenda.rdv || []).filter(function (r) { return r.le === auj && !r.fait_le; });
+  return (agenda.rdv || []).filter(function (r) { return r.le <= auj && !r.fait_le; });
 }
 
 function titreJour(iso) {
@@ -120,9 +157,13 @@ function titreJour(iso) {
 function ligneAgenda(e) {
   const r = e.rdv;
   const fait = r && r.fait_le;
-  return '<div class="ligne-info" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed #E8E6E1;' + (fait ? 'opacity:.6;' : '') + '">' +
+  const t = THEMES_AGENDA[e.theme] || THEMES_AGENDA['Organisation et perso'];
+  return '<div class="ligne-info" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0 8px 8px;border-top:1px dashed #E8E6E1;border-left:4px solid ' + (e.retard && !fait ? '#C62828' : t.c) + ';' + (fait ? 'opacity:.6;' : '') + '">' +
     '<span style="min-width:48px;font-weight:700;color:#5A3A6A;">' + (heureCourte(e.heure) || '—') + '</span>' +
     '<span style="flex:1;min-width:0;">' + e.emoji + ' <strong' + (fait ? ' style="text-decoration:line-through;"' : '') + '>' + albEchapper(e.titre) + '</strong>' +
+      ' <span class="etiquette" style="background:transparent;color:' + t.c + ';border:1px solid ' + t.c + ';">' + t.e + ' ' + albEchapper(e.theme || 'Organisation et perso') + '</span>' +
+      (e.retard && !fait ? ' <span class="etiquette rouge">en retard depuis le ' + albEchapper(dateLisible(e.retard + 'T12:00:00')) + '</span>' : '') +
+      (r && r.genre === 'tache' ? ' <span class="etiquette or">tâche</span>' : '') +
       (r ? '' : ' <span class="etiquette">site</span>') +
       (e.detail ? '<br><span style="color:#6a6a65;overflow-wrap:anywhere;">' + albEchapper(e.detail) + '</span>' : '') +
       (r ? '<span class="actions" style="margin-top:6px;">' +
@@ -145,14 +186,18 @@ function blocJours(liste) {
 
 function formulaireAgenda() {
   const r = agendaFormulaire && agendaFormulaire !== 'nouveau' ? (agenda.rdv || []).find(function (x) { return x.id === agendaFormulaire; }) || {} : {};
-  return '<div class="decision" id="agenda-formulaire"><div class="decision-titre">' + (r.id ? '✏️ Modifier le rendez-vous' : '➕ Nouveau rendez-vous') + '</div>' +
+  const genre = r.genre || 'rdv';
+  return '<div class="decision" id="agenda-formulaire"><div class="decision-titre">' + (r.id ? '✏️ Modifier' : '➕ Nouveau rendez-vous ou tâche') + '</div>' +
     '<div class="grille">' +
+      '<label class="petit-champ">C\'est<select id="ag-genre"><option value="rdv"' + (genre === 'rdv' ? ' selected' : '') + '>📌 Un rendez-vous</option><option value="tache"' + (genre === 'tache' ? ' selected' : '') + '>📝 Une tâche à faire</option></select></label>' +
+      '<label class="petit-champ">Thème<select id="ag-theme"><option value="">Automatique (d\'après le titre)</option>' + Object.keys(THEMES_AGENDA).map(function (k) { return '<option value="' + albEchapper(k) + '"' + (r.theme === k ? ' selected' : '') + '>' + THEMES_AGENDA[k].e + ' ' + albEchapper(k) + '</option>'; }).join('') + '</select></label>' +
       '<label class="petit-champ">Date<input type="date" id="ag-le" value="' + albEchapper(r.le || jourIso(0)) + '"></label>' +
       '<label class="petit-champ">Heure (facultatif)<input type="time" id="ag-heure" value="' + albEchapper(String(r.heure || '').slice(0, 5)) + '"></label>' +
       '<label class="petit-champ">Quoi ?<input type="text" id="ag-titre" maxlength="200" placeholder="Ex. : Café avec Pauline, appeler un courtier…" value="' + albEchapper(r.titre || '') + '"></label>' +
       '<label class="petit-champ">Où ? (facultatif)<input type="text" id="ag-lieu" maxlength="200" placeholder="Ex. : Saint-Maximin, en visio…" value="' + albEchapper(r.lieu || '') + '"></label>' +
     '</div>' +
     '<label class="petit-champ" style="margin-top:8px;">Note (facultatif)<textarea id="ag-note" maxlength="1000" style="min-height:60px;">' + albEchapper(r.note || '') + '</textarea></label>' +
+    '<p class="aide" style="margin-top:6px;">Si tu ne coches pas « fait », il remonte tout seul à aujourd\'hui, en rouge « en retard », jusqu\'à ce que tu le coches.</p>' +
     '<div class="actions"><button type="button" class="bouton vert" onclick="agendaEnregistrer(this)">💾 Enregistrer</button>' +
     '<button type="button" class="bouton discret" onclick="agendaFermer()">Annuler</button></div></div>';
 }
@@ -163,9 +208,14 @@ function afficherAgenda() {
   if (!panneau) return;
   const auj = jourIso(0);
   const fin = agendaPeriode ? jourIso(agendaPeriode) : '9999-12-31';
-  const tout = elementsAgenda();
+  const toutSansFiltre = elementsAgenda();
+  const tout = toutSansFiltre.filter(function (e) { return !agendaTheme || e.theme === agendaTheme; });
   const aVenir = tout.filter(function (e) { return e.le >= auj && e.le <= fin; });
-  const passes = tout.filter(function (e) { return e.le < auj && e.rdv; }).reverse();
+  const passes = tout.filter(function (e) { return e.le < auj && e.rdv && e.rdv.fait_le; }).reverse();
+  const nbRetard = toutSansFiltre.filter(function (e) { return e.retard && !(e.rdv && e.rdv.fait_le); }).length;
+  const compteTheme = function (k) { return toutSansFiltre.filter(function (e) { return e.theme === k && e.le >= auj && e.le <= fin; }).length; };
+  const filtreThemes = '<select onchange="agendaTheme=this.value; afficherAgenda();" style="width:auto;"><option value="">Tous les thèmes</option>' +
+    Object.keys(THEMES_AGENDA).map(function (k) { const n = compteTheme(k); return (n || agendaTheme === k) ? '<option value="' + albEchapper(k) + '"' + (agendaTheme === k ? ' selected' : '') + '>' + THEMES_AGENDA[k].e + ' ' + albEchapper(k) + ' (' + n + ')</option>' : ''; }).join('') + '</select>';
   const nbAuj = rdvDuJour().length;
   const pastille = document.getElementById('pastille-agenda');
   if (pastille) { pastille.textContent = nbAuj; pastille.classList.toggle('cache', !nbAuj); }
@@ -173,20 +223,22 @@ function afficherAgenda() {
     return '<button type="button" class="bouton ' + (agendaPeriode === jours ? '' : 'discret') + '" onclick="agendaChoisirPeriode(' + jours + ')">' + texte + '</button>';
   };
   // On garde ce qui est en cours de saisie si la liste se redessine
-  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note'].map(function (id) { return document.getElementById(id).value; }) : null;
+  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme'].map(function (id) { return document.getElementById(id).value; }) : null;
   panneau.innerHTML =
-    '<p class="aide">Tes rendez-vous à toi (📌), et les dates du site ajoutées toutes seules (visites confirmées, membres à relancer, fins de validité, fins de mandat, rappels). Rien n\'est envoyé à personne : c\'est ton agenda.</p>' +
+    '<p class="aide">Tes rendez-vous (📌) et tes tâches (📝), et les dates du site ajoutées toutes seules (visites confirmées, membres à relancer, fins de validité, fins de mandat, rappels). Rien n\'est envoyé à personne : c\'est ton agenda.</p>' +
     '<div class="actions" style="margin-top:0;">' +
-      '<button type="button" class="bouton vert" onclick="agendaNouveau()">' + (agendaFormulaire ? '✖ Fermer' : '➕ Ajouter un rendez-vous') + '</button>' +
+      '<button type="button" class="bouton vert" onclick="agendaNouveau()">' + (agendaFormulaire ? '✖ Fermer' : '➕ Ajouter un rendez-vous ou une tâche') + '</button>' +
+      (nbRetard ? '<span class="etiquette rouge" style="align-self:center;">⚠️ ' + nbRetard + ' en retard</span>' : '') +
     '</div>' +
     (agendaFormulaire ? formulaireAgenda() : '') +
     '<div class="actions">' + choix(7, '7 jours') + choix(30, '30 jours') + choix(90, '3 mois') + choix(0, 'Tout') +
       '<label style="display:flex;gap:6px;align-items:center;margin-left:6px;"><input type="checkbox" style="width:auto;flex:none;"' + (agendaDatesSite ? ' checked' : '') + ' onchange="agendaDatesSite=this.checked; afficherAgenda();"> Dates du site</label>' +
+      filtreThemes +
     '</div>' +
     (aVenir.length ? blocJours(aVenir) : '<div class="vide" style="margin-top:10px;">Rien de prévu sur cette période. 🌿</div>') +
     (passes.length ? '<details class="historique" style="margin-top:12px;"><summary>📜 Rendez-vous passés (30 derniers jours)</summary>' + blocJours(passes) + '</details>' : '');
   if (enCours && document.getElementById('agenda-formulaire')) {
-    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
+    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
   }
 }
 
@@ -197,7 +249,7 @@ function agendaFermer() { agendaFormulaire = null; afficherAgenda(); }
 
 async function agendaEnregistrer(bouton) {
   const v = function (id) { return document.getElementById(id).value.trim(); };
-  const rdv = { le: v('ag-le'), heure: v('ag-heure'), titre: v('ag-titre'), lieu: v('ag-lieu'), note: v('ag-note') };
+  const rdv = { le: v('ag-le'), heure: v('ag-heure'), titre: v('ag-titre'), lieu: v('ag-lieu'), note: v('ag-note'), genre: v('ag-genre') || 'rdv', theme: v('ag-theme') };
   if (!rdv.titre) { afficherMessage('message-general', 'erreur', ERREURS.TITRE_MANQUANT); return; }
   if (!rdv.le) { afficherMessage('message-general', 'erreur', ERREURS.RDV_DATE_MANQUANTE); return; }
   bouton.disabled = true;
@@ -208,7 +260,7 @@ async function agendaEnregistrer(bouton) {
   await chargerAgenda();
   afficherAgenda();
   afficherAFaire();
-  afficherMessage('message-general', 'succes', 'Rendez-vous enregistré ✓');
+  afficherMessage('message-general', 'succes', (rdv.genre === 'tache' ? 'Tâche' : 'Rendez-vous') + ' enregistré ✓');
 }
 
 async function agendaFait(id, fait, bouton) {
@@ -237,7 +289,7 @@ async function agendaRetirer(id, bouton) {
 // « À faire aujourd'hui » : tout en haut, les rendez-vous du jour
 LIGNES_A_FAIRE.unshift({
   calcul: function () { return rdvDuJour().length; },
-  un: 'rendez-vous aujourd\'hui dans ton agenda', plusieurs: 'rendez-vous aujourd\'hui dans ton agenda', emoji: '📅', onglet: 'agenda'
+  un: 'chose à faire aujourd\'hui (ou en retard) dans ton agenda', plusieurs: 'choses à faire aujourd\'hui (ou en retard) dans ton agenda', emoji: '📅', onglet: 'agenda'
 });
 
 preparerOngletAgenda();
