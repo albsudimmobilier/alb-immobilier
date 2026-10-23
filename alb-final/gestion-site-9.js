@@ -24,6 +24,8 @@ let agendaPeriode = 30;        // nombre de jours à venir affichés (0 = tout)
 let agendaDatesSite = true;    // afficher aussi les dates du site
 let agendaFormulaire = null;   // null, 'nouveau' ou l'id du rendez-vous en cours de modification
 let agendaTheme = '';          // thème affiché ('' = tous les thèmes)
+let agendaFaitOuvert = null;   // id de l'élément dont on est en train de cocher « fait » (zone de note ouverte)
+const REPETITIONS = { semaine: 'chaque semaine', mois: 'chaque mois', an: 'chaque année' };
 // Les thèmes de l'agenda : ce qu'une fondatrice a à gérer (emoji + couleur)
 const THEMES_AGENDA = {
   'Pros': { e: '🤝', c: '#1E88E5' },
@@ -164,10 +166,18 @@ function ligneAgenda(e) {
       ' <span class="etiquette" style="background:transparent;color:' + t.c + ';border:1px solid ' + t.c + ';">' + t.e + ' ' + albEchapper(e.theme || 'Organisation et perso') + '</span>' +
       (e.retard && !fait ? ' <span class="etiquette rouge">en retard depuis le ' + albEchapper(dateLisible(e.retard + 'T12:00:00')) + '</span>' : '') +
       (r && r.genre === 'tache' ? ' <span class="etiquette or">tâche</span>' : '') +
+      (r && REPETITIONS[r.repete] ? ' <span class="etiquette">🔁 ' + REPETITIONS[r.repete] + '</span>' : '') +
       (r ? '' : ' <span class="etiquette">site</span>') +
       (e.detail ? '<br><span style="color:#6a6a65;overflow-wrap:anywhere;">' + albEchapper(e.detail) + '</span>' : '') +
+      (fait ? '<br><span style="color:#2E7D32;overflow-wrap:anywhere;">✓ Fait le ' + albEchapper(dateLisible(r.fait_le)) + (r.note_fait ? ' · 📝 ' + albEchapper(r.note_fait) : '') + '</span>' : '') +
+      (r && agendaFaitOuvert === r.id && !fait ?
+        '<span class="decision" style="display:block;margin-top:6px;"><label class="petit-champ">Une note ? (facultatif)<textarea id="ag-note-fait" maxlength="1000" style="min-height:50px;" placeholder="Ex. : rappelé, il me renvoie son devis lundi"></textarea></label>' +
+          (REPETITIONS[r.repete] ? '<span class="aide" style="display:block;">🔁 Le prochain (' + REPETITIONS[r.repete] + ') se mettra tout seul dans ton agenda.</span>' : '') +
+          '<span class="actions" style="margin-top:6px;"><button type="button" class="bouton vert" onclick="agendaFait(\'' + r.id + '\', true, this)">✓ Valider « fait »</button>' +
+          '<button type="button" class="bouton discret" onclick="agendaFaitOuvert=null; afficherAgenda();">Annuler</button></span></span>' : '') +
       (r ? '<span class="actions" style="margin-top:6px;">' +
-          '<button type="button" class="bouton discret" onclick="agendaFait(\'' + r.id + '\', ' + (fait ? 'false' : 'true') + ', this)">' + (fait ? 'Annuler « fait »' : '✓ Fait') + '</button>' +
+          (fait ? '<button type="button" class="bouton discret" onclick="agendaFait(\'' + r.id + '\', false, this)">Annuler « fait »</button>'
+                : (agendaFaitOuvert === r.id ? '' : '<button type="button" class="bouton discret" onclick="agendaOuvrirFait(\'' + r.id + '\')">✓ Fait</button>')) +
           '<button type="button" class="bouton discret" onclick="agendaModifier(\'' + r.id + '\')">✏️ Modifier</button>' +
           '<button type="button" class="bouton discret" onclick="agendaRetirer(\'' + r.id + '\', this)">🗑️ Retirer</button></span>'
         : '<br><button type="button" class="bouton discret" style="margin-top:4px;" onclick="afficherOnglet(\'' + e.onglet + '\'); window.scrollTo({ top: 0, behavior: \'smooth\' });">Voir →</button>') +
@@ -194,6 +204,7 @@ function formulaireAgenda() {
       '<label class="petit-champ">Date<input type="date" id="ag-le" value="' + albEchapper(r.le || jourIso(0)) + '"></label>' +
       '<label class="petit-champ">Heure (facultatif)<input type="time" id="ag-heure" value="' + albEchapper(String(r.heure || '').slice(0, 5)) + '"></label>' +
       '<label class="petit-champ">Quoi ?<input type="text" id="ag-titre" maxlength="200" placeholder="Ex. : Café avec Pauline, appeler un courtier…" value="' + albEchapper(r.titre || '') + '"></label>' +
+      '<label class="petit-champ">Répéter<select id="ag-repete"><option value="">Non, une seule fois</option>' + Object.keys(REPETITIONS).map(function (k) { return '<option value="' + k + '"' + (r.repete === k ? ' selected' : '') + '>🔁 ' + REPETITIONS[k].charAt(0).toUpperCase() + REPETITIONS[k].slice(1) + '</option>'; }).join('') + '</select></label>' +
       '<label class="petit-champ">Où ? (facultatif)<input type="text" id="ag-lieu" maxlength="200" placeholder="Ex. : Saint-Maximin, en visio…" value="' + albEchapper(r.lieu || '') + '"></label>' +
     '</div>' +
     '<label class="petit-champ" style="margin-top:8px;">Note (facultatif)<textarea id="ag-note" maxlength="1000" style="min-height:60px;">' + albEchapper(r.note || '') + '</textarea></label>' +
@@ -223,7 +234,8 @@ function afficherAgenda() {
     return '<button type="button" class="bouton ' + (agendaPeriode === jours ? '' : 'discret') + '" onclick="agendaChoisirPeriode(' + jours + ')">' + texte + '</button>';
   };
   // On garde ce qui est en cours de saisie si la liste se redessine
-  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme'].map(function (id) { return document.getElementById(id).value; }) : null;
+  const noteFaitEnCours = (document.getElementById('ag-note-fait') || {}).value || '';
+  const enCours = document.getElementById('agenda-formulaire') ? ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete'].map(function (id) { return document.getElementById(id).value; }) : null;
   panneau.innerHTML =
     '<p class="aide">Tes rendez-vous (📌) et tes tâches (📝), et les dates du site ajoutées toutes seules (visites confirmées, membres à relancer, fins de validité, fins de mandat, rappels). Rien n\'est envoyé à personne : c\'est ton agenda.</p>' +
     '<div class="actions" style="margin-top:0;">' +
@@ -238,8 +250,9 @@ function afficherAgenda() {
     (aVenir.length ? blocJours(aVenir) : '<div class="vide" style="margin-top:10px;">Rien de prévu sur cette période. 🌿</div>') +
     (passes.length ? '<details class="historique" style="margin-top:12px;"><summary>📜 Rendez-vous passés (30 derniers jours)</summary>' + blocJours(passes) + '</details>' : '');
   if (enCours && document.getElementById('agenda-formulaire')) {
-    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
+    ['ag-le', 'ag-heure', 'ag-titre', 'ag-lieu', 'ag-note', 'ag-genre', 'ag-theme', 'ag-repete'].forEach(function (id, i) { document.getElementById(id).value = enCours[i]; });
   }
+  if (noteFaitEnCours && document.getElementById('ag-note-fait')) document.getElementById('ag-note-fait').value = noteFaitEnCours;
 }
 
 function agendaChoisirPeriode(jours) { agendaPeriode = jours; afficherAgenda(); }
@@ -249,7 +262,7 @@ function agendaFermer() { agendaFormulaire = null; afficherAgenda(); }
 
 async function agendaEnregistrer(bouton) {
   const v = function (id) { return document.getElementById(id).value.trim(); };
-  const rdv = { le: v('ag-le'), heure: v('ag-heure'), titre: v('ag-titre'), lieu: v('ag-lieu'), note: v('ag-note'), genre: v('ag-genre') || 'rdv', theme: v('ag-theme') };
+  const rdv = { le: v('ag-le'), heure: v('ag-heure'), titre: v('ag-titre'), lieu: v('ag-lieu'), note: v('ag-note'), genre: v('ag-genre') || 'rdv', theme: v('ag-theme'), repete: v('ag-repete') };
   if (!rdv.titre) { afficherMessage('message-general', 'erreur', ERREURS.TITRE_MANQUANT); return; }
   if (!rdv.le) { afficherMessage('message-general', 'erreur', ERREURS.RDV_DATE_MANQUANTE); return; }
   bouton.disabled = true;
@@ -263,11 +276,21 @@ async function agendaEnregistrer(bouton) {
   afficherMessage('message-general', 'succes', (rdv.genre === 'tache' ? 'Tâche' : 'Rendez-vous') + ' enregistré ✓');
 }
 
+// « ✓ Fait » ouvre une petite zone pour ajouter une note (facultative) avant de valider
+function agendaOuvrirFait(id) {
+  agendaFaitOuvert = id;
+  afficherAgenda();
+  const zone = document.getElementById('ag-note-fait');
+  if (zone) zone.focus();
+}
+
 async function agendaFait(id, fait, bouton) {
+  const note = fait ? ((document.getElementById('ag-note-fait') || {}).value || '').trim() : '';
   bouton.disabled = true;
-  const { error } = await albSupabase.rpc('alb_gestion_agenda_fait', { p_id: id, p_fait: fait });
+  const { error } = await albSupabase.rpc('alb_gestion_agenda_cocher', { p_id: id, p_fait: fait, p_note: note || null });
   bouton.disabled = false;
-  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  if (error) { console.error('[ALB DEBUG] agenda fait :', error); afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  agendaFaitOuvert = null;
   await chargerAgenda();
   afficherAgenda();
   afficherAFaire();
