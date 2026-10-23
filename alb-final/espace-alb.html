@@ -775,8 +775,38 @@
 
     <div class="carte rubrique">
       <h2>👤 Mon profil</h2>
-      <p>Vos coordonnées, votre photo et votre présentation.</p>
-      <span class="bientot">Bientôt disponible ici</span>
+      <p>Vos coordonnées, votre adresse e-mail et votre code PIN. Tout est enregistré dès que vous cliquez.</p>
+      <p class="aide-bloc cache" id="profil-aide-pro">Votre photo et votre présentation se modifient dans « 🤝 Mon activité pro », plus haut.</p>
+
+      <!-- Mes coordonnées : enregistrées tout de suite, Jocelyne est prévenue -->
+      <form class="sous-bloc formulaire" id="formulaire-coordonnees" onsubmit="gererCoordonnees(event)">
+        <h3>📇 Mes coordonnées</h3>
+        <div class="message" id="message-coordonnees"></div>
+        <div class="champ">
+          <label for="profil-telephone">Téléphone</label>
+          <input type="tel" id="profil-telephone" autocomplete="tel" maxlength="30" required>
+          <div class="aide">Il reste confidentiel : il n'est jamais affiché publiquement.</div>
+        </div>
+        <div class="champ cache" id="champ-profil-entreprise">
+          <label for="profil-entreprise">Nom de votre entreprise</label>
+          <input type="text" id="profil-entreprise" autocomplete="organization" maxlength="150">
+        </div>
+        <div class="champ">
+          <label for="profil-adresse">Adresse <span class="leger">(facultatif)</span></label>
+          <input type="text" id="profil-adresse" autocomplete="street-address" maxlength="200" placeholder="N° et nom de la rue">
+        </div>
+        <div class="deux-colonnes">
+          <div class="champ">
+            <label for="profil-cp">Code postal</label>
+            <input type="text" id="profil-cp" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}">
+          </div>
+          <div class="champ">
+            <label for="profil-ville">Ville</label>
+            <input type="text" id="profil-ville" autocomplete="address-level2" maxlength="80">
+          </div>
+        </div>
+        <button type="submit" class="bouton bouton-discret" id="bouton-coordonnees">Enregistrer mes coordonnées</button>
+      </form>
 
       <!-- Changer son code PIN (pas besoin de l'ancien : la personne est déjà connectée) -->
       <form class="sous-bloc formulaire" id="formulaire-pin" onsubmit="gererChangementPin(event)">
@@ -795,21 +825,28 @@
         <button type="submit" class="bouton bouton-discret" id="bouton-pin">Changer mon code PIN</button>
       </form>
 
-      <!-- Demander à changer d'adresse e-mail -->
+      <!-- Changer d'adresse e-mail : c'est aussi l'adresse pour se connecter -->
       <form class="sous-bloc formulaire" id="formulaire-email" onsubmit="gererChangementEmail(event)">
         <h3>✉️ Mon adresse e-mail</h3>
         <p>Adresse actuelle : <strong id="profil-email-actuel"></strong></p>
-        <p class="aide-bloc">Pour votre sécurité, Jocelyne vous rappelle pour vérifier que c'est bien vous, puis vous envoie un lien pour valider la nouvelle adresse.</p>
+        <p class="aide-bloc">C'est aussi l'adresse avec laquelle vous vous connectez. Après le changement, vous vous connecterez avec la nouvelle adresse et votre code PIN habituel. Un e-mail de confirmation part sur l'ancienne et la nouvelle adresse.</p>
         <div class="message" id="message-email"></div>
-        <div class="champ">
-          <label for="profil-nouvel-email">Nouvelle adresse e-mail</label>
-          <input type="email" id="profil-nouvel-email" required>
+        <div class="deux-colonnes">
+          <div class="champ">
+            <label for="profil-nouvel-email">Nouvelle adresse e-mail</label>
+            <input type="email" id="profil-nouvel-email" autocomplete="email" maxlength="200" required>
+          </div>
+          <div class="champ">
+            <label for="profil-nouvel-email-confirmation">Confirmez-la</label>
+            <input type="email" id="profil-nouvel-email-confirmation" autocomplete="off" maxlength="200" required>
+          </div>
         </div>
         <div class="champ">
-          <label for="profil-email-message">Un petit mot <span class="leger">(facultatif)</span></label>
-          <textarea id="profil-email-message" maxlength="1000" rows="2" placeholder="Le meilleur moment pour vous rappeler…"></textarea>
+          <label for="profil-email-pin">Votre code PIN actuel</label>
+          <input type="password" id="profil-email-pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="current-password" required>
+          <div class="aide">Par sécurité, on vérifie que c'est bien vous.</div>
         </div>
-        <button type="submit" class="bouton bouton-discret" id="bouton-email">Demander le changement</button>
+        <button type="submit" class="bouton bouton-discret" id="bouton-email">Changer mon adresse e-mail</button>
       </form>
 
       <!-- Quitter ALB Immobilier : la demande arrive chez Jocelyne, c'est elle qui ferme le compte -->
@@ -1040,18 +1077,88 @@
     afficherMessage('message-pin', 'succes', "C'est enregistré ! Votre nouveau code PIN servira dès votre prochaine connexion.");
   }
 
+  // ----- 📇 Mes coordonnées et mon adresse e-mail (enregistrées tout de suite, Jocelyne est prévenue) -----
+  // Le petit guichet qui enregistre les coordonnées (à part du guichet de connexion)
+  const ALB_GUICHET_PROFIL = ALB_SUPABASE_URL + '/functions/v1/alb-profil';
+  let profilActuel = null;
+  const ERREURS_PROFIL = {
+    TELEPHONE_INVALIDE: 'Votre numéro de téléphone ne semble pas complet (10 chiffres). Pouvez-vous le vérifier ?',
+    CP_INVALIDE: 'Le code postal doit contenir 5 chiffres.',
+    EMAIL_INVALIDE: 'L\'adresse e-mail ne semble pas complète. Pouvez-vous la vérifier ?',
+    EMAIL_DEJA_PRIS: 'Cette adresse e-mail est déjà utilisée par un autre espace ALB.',
+    PIN_ACTUEL_INCORRECT: 'Ce n\'est pas votre code PIN actuel. Pouvez-vous le vérifier ?',
+    BLOQUE: 'Par sécurité, après plusieurs essais, il faut attendre 15 minutes avant de réessayer.',
+    BLOQUE_LONG: 'Par sécurité, votre compte est en pause pendant 24 heures. Jocelyne est prévenue et peut vous aider : 07 45 60 28 05.',
+    NON_CONNECTE: 'Votre session a expiré. Reconnectez-vous, puis recommencez.'
+  };
+  function messageProfil(code) {
+    return ERREURS_PROFIL[code] || 'Un souci est survenu. Pouvez-vous réessayer dans un instant ?';
+  }
+
+  function remplirCoordonnees(profil) {
+    profilActuel = profil;
+    document.getElementById('profil-telephone').value = profil.telephone || '';
+    document.getElementById('profil-entreprise').value = profil.nom_entreprise || '';
+    document.getElementById('profil-adresse').value = profil.adresse_complete || '';
+    document.getElementById('profil-cp').value = profil.code_postal || '';
+    document.getElementById('profil-ville').value = profil.ville || '';
+    const estPro = profil.role && profil.role !== 'particulier';
+    document.getElementById('champ-profil-entreprise').classList.toggle('cache', !estPro);
+    document.getElementById('profil-aide-pro').classList.toggle('cache', !estPro);
+  }
+
+  // Les coordonnées seules (l'adresse e-mail ne change pas ici)
+  function coordonneesSaisies() {
+    return {
+      telephone: document.getElementById('profil-telephone').value.trim(),
+      nom_entreprise: document.getElementById('profil-entreprise').value.trim(),
+      adresse: document.getElementById('profil-adresse').value.trim(),
+      code_postal: document.getElementById('profil-cp').value.trim(),
+      ville: document.getElementById('profil-ville').value.trim()
+    };
+  }
+  // Pour l'e-mail : on renvoie les coordonnées déjà enregistrées, pas celles en cours de saisie
+  function coordonneesEnregistrees() {
+    const p = profilActuel || {};
+    return { telephone: p.telephone || '', nom_entreprise: p.nom_entreprise || '', adresse: p.adresse_complete || '', code_postal: p.code_postal || '', ville: p.ville || '' };
+  }
+
+  async function gererCoordonnees(event) {
+    event.preventDefault();
+    const donnees = coordonneesSaisies();
+    if (donnees.telephone.replace(/\D/g, '').length < 10) { afficherMessage('message-coordonnees', 'erreur', ERREURS_PROFIL.TELEPHONE_INVALIDE); return; }
+    if (donnees.code_postal && !/^[0-9]{5}$/.test(donnees.code_postal)) { afficherMessage('message-coordonnees', 'erreur', ERREURS_PROFIL.CP_INVALIDE); return; }
+    const bouton = document.getElementById('bouton-coordonnees');
+    bouton.disabled = true;
+    const resultat = await albAppelerGuichet(Object.assign({ action: 'modifier_coordonnees' }, donnees), ALB_GUICHET_PROFIL);
+    bouton.disabled = false;
+    if (!resultat.ok) { afficherMessage('message-coordonnees', 'erreur', messageProfil(resultat.code)); return; }
+    const profil = await albProfilConnecte();
+    if (profil) remplirCoordonnees(profil);
+    afficherMessage('message-coordonnees', 'succes', resultat.modifie ? 'C\'est enregistré ✅ Merci d\'avoir mis vos coordonnées à jour.' : 'Rien n\'a changé : vos coordonnées étaient déjà à jour.');
+  }
+
   async function gererChangementEmail(event) {
     event.preventDefault();
+    const email = document.getElementById('profil-nouvel-email').value.trim().toLowerCase();
+    if (email !== document.getElementById('profil-nouvel-email-confirmation').value.trim().toLowerCase()) {
+      afficherMessage('message-email', 'erreur', 'Les deux adresses ne sont pas identiques. Pouvez-vous les vérifier ?');
+      return;
+    }
+    if (profilActuel && email === String(profilActuel.email || '').toLowerCase()) {
+      afficherMessage('message-email', 'erreur', 'C\'est déjà votre adresse actuelle.');
+      return;
+    }
     const bouton = document.getElementById('bouton-email');
     bouton.disabled = true;
-    const resultat = await albDemandeAcces({
-      nouvel_email: document.getElementById('profil-nouvel-email').value,
-      message: document.getElementById('profil-email-message').value
-    });
+    const resultat = await albAppelerGuichet(Object.assign({ action: 'modifier_coordonnees', nouvel_email: email, pin: document.getElementById('profil-email-pin').value.trim() }, coordonneesEnregistrees()), ALB_GUICHET_PROFIL);
     bouton.disabled = false;
-    if (!resultat.ok) { afficherMessage('message-email', 'erreur', resultat.message); return; }
+    if (!resultat.ok) { afficherMessage('message-email', 'erreur', messageProfil(resultat.code)); return; }
     document.getElementById('formulaire-email').reset();
-    afficherMessage('message-email', 'succes', 'Votre demande est bien arrivée. Jocelyne vous rappelle très vite, puis vous envoie le lien pour valider votre nouvelle adresse. 💜');
+    const profil = await albProfilConnecte();
+    if (profil) remplirCoordonnees(profil);
+    document.getElementById('profil-email-actuel').textContent = resultat.email || email;
+    afficherMessage('message-email', 'succes', 'C\'est enregistré ✅ Désormais, vous vous connectez avec ' + (resultat.email || email) + ' et votre code PIN habituel.');
   }
 
   // ----- 🚪 Quitter ALB Immobilier -----
@@ -1300,6 +1407,7 @@
 
     document.getElementById('titre-bienvenue').textContent = 'Bonjour ' + (profil.prenom || '') + ' !';
     document.getElementById('profil-email-actuel').textContent = profil.email || '';
+    remplirCoordonnees(profil);
     document.getElementById('etiquettes-casquettes').innerHTML = etiquettes
       .map(function (texte) { return '<span class="etiquette">' + albEchapper(texte) + '</span>'; })
       .join('');
