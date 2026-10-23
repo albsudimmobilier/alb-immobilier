@@ -135,6 +135,7 @@
     DEMANDE_ANNULEE: 'Le particulier a retiré sa demande.',
     DEVIS_DEJA_REPONDU: 'Vous avez déjà répondu à ce devis.',
     DEVIS_INTROUVABLE: 'Ce devis n’est plus disponible. Rechargez la page.',
+    DEVIS_MAX_ATTEINT: 'Ce particulier a déjà reçu 3 devis : c’est le maximum sur ALB Immobilier. Merci pour votre réactivité !',
   };
   function erreurDevis(error) {
     const code = Object.keys(ERREURS_DEVIS).find(function (c) { return String((error && error.message) || '').indexOf(c) !== -1; });
