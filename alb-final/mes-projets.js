@@ -4,6 +4,8 @@
 //    (financement, travaux, vente/achat) et les pros qui ont accepté
 //  • « 🤝 Mon activité pro » : les demandes reçues par un pro,
 //    sans les coordonnées du particulier, à accepter ou décliner
+//  • 📄 Devis (travaux) : l'artisan qui a accepté dépose son devis,
+//    le particulier l'ouvre et répond « J'accepte » ou « Je ne retiens pas »
 // Besoin de : alb-connexion.js (albSupabase, albEchapper, albAppelerGuichet)
 // ============================================================
 (function () {
@@ -116,6 +118,145 @@
   }
 
   // ============================================================
+  // 📄 Devis (projets travaux)
+  // ============================================================
+  let devis = [];
+  let profilId = null;
+  const ETATS_DEVIS = {
+    envoye: ['⏳ En attente de réponse', 'pj-attente'],
+    accepte: ['✅ Accepté', 'pj-ok'],
+    refuse: ['Pas retenu', 'pj-fin'],
+    remplace: ['Remplacé par une nouvelle version', 'pj-fin'],
+  };
+  const ERREURS_DEVIS = {
+    FICHIER_INVALIDE: 'Le fichier n’a pas pu être enregistré. Réessayez.',
+    MONTANT_INVALIDE: 'Le montant ne semble pas juste. Indiquez-le en euros (ex. : 4600 ou 4 600,50).',
+    DEVIS_PAS_ACCEPTEE: 'Vous pourrez envoyer votre devis après avoir accepté la demande.',
+    DEMANDE_ANNULEE: 'Le particulier a retiré sa demande.',
+    DEVIS_DEJA_REPONDU: 'Vous avez déjà répondu à ce devis.',
+    DEVIS_INTROUVABLE: 'Ce devis n’est plus disponible. Rechargez la page.',
+  };
+  function erreurDevis(error) {
+    const code = Object.keys(ERREURS_DEVIS).find(function (c) { return String((error && error.message) || '').indexOf(c) !== -1; });
+    return code ? ERREURS_DEVIS[code] : 'Un souci est survenu. Réessayez dans un instant.';
+  }
+
+  function montantDevis(m) {
+    const n = Number(m), c = Number.isInteger(n) ? 0 : 2;
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: c, maximumFractionDigits: c }) + ' € TTC';
+  }
+
+  async function chargerDevis() {
+    const { data, error } = await albSupabase.rpc('alb_mes_devis');
+    if (error) { console.error('[ALB DEBUG] devis :', error); devis = []; return; }
+    devis = data || [];
+  }
+
+  // Un devis : date, montant, état, mot de l'artisan, lien pour l'ouvrir
+  function ligneDevis(d, pourParticulier) {
+    const et = ETATS_DEVIS[d.statut] || [d.statut, ''];
+    const repondable = pourParticulier && d.statut === 'envoye';
+    return '<div class="pj-devis' + (d.statut === 'remplace' ? ' pj-devis-ancien' : '') + '">' +
+      '<div class="pj-devis-tete"><strong>📄 Devis du ' + e(dateCourte(d.cree_le)) + '</strong>' + (d.montant ? ' · ' + e(montantDevis(d.montant)) : '') +
+        ' <span class="pj-statut ' + et[1] + '">' + e(et[0]) + (d.repondu_le && (d.statut === 'accepte' || d.statut === 'refuse') ? ' le ' + e(dateCourte(d.repondu_le)) : '') + '</span></div>' +
+      (d.note ? '<p class="pj-suivi">💬 « ' + e(d.note) + ' »</p>' : '') +
+      (d.mot_particulier ? '<p class="pj-suivi">' + (pourParticulier ? 'Votre mot' : 'Son mot') + ' : « ' + e(d.mot_particulier) + ' »</p>' : '') +
+      '<div class="pj-boutons"><a class="pj-btn pj-devis-lien" target="_blank" rel="noopener" data-chemin="' + e(d.chemin) + '">👀 Ouvrir le devis</a>' +
+        (repondable ? '<button type="button" class="pj-btn pj-btn-oui" data-action="devis-oui" data-devis="' + e(d.id) + '">✅ J’accepte ce devis</button>' +
+          '<button type="button" class="pj-btn" data-action="devis-non" data-devis="' + e(d.id) + '">Je ne retiens pas</button>' : '') +
+      '</div>' +
+      '<div class="message" id="pj-msg-devis-' + e(d.id) + '"></div>' +
+    '</div>';
+  }
+
+  // Côté artisan : ses devis pour cette demande + le formulaire pour en envoyer un
+  function blocDevisPro(l) {
+    const p = l.projet || {};
+    if (p.module !== 'travaux' || l.statut !== 'acceptee' || p.statut === 'annulee') return '';
+    const mesDevis = devis.filter(function (d) { return d.ligne_id === l.id; });
+    const enAttente = mesDevis.some(function (d) { return d.statut === 'envoye'; });
+    return '<div class="pj-devis-zone"><p class="pj-medias-titre">📄 Mon devis</p>' +
+      mesDevis.map(function (d) { return ligneDevis(d, false); }).join('') +
+      '<details class="pj-details"' + (mesDevis.length ? '' : ' open') + '><summary>' + (mesDevis.length ? '📤 Envoyer une nouvelle version' : '📤 Envoyer mon devis') + '</summary>' +
+        (enAttente ? '<p class="pj-suivi">La nouvelle version remplacera celle qui attend encore sa réponse.</p>' : '') +
+        '<div class="champ pj-champ"><label for="pj-devis-fichier-' + e(l.id) + '">Le devis (PDF ou photo, 10 Mo au plus)</label>' +
+          '<input type="file" id="pj-devis-fichier-' + e(l.id) + '" accept="application/pdf,image/*"></div>' +
+        '<div class="champ pj-champ"><label for="pj-devis-montant-' + e(l.id) + '">Montant total TTC en euros (facultatif)</label>' +
+          '<input type="text" inputmode="decimal" id="pj-devis-montant-' + e(l.id) + '" maxlength="12" placeholder="Ex. : 4600" class="pj-input"></div>' +
+        '<div class="champ pj-champ"><label for="pj-devis-note-' + e(l.id) + '">Un mot pour accompagner votre devis (facultatif)</label>' +
+          '<textarea id="pj-devis-note-' + e(l.id) + '" maxlength="1000" rows="2" placeholder="Ex. : fourniture et pose comprises, démarrage possible sous 3 semaines"></textarea></div>' +
+        '<div class="pj-boutons"><button type="button" class="pj-btn pj-btn-oui" data-action="devis-envoyer" data-ligne="' + e(l.id) + '">📤 Envoyer le devis</button></div>' +
+        '<div class="message" id="pj-msg-devis-ligne-' + e(l.id) + '"></div>' +
+      '</details></div>';
+  }
+
+  // Côté particulier : les devis reçus d'un artisan pour ce projet
+  function blocDevisParticulier(p, x) {
+    if (p.module !== 'travaux' || !x.pro) return '';
+    const recus = devis.filter(function (d) { return d.projet_id === p.id && d.pro_id === x.pro.id && d.statut !== 'remplace'; });
+    if (!recus.length) return '';
+    return '<div class="pj-devis-zone">' + recus.map(function (d) { return ligneDevis(d, true); }).join('') + '</div>';
+  }
+
+  // Les fichiers sont privés : lien temporaire, préparé au moment du clic
+  async function ouvrirDevis(lien, ev) {
+    if (lien.getAttribute('href')) return;
+    ev.preventDefault();
+    const fenetre = window.open('', '_blank');
+    const { data, error } = await albSupabase.storage.from('projets-medias').createSignedUrl(lien.dataset.chemin, 3600);
+    if (error || !data) { if (fenetre) fenetre.close(); console.error('[ALB DEBUG] devis (fichier) :', error); window.alert('Le devis n’a pas pu être ouvert. Réessayez dans un instant.'); return; }
+    lien.href = data.signedUrl;
+    if (fenetre) fenetre.location = data.signedUrl; else window.open(data.signedUrl, '_blank');
+  }
+
+  async function envoyerDevis(bouton) {
+    const id = bouton.dataset.ligne;
+    const idMsg = 'pj-msg-devis-ligne-' + id;
+    const fichier = (el('pj-devis-fichier-' + id).files || [])[0];
+    const montantTexte = String(el('pj-devis-montant-' + id).value || '').replace(/[\s €]/g, '').replace(',', '.');
+    const note = el('pj-devis-note-' + id).value;
+    if (!fichier) { message(idMsg, 'erreur', 'Choisissez le fichier de votre devis.'); return; }
+    if (!/^image\//.test(fichier.type) && fichier.type !== 'application/pdf') { message(idMsg, 'erreur', 'Choisissez un PDF ou une photo.'); return; }
+    if (fichier.size > 10 * 1024 * 1024) { message(idMsg, 'erreur', 'Le fichier est un peu lourd : 10 Mo au plus.'); return; }
+    const montant = montantTexte ? Number(montantTexte) : null;
+    if (montantTexte && !(montant > 0)) { message(idMsg, 'erreur', ERREURS_DEVIS.MONTANT_INVALIDE); return; }
+    bouton.disabled = true;
+    message(idMsg, 'info', 'Envoi du devis…');
+    const ext = fichier.type === 'application/pdf' ? 'pdf' : (String(fichier.name).split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+    const chemin = profilId + '/devis/' + id + '-' + Date.now() + '.' + ext;
+    const envoi = await albSupabase.storage.from('projets-medias').upload(chemin, fichier, { contentType: fichier.type, upsert: false });
+    if (envoi.error) { bouton.disabled = false; console.error('[ALB DEBUG] devis (envoi) :', envoi.error); message(idMsg, 'erreur', 'Le fichier n’a pas pu être envoyé. Réessayez.'); return; }
+    const { error } = await albSupabase.rpc('alb_pro_deposer_devis', { p_ligne: id, p_chemin: chemin, p_nom: fichier.name, p_montant: montant, p_note: note });
+    if (error) {
+      bouton.disabled = false;
+      await albSupabase.storage.from('projets-medias').remove([chemin]);
+      message(idMsg, 'erreur', erreurDevis(error));
+      return;
+    }
+    await chargerDevis();
+    dessinerRecues();
+    chargerMedias(el('projets-recus'));
+    const carte = el('recue-' + id);
+    if (carte) { const m = carte.querySelector('.pj-devis-zone'); if (m) { const ok = document.createElement('div'); ok.className = 'message visible succes'; ok.textContent = 'C’est envoyé ✅ Il le retrouve dans « Mes projets ALB », et un message l’a prévenu dans votre conversation.'; m.appendChild(ok); } }
+  }
+
+  async function repondreDevis(bouton) {
+    const id = bouton.dataset.devis;
+    const accepte = bouton.dataset.action === 'devis-oui';
+    const mot = window.prompt(accepte
+      ? 'Vous acceptez ce devis. Un petit mot pour l’artisan ? (facultatif)'
+      : 'Vous ne retenez pas ce devis. Un petit mot pour l’artisan ? (facultatif)', '');
+    if (mot === null) return;
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_particulier_repondre_devis', { p_devis: id, p_accepte: accepte, p_mot: mot.trim().slice(0, 1000) });
+    if (error) { bouton.disabled = false; message('pj-msg-devis-' + id, 'erreur', erreurDevis(error)); return; }
+    await chargerDevis();
+    dessinerProjets();
+    chargerMedias(el('mes-projets'));
+    message('pj-msg-devis-' + id, 'succes', accepte ? 'C’est noté ✅ L’artisan est prévenu dans votre conversation.' : 'C’est noté. L’artisan est prévenu dans votre conversation.');
+  }
+
+  // ============================================================
   // Côté particulier : « Mes projets ALB »
   // ============================================================
   let projets = [];
@@ -151,7 +292,7 @@
             ? '<span class="pj-coord">' + lienTel(x.pro.telephone) + (x.pro.email ? ' <a href="mailto:' + e(x.pro.email) + '">✉️ ' + e(x.pro.email) + '</a>' : '') + '</span>' : '') +
         '</span>' +
         (x.statut === 'acceptee' && x.conversation_id ? '<button type="button" class="pj-btn pj-btn-oui" data-action="discuter" data-conversation="' + e(x.conversation_id) + '">💬 Échanger</button>' : '') +
-      '</div>';
+      '</div>' + blocDevisParticulier(p, x);
     }).join('');
     const retirable = ['nouvelle', 'a_verifier', 'a_orienter', 'envoyee'].indexOf(p.statut) !== -1;
     return '<div class="pj-carte" id="projet-' + e(p.id) + '">' +
@@ -227,6 +368,7 @@
         : '<p class="pj-suivi">Vous échangez avec <strong>' + e(qui) + '</strong> dans votre messagerie ALB (il n’a pas souhaité être appelé : c’est lui qui choisit de vous donner son numéro).</p>';
       if (l.conversation_id) actions = '<button type="button" class="pj-btn pj-btn-oui" data-action="discuter" data-conversation="' + e(l.conversation_id) + '">💬 Voir la conversation</button>';
     }
+    const zoneDevis = blocDevisPro(l);
     return '<div class="pj-carte" id="recue-' + e(l.id) + '">' +
       '<div class="pj-tete"><span class="pj-icone">' + m.icone + '</span><span><span class="pj-titre">' + e(m.titre) + (p.zone || p.code_postal ? ' · ' + e(p.zone || p.code_postal) : '') + '</span>' +
       '<span class="pj-date">Reçue le ' + e(dateCourte(l.envoye_le)) + '</span></span></div>' +
@@ -234,6 +376,7 @@
       (l.statut === 'en_attente' ? corps : '<details class="pj-details"><summary>Voir la demande</summary>' + corps + '</details>') +
       '<div class="message" id="pj-msg-' + e(l.id) + '"></div>' +
       (actions ? '<div class="pj-boutons">' + actions + '</div>' : '') +
+      zoneDevis +
     '</div>';
   }
 
@@ -340,6 +483,14 @@
       '.pj-coord a,.pj-appel a{color:#5A3A6A;font-weight:600;}',
       '.pj-appel{background:#EEF6EE;border:1px solid #CBE3CD;border-radius:8px;padding:10px 12px;margin-top:10px;}',
       '.pj-appel span{font-size:.85rem;color:#5f5f5a;}',
+      '.pj-devis-zone{margin-top:12px;border-top:1px dashed #D8D5CE;padding-top:10px;}',
+      '.pj-devis{background:#FBF8F3;border:1px solid #E8E6E1;border-radius:8px;padding:10px 12px;margin-top:8px;}',
+      '.pj-devis-ancien{opacity:.6;}',
+      '.pj-devis-tete{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.9rem;}',
+      '.pj-devis-tete .pj-statut{margin-top:0;}',
+      '.pj-devis-lien{text-decoration:none;}',
+      '.pj-input{width:100%;padding:10px;border:1px solid #D8D5CE;border-radius:6px;font-family:inherit;font-size:.95rem;}',
+      '.pj-champ input[type=file]{width:100%;font-size:.88rem;}',
       '@media (max-width:480px){.pj-recap{grid-template-columns:1fr;}.pj-recap dd{margin-bottom:4px;}}',
     ].join('\n');
     document.head.appendChild(s);
@@ -349,9 +500,13 @@
     if (!zone || zone.dataset.branche) return;
     zone.dataset.branche = '1';
     zone.addEventListener('click', function (ev) {
+      const lien = ev.target.closest('.pj-devis-lien');
+      if (lien) { ouvrirDevis(lien, ev); return; }
       const b = ev.target.closest('.pj-btn');
       if (!b || b.disabled) return;
       const action = b.dataset.action;
+      if (action === 'devis-envoyer') { envoyerDevis(b); return; }
+      if (action === 'devis-oui' || action === 'devis-non') { repondreDevis(b); return; }
       if (action === 'discuter') { if (window.albMessagerieOuvrir) window.albMessagerieOuvrir({ conversation: b.dataset.conversation }); return; }
       if (action === 'retirer') { retirer(b); return; }
       if (action === 'accepter' || action === 'decliner') repondre(b);
@@ -380,7 +535,8 @@
     styles();
     const zone = el('mes-projets');
     brancher(zone);
-    try { await chargerProjets(); } catch (ex) {
+    profilId = profil.id;
+    try { await Promise.all([chargerProjets(), chargerDevis()]); } catch (ex) {
       if (zone) zone.innerHTML = '<div class="message visible erreur">Vos projets n’ont pas pu être chargés. Rechargez la page dans un instant.</div>';
       return false;
     }
@@ -396,7 +552,8 @@
     styles();
     const zone = el('projets-recus');
     brancher(zone);
-    try { await chargerRecues(); } catch (ex) {
+    profilId = profil.id;
+    try { await Promise.all([chargerRecues(), chargerDevis()]); } catch (ex) {
       if (zone) zone.innerHTML = '<div class="message visible erreur">Vos demandes reçues n’ont pas pu être chargées. Rechargez la page dans un instant.</div>';
       return 0;
     }
