@@ -206,7 +206,12 @@ function elementsAgenda() {
       detail: enRetard ? 'Prévu le ' + dateLisible(s.relancer_le + 'T12:00:00') + ' (en retard)' : (m.telephone || ''), onglet: 'membres' });
   });
   (typeof papiersPros !== 'undefined' ? papiersPros : []).forEach(function (x) {
-    if (!x.expire || !x.expire_le || x.statut === 'refuse' || x.expire_le < auj) return;
+    if (!x.expire_le || x.statut === 'refuse' || x.expire_le < auj) return;
+    // Rappel automatique 30 jours avant la fin (ou aujourd'hui si on est déjà à moins de 30 jours)
+    const rappel = new Date(x.expire_le + 'T12:00:00'); rappel.setDate(rappel.getDate() - 30);
+    const leRappel = rappel.toISOString().slice(0, 10);
+    liste.push({ le: leRappel < auj ? auj : leRappel, emoji: '⏰', theme: 'Pros', titre: 'Demander le nouveau document : ' + String(x.libelle || 'papier').replace(/\s*\(.*\)\s*$/, ''),
+      detail: (x.pro || '') + ' · il expire le ' + dateLisible(x.expire_le + 'T12:00:00'), onglet: 'valides' });
     liste.push({ le: x.expire_le, emoji: '📄', theme: 'Pros', titre: 'Fin de validité : ' + String(x.libelle || 'papier').replace(/\s*\(.*\)\s*$/, ''), detail: x.pro || '', onglet: 'valides' });
   });
   (typeof rappelsMandat !== 'undefined' ? rappelsMandat : []).forEach(function (r) {
@@ -923,3 +928,201 @@ LIGNES_A_FAIRE.push({
   calcul: function () { return (typeof membres !== 'undefined' ? membres : []).filter(function (m) { return estUnPro(m) && m.profil_mis_en_ligne && piecesManquantes(m).length; }).length; },
   un: 'pro en ligne à qui il manque une pièce obligatoire (assurance, numéro…)', plusieurs: 'pros en ligne à qui il manque une pièce obligatoire (assurance, numéro…)', emoji: '📋', onglet: 'valides'
 });
+
+// ---------- Lecture automatique d'un document (PDF) : type, numéro, date de fin ----------
+const MOIS_FR = { janvier: 1, fevrier: 2, février: 2, mars: 3, avril: 4, mai: 5, juin: 6, juillet: 7, aout: 8, août: 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12, décembre: 12 };
+// Ce qui permet de reconnaître chaque document (le premier qui correspond gagne)
+const RECONNAITRE_PAPIER = [
+  ['orias', /orias|registre unique des interm[ée]diaires/i],
+  ['decennale', /d[ée]cennale/i],
+  ['garantie', /garantie financi[èe]re/i],
+  ['rc_pro', /responsabilit[ée] civile (professionnelle|pro\b)|\brc pro\b/i],
+  ['urssaf', /attestation de vigilance|urssaf/i],
+  ['fluides', /fluides? frigorig[èe]ne/i],
+  ['rge', /\brge\b|reconnu garant/i],
+  ['carte_t', /carte professionnelle|\bcpi ?\d{4}/i],
+  ['habilitation', /attestation d.habilitation/i],
+  ['cni', /carte nationale d.identit[ée]|identity card/i],
+  ['kbis', /registre sp[ée]cial des agents commerciaux|extrait d.immatriculation|\bk ?bis\b|registre du commerce/i],
+  ['sirene', /r[ée]pertoire sirene/i],
+  ['rib', /relev[ée] d.identit[ée] bancaire|\biban\b/i],
+  ['contrat', /contrat d.apporteur/i]
+];
+// Les dates du texte, avec un score : « jusqu'au », « expire », « fin de validité »… comptent pour la date de fin
+function datesDuTexte(texte) {
+  const t = texte.replace(/\s+/g, ' ');
+  const trouvees = [];
+  const ajouter = function (j, m, a, index) {
+    j = +j; m = +m; a = +a;
+    if (a < 100) a += 2000;
+    if (!(j >= 1 && j <= 31 && m >= 1 && m <= 12 && a >= 1990 && a <= 2100)) return;
+    const avant = t.slice(Math.max(0, index - 60), index).toLowerCase();
+    let score = 0;
+    if (/(jusqu.?(au|à|a)|expir|fin de validit|[ée]ch[ée]ance|valable|valide|validit[ée]|au\s*$|terme)/.test(avant)) score += 2;
+    if (/(jusqu.?(au|à|a)|expir|fin de validit)\W*$/.test(avant)) score += 3;
+    if (/(n[ée]e? le|naissance|depuis|d[ée]livr|fait (à|a|le)|[ée]tabli|du\s*$|immatricul|cr[ée]ation|commencement|à la date|[àa] jour au|edition|édité)/.test(avant.slice(-30))) score -= 3;
+    trouvees.push({ iso: a + '-' + String(m).padStart(2, '0') + '-' + String(j).padStart(2, '0'), score: score });
+  };
+  let r;
+  const chiffres = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})\b/g;
+  while ((r = chiffres.exec(t))) ajouter(r[1], r[2], r[3], r.index);
+  const lettres = /\b(\d{1,2})(?:er)? (janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre) (\d{4})\b/gi;
+  while ((r = lettres.exec(t))) ajouter(r[1], MOIS_FR[r[2].toLowerCase().replace('û', 'u')] || MOIS_FR[r[2].toLowerCase()], r[3], r.index);
+  return trouvees;
+}
+// Analyse le texte : quel document, quel numéro, quelle date de fin (null si pas trouvé)
+function analyserTexte(texte, typesPossibles) {
+  const t = String(texte || '').replace(/\s+/g, ' ');
+  const reco = RECONNAITRE_PAPIER.find(function (x) { return x[1].test(t) && (!typesPossibles || typesPossibles.indexOf(x[0]) !== -1); });
+  const type = reco ? reco[0] : null;
+  let numero = null, r;
+  if (type === 'orias' && (r = /(?:immatriculation|n° ?orias|num[ée]ro orias)\D{0,30}(\d{8})\b/i.exec(t))) numero = r[1];
+  if (type === 'carte_t' && (r = /\b(CPI ?\d{4} ?\d{4} ?\d{3} ?\d{3})\b/i.exec(t))) numero = r[1].replace(/\s/g, ' ');
+  if ((type === 'kbis' || type === 'rsac' || type === 'sirene') && (r = /\b(\d{3} ?\d{3} ?\d{3})\b/.exec(t))) numero = r[1];
+  const auj = new Date().toISOString().slice(0, 10);
+  const dates = datesDuTexte(t);
+  // La date de fin : la mieux notée ; à égalité, la plus lointaine. On ne garde qu'une date qui a un indice de « fin »
+  const fin = dates.filter(function (d) { return d.score > 0; })
+    .sort(function (a, b) { return b.score - a.score || b.iso.localeCompare(a.iso); })[0];
+  // Kbis, avis SIRENE, RIB, contrat : pas de date de fin
+  let dateFin = fin && ['kbis', 'sirene', 'rib', 'contrat', 'corps_metier', 'reseau'].indexOf(type) === -1 ? fin.iso : null;
+  // Attestation URSSAF sans date de fin écrite : valable 6 mois après sa date
+  if (!dateFin && type === 'urssaf' && dates.length) {
+    const d = new Date(dates.map(function (x) { return x.iso; }).sort().pop() + 'T12:00:00');
+    d.setMonth(d.getMonth() + 6);
+    dateFin = d.toISOString().slice(0, 10);
+  }
+  return { type: type, numero: numero, dateFin: dateFin, dejaPassee: !!dateFin && dateFin < auj };
+}
+
+// Lit le texte d'un PDF (outil pdf.js, chargé seulement quand on en a besoin)
+let pdfjsPret = null;
+function chargerPdfjs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (pdfjsPret) return pdfjsPret;
+  pdfjsPret = new Promise(function (ok, ko) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = function () {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      ok(window.pdfjsLib);
+    };
+    s.onerror = function () { pdfjsPret = null; ko(new Error('pdf.js')); };
+    document.head.appendChild(s);
+  });
+  return pdfjsPret;
+}
+async function texteDuPdf(fichier) {
+  const pdfjs = await chargerPdfjs();
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await fichier.arrayBuffer()) }).promise;
+  let texte = '';
+  for (let i = 1; i <= Math.min(doc.numPages, 5); i++) {
+    const contenu = await (await doc.getPage(i)).getTextContent();
+    texte += contenu.items.map(function (x) { return x.str; }).join(' ') + '\n';
+  }
+  return texte;
+}
+
+// ---------- Ajouter un document pour un pro (reçu par mail, en main propre…) ----------
+let papiersHorsSite = null;     // Kbis, SIRENE, URSSAF, CNI, contrat, RIB…
+let ajoutDocOuvert = null;      // id du pro dont le formulaire est ouvert
+async function chargerPapiersHorsSite() {
+  if (papiersHorsSite) return;
+  const { data, error } = await albSupabase.rpc('alb_papiers_hors_site');
+  if (error) { console.error('[ALB DEBUG] pièces hors site :', error); return; }
+  papiersHorsSite = Array.isArray(data) ? data : [];
+}
+function typesPourPro(m) {
+  const metier = (papiersAttendus[clePapiers(m)] || []).filter(function (p) { return p.type !== 'avis_google'; });
+  return metier.map(function (p) { return { type: p.type, libelle: String(p.libelle).replace(/\s*\(.*\)\s*$/, ''), groupe: 'metier' }; })
+    .concat((papiersHorsSite || []).filter(function (p) { return !metier.some(function (x) { return x.type === p.type; }); })
+      .map(function (p) { return { type: p.type, libelle: p.libelle, groupe: 'hors' }; }));
+}
+function formulaireAjoutDoc(m) {
+  const types = typesPourPro(m);
+  const opt = function (t) { return '<option value="' + albEchapper(t.type) + '">' + albEchapper(t.libelle) + '</option>'; };
+  return '<div class="decision" id="ajout-doc-' + m.id + '" style="margin-top:8px;"><div class="decision-titre">➕ Ajouter un document pour ' + albEchapper(nomAgenda(m)) + '</div>' +
+    '<label class="petit-champ">Le fichier (PDF ou photo)<input type="file" id="ad-fichier-' + m.id + '" accept="application/pdf,image/*" onchange="lireDocument(\'' + m.id + '\')"></label>' +
+    '<p class="aide" id="ad-lecture-' + m.id + '" style="margin-top:4px;">Choisis le fichier : je lis le PDF et je remplis tout seul ce que je trouve. Tu vérifies avant d\'enregistrer.</p>' +
+    '<div class="grille">' +
+      '<label class="petit-champ">C\'est quoi ?<select id="ad-type-' + m.id + '">' +
+        '<optgroup label="Demandé à son métier">' + types.filter(function (t) { return t.groupe === 'metier'; }).map(opt).join('') + '</optgroup>' +
+        '<optgroup label="Autres pièces">' + types.filter(function (t) { return t.groupe === 'hors'; }).map(opt).join('') + '</optgroup></select></label>' +
+      '<label class="petit-champ">Numéro (facultatif)<input type="text" id="ad-numero-' + m.id + '" maxlength="200" placeholder="Ex. : ORIAS, carte T, SIREN…"></label>' +
+      '<label class="petit-champ">Valable jusqu\'au<input type="date" id="ad-date-' + m.id + '"></label>' +
+    '</div>' +
+    '<p class="aide" style="margin-top:4px;">Laisse la date vide si le document n\'a pas de fin (Kbis, RIB, contrat…). Avec une date, les rappels se font tout seuls : un mois avant dans ton agenda, puis mail et SMS à préparer.</p>' +
+    '<div class="actions"><button type="button" class="bouton vert" onclick="enregistrerDocument(\'' + m.id + '\', this)">💾 Enregistrer (vérifié)</button>' +
+    '<button type="button" class="bouton discret" onclick="ouvrirAjoutDoc(null)">Annuler</button></div></div>';
+}
+function ouvrirAjoutDoc(proId) {
+  ajoutDocOuvert = proId;
+  document.querySelectorAll('.papiers-pro').forEach(function (zone) { zone.innerHTML = blocPapiersPro(zone.dataset.pro); });
+  const form = proId && document.getElementById('ajout-doc-' + proId);
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+async function lireDocument(proId) {
+  const fichier = (document.getElementById('ad-fichier-' + proId).files || [])[0];
+  const info = document.getElementById('ad-lecture-' + proId);
+  if (!fichier) return;
+  if (fichier.type !== 'application/pdf') { info.textContent = '📷 C\'est une photo : je ne peux pas la lire. Choisis le type et écris la date de fin toi-même.'; return; }
+  info.textContent = '🔎 Je lis le document…';
+  try {
+    const m = membres.find(function (x) { return x.id === proId; });
+    const texte = await texteDuPdf(fichier);
+    if (texte.replace(/\s/g, '').length < 20) { info.textContent = '📷 Ce PDF est une image scannée : je ne peux pas le lire. Choisis le type et écris la date de fin toi-même.'; return; }
+    const r = analyserTexte(texte, typesPourPro(m).map(function (t) { return t.type; }));
+    const trouve = [];
+    if (r.type) { document.getElementById('ad-type-' + proId).value = r.type; trouve.push('c\'est : ' + typesPourPro(m).find(function (t) { return t.type === r.type; }).libelle); }
+    if (r.numero) { document.getElementById('ad-numero-' + proId).value = r.numero; trouve.push('numéro ' + r.numero); }
+    if (r.dateFin) { document.getElementById('ad-date-' + proId).value = r.dateFin; trouve.push('valable jusqu\'au ' + dateLisible(r.dateFin + 'T12:00:00')); }
+    console.log('[ALB DEBUG] lecture document :', r);
+    info.innerHTML = (trouve.length ? '✅ J\'ai trouvé : <strong>' + albEchapper(trouve.join(' · ')) + '</strong>. Vérifie avant d\'enregistrer.' : '🤔 Je n\'ai rien reconnu : remplis les cases toi-même.') +
+      (r.dejaPassee ? '<br><span style="color:#8A2D2D;font-weight:600;">⚠️ Cette date est déjà passée : le document n\'est plus valable.</span>' : '') +
+      (!r.dateFin && r.type && ['kbis', 'sirene', 'rib', 'contrat'].indexOf(r.type) === -1 ? '<br>📅 Pas de date de fin trouvée : écris-la si le document en a une.' : '');
+  } catch (e) {
+    console.error('[ALB DEBUG] lecture PDF :', e);
+    info.textContent = 'Je n\'ai pas pu lire ce PDF. Remplis les cases toi-même, l\'enregistrement marche quand même.';
+  }
+}
+async function enregistrerDocument(proId, bouton) {
+  const fichier = (document.getElementById('ad-fichier-' + proId).files || [])[0];
+  const type = document.getElementById('ad-type-' + proId).value;
+  const numero = document.getElementById('ad-numero-' + proId).value.trim();
+  const date = document.getElementById('ad-date-' + proId).value || null;
+  if (!fichier && !numero) { afficherMessage('message-general', 'erreur', 'Choisis un fichier ou écris un numéro.'); return; }
+  if (fichier && fichier.size > 10 * 1024 * 1024) { afficherMessage('message-general', 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
+  bouton.disabled = true;
+  let chemin = null;
+  if (fichier) {
+    const extension = fichier.type === 'application/pdf' ? 'pdf' : ((fichier.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+    chemin = proId + '/' + type + '-' + Date.now() + '.' + extension;
+    const envoi = await albSupabase.storage.from('pro-documents').upload(chemin, fichier, { contentType: fichier.type || 'application/octet-stream', upsert: false });
+    if (envoi.error) { bouton.disabled = false; console.error('[ALB DEBUG] envoi document :', envoi.error); afficherMessage('message-general', 'erreur', 'Le fichier n\'a pas pu être envoyé. Réessaie.'); return; }
+  }
+  const { error } = await albSupabase.rpc('alb_gestion_papier_ajouter', { p_pro: proId, p_type: type, p_valeur: numero || null, p_chemin: chemin, p_nom: fichier ? fichier.name : null, p_expire_le: date });
+  bouton.disabled = false;
+  if (error) { console.error('[ALB DEBUG] ajout document :', error); afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  ajoutDocOuvert = null;
+  await chargerPapiers();
+  afficherAgenda();
+  afficherMessage('message-general', 'succes', 'Document enregistré et vérifié ✓' + (date ? ' Les rappels sont en place (un mois avant la fin).' : ''));
+}
+
+// On branche : la liste des pièces hors site se charge avec les papiers, et le bouton « ➕ Ajouter un document » est sur chaque pro
+(function () {
+  const chargerAvantHorsSite = chargerPapiersAttendus;
+  chargerPapiersAttendus = async function () { await Promise.all([chargerAvantHorsSite(), chargerPapiersHorsSite()]); };
+  const blocPointAvantAjout = blocPointPieces;
+  blocPointPieces = function (m) {
+    const recus = (typeof papiersPros !== 'undefined' ? papiersPros : []).filter(function (x) { return x.profile_id === m.id; });
+    const horsSite = (papiersHorsSite || []).filter(function (p) { return recus.some(function (x) { return x.type === p.type; }); });
+    return blocPointAvantAjout(m) +
+      (horsSite.length ? '<p class="ligne-info" style="margin:4px 0;">📎 Autres pièces : ' + horsSite.map(function (p) {
+        const x = recus.find(function (y) { return y.type === p.type; });
+        return albEchapper(p.libelle) + (x.expire_le ? ' (jusqu\'au ' + albEchapper(dateLisible(x.expire_le + 'T12:00:00')) + ')' : '');
+      }).join(' · ') + '</p>' : '') +
+      (ajoutDocOuvert === m.id ? formulaireAjoutDoc(m)
+        : '<div class="actions" style="margin-top:4px;"><button type="button" class="bouton discret" onclick="ouvrirAjoutDoc(\'' + m.id + '\')">➕ Ajouter un document</button></div>');
+  };
+})();
