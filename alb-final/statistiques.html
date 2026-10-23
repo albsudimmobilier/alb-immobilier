@@ -114,6 +114,12 @@
     <p class="aide">Ce que deviennent les demandes des particuliers, étape par étape. « Signées » = le pro a répondu « signé » à son point du mois.</p>
     <div class="carte tableau-conteneur" id="t-dossiers"></div>
 
+    <h2 class="titre-section">📄 Les devis des artisans</h2>
+    <p class="aide">Les devis déposés par les artisans sur la période (selon leur date d'envoi). « Taux de signature » = signés ÷ (signés + perdus). Le statut est celui que tu suis dans l'onglet « 📄 Devis » de Gestion du site. Les montants sont ceux indiqués par l'artisan (TTC).</p>
+    <div class="compteurs" id="c-devis"></div>
+    <p class="aide">Artisan par artisan :</p>
+    <div class="carte tableau-conteneur" id="t-devis"></div>
+
     <h2 class="titre-section">✅ Résultats concrets</h2>
     <p class="aide">Ce qu'ALB Immobilier a réellement fait aboutir sur la période. C'est ce qui parle aux pros et aux particuliers.</p>
     <div class="compteurs" id="c-resultats"></div>
@@ -449,6 +455,41 @@
     }), 'Pas encore d\'annonce sur cette période. 🌿');
   }
 
+  // ----- Devis des artisans (onglet « 📄 Devis » de Gestion du site) -----
+  function depDevis(d) { const cp = String((d.projet || {}).code_postal || ''); const dep = cp.slice(0, 2); return dep === '83' || dep === '13' ? dep : 'autre'; }
+  function dessinerDevis() {
+    const l = donnees.devis.filter(function (d) { return d.statut !== 'remplace' && dansPeriode(d.cree_le) && (choix.dep === 'tous' || depDevis(d) === choix.dep); });
+    const signes = l.filter(function (d) { return d.suivi === 'signe'; });
+    const perdus = l.filter(function (d) { return d.suivi === 'perdu'; });
+    const enCours = l.filter(function (d) { return d.suivi === 'envoye' || d.suivi === 'en_discussion'; });
+    const somme = function (liste) { return liste.reduce(function (n, d) { return n + Number(d.montant || 0); }, 0); };
+    const delai = moyenne(l.filter(function (d) { return d.repondu_le; }).map(function (d) { return Math.max(0, jours(d.cree_le, d.repondu_le)); }));
+    const particuliers = {};
+    l.forEach(function (d) { particuliers[(d.particulier || {}).id || d.id] = true; });
+    el('c-devis').innerHTML =
+      compteur(nb(l.length), '📨 Devis envoyés', nb(Object.keys(particuliers).length) + ' particulier' + (Object.keys(particuliers).length > 1 ? 's' : '')) +
+      compteur(nb(enCours.length), '💬 En cours', 'envoyés ou en discussion') +
+      compteur(nb(signes.length), '✍️ Signés', '', true) +
+      compteur(nb(perdus.length), '❌ Perdus') +
+      compteur(euros(somme(l)), '💶 Montant des devis envoyés') +
+      compteur(euros(somme(signes)), '💶 Montant signé', '', true) +
+      compteur(pourcent(signes.length, signes.length + perdus.length), '🎯 Taux de signature') +
+      compteur(delai == null ? '—' : dixieme(delai) + ' j', '⏱️ Délai moyen de réponse', 'entre l\'envoi et la réponse du particulier');
+    const parPro = {};
+    l.forEach(function (d) {
+      const p = d.pro || {};
+      const g = parPro[d.pro_id] || (parPro[d.pro_id] = { nom: p.nom_entreprise || ((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Artisan', liste: [] });
+      g.liste.push(d);
+    });
+    const lignes = Object.keys(parPro).map(function (k) { return parPro[k]; }).sort(function (a, b) { return b.liste.length - a.liste.length; }).map(function (g) {
+      const s = g.liste.filter(function (d) { return d.suivi === 'signe'; });
+      const pe = g.liste.filter(function (d) { return d.suivi === 'perdu'; });
+      return [e(g.nom), nb(g.liste.length), nb(g.liste.filter(function (d) { return d.suivi === 'envoye' || d.suivi === 'en_discussion'; }).length),
+        nb(s.length), nb(pe.length), euros(somme(s)), pourcent(s.length, s.length + pe.length)];
+    });
+    el('t-devis').innerHTML = tableau(['Artisan', 'Devis', 'En cours', 'Signés', 'Perdus', 'Montant signé', 'Taux de signature'], lignes, 'Pas encore de devis sur cette période. 🌿');
+  }
+
   // ----- Mois par mois -----
   function dessinerMois() {
     const mois = [];
@@ -493,6 +534,7 @@
     dessinerVisites();
     dessinerProjets();
     dessinerDossiers();
+    dessinerDevis();
     dessinerResultats();
     dessinerPros();
     dessinerPoints();
@@ -509,10 +551,12 @@
     if (!session?.session) { etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.'; return; }
     const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
-    const { data, error } = await albSupabase.rpc('alb_gestion_statistiques');
+    const [{ data, error }, devisRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis')]);
+    if (devisRep.error) console.error('[ALB DEBUG] devis :', devisRep.error);
     if (error) { console.error('[ALB DEBUG] statistiques :', error); etat.className = 'message erreur'; etat.textContent = 'Les chiffres n\'ont pas pu être chargés. Recharge la page dans un instant.'; return; }
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
-      signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [] };
+      signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
+      devis: devisRep.data || [] };
     const t = data.tarifs || {};
     if (t.abonnement_immo != null) TARIF_AGENT_MOIS = Number(t.abonnement_immo);
     if (t.abonnement_vendeur != null) TARIF_PARTICULIER_MOIS = Number(t.abonnement_vendeur);
