@@ -157,6 +157,60 @@
     if (!date) return { error: { message: 'DATE_MANQUANTE' } };
     return albSupabase.rpc('alb_pro_papier_date', { p_type: type, p_date: date });
   }
+  // ---------- Lecture automatique de la date de fin dans un PDF ----------
+  // (outil pdf.js, chargé seulement quand le pro envoie un PDF ; une photo ou un scan ne se lit pas)
+  let pdfjsPret = null;
+  function chargerPdfjs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfjsPret) return pdfjsPret;
+    pdfjsPret = new Promise(function (ok, ko) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        ok(window.pdfjsLib);
+      };
+      s.onerror = function () { pdfjsPret = null; ko(new Error('pdf.js')); };
+      document.head.appendChild(s);
+    });
+    return pdfjsPret;
+  }
+  const MOIS_FR = { janvier: 1, fevrier: 2, 'février': 2, mars: 3, avril: 4, mai: 5, juin: 6, juillet: 7, aout: 8, 'août': 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12, 'décembre': 12 };
+  // La date de fin écrite dans le document (« jusqu'au », « expire le », « fin de validité »…), ou null
+  function dateFinDuTexte(texte, type) {
+    const t = String(texte || '').replace(/\s+/g, ' ');
+    const dates = [];
+    const ajouter = function (j, m, a, index) {
+      j = +j; m = +m; a = +a;
+      if (a < 100) a += 2000;
+      if (!(j >= 1 && j <= 31 && m >= 1 && m <= 12 && a >= 1990 && a <= 2100)) return;
+      const avant = t.slice(Math.max(0, index - 60), index).toLowerCase();
+      let score = 0;
+      if (/(jusqu.?(au|à|a)|expir|fin de validit|[ée]ch[ée]ance|valable|valide|validit[ée]|au\s*$|terme)/.test(avant)) score += 2;
+      if (/(jusqu.?(au|à|a)|expir|fin de validit)\W*$/.test(avant)) score += 3;
+      if (/(n[ée]e? le|naissance|depuis|d[ée]livr|fait (à|a|le)|[ée]tabli|du\s*$|immatricul|cr[ée]ation|commencement|à la date|[àa] jour au|edition|édité)/.test(avant.slice(-30))) score -= 3;
+      dates.push({ iso: a + '-' + String(m).padStart(2, '0') + '-' + String(j).padStart(2, '0'), score: score });
+    };
+    let r;
+    const chiffres = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})\b/g;
+    while ((r = chiffres.exec(t))) ajouter(r[1], r[2], r[3], r.index);
+    const lettres = /\b(\d{1,2})(?:er)? (janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre) (\d{4})\b/gi;
+    while ((r = lettres.exec(t))) ajouter(r[1], MOIS_FR[r[2].toLowerCase()] || MOIS_FR[r[2].toLowerCase().replace('û', 'u')], r[3], r.index);
+    const fin = dates.filter(function (d) { return d.score > 0; })
+      .sort(function (a, b) { return b.score - a.score || b.iso.localeCompare(a.iso); })[0];
+    return fin ? fin.iso : null;
+  }
+  async function dateFinDuPdf(fichier, type) {
+    const pdfjs = await chargerPdfjs();
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(await fichier.arrayBuffer()) }).promise;
+    let texte = '';
+    for (let i = 1; i <= Math.min(doc.numPages, 5); i++) {
+      const contenu = await (await doc.getPage(i)).getTextContent();
+      texte += contenu.items.map(function (x) { return x.str; }).join(' ') + '\n';
+    }
+    return dateFinDuTexte(texte, type);
+  }
+
   function dateAvecAnnee(iso) { return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
   function papierDe(type) { return papiers.find(function (x) { return x.type === type; }) || {}; }
 
@@ -187,7 +241,7 @@
       '<p class="pp-aide">' + (manquants
         ? 'Il nous manque encore ' + manquants + ' élément' + (manquants > 1 ? 's' : '') + '. Ils restent privés : seule Jocelyne les voit, pour vérifier que tout est en règle avant de vous présenter aux particuliers.'
         : 'Merci, tout est là ✅ Seule Jocelyne voit vos papiers. Pensez à renvoyer une attestation quand elle est renouvelée.') + '</p>' +
-      (papiers.some(function (d) { return d.expire; }) ? '<p class="pp-aide">📅 Pour vos assurances et certificats, indiquez la date de fin de validité : vous serez prévenu avant qu’ils expirent.</p>' : '') +
+      (papiers.some(function (d) { return d.expire; }) ? '<p class="pp-aide">📅 Pour vos assurances et certificats, la date de fin de validité est lue automatiquement dans votre PDF (pour une photo, indiquez-la vous-même) : vous serez prévenu avant qu’ils expirent.</p>' : '') +
       papiers.map(lignePapier).join('') + '</div>';
   }
 
@@ -294,7 +348,23 @@
     const type = input.dataset.type;
     const idMsg = 'pp-msg-papier-' + type;
     if (!fichier) return;
-    if (papierDe(type).expire && !(el('pp-date-' + type) || {}).value) { input.value = ''; message(idMsg, 'erreur', ERREURS.DATE_MANQUANTE); return; }
+    let dateLue = null;
+    // Pas de date indiquée : on essaie de la lire dans le PDF
+    if (papierDe(type).expire && !(el('pp-date-' + type) || {}).value) {
+      if (fichier.type === 'application/pdf') {
+        message(idMsg, 'info', 'Lecture de la date de fin dans votre document…');
+        try { dateLue = await dateFinDuPdf(fichier, type); } catch (err) { console.error('[ALB DEBUG] lecture PDF :', err); }
+        console.log('[ALB DEBUG] date lue dans le PDF :', dateLue);
+      }
+      if (!dateLue) {
+        input.value = '';
+        message(idMsg, 'erreur', fichier.type === 'application/pdf'
+          ? 'Nous n’avons pas trouvé la date de fin dans ce document. Indiquez-la ci-dessus (« Valable jusqu’au »), puis choisissez à nouveau le fichier.'
+          : ERREURS.DATE_MANQUANTE);
+        return;
+      }
+      el('pp-date-' + type).value = dateLue;
+    }
     if (fichier.size > 10 * 1024 * 1024) { message(idMsg, 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
     if (!/^image\//.test(fichier.type) && fichier.type !== 'application/pdf') { message(idMsg, 'erreur', 'Choisissez un PDF ou une photo.'); return; }
     message(idMsg, 'info', 'Envoi en cours…');
@@ -310,7 +380,9 @@
     }
     await charger();
     dessiner(profilId);
-    message(idMsg, 'succes', 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
+    message(idMsg, 'succes', dateLue
+      ? 'Merci, c’est bien reçu ✅ Nous avons lu la date de fin : ' + dateAvecAnnee(dateLue) + '. Si elle n’est pas juste, corrigez-la puis cliquez « Enregistrer la date ». Jocelyne vérifie votre document.'
+      : 'Merci, c’est bien reçu ✅ Jocelyne le vérifie.');
   }
 
   async function enregistrerDateSeule(bouton, profilId) {
