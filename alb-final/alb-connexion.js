@@ -103,6 +103,11 @@ async function albSInscrire(donnees) {
     });
     if (error) console.error("[ALB] Corps de métier :", error.message);
   }
+  // Professionnel : preuve (date et heure) de son accord pour la transmission de ses coordonnées
+  if (session.ok && donnees.accepte_transmission === true) {
+    const { error } = await albSupabase.rpc("alb_enregistrer_accord_transmission");
+    if (error) console.error("[ALB] Accord de transmission :", error.message);
+  }
   return session;
 }
 
