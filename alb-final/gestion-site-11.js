@@ -66,9 +66,138 @@ function dateCourteCarnet(iso) { return iso ? dateLisible(iso) : ''; }
     const repere = '<button type="button" class="bouton discret" onclick="agendaPour(';
     const j = html.indexOf(repere);
     if (boutons && j !== -1) html = html.slice(0, j) + boutons + html.slice(j);
+    // ✉️ SMS, WhatsApp et Mail avec des messages tout prêts
+    const num = String(c.telephone || '').replace(/[^0-9+]/g, '');
+    const messages = (num ? '<button type="button" class="bouton" onclick="carnetOuvrirMessage(\'' + c.id + '\', \'sms\')">📱 SMS</button>' +
+        '<button type="button" class="bouton" onclick="carnetOuvrirMessage(\'' + c.id + '\', \'whatsapp\')">💬 WhatsApp</button>' : '') +
+      (c.email ? '<button type="button" class="bouton" onclick="carnetOuvrirMessage(\'' + c.id + '\', \'mail\')">📧 Mail</button>' : '');
+    html = html.replace('<a class="bouton" href="tel:', '<a class="bouton" data-alb-vu="1" href="tel:');
+    const appel = '">📞 Appeler</a>';
+    const k = html.indexOf(appel);
+    if (k !== -1) html = html.slice(0, k + appel.length) + messages + html.slice(k + appel.length);
+    else if (j !== -1) { const r = html.indexOf(repere); html = html.slice(0, r) + messages + html.slice(r); }
+    if (carnetMessage[c.id]) {
+      const fin = html.lastIndexOf('</div>');
+      html = html.slice(0, fin) + panneauMessageCarnet(c, carnetMessage[c.id]) + html.slice(fin);
+    }
     return html;
   };
 })();
+
+// ----- ✉️ Messages tout prêts (Carnet) : SMS, WhatsApp et Mail -----
+let carnetMessage = {};   // id du contact → 'sms' | 'whatsapp' | 'mail'
+function modelesCarnet(c) {
+  const p = c.prenom || '';
+  const salon = /rent/i.test(String(c.origine || ''));
+  const ou = salon ? 'au salon RENT' : 'lors de notre rencontre';
+  const sig = typeof signature === 'function' ? signature() : '\n\nÀ la bien, toujours ✨\nJocelyne Rimlinger\nFondatrice · ALB Sud Immobilier\n07 45 60 28 05';
+  return {
+    libre: { nom: '✏️ Message libre', objet: '', court: 'Bonjour ' + p + ', ', long: 'Bonjour ' + p + ',\n\n' },
+    rencontre: {
+      nom: '🤝 Ravie de notre rencontre',
+      objet: 'Ravie d\'avoir échangé avec vous',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Ravie d\'avoir échangé avec vous ' + ou + ' ! Comme promis, je reviens vers vous pour vous présenter ALB Immobilier plus en détail. Quand seriez-vous disponible pour un petit appel ? À la bien, toujours ✨',
+      long: 'Bonjour ' + p + ',\n\nRavie d\'avoir échangé avec vous ' + ou + ' ! Merci pour le temps que vous m\'avez accordé.\n\n' +
+        'Comme promis, je reviens vers vous pour vous présenter ALB Immobilier plus en détail : une plateforme dédiée à l\'immobilier ancien dans le Var et les Bouches-du-Rhône, qui met en relation les particuliers avec des professionnels de confiance.\n\n' +
+        'Quand seriez-vous disponible pour un petit appel ? Dites-moi le jour et l\'heure qui vous arrangent.'
+    },
+    test: {
+      nom: '⭐ Tester gratuitement',
+      objet: 'Testez ALB Immobilier gratuitement',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Comme convenu, vous pouvez tester ALB Immobilier gratuitement jusqu\'à fin 2026. Dites-moi quand vous êtes prêt, et je vous envoie le lien pour créer votre espace. À la bien, toujours ✨',
+      long: 'Bonjour ' + p + ',\n\nComme convenu, vous pouvez tester ALB Immobilier gratuitement jusqu\'à fin 2026, sans engagement.\n\n' +
+        'Il vous suffit de me donner votre feu vert : je crée votre espace et je vous envoie le lien pour l\'activer. Ensuite, je vous accompagne pour que votre fiche soit prête à recevoir vos premières demandes.\n\nÀ très vite !'
+    },
+    rdv: {
+      nom: '📅 Proposer un rendez-vous',
+      objet: 'Un moment pour en parler ?',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Je vous propose qu\'on prenne un moment pour en parler. Quel jour et quelle heure vous arrangent cette semaine ? À la bien, toujours ✨',
+      long: 'Bonjour ' + p + ',\n\nJe vous propose qu\'on prenne un moment pour parler de notre partenariat, de vive voix ou en visio.\n\nQuel jour et quelle heure vous arrangent cette semaine ?'
+    },
+    proposition: {
+      nom: '📨 Relancer ma proposition',
+      objet: 'Ma proposition de partenariat',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Je reviens vers vous au sujet de ma proposition. Avez-vous eu le temps d\'y jeter un œil ? Je reste disponible pour en parler. Belle journée !',
+      long: 'Bonjour ' + p + ',\n\nJe reviens vers vous au sujet de la proposition que je vous ai envoyée. Avez-vous eu le temps d\'y jeter un œil ?\n\n' +
+        'Si vous avez des questions ou si un point mérite d\'être ajusté, je suis là pour en parler. Répondez simplement à ce mail ou appelez-moi.'
+    },
+    contrat: {
+      nom: '✍️ Envoyer le contrat',
+      objet: 'Notre contrat de partenariat',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Comme convenu, je vous envoie le contrat de notre partenariat par e-mail. Prenez le temps de le lire, je reste disponible pour toute question. À la bien, toujours ✨',
+      long: 'Bonjour ' + p + ',\n\nComme convenu, vous trouverez ci-joint le contrat de notre partenariat.\n\n' +
+        'Prenez le temps de le lire tranquillement. Si un point n\'est pas clair, appelez-moi : on en parle avant que vous le signiez.\n\nMerci de votre confiance.'
+    },
+    relance: {
+      nom: '🔔 Relance',
+      objet: 'Je reviens vers vous',
+      court: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Je me permets de revenir vers vous suite à notre dernier échange. Pouvez-vous me rappeler quand vous avez un moment ? Merci !',
+      long: 'Bonjour ' + p + ',\n\nJe me permets de revenir vers vous suite à notre dernier échange.\n\nQuand pourrions-nous en reparler ? Répondez simplement à ce mail, ou appelez-moi quand vous avez un moment.'
+    },
+    bienvenue: {
+      nom: '🎉 Bienvenue (contrat signé)',
+      objet: 'Bienvenue chez ALB Immobilier',
+      court: 'Bonjour ' + p + ', merci pour votre confiance et bienvenue chez ALB Immobilier ! Je reste à vos côtés pour vos premières demandes. À la bien, toujours ✨ Jocelyne',
+      long: 'Bonjour ' + p + ',\n\nMerci pour votre confiance, et bienvenue chez ALB Immobilier !\n\n' +
+        'Je reste à vos côtés pour que tout se passe bien : votre fiche, vos premières demandes, vos questions. N\'hésitez jamais à m\'appeler.'
+    },
+    _sig: sig
+  };
+}
+
+function panneauMessageCarnet(c, quoi) {
+  const id = 'cm-' + c.id;
+  const num = String(c.telephone || '').replace(/[^0-9+]/g, '');
+  const m = modelesCarnet(c);
+  const depart = c.proposition_le && !c.contrat_le ? 'proposition' : (c.contrat_le ? 'bienvenue' : 'rencontre');
+  const options = Object.keys(m).filter(function (k) { return k !== '_sig'; }).map(function (k) {
+    return '<option value="' + k + '"' + (k === depart ? ' selected' : '') + '>' + m[k].nom + '</option>';
+  }).join('');
+  const titre = quoi === 'mail' ? '📧 Mail à ' + albEchapper(nomContact(c)) + ' · ' + albEchapper(c.email || '')
+    : (quoi === 'sms' ? '📱 SMS à ' : '💬 WhatsApp à ') + albEchapper(nomContact(c)) + ' · ' + albEchapper(c.telephone || '');
+  const texte = quoi === 'mail' ? m[depart].long + m._sig : m[depart].court;
+  const ouvrir = quoi === 'mail' ? '<button type="button" class="bouton" onclick="ouvrirMail(\'' + id + '\', \'' + albEchapper(c.email || '') + '\')">📧 Ouvrir le mail</button>'
+    : quoi === 'sms' ? '<button type="button" class="bouton" data-alb-vu="1" onclick="ouvrirSms(\'' + id + '\', \'' + albEchapper(num) + '\')">📱 Ouvrir le SMS</button>'
+    : '<button type="button" class="bouton" onclick="ouvrirWhatsApp(\'' + id + '\', \'' + albEchapper(num) + '\')">💬 Ouvrir WhatsApp</button>';
+  return '<div class="decision"><div class="decision-titre">' + titre + '</div>' +
+    '<label class="petit-champ" style="margin-bottom:8px;">Modèle<select onchange="carnetAppliquerModele(\'' + c.id + '\', this.value)">' + options + '</select></label>' +
+    (quoi === 'mail' ? '<label class="petit-champ">Objet<input type="text" maxlength="200" id="objet-' + id + '" value="' + albEchapper(m[depart].objet) + '"></label>' : '') +
+    '<textarea class="texte-pret" id="texte-' + id + '"' + (quoi === 'mail' ? ' style="min-height:200px;margin-top:8px;"' : '') + '>' + albEchapper(texte) + '</textarea>' +
+    '<div class="actions">' + ouvrir +
+      '<button type="button" class="bouton discret" onclick="copierTexte(\'' + id + '\', this)">📋 Copier</button>' +
+      '<button type="button" class="bouton vert" onclick="carnetMessageEnvoye(\'' + c.id + '\')">✓ C\'est fait, je l\'ai envoyé</button>' +
+      '<button type="button" class="bouton discret" onclick="carnetOuvrirMessage(\'' + c.id + '\', null)">Annuler</button></div>' +
+    '<p class="aide">Relis et ajuste le texte si besoin : rien ne part tout seul. Une fois envoyé, clique « C\'est fait » : tu pourras noter quand le relancer.</p></div>';
+}
+
+function carnetOuvrirMessage(id, quoi) {
+  carnetMessage[id] = quoi && carnetMessage[id] !== quoi ? quoi : null;
+  afficherCarnet();
+}
+
+function carnetAppliquerModele(id, cle) {
+  const c = carnet.find(function (x) { return x.id === id; }) || {};
+  const m = modelesCarnet(c)[cle];
+  if (!m) return;
+  const quoi = carnetMessage[id];
+  document.getElementById('texte-cm-' + id).value = quoi === 'mail' ? m.long + modelesCarnet(c)._sig : m.court;
+  const objet = document.getElementById('objet-cm-' + id);
+  if (objet) objet.value = m.objet;
+}
+
+// « C'est fait » : on garde une trace dans ses notes, et on propose la date de relance
+function carnetMessageEnvoye(id) {
+  const quoi = carnetMessage[id];
+  const choix = document.querySelector('#texte-cm-' + id) ? document.querySelector('#texte-cm-' + id).closest('.decision').querySelector('select') : null;
+  const modele = choix ? choix.options[choix.selectedIndex].text : '';
+  const canal = quoi === 'mail' ? '📧 Mail envoyé' : quoi === 'sms' ? '📱 SMS envoyé' : '💬 WhatsApp envoyé';
+  carnetMessage[id] = null;
+  carnetNoteOuverte[id] = true;
+  afficherCarnet();
+  const note = document.getElementById('cn-note-' + id);
+  if (note) { note.value = canal + (modele && modele !== '✏️ Message libre' ? ' : « ' + modele.replace(/^\S+\s/, '') + ' »' : ''); note.focus(); }
+  afficherMessage('message-general', 'succes', 'Noté ✓ Indique quand le relancer, puis clique « Enregistrer ».');
+}
 
 // Un clic : on note l'étape (avec un petit mot facultatif)
 async function carnetEtapeRapide(id, etape, bouton) {
@@ -260,3 +389,35 @@ async function membreCommercial(id, etape, bouton) {
   afficherAFaire();
   afficherMessage('message-general', 'succes', etape === 'proposition' ? 'C\'est noté ✓ Relance prévue dans 7 jours.' : 'Contrat signé, bravo ! 🎉 C\'est noté.');
 }
+
+// ----- ✉️ Suivi des membres : des modèles en plus pour les pros (SMS, WhatsApp, Mail) -----
+(function () {
+  const modelesPourAvantCommercial = modelesPour;
+  modelesPour = function (m) {
+    const base = modelesPourAvantCommercial(m);
+    if (!estPro(m)) return base;
+    const p = m.prenom || '';
+    base.proposition = {
+      nom: '📨 Relancer ma proposition',
+      objet: 'Ma proposition de partenariat',
+      sms: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Je reviens vers vous au sujet de ma proposition. Avez-vous eu le temps d\'y jeter un œil ? Je reste disponible pour en parler. Belle journée !',
+      mail: 'Bonjour ' + p + ',\n\nJe reviens vers vous au sujet de la proposition que je vous ai envoyée. Avez-vous eu le temps d\'y jeter un œil ?\n\n' +
+        'Si vous avez des questions ou si un point mérite d\'être ajusté, je suis là pour en parler. Répondez simplement à ce mail ou appelez-moi.'
+    };
+    base.contrat = {
+      nom: '✍️ Envoyer le contrat',
+      objet: 'Notre contrat de partenariat',
+      sms: 'Bonjour ' + p + ', c\'est Jocelyne d\'ALB Sud Immobilier. Comme convenu, je vous envoie le contrat de notre partenariat par e-mail. Prenez le temps de le lire, je reste disponible pour toute question. À la bien, toujours ✨',
+      mail: 'Bonjour ' + p + ',\n\nComme convenu, vous trouverez ci-joint le contrat de notre partenariat.\n\n' +
+        'Prenez le temps de le lire tranquillement. Si un point n\'est pas clair, appelez-moi : on en parle avant que vous le signiez.\n\nMerci de votre confiance.'
+    };
+    base.bienvenue = {
+      nom: '🎉 Merci (contrat signé)',
+      objet: 'Merci pour votre confiance',
+      sms: 'Bonjour ' + p + ', merci pour votre confiance ! Je suis ravie de continuer l\'aventure ALB Immobilier à vos côtés. N\'hésitez jamais à m\'appeler. À la bien, toujours ✨ Jocelyne',
+      mail: 'Bonjour ' + p + ',\n\nMerci pour votre confiance ! Je suis ravie de continuer l\'aventure ALB Immobilier à vos côtés.\n\n' +
+        'Je reste là pour que tout se passe bien : votre fiche, vos demandes, vos questions. N\'hésitez jamais à m\'appeler.'
+    };
+    return base;
+  };
+})();
