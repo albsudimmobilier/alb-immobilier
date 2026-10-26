@@ -89,6 +89,12 @@
     </div>
     <p class="aide">« Bien » et « Vente » ne changent que les chiffres des annonces. Les biens « en ligne » et « sous offre » sont comptés aujourd'hui, quelle que soit la période.</p>
 
+    <h2 class="titre-section">🎯 Suivi commercial d'ALB Sud Immobilier</h2>
+    <p class="aide">Ta prospection des pros, de la rencontre jusqu'à l'argent encaissé, sur la période choisie (le département ne compte pas ici). Les contacts et les étapes viennent du « 📇 Carnet », les rendez-vous de l'« 📅 Agenda » (ceux marqués faits), l'encaissé des factures marquées « 💶 Payée » dans « Factures ».</p>
+    <div class="compteurs" id="c-commercial"></div>
+    <p class="aide">D'où viennent tes contacts (salon, rencontre, visio…) :</p>
+    <div class="carte tableau-conteneur" id="t-commercial"></div>
+
     <h2 class="titre-section">🏡 Les ventes</h2>
     <div class="compteurs" id="c-ventes"></div>
 
@@ -490,6 +496,44 @@
     el('t-devis').innerHTML = tableau(['Artisan', 'Devis', 'En cours', 'Signés', 'Perdus', 'Montant signé', 'Taux de signature'], lignes, 'Pas encore de devis sur cette période. 🌿');
   }
 
+  // ----- 🎯 Suivi commercial (Carnet, Agenda, Factures) -----
+  function dessinerCommercial() {
+    const co = donnees.commercial;
+    const contacts = co.carnet.filter(function (c) { return dansPeriode(c.cree_le); });
+    const qualifies = co.carnet.filter(function (c) { return dansPeriode(c.qualifie_le); });
+    const rdv = co.rdv.filter(function (r) { return dansPeriode(r.fait_le); });
+    const rdvCarnet = rdv.filter(function (r) { return r.lien_type === 'carnet'; }).length;
+    const propositions = co.carnet.filter(function (c) { return dansPeriode(c.proposition_le); });
+    const contrats = co.carnet.filter(function (c) { return dansPeriode(c.contrat_le); });
+    const payees = co.factures.filter(function (f) { return f.payee_le && dansPeriode(f.payee_le + 'T12:00:00'); });
+    const aEncaisser = co.factures.filter(function (f) { return !f.payee_le; });
+    const enAttente = co.carnet.filter(function (c) { return c.etape === 'proposition'; }).length;
+    const somme = function (l, cle) { return l.reduce(function (t, f) { return t + Number(f[cle] || 0); }, 0); };
+    const salon = contacts.filter(function (c) { return c.salon; }).length;
+    el('c-commercial').innerHTML =
+      compteur(nb(contacts.length), '📇 Nouveaux contacts', salon ? 'dont ' + nb(salon) + ' venu' + (salon > 1 ? 's' : '') + ' du formulaire salon / rencontre' : 'ajoutés au Carnet') +
+      compteur(nb(qualifies.length), '👍 Contacts qualifiés', 'passés à « Intéressé » ou plus loin') +
+      compteur(nb(rdv.length), '🤝 Rendez-vous faits', rdvCarnet ? 'dont ' + nb(rdvCarnet) + ' avec un contact du Carnet' : 'marqués faits dans l\'agenda') +
+      compteur(nb(propositions.length), '📨 Propositions envoyées', enAttente ? nb(enAttente) + ' en attente de réponse aujourd\'hui' : '') +
+      compteur(nb(contrats.length), '✍️ Contrats signés', propositions.length ? pourcent(contrats.length, propositions.length) + ' des propositions' : '', true) +
+      compteur(euros(somme(payees, 'total_ttc')), '💶 Montant encaissé', payees.length ? nb(payees.length) + ' facture' + (payees.length > 1 ? 's' : '') + ' · ' + euros(somme(payees, 'total_ht')) + ' HT' : 'tout est offert jusqu\'au 31/12/2026', true) +
+      compteur(euros(somme(aEncaisser, 'total_ttc')), '⏳ Reste à encaisser', nb(aEncaisser.length) + ' facture' + (aEncaisser.length > 1 ? 's' : '') + ' validée' + (aEncaisser.length > 1 ? 's' : '') + ' pas encore payée' + (aEncaisser.length > 1 ? 's' : '')) +
+      compteur(contacts.length ? pourcent(contrats.length, contacts.length) : '—', '🎯 Du contact au contrat', 'contrats signés ÷ nouveaux contacts');
+    const parOrigine = {};
+    co.carnet.filter(function (c) { return dansPeriode(c.cree_le); }).forEach(function (c) {
+      const cle = String(c.origine || 'Sans origine indiquée').trim();
+      const o = parOrigine[cle.toLowerCase()] || (parOrigine[cle.toLowerCase()] = { nom: cle, contacts: 0, qualifies: 0, propositions: 0, contrats: 0 });
+      o.contacts++;
+      if (c.qualifie_le) o.qualifies++;
+      if (c.proposition_le) o.propositions++;
+      if (c.contrat_le) o.contrats++;
+    });
+    const lignes = Object.keys(parOrigine).map(function (k) { return parOrigine[k]; }).sort(function (a, b) { return b.contacts - a.contacts; }).slice(0, 10).map(function (o) {
+      return [e(o.nom), nb(o.contacts), nb(o.qualifies), nb(o.propositions), nb(o.contrats), pourcent(o.contrats, o.contacts)];
+    });
+    el('t-commercial').innerHTML = tableau(['Origine', 'Contacts', 'Qualifiés', 'Propositions', 'Contrats', 'Taux'], lignes, 'Pas encore de contact dans le Carnet sur cette période. 🌿');
+  }
+
   // ----- Mois par mois -----
   function dessinerMois() {
     const mois = [];
@@ -528,6 +572,7 @@
 
   function dessinerTout() {
     dessinerFiltres();
+    dessinerCommercial();
     dessinerVentes();
     dessinerTemps();
     dessinerM2();
@@ -551,12 +596,13 @@
     if (!session?.session) { etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.'; return; }
     const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
-    const [{ data, error }, devisRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis')]);
+    const [{ data, error }, devisRep, commercialRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial')]);
     if (devisRep.error) console.error('[ALB DEBUG] devis :', devisRep.error);
+    if (commercialRep.error) console.error('[ALB DEBUG] suivi commercial :', commercialRep.error);
     if (error) { console.error('[ALB DEBUG] statistiques :', error); etat.className = 'message erreur'; etat.textContent = 'Les chiffres n\'ont pas pu être chargés. Recharge la page dans un instant.'; return; }
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
       signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
-      devis: devisRep.data || [] };
+      devis: devisRep.data || [], commercial: Object.assign({ carnet: [], rdv: [], factures: [] }, commercialRep.data || {}) };
     const t = data.tarifs || {};
     if (t.abonnement_immo != null) TARIF_AGENT_MOIS = Number(t.abonnement_immo);
     if (t.abonnement_vendeur != null) TARIF_PARTICULIER_MOIS = Number(t.abonnement_vendeur);
