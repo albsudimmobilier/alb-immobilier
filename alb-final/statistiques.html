@@ -90,7 +90,7 @@
     <p class="aide">« Bien » et « Vente » ne changent que les chiffres des annonces. Les biens « en ligne » et « sous offre » sont comptés aujourd'hui, quelle que soit la période.</p>
 
     <h2 class="titre-section">🎯 Suivi commercial d'ALB Sud Immobilier</h2>
-    <p class="aide">Ta prospection des pros, de la rencontre jusqu'à l'argent encaissé, sur la période choisie (le département ne compte pas ici). Les contacts et les étapes viennent du « 📇 Carnet », les rendez-vous de l'« 📅 Agenda » (ceux marqués faits), l'encaissé des factures marquées « 💶 Payée » dans « Factures ».</p>
+    <p class="aide">Ta prospection des pros, de la rencontre jusqu'à l'argent encaissé, sur la période choisie (le département ne compte pas ici). Les contacts viennent du « 📇 Carnet » ; les propositions et contrats, du Carnet et de « 👥 Suivi des membres » (pros déjà inscrits) ; les rendez-vous de l'« 📅 Agenda » (ceux marqués faits), l'encaissé des factures marquées « 💶 Payée » dans « Factures ».</p>
     <div class="compteurs" id="c-commercial"></div>
     <p class="aide">D'où viennent tes contacts (salon, rencontre, visio…) :</p>
     <div class="carte tableau-conteneur" id="t-commercial"></div>
@@ -503,11 +503,14 @@
     const qualifies = co.carnet.filter(function (c) { return dansPeriode(c.qualifie_le); });
     const rdv = co.rdv.filter(function (r) { return dansPeriode(r.fait_le); });
     const rdvCarnet = rdv.filter(function (r) { return r.lien_type === 'carnet'; }).length;
-    const propositions = co.carnet.filter(function (c) { return dansPeriode(c.proposition_le); });
-    const contrats = co.carnet.filter(function (c) { return dansPeriode(c.contrat_le); });
+    // Propositions et contrats : contacts du Carnet + pros déjà inscrits (Suivi des membres)
+    const tous = co.carnet.concat(co.membres || []);
+    const propositions = tous.filter(function (c) { return dansPeriode(c.proposition_le); });
+    const contrats = tous.filter(function (c) { return dansPeriode(c.contrat_le); });
     const payees = co.factures.filter(function (f) { return f.payee_le && dansPeriode(f.payee_le + 'T12:00:00'); });
     const aEncaisser = co.factures.filter(function (f) { return !f.payee_le; });
-    const enAttente = co.carnet.filter(function (c) { return c.etape === 'proposition'; }).length;
+    const enAttente = co.carnet.filter(function (c) { return c.etape === 'proposition'; }).length +
+      (co.membres || []).filter(function (x) { return x.proposition_le && !x.contrat_le; }).length;
     const somme = function (l, cle) { return l.reduce(function (t, f) { return t + Number(f[cle] || 0); }, 0); };
     const salon = contacts.filter(function (c) { return c.salon; }).length;
     el('c-commercial').innerHTML =
@@ -602,7 +605,7 @@
     if (error) { console.error('[ALB DEBUG] statistiques :', error); etat.className = 'message erreur'; etat.textContent = 'Les chiffres n\'ont pas pu être chargés. Recharge la page dans un instant.'; return; }
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
       signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
-      devis: devisRep.data || [], commercial: Object.assign({ carnet: [], rdv: [], factures: [] }, commercialRep.data || {}) };
+      devis: devisRep.data || [], commercial: Object.assign({ carnet: [], membres: [], rdv: [], factures: [] }, commercialRep.data || {}) };
     const t = data.tarifs || {};
     if (t.abonnement_immo != null) TARIF_AGENT_MOIS = Number(t.abonnement_immo);
     if (t.abonnement_vendeur != null) TARIF_PARTICULIER_MOIS = Number(t.abonnement_vendeur);
