@@ -32,6 +32,30 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://albimmobilier.fr/simulateur-budget.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://albimmobilier.fr/financement_interactive.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://albimmobilier.fr/projets-travaux.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://albimmobilier.fr/accompagnement_vente_achat.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://albimmobilier.fr/cgu.html</loc>
     <lastmod>2026-10-11</lastmod>
     <changefreq>yearly</changefreq>
