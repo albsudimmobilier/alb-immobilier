@@ -53,6 +53,20 @@ function albMessageErreur(code) {
   return ALB_MESSAGES[code] || ALB_MESSAGES.ERREUR_SERVEUR;
 }
 
+// Codes PIN refusés quand quelqu'un en choisit un : trop faciles à deviner.
+// (La connexion ne les regarde pas : un code déjà enregistré reste valable.)
+// La même liste existe côté serveur : si on la change ici, il faut aussi la changer là-bas.
+const ALB_PINS_TROP_SIMPLES = [
+  "0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999",
+  "0123", "1234", "2345", "3456", "4567", "5678", "6789",
+  "3210", "4321", "5432", "6543", "7654", "8765", "9876",
+  "1212", "2121", "1122", "1313", "1010", "2580", "0852", "1004", "6969", "2000", "2001", "1357", "2468"
+];
+
+function albPinTropSimple(pin) {
+  return ALB_PINS_TROP_SIMPLES.includes(String(pin || "").trim());
+}
+
 // Appel au guichet serveur (si la personne est connectée, le guichet sait qui elle est)
 async function albAppelerGuichet(donnees, adresse) {
   try {
@@ -94,6 +108,7 @@ async function albSeConnecter(email, pin) {
 
 // Inscription (connecte automatiquement si tout est bon)
 async function albSInscrire(donnees) {
+  if (albPinTropSimple(donnees.pin)) return { ok: false, message: albMessageErreur("PIN_TROP_SIMPLE") };
   const resultat = await albAppelerGuichet({ action: "inscription", ...donnees });
   if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
   const session = await albOuvrirSession(resultat.jeton);
@@ -127,6 +142,7 @@ async function albLireLien(jeton) {
 
 // Utilise le lien : nouveau code PIN (et nouvelle adresse si Jocelyne l'a prévue), puis connexion
 async function albUtiliserLien(jeton, pin) {
+  if (albPinTropSimple(pin)) return { ok: false, message: albMessageErreur("PIN_TROP_SIMPLE") };
   const resultat = await albAppelerGuichet({ action: "utiliser_lien", jeton, pin });
   if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
   const session = await albOuvrirSession(resultat.jeton);
@@ -142,6 +158,7 @@ async function albLireActivation(jeton) {
 
 // La personne active son espace : code PIN + conditions générales acceptées, puis connexion
 async function albActiverEspace(jeton, pin, cguAcceptees) {
+  if (albPinTropSimple(pin)) return { ok: false, message: albMessageErreur("PIN_TROP_SIMPLE") };
   const resultat = await albAppelerGuichet({ action: "activer", jeton, pin, cgu_acceptees: cguAcceptees === true }, ALB_GUICHET_ESPACES);
   if (!resultat.ok) return { ok: false, message: albMessageErreur(resultat.code) };
   const session = await albOuvrirSession(resultat.jeton);
@@ -161,6 +178,7 @@ async function albDemandeAcces(donnees) {
 
 // Changer son code PIN une fois connecté (pas besoin de l'ancien)
 async function albChangerPin(pin) {
+  if (albPinTropSimple(pin)) return { ok: false, message: albMessageErreur("PIN_TROP_SIMPLE") };
   const resultat = await albAppelerGuichet({ action: "changer_pin", pin });
   return resultat.ok ? { ok: true } : { ok: false, message: albMessageErreur(resultat.code) };
 }

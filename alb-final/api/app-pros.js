@@ -610,6 +610,7 @@ const MESSAGES_CONTACT = {
   EMAIL_INVALIDE: 'L\'adresse e-mail ne semble pas complète. Pouvez-vous la vérifier ?',
   TELEPHONE_INVALIDE: 'Le numéro de téléphone ne semble pas complet. Pouvez-vous le vérifier ?',
   PIN_INVALIDE: 'Votre code PIN doit contenir exactement 4 chiffres.',
+  PIN_TROP_SIMPLE: 'Ce code PIN est trop facile à deviner (comme 1234 ou 1111). Choisissez-en un autre pour bien protéger votre espace.',
   PIN_DIFFERENTS: 'Les deux codes PIN ne sont pas identiques. Pouvez-vous les vérifier ?',
   MESSAGE_VIDE: 'Écrivez votre message avant de l\'envoyer.',
   MESSAGE_TROP_LONG: 'Votre message est un peu long : 2 000 caractères au maximum.',
