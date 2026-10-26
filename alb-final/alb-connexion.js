@@ -36,6 +36,7 @@ const ALB_MESSAGES = {
   AUTRE_A_PRECISER: "Vous avez coché « Autre » : dites-nous en quelques mots ce qui vous amène.",
   EMAIL_INVALIDE: "L'adresse e-mail ne semble pas complète. Pouvez-vous la vérifier ?",
   PIN_INVALIDE: "Votre code PIN doit contenir exactement 4 chiffres.",
+  PIN_TROP_SIMPLE: "Ce code PIN est trop facile à deviner (comme 1234 ou 1111). Choisissez-en un autre pour bien protéger votre espace.",
   NOM_MANQUANT: "Indiquez-nous votre prénom et votre nom, pour qu'on sache à qui on parle.",
   TELEPHONE_INVALIDE: "Le numéro de téléphone ne semble pas complet. Pouvez-vous le vérifier ?",
   CGU_NON_ACCEPTEES: "Pour rejoindre ALB, merci d'accepter les conditions générales.",
