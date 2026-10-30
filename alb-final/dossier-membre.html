@@ -15,6 +15,8 @@
     droit d'accès). On peut l'imprimer en PDF ou le télécharger pour le lui envoyer.
     Deux recherches : les membres (avec compte) et les personnes sans compte
     (salon, demande de rappel, carnet de contacts…).
+    Trois listes complètes, avec un filtre : tous les inscrits, tout le carnet,
+    tous les contacts du salon. Un clic sur une ligne ouvre le dossier de la personne.
     Lecture seule : rien n'est modifié ni effacé depuis cette page.
   -->
   <style>
@@ -56,6 +58,12 @@
     .infos ul { font-size: 0.88rem; margin: 0 0 8px 20px; }
     .ligne-recherche { display: flex; flex-wrap: wrap; gap: 8px; }
     .ligne-recherche input { flex: 1 1 240px; }
+    .liste-titre { font-size: 1.3rem; margin-bottom: 6px; }
+    .liste-titre .nb { font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: #7a7a75; font-weight: 500; }
+    .liste-filtres { display: flex; flex-wrap: wrap; gap: 8px; }
+    .liste-filtres input { flex: 1 1 240px; }
+    .liste-filtres select { padding: 12px; border: 1px solid #D8D5CE; border-radius: 8px; font: inherit; background: #fff; }
+    .liste-contacts { max-height: 520px; overflow-y: auto; }
     @media (max-width: 560px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
     @media print {
       .bandeau, #zone-recherche, .actions, .rgpd { display: none !important; }
@@ -92,6 +100,38 @@
       </div>
     </div>
 
+    <div class="carte">
+      <h2 class="liste-titre">🙋 Tous les inscrits <span class="nb" id="nb-membres"></span></h2>
+      <p class="aide">Tous les membres qui ont un compte sur la plateforme. Tape pour filtrer (nom, prénom, entreprise, e-mail, téléphone, ville). Un clic ouvre son dossier.</p>
+      <div class="liste-filtres">
+        <input type="search" id="filtre-membres" placeholder="Filtrer les inscrits…" autocomplete="off" oninput="afficherListeMembres()">
+        <select id="filtre-type-membres" onchange="afficherListeMembres()">
+          <option value="">Tous</option>
+          <option value="particulier">Particuliers</option>
+          <option value="pro">Pros</option>
+        </select>
+      </div>
+      <div class="resultats liste-contacts" id="liste-membres"></div>
+    </div>
+
+    <div class="carte">
+      <h2 class="liste-titre">📒 Tout le carnet <span class="nb" id="nb-carnet"></span></h2>
+      <p class="aide">Les personnes de ton carnet de contacts. Tape pour filtrer (nom, entreprise, métier, e-mail, téléphone, ville, étape). Un clic ouvre le dossier de la personne.</p>
+      <div class="liste-filtres">
+        <input type="search" id="filtre-carnet" placeholder="Filtrer le carnet…" autocomplete="off" oninput="afficherListeCarnet()">
+      </div>
+      <div class="resultats liste-contacts" id="liste-carnet"></div>
+    </div>
+
+    <div class="carte">
+      <h2 class="liste-titre">🎪 Tous les contacts du salon <span class="nb" id="nb-salon"></span></h2>
+      <p class="aide">Les personnes rencontrées lors d'un salon ou d'une rencontre. Tape pour filtrer (nom, métier, coordonnées, lieu). Un clic ouvre le dossier de la personne.</p>
+      <div class="liste-filtres">
+        <input type="search" id="filtre-salon" placeholder="Filtrer les contacts du salon…" autocomplete="off" oninput="afficherListeSalon()">
+      </div>
+      <div class="resultats liste-contacts" id="liste-salon"></div>
+    </div>
+
     <div class="carte rgpd">
       <strong>🔒 Si quelqu'un te demande « ce que vous avez sur moi »</strong> : ouvre son dossier, clique sur « 🖨️ Imprimer ou enregistrer en PDF », puis envoie-lui le PDF. Tu as un mois pour répondre. Vérifie d'abord que c'est bien lui qui demande (appel au numéro connu, ou mail depuis son adresse enregistrée).
     </div>
@@ -102,6 +142,8 @@
 
 <script>
   let lesMembres = [];
+  let leCarnet = [];
+  let lesContactsSalon = [];
   let dossierCourant = null;
   let dossierEstContact = false;
 
@@ -250,6 +292,106 @@
     lesMembres = (data || []).filter(function (m) { return !m.est_admin; });
     document.getElementById('zone-recherche').classList.remove('cache');
     afficherResultats();
+    afficherListeMembres();
+    await chargerListesContacts();
+  }
+
+  // Charge le carnet et les contacts du salon (réservé à Jocelyne côté base de données)
+  async function chargerListesContacts() {
+    const { data, error } = await albSupabase.rpc('alb_gestion_liste_contacts');
+    if (error) {
+      console.log('[ALB DEBUG] liste des contacts impossible à charger :', error.message);
+      const texte = '<p class="vide">Impossible de charger cette liste pour le moment. Réessaie dans un instant.</p>';
+      document.getElementById('liste-carnet').innerHTML = texte;
+      document.getElementById('liste-salon').innerHTML = texte;
+      return;
+    }
+    leCarnet = (data && data.carnet) || [];
+    lesContactsSalon = (data && data.salon) || [];
+    afficherListeCarnet();
+    afficherListeSalon();
+  }
+
+  // Met un texte en minuscules et sans accents, pour que « Hélène » trouve « helene »
+  function simplifier(texte) {
+    return String(texte || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  }
+
+  // Dit si une ligne correspond à ce qui est tapé dans le filtre (texte ou début de numéro)
+  function correspondAuFiltre(valeurs, saisie) {
+    const q = simplifier(saisie).trim();
+    if (!q) return true;
+    const chiffres = q.replace(/\D/g, '');
+    const texte = valeurs.map(simplifier).join(' ');
+    if (texte.includes(q)) return true;
+    if (chiffres.length >= 4) {
+      const tel = valeurs.join(' ').replace(/\D/g, '');
+      return tel.includes(chiffres.replace(/^33/, '0').replace(/^0/, ''));
+    }
+    return false;
+  }
+
+  function afficherListeMembres() {
+    const saisie = document.getElementById('filtre-membres').value;
+    const type = document.getElementById('filtre-type-membres').value;
+    const liste = lesMembres.filter(function (m) {
+      const estPro = !!(m.role && m.role !== 'particulier');
+      if (type === 'pro' && !estPro) return false;
+      if (type === 'particulier' && estPro) return false;
+      return correspondAuFiltre([m.prenom, m.nom, (m.prenom || '') + ' ' + (m.nom || ''), (m.nom || '') + ' ' + (m.prenom || ''), m.email, m.telephone, m.nom_entreprise, m.ville], saisie);
+    });
+    document.getElementById('nb-membres').textContent = '(' + liste.length + ' sur ' + lesMembres.length + ')';
+    document.getElementById('liste-membres').innerHTML = liste.length ? liste.map(function (m) {
+      const qui = m.role && m.role !== 'particulier' ? '🧑‍💼 Pro' : '🙋 Particulier';
+      return '<button type="button" class="resultat" onclick="ouvrirDossier(\'' + m.id + '\')"><strong>' + echapper(((m.prenom || '') + ' ' + (m.nom || '')).trim() || 'Sans nom') + '</strong>' +
+        (m.nom_entreprise ? ' · ' + echapper(m.nom_entreprise) : '') + '<br><small>' + qui + ' · ' + echapper(m.email || '') + (m.telephone ? ' · ' + echapper(m.telephone) : '') + (m.ville ? ' · ' + echapper(m.ville) : '') + '</small></button>';
+    }).join('') : '<p class="vide">' + (lesMembres.length ? 'Personne ne correspond.' : 'Aucun inscrit pour le moment.') + '</p>';
+  }
+
+  function afficherListeCarnet() {
+    const saisie = document.getElementById('filtre-carnet').value;
+    const liste = leCarnet.map(function (c, i) { return { c: c, i: i }; }).filter(function (x) {
+      const c = x.c;
+      return correspondAuFiltre([c.prenom, c.nom, (c.prenom || '') + ' ' + (c.nom || ''), (c.nom || '') + ' ' + (c.prenom || ''), c.entreprise, c.metier, c.email, c.telephone, c.ville, c.etape, c.origine], saisie);
+    });
+    document.getElementById('nb-carnet').textContent = '(' + liste.length + ' sur ' + leCarnet.length + ')';
+    document.getElementById('liste-carnet').innerHTML = liste.length ? liste.map(function (x) {
+      const c = x.c;
+      const nom = ((c.prenom || '') + ' ' + (c.nom || '')).trim() || c.entreprise || 'Sans nom';
+      const details = [c.metier, c.etape, c.email, c.telephone, c.ville].filter(function (v) { return v; }).map(echapper).join(' · ');
+      return '<button type="button" class="resultat" onclick="ouvrirContactListe(\'carnet\', ' + x.i + ')"><strong>' + echapper(nom) + '</strong>' +
+        (c.entreprise && c.entreprise !== nom ? ' · ' + echapper(c.entreprise) : '') +
+        (c.profile_id ? ' <span class="etiquette">A un compte</span>' : '') +
+        '<br><small>' + details + '</small></button>';
+    }).join('') : '<p class="vide">' + (leCarnet.length ? 'Personne ne correspond.' : 'Aucune fiche dans le carnet pour le moment.') + '</p>';
+  }
+
+  function afficherListeSalon() {
+    const saisie = document.getElementById('filtre-salon').value;
+    const liste = lesContactsSalon.map(function (s, i) { return { s: s, i: i }; }).filter(function (x) {
+      return correspondAuFiltre([x.s.nom, x.s.metier, x.s.coordonnees, x.s.salon], saisie);
+    });
+    document.getElementById('nb-salon').textContent = '(' + liste.length + ' sur ' + lesContactsSalon.length + ')';
+    document.getElementById('liste-salon').innerHTML = liste.length ? liste.map(function (x) {
+      const s = x.s;
+      const details = [s.coordonnees, s.salon].filter(function (v) { return v; }).map(echapper).join(' · ');
+      return '<button type="button" class="resultat" onclick="ouvrirContactListe(\'salon\', ' + x.i + ')"><strong>' + echapper(s.nom || 'Sans nom') + '</strong>' +
+        (s.metier ? ' · ' + echapper(s.metier) : '') + '<br><small>' + details + '</small></button>';
+    }).join('') : '<p class="vide">' + (lesContactsSalon.length ? 'Personne ne correspond.' : 'Aucun contact du salon pour le moment.') + '</p>';
+  }
+
+  // Ouvre le dossier d'une personne choisie dans la liste du carnet ou du salon
+  function ouvrirContactListe(liste, position) {
+    const ligne = liste === 'carnet' ? leCarnet[position] : lesContactsSalon[position];
+    if (!ligne) return;
+    // Si la personne du carnet a un compte, on ouvre son dossier de membre complet
+    if (liste === 'carnet' && ligne.profile_id) { ouvrirDossier(ligne.profile_id); return; }
+    // Sinon on cherche d'abord par e-mail, puis par téléphone, puis par nom
+    const nom = ((ligne.prenom || '') + ' ' + (ligne.nom || '')).trim();
+    const saisie = (liste === 'carnet' ? (ligne.email || ligne.telephone || ligne.nom || nom) : (ligne.nom || '')) || '';
+    if (String(saisie).trim().length < 3) { alert('Il manque un nom, un e-mail ou un téléphone pour ouvrir ce dossier.'); return; }
+    document.getElementById('recherche-contact').value = saisie;
+    chercherContact();
   }
 
   function afficherResultats() {
