@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Calendrier — ALB Immobilier</title>
+  <link rel="stylesheet" href="polices/polices.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.5; }
+    h1, h2 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    .cache { display: none !important; }
+
+    /* Bandeau (le même que Gestion du site) */
+    .bandeau { background: #4B1A3E; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
+    .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
+    .bandeau-titre { font-weight: 700; font-size: 1rem; }
+    .bandeau-droite { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; align-items: center; }
+    .bandeau a { color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem; text-decoration: none; }
+    .bandeau a:hover { background: #B28E3D; border-color: #B28E3D; }
+
+    .contenu { max-width: 1100px; margin: 0 auto; padding: 16px 16px 60px; }
+    .message { padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 0.9rem; background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border-color: #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border-color: #CFE4CF; }
+
+    .cal { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 760px) { .cal { grid-template-columns: 1fr; } }
+
+    /* Le côté : le mois */
+    .cote { background: #fff; border: 1px solid #E8E6E1; border-radius: 12px; padding: 14px; }
+    .mois-tete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .mois-nom { font-weight: 700; font-size: 0.95rem; color: #4B1A3E; text-transform: capitalize; }
+    .fleche { border: none; background: transparent; font-size: 1.1rem; cursor: pointer; color: #5A3A6A; padding: 4px 9px; border-radius: 6px; font-family: inherit; }
+    .fleche:hover { background: #F4EEF6; }
+    .mois-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+    .mois-jour-nom { font-size: 0.7rem; font-weight: 700; color: #7a7a75; padding: 4px 0; }
+    .case-jour { position: relative; border: none; background: transparent; font-family: inherit; font-size: 0.8rem; padding: 7px 0; border-radius: 50%; cursor: pointer; color: #4A4A47; }
+    .case-jour:hover { background: #F4EEF6; }
+    .case-jour.autre { color: #b5b3ae; }
+    .case-jour.aujourdhui { color: #5A3A6A; font-weight: 700; box-shadow: inset 0 0 0 1.5px #5A3A6A; }
+    .case-jour.choisi { background: #5A3A6A; color: #fff; }
+    .case-jour .point { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #B28E3D; }
+    .case-jour.choisi .point { background: #fff; }
+    .options { margin-top: 14px; font-size: 0.84rem; display: flex; flex-direction: column; gap: 8px; }
+    .options label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .alerte-retard { margin-top: 12px; font-size: 0.8rem; background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; border-radius: 8px; padding: 8px 10px; }
+    .alerte-retard a { color: #8A2D2D; font-weight: 700; }
+
+    /* La journée */
+    .jour { background: #fff; border: 1px solid #E8E6E1; border-radius: 12px; padding: 14px; min-width: 0; }
+    .jour-tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .jour-tete h1 { font-size: 1.25rem; flex: 1; min-width: 180px; text-transform: capitalize; }
+    .bouton { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 8px 14px; border-radius: 18px; border: 1px solid #5A3A6A; background: #fff; color: #5A3A6A; cursor: pointer; text-decoration: none; display: inline-block; }
+    .bouton:hover { background: #F4EEF6; }
+    .bouton.plein { background: #5A3A6A; color: #fff; }
+    .bouton.vert { background: #2E6B34; border-color: #2E6B34; color: #fff; }
+
+    .sans-heure { margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .sans-heure-titre { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #7a7a75; }
+
+    .grille { position: relative; margin-left: 52px; border-left: 1px solid #E8E6E1; }
+    .heure-ligne { position: absolute; left: 0; right: 0; border-top: 1px solid #EFEDE9; }
+    .heure-nom { position: absolute; left: -52px; width: 44px; text-align: right; font-size: 0.72rem; color: #7a7a75; transform: translateY(-8px); }
+    .maintenant { position: absolute; left: -6px; right: 0; border-top: 2px solid #D93025; z-index: 3; }
+    .maintenant::before { content: ""; position: absolute; left: 0; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #D93025; }
+
+    .creneau { position: absolute; border-radius: 8px; padding: 4px 8px; font-size: 0.78rem; overflow: hidden; cursor: pointer; border: 1px solid; background: #fff; z-index: 2; line-height: 1.25; }
+    .creneau.fait { opacity: 0.55; text-decoration: line-through; }
+    .creneau.retard { box-shadow: inset 3px 0 0 #D93025; }
+    .creneau .h { font-weight: 700; display: block; font-size: 0.72rem; }
+
+    .ligne { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border: 1px solid #E8E6E1; border-left-width: 4px; border-radius: 8px; background: #fff; cursor: pointer; font-size: 0.88rem; }
+    .ligne.fait { opacity: 0.55; text-decoration: line-through; }
+    .ligne.retard { box-shadow: inset 3px 0 0 #D93025; }
+    .ligne .h { min-width: 48px; font-weight: 700; color: #5A3A6A; }
+    .liste { display: flex; flex-direction: column; gap: 6px; }
+
+    .detail { margin-bottom: 12px; background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 10px; padding: 12px; font-size: 0.88rem; }
+    .detail-titre { font-weight: 700; color: #4B1A3E; margin-bottom: 4px; }
+    .detail p { margin: 4px 0; white-space: pre-wrap; }
+    .detail .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .vide { color: #7a7a75; font-size: 0.9rem; padding: 14px 4px; }
+  </style>
+</head>
+<body>
+
+<header class="bandeau">
+  <div class="bandeau-gauche">
+    <img src="logo-signature.png" alt="ALB Sud Immobilier">
+    <span class="bandeau-titre">Calendrier</span>
+  </div>
+  <div class="bandeau-droite">
+    <a href="gestion-site.html">← Gestion du site</a>
+    <a href="questionnaires.html">📝 Questionnaires</a>
+    <a href="contacts-salon.html">📇 Contacts du salon</a>
+    <a href="statistiques.html">📈 Statistiques</a>
+  </div>
+</header>
+
+<main class="contenu">
+  <div id="etat" class="message">Chargement…</div>
+  <div id="retour" class="message cache"></div>
+
+  <div id="page" class="cache">
+    <div class="cal">
+      <aside class="cote">
+        <div class="mois-tete">
+          <button type="button" class="fleche" data-action="mois-moins" aria-label="Mois précédent">‹</button>
+          <span class="mois-nom" id="mois-nom"></span>
+          <button type="button" class="fleche" data-action="mois-plus" aria-label="Mois suivant">›</button>
+        </div>
+        <div class="mois-grille" id="mois-grille"></div>
+        <div class="options">
+          <label><input type="checkbox" id="opt-heures" checked> Détail des heures</label>
+          <label><input type="checkbox" id="opt-site" checked> Rappels et relances du carnet</label>
+        </div>
+        <div class="alerte-retard cache" id="alerte-retard"></div>
+      </aside>
+
+      <section class="jour">
+        <div class="jour-tete">
+          <h1 id="titre-jour"></h1>
+          <button type="button" class="bouton" data-action="jour-moins" aria-label="Jour précédent">‹</button>
+          <button type="button" class="bouton" data-action="jour-plus" aria-label="Jour suivant">›</button>
+          <button type="button" class="bouton plein" data-action="aujourdhui">Aujourd'hui</button>
+        </div>
+        <div id="detail" class="detail cache"></div>
+        <div id="zone"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ============================================================
+  // Calendrier : réservé à Jocelyne (même accès que Gestion du site).
+  // C'est ton Agenda, présenté autrement : rien n'est copié, rien n'est dupliqué.
+  // Les rendez-vous et tâches viennent de l'Agenda ; ce que tu coches « fait » ici
+  // l'est aussi dans l'Agenda.
+  // ============================================================
+  const THEMES = {
+    'Pros': '#1E88E5', 'Particuliers': '#D81B60', 'Réseau et prospection': '#C78A00', 'Compta et factures': '#2E7D32',
+    'Banque et trésorerie': '#00838F', 'TVA et impôts': '#827717', 'Juridique et administratif': '#5E35B1', 'Assurances': '#3949AB',
+    'Site ALB Immobilier': '#546E7A', 'Communication et réseaux sociaux': '#EC407A', 'Accompagnement et formation': '#7E57C2', 'Organisation et perso': '#78909C'
+  };
+  const MOTS_THEMES = [
+    ['TVA et impôts', /(tva|impôt|impot|cfe|urssaf)/i], ['Compta et factures', /(pennylane|factur|compta|advyse|justificatif|fournisseur)/i],
+    ['Banque et trésorerie', /(qonto|banque|rib|trésorerie|virement|prélèvement|sepa)/i], ['Assurances', /(assurance|rc pro|mutuelle|prévoyance)/i],
+    ['Juridique et administratif', /(juriste|avocat|contrat|kbis|statuts|rgpd|cgv|cgu|médiateur|greffe|charte)/i],
+    ['Site ALB Immobilier', /(site|netlify|supabase|github|brevo|plateforme)/i], ['Communication et réseaux sociaux', /(post|linkedin|instagram|facebook|vidéo|video|flyer|publication)/i],
+    ['Réseau et prospection', /(notaire|bni|issole|réseau|salon|rent|café pro|afterwork|prospect)/i], ['Accompagnement et formation', /(scale ?lab|coach|formation|masterclass|webinaire|mentor)/i],
+    ['Pros', /(courtier|artisan|agent|mandataire|pros?\b)/i]
+  ];
+  const PX = 56;            // hauteur d'une heure, en pixels
+  const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  let agenda = { rdv: [], rappels: [] };
+  let carnet = [];
+  let jour = iso(new Date());
+  let mois = { a: new Date().getFullYear(), m: new Date().getMonth() };
+  let ouvert = null;        // le créneau dont on voit le détail
+
+  function e(t) { return albEchapper(t); }
+  function el(id) { return document.getElementById(id); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function dateDe(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2], 12); }
+  function ajouterJours(s, n) { const d = dateDe(s); d.setDate(d.getDate() + n); return iso(d); }
+  function hCourte(min) { return Math.floor(min / 60) + 'h' + (min % 60 ? pad(min % 60) : ''); }
+  function themeDe(r) {
+    if (r.theme && THEMES[r.theme]) return r.theme;
+    const m = MOTS_THEMES.find(function (x) { return x[1].test((r.titre || '') + ' ' + (r.note || '')); });
+    return m ? m[0] : 'Organisation et perso';
+  }
+
+  // La plage écrite dans le titre, par exemple « (9h–10h30) » : sert à donner sa taille au créneau
+  function plageDuTitre(titre) {
+    const m = /\((\d{1,2})h(\d{2})?\s*[–-]\s*(\d{1,2})h(\d{2})?\)/.exec(titre || '');
+    if (!m) return null;
+    const d = (+m[1]) * 60 + (m[2] ? +m[2] : 0), f = (+m[3]) * 60 + (m[4] ? +m[4] : 0);
+    return f > d ? f - d : null;
+  }
+
+  function messageErreur() { return 'Ça n\'a pas marché. Réessaie dans un instant.'; }
+  function retour(type, texte) { const z = el('retour'); z.className = 'message ' + (type || ''); z.textContent = texte; }
+  function cacherRetour() { el('retour').className = 'message cache'; }
+
+  async function charger() {
+    const [a, c] = await Promise.all([albSupabase.rpc('alb_gestion_agenda'), albSupabase.rpc('alb_gestion_carnet')]);
+    if (a.error) { console.log('[ALB DEBUG] agenda :', a.error); return false; }
+    if (c.error) { console.log('[ALB DEBUG] carnet :', c.error); }
+    agenda = a.data || { rdv: [], rappels: [] };
+    carnet = c.data || [];
+    return true;
+  }
+
+  // Tout ce qui a une date, dans une seule liste
+  function elements() {
+    const liste = [];
+    (agenda.rdv || []).forEach(function (r) {
+      const minutes = r.heure ? (+String(r.heure).slice(0, 2)) * 60 + (+String(r.heure).slice(3, 5)) : null;
+      liste.push({ cle: 'a' + r.id, id: r.id, le: r.le, debut: minutes, duree: plageDuTitre(r.titre) || 45, titre: r.titre, theme: themeDe(r),
+        genre: r.genre, fait: !!r.fait_le, lieu: r.lieu || '', note: r.note || '', retard: r.genre === 'tache' && !r.fait_le && r.le < iso(new Date()), cochable: true });
+    });
+    if (el('opt-site').checked) {
+      (agenda.rappels || []).forEach(function (r) {
+        liste.push({ cle: 'r' + r.le + r.titre, le: r.le, debut: null, duree: 45, titre: '🔔 Rappel : ' + r.titre, theme: themeDe(r), genre: 'site', fait: false, lieu: '', note: r.detail || '', retard: false, cochable: false });
+      });
+      carnet.forEach(function (c) {
+        if (!c.relancer_le || c.etape === 'inscrit' || c.etape === 'pas_interesse') return;
+        const nom = ((c.prenom || '') + ' ' + (c.nom || '')).trim() || c.entreprise || 'un contact';
+        liste.push({ cle: 'c' + c.id, le: c.relancer_le, debut: null, duree: 45, titre: '📇 Relancer ' + nom, theme: 'Réseau et prospection', genre: 'site', fait: false, lieu: '', note: c.telephone || '', retard: false, cochable: false });
+      });
+    }
+    return liste;
+  }
+
+  // ---------- Le mois, sur le côté ----------
+  function dessinerMois() {
+    const tous = elements();
+    const dates = {};
+    tous.forEach(function (x) { dates[x.le] = true; });
+    const premier = new Date(mois.a, mois.m, 1, 12);
+    el('mois-nom').textContent = premier.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const decalage = (premier.getDay() + 6) % 7;
+    const debut = new Date(mois.a, mois.m, 1 - decalage, 12);
+    const aujourdhui = iso(new Date());
+    let h = JOURS_COURTS.map(function (j) { return '<div class="mois-jour-nom">' + j + '</div>'; }).join('');
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate() + i, 12);
+      const s = iso(d);
+      h += '<button type="button" class="case-jour' + (d.getMonth() !== mois.m ? ' autre' : '') + (s === aujourdhui ? ' aujourdhui' : '') + (s === jour ? ' choisi' : '') + '" data-action="jour" data-jour="' + s + '">' +
+        d.getDate() + (dates[s] ? '<span class="point"></span>' : '') + '</button>';
+    }
+    el('mois-grille').innerHTML = h;
+    const retards = tous.filter(function (x) { return x.retard; }).length;
+    const z = el('alerte-retard');
+    if (retards) { z.innerHTML = '⚠️ ' + retards + ' tâche' + (retards > 1 ? 's' : '') + ' pas cochée' + (retards > 1 ? 's' : '') + '. Tu les retrouves dans l\'<a href="gestion-site.html">Agenda</a>.'; z.classList.remove('cache'); }
+    else { z.classList.add('cache'); }
+  }
+
+  // ---------- La journée ----------
+  function creneauTexte(x) {
+    return (x.debut !== null ? hCourte(x.debut) + ' ' : '') + x.titre;
+  }
+
+  function dessinerJour() {
+    const d = dateDe(jour);
+    el('titre-jour').textContent = (jour === iso(new Date()) ? 'Aujourd\'hui · ' : '') + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const duJour = elements().filter(function (x) { return x.le === jour; });
+    const avecHeure = duJour.filter(function (x) { return x.debut !== null; }).sort(function (a, b) { return a.debut - b.debut; });
+    const sansHeure = duJour.filter(function (x) { return x.debut === null; });
+    if (!duJour.length) { el('zone').innerHTML = '<div class="vide">Rien de prévu ce jour-là. 🌿</div>'; return; }
+
+    if (!el('opt-heures').checked) {
+      // Sans le détail des heures : juste la liste du jour
+      el('zone').innerHTML = '<div class="liste">' + avecHeure.concat(sansHeure).map(function (x) {
+        const c = THEMES[x.theme] || '#78909C';
+        return '<div class="ligne' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + '" style="border-left-color:' + c + ';" data-action="ouvrir" data-cle="' + e(x.cle) + '">' +
+          '<span class="h">' + (x.debut !== null ? hCourte(x.debut) : '—') + '</span><span>' + e(x.titre) + '</span></div>';
+      }).join('') + '</div>';
+      return;
+    }
+
+    // La grille des heures
+    let min = 8 * 60, max = 19 * 60;
+    avecHeure.forEach(function (x) { min = Math.min(min, Math.floor(x.debut / 60) * 60); max = Math.max(max, Math.ceil((x.debut + x.duree) / 60) * 60); });
+    // Chevauchements : on met les créneaux côte à côte
+    let groupe = [], finGroupe = -1;
+    const groupes = [];
+    avecHeure.forEach(function (x) {
+      if (groupe.length && x.debut >= finGroupe) { groupes.push(groupe); groupe = []; finGroupe = -1; }
+      groupe.push(x); finGroupe = Math.max(finGroupe, x.debut + x.duree);
+    });
+    if (groupe.length) groupes.push(groupe);
+    groupes.forEach(function (g) {
+      const fins = [];
+      g.forEach(function (x) {
+        let c = fins.findIndex(function (f) { return f <= x.debut; });
+        if (c === -1) { c = fins.length; fins.push(0); }
+        fins[c] = x.debut + x.duree; x.col = c;
+      });
+      g.forEach(function (x) { x.cols = fins.length; });
+    });
+
+    let h = '';
+    if (sansHeure.length) {
+      h += '<div class="sans-heure"><div class="sans-heure-titre">Sans heure</div>' + sansHeure.map(function (x) {
+        const c = THEMES[x.theme] || '#78909C';
+        return '<div class="ligne' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + '" style="border-left-color:' + c + ';" data-action="ouvrir" data-cle="' + e(x.cle) + '"><span>' + e(x.titre) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    let grille = '';
+    for (let m = min; m <= max; m += 60) {
+      grille += '<div class="heure-ligne" style="top:' + ((m - min) / 60 * PX) + 'px;"><span class="heure-nom">' + hCourte(m) + '</span></div>';
+    }
+    avecHeure.forEach(function (x) {
+      const c = THEMES[x.theme] || '#78909C';
+      const hauteur = Math.max(x.duree / 60 * PX - 2, 24);
+      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
+        'left:calc(' + (x.col * 100 / x.cols) + '% + 2px);width:calc(' + (100 / x.cols) + '% - 4px);border-color:' + c + ';background:' + c + '1A;color:#3a3a37;">' +
+        '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + '</div>';
+    });
+    if (jour === iso(new Date())) {
+      const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
+      if (m >= min && m <= max) grille += '<div class="maintenant" style="top:' + ((m - min) / 60 * PX) + 'px;"></div>';
+    }
+    h += '<div class="grille" style="height:' + ((max - min) / 60 * PX) + 'px;">' + grille + '</div>';
+    el('zone').innerHTML = h;
+  }
+
+  function dessinerDetail() {
+    const z = el('detail');
+    const x = ouvert ? elements().find(function (y) { return y.cle === ouvert; }) : null;
+    if (!x) { z.classList.add('cache'); return; }
+    z.classList.remove('cache');
+    z.innerHTML = '<div class="detail-titre">' + e(x.titre) + '</div>' +
+      '<p>' + (x.debut !== null ? '🕐 ' + hCourte(x.debut) + (plageDuTitre(x.titre) ? ' (' + plageDuTitre(x.titre) + ' min)' : '') + ' · ' : '') + e(x.theme) + (x.genre === 'tache' ? ' · 📝 tâche' : '') + '</p>' +
+      (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? '<p>' + e(x.note) + '</p>' : '') +
+      '<div class="actions">' +
+      (x.cochable ? '<button type="button" class="bouton ' + (x.fait ? '' : 'vert') + '" data-action="fait" data-id="' + e(x.id) + '" data-fait="' + (x.fait ? '0' : '1') + '">' + (x.fait ? '↩ Annuler « fait »' : '✓ Fait') + '</button>' : '') +
+      (x.cochable ? '<a class="bouton" href="gestion-site.html">✏️ Modifier dans l\'Agenda</a>' : '') +
+      '<button type="button" class="bouton" data-action="fermer-detail">Fermer</button></div>';
+  }
+
+  function dessiner() { dessinerMois(); dessinerJour(); dessinerDetail(); }
+
+  function allerAuJour(s) {
+    jour = s; const d = dateDe(s); mois = { a: d.getFullYear(), m: d.getMonth() }; ouvert = null; dessiner();
+  }
+
+  async function cocher(id, fait, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_agenda_cocher', { p_id: id, p_fait: fait, p_note: null });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] cocher :', error); retour('erreur', messageErreur()); return; }
+    cacherRetour();
+    if (await charger()) dessiner();
+  }
+
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest('[data-action]');
+    if (!b) return;
+    const a = b.dataset.action;
+    if (a === 'jour') { allerAuJour(b.dataset.jour); return; }
+    if (a === 'jour-moins') { allerAuJour(ajouterJours(jour, -1)); return; }
+    if (a === 'jour-plus') { allerAuJour(ajouterJours(jour, 1)); return; }
+    if (a === 'aujourdhui') { allerAuJour(iso(new Date())); return; }
+    if (a === 'mois-moins') { mois = mois.m === 0 ? { a: mois.a - 1, m: 11 } : { a: mois.a, m: mois.m - 1 }; dessinerMois(); return; }
+    if (a === 'mois-plus') { mois = mois.m === 11 ? { a: mois.a + 1, m: 0 } : { a: mois.a, m: mois.m + 1 }; dessinerMois(); return; }
+    if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); return; }
+    if (a === 'fermer-detail') { ouvert = null; dessinerDetail(); return; }
+    if (a === 'fait') { await cocher(b.dataset.id, b.dataset.fait === '1', b); return; }
+  });
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id === 'opt-heures' || ev.target.id === 'opt-site') dessiner();
+  });
+
+  async function demarrer() {
+    const etat = el('etat');
+    const { data: session } = await albSupabase.auth.getSession();
+    if (!session?.session) {
+      etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.';
+      return;
+    }
+    const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
+    if (estAdmin !== true) {
+      etat.className = 'message erreur';
+      etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.';
+      return;
+    }
+    if (!(await charger())) {
+      etat.className = 'message erreur';
+      etat.textContent = 'Ton agenda n\'a pas pu être chargé. Recharge la page dans un instant.';
+      return;
+    }
+    etat.classList.add('cache');
+    el('page').classList.remove('cache');
+    dessiner();
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>
