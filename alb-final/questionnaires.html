@@ -78,6 +78,9 @@
     .ligne-note { display: grid; grid-template-columns: 1fr; gap: 8px; }
     @media (min-width: 600px) { .ligne-note { grid-template-columns: 1fr 170px; } }
     .decision { background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 10px; padding: 12px; margin-top: 14px; }
+    .puces { display: flex; flex-wrap: wrap; gap: 6px; }
+    .puce { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 7px 12px; border-radius: 16px; border: 1px solid #E2D6E8; background: #fff; color: #5A3A6A; cursor: pointer; }
+    .puce.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
     .ecoute { background: #F4EEF6; color: #5A3A6A; border-radius: 8px; padding: 7px 10px; font-size: 0.82rem; margin-bottom: 8px; }
     .cases { display: flex; flex-wrap: wrap; gap: 8px 16px; }
     .case { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
@@ -580,7 +583,28 @@
       return c.metier === "particulier" && c.etape !== "inscrit" && c.etape !== "pas_interesse" && !fichesPart.some(function (f) { return f.carnet_id === c.id; });
     });
   }
-  function nbAFairePart() { return demandesAFaire().length + carnetPartAFaire().length + fichesPart.filter(function (f) { return f.statut === "en_cours"; }).length; }
+  // Une personne peut avoir plusieurs questionnaires (accueil, vendeur, acheteur, un ou plusieurs « besoin d'un pro »).
+  // On les regroupe : la première fiche (sans « parent ») est la racine, les autres en dépendent.
+  function racineDe(f) {
+    let x = f, garde = 0;
+    while (x.parent_id && garde++ < 10) {
+      const p = fichesPart.find(function (y) { return y.id === x.parent_id; });
+      if (!p) break;
+      x = p;
+    }
+    return x;
+  }
+  function familles() {
+    const map = {}, ordre = [];
+    fichesPart.forEach(function (f) {
+      const r = racineDe(f);
+      if (!map[r.id]) { map[r.id] = { racine: r, fiches: [] }; ordre.push(r.id); }
+      map[r.id].fiches.push(f);
+    });
+    return ordre.map(function (id) { return map[id]; });
+  }
+  function familleEnCours(fam) { return fam.fiches.some(function (f) { return f.statut === "en_cours"; }); }
+  function nbAFairePart() { return demandesAFaire().length + carnetPartAFaire().length + familles().filter(familleEnCours).length; }
 
   function carteCandidatPart(type, x) {
     const rappel = type === "rappel";
@@ -593,18 +617,31 @@
       '</div><button type="button" class="bouton" data-action="p-commencer" data-type="' + type + '" data-id="' + e(x.id) + '">🧭 Commencer l\'accueil</button></div></div>';
   }
 
-  function carteFichePart(f) {
-    const ouvert = ouverte === f.id;
-    const parent = f.parent_id ? fichesPart.find(function (x) { return x.id === f.parent_id; }) : null;
-    return '<div class="carte" id="fiche-' + e(f.id) + '"><div class="carte-tete"><div>' +
-      '<div class="carte-nom">' + e(nomDe(f)) + "</div>" +
-      '<div class="carte-sous">' + e(PARCOURS[f.parcours] || f.parcours) + (f.telephone ? " · " + e(f.telephone) : "") + (f.commune ? " · 📍 " + e(f.commune) : "") + "</div>" +
-      '<div style="margin-top:6px;"><span class="etiquette ' + (f.statut === "termine" ? "vert" : "or") + '">' + e(STATUTS_PART[f.statut] || f.statut) + "</span>" +
-      '<span class="etiquette">' + e(ORIGINES_PART[f.origine] || "") + "</span>" +
-      (parent ? '<span class="etiquette">↩ Ouvert depuis l\'accueil</span>' : "") +
-      (f.prochaine_date ? '<span class="etiquette">📅 Prochaine étape le ' + e(f.prochaine_date.split("-").reverse().join("/")) + "</span>" : "") + "</div>" +
-      '</div><button type="button" class="bouton ' + (ouvert ? "clair" : "") + '" data-action="p-ouvrir" data-id="' + e(f.id) + '">' + (ouvert ? "✖ Fermer" : "📝 Ouvrir la fiche") + "</button></div>" +
-      (ouvert ? formulaireFichePart(f) : "") + "</div>";
+  const ICONES_STATUT = { en_cours: "⏳", oriente: "➡️", termine: "✅" };
+  function carteFamille(fam) {
+    const r = fam.racine;
+    const fiches = fam.fiches.slice().sort(function (a, b) { return String(a.cree_le).localeCompare(String(b.cree_le)); });
+    const ouverteIci = fiches.find(function (f) { return f.id === ouverte; });
+    const compte = {}, total = {};
+    fiches.forEach(function (f) { total[f.parcours] = (total[f.parcours] || 0) + 1; });
+    const puces = fiches.map(function (f) {
+      compte[f.parcours] = (compte[f.parcours] || 0) + 1;
+      const numero = total[f.parcours] > 1 ? " (" + compte[f.parcours] + ")" : "";
+      return '<button type="button" class="puce' + (f.id === ouverte ? " actif" : "") + '" data-action="p-ouvrir" data-id="' + e(f.id) + '">' + e(PARCOURS[f.parcours] || f.parcours) + numero + " " + ICONES_STATUT[f.statut] + "</button>";
+    }).join("");
+    const aUnAccueil = fiches.some(function (f) { return f.parcours === "accueil"; });
+    const ajouts = Object.keys(PARCOURS).filter(function (k) { return !(k === "accueil" && aUnAccueil); }).map(function (k) {
+      const deja = total[k] ? "Un autre : " : "";
+      return '<button type="button" class="bouton clair" data-action="p-ajoutq" data-parcours="' + k + '" data-id="' + e(r.id) + '">➕ ' + deja + e(PARCOURS[k]) + "</button>";
+    }).join("");
+    const prochaine = fiches.map(function (f) { return f.prochaine_date; }).filter(Boolean).sort()[0];
+    return '<div class="carte" id="fam-' + e(r.id) + '">' +
+      '<div class="carte-nom">' + e(nomDe(r)) + "</div>" +
+      '<div class="carte-sous">' + (r.telephone ? e(r.telephone) : "") + (r.commune ? " · 📍 " + e(r.commune) : "") + " · " + e(ORIGINES_PART[r.origine] || "") +
+      (prochaine ? " · 📅 Prochaine étape le " + e(prochaine.split("-").reverse().join("/")) : "") + "</div>" +
+      '<p class="aide" style="margin:10px 0 4px;">Ses questionnaires (appuie pour ouvrir ou fermer) :</p><div class="puces">' + puces + "</div>" +
+      '<p class="aide" style="margin:10px 0 4px;">Il a aussi un autre besoin ? Ajoute un questionnaire :</p><div class="actions" style="margin-top:0;">' + ajouts + "</div>" +
+      (ouverteIci ? formulaireFichePart(ouverteIci) : "") + "</div>";
   }
 
   function formulaireFichePart(f) {
@@ -627,11 +664,7 @@
           '<label class="petit-champ">Mes notes<textarea id="pn-' + q.id + '">' + e(r.notes || "") + "</textarea></label></div>";
       }).join("") +
       (f.parcours === "accueil"
-        ? '<div class="decision"><strong>Où l\'envoyer ?</strong><p class="aide">Ce que tu as noté est enregistré, et ses coordonnées sont reprises dans le nouveau questionnaire.</p><div class="actions">' +
-            '<button type="button" class="bouton or" data-action="p-vers" data-vers="vendeur" data-id="' + e(f.id) + '">🏡 Questionnaire Vendeur</button>' +
-            '<button type="button" class="bouton or" data-action="p-vers" data-vers="acheteur" data-id="' + e(f.id) + '">🔎 Questionnaire Acheteur</button>' +
-            '<button type="button" class="bouton or" data-action="p-vers" data-vers="besoin_pro" data-id="' + e(f.id) + '">🛠️ Besoin d\'un pro</button></div>' +
-            '<p class="aide" style="margin-top:8px;">Il veut vendre et acheter ? Commence par Vendeur : la vente décide de l\'achat.</p></div>'
+        ? '<div class="decision"><strong>Où l\'envoyer ?</strong><p class="aide" style="margin-top:6px;">Selon ce qu\'il te dit, ajoute le bon questionnaire avec les boutons « ➕ » en haut de la carte. Une personne peut en avoir plusieurs (par exemple acheteur et besoin d\'un pro), et tu peux revenir ici à tout moment avec les petits boutons. Il veut vendre et acheter ? Commence par Vendeur : la vente décide de l\'achat.</p></div>'
         : "") +
       "<h3>Ce que j'ai compris, et la suite</h3>" +
       '<label class="petit-champ">Ce que j\'ai compris (trois lignes)<textarea id="p-resume">' + e(f.resume || "") + "</textarea></label>" +
@@ -652,10 +685,12 @@
 
   function lirePart(f) {
     const v = function (id) { const x = el(id); return x ? x.value.trim() : ""; };
-    const reponses = {};
+    // On part des notes déjà enregistrées : rien ne se perd, même d'un autre questionnaire
+    const reponses = Object.assign({}, f.reponses || {});
     (QUESTIONS_PART[f.parcours] || []).forEach(function (q) {
       const n = el("pn-" + q.id);
-      if (n && n.value.trim()) reponses[q.id] = { notes: n.value.trim() };
+      if (!n) return;
+      if (n.value.trim()) reponses[q.id] = { notes: n.value.trim() }; else delete reponses[q.id];
     });
     const orientations = Array.prototype.map.call(document.querySelectorAll('input[name="po-orient"]:checked'), function (c) { return c.value; });
     return {
@@ -677,8 +712,9 @@
       el("zone").innerHTML = '<div class="carte vide">Les fiches des particuliers ne sont pas encore prêtes : le tableau n\'est pas encore créé dans la base. Colle le SQL « particuliers » dans Supabase, puis recharge la page.</div>';
       return;
     }
-    const enCours = fichesPart.filter(function (f) { return f.statut === "en_cours"; });
-    const autres = fichesPart.filter(function (f) { return f.statut !== "en_cours"; });
+    const fams = familles();
+    const enCours = fams.filter(familleEnCours);
+    const autres = fams.filter(function (fam) { return !familleEnCours(fam); });
     const dem = demandesAFaire();
     const car = carnetPartAFaire();
     let h = '<div class="actions" style="margin:0 0 12px;"><button type="button" class="bouton" data-action="p-ajout">' + (formulaireAjoutPart ? "✖ Fermer" : "➕ Ajouter un particulier") + "</button></div>";
@@ -690,14 +726,14 @@
         '<label class="petit-champ">Par quoi commencer ?<select id="ajp-depart"><option value="accueil">Il ne sait pas encore où il en est</option><option value="vendeur">Il veut vendre</option><option value="acheteur">Il veut acheter</option><option value="besoin_pro">Il cherche un pro</option></select></label></div>' +
         '<div class="actions"><button type="button" class="bouton vert" data-action="p-ajouter">💾 Ajouter et ouvrir sa fiche</button><button type="button" class="bouton clair" data-action="p-fermer-ajout">Annuler</button></div></div>';
     }
-    h += '<h2 class="titre-section">📝 Fiches en cours (' + enCours.length + ")</h2>";
-    h += enCours.length ? enCours.map(carteFichePart).join("") : '<div class="carte vide">Aucune fiche en cours. 🌿</div>';
+    h += '<h2 class="titre-section">📝 Personnes en cours (' + enCours.length + ")</h2>";
+    h += enCours.length ? enCours.map(carteFamille).join("") : '<div class="carte vide">Aucune fiche en cours. 🌿</div>';
     h += '<h2 class="titre-section">📞 Demandes de rappel à faire (' + dem.length + ")</h2>";
     h += dem.length ? dem.map(function (d) { return carteCandidatPart("rappel", d); }).join("") : '<div class="carte vide">Aucune demande de rappel en attente.</div>';
     h += '<h2 class="titre-section">📇 Particuliers de ton carnet (' + car.length + ")</h2>";
     h += car.length ? car.map(function (c) { return carteCandidatPart("carnet", c); }).join("") : '<div class="carte vide">Aucun particulier dans ton carnet.</div>';
     if (autres.length) {
-      h += "<details" + (autres.some(function (f) { return f.id === ouverte; }) ? " open" : "") + "><summary>✅ Orientés ou terminés (" + autres.length + ")</summary>" + autres.map(carteFichePart).join("") + "</details>";
+      h += "<details" + (autres.some(function (fam) { return fam.fiches.some(function (f) { return f.id === ouverte; }); }) ? " open" : "") + "><summary>✅ Terminés (" + autres.length + ")</summary>" + autres.map(carteFamille).join("") + "</details>";
     }
     el("zone").innerHTML = h;
   }
@@ -750,6 +786,7 @@
     }
 
     if (!f) return;
+    const racine = racineDe(f);
 
     if (action === "p-enregistrer") {
       b.disabled = true;
@@ -759,20 +796,30 @@
       return;
     }
 
-    if (action === "p-vers") {
+    if (action === "p-ajoutq") {
       b.disabled = true;
-      const fiche = lirePart(f);
-      if (!(await enregistrerPart(f, fiche))) { b.disabled = false; return; }
-      const enfant = { parcours: b.dataset.vers, origine: f.origine, parent_id: f.id, prenom: fiche.prenom, nom: fiche.nom, telephone: fiche.telephone, email: fiche.email, commune: fiche.commune, statut: "en_cours", reponses: {} };
-      const r = await albSupabase.rpc("alb_gestion_questionnaire_particulier_enregistrer", { p_id: null, p_fiche: enfant });
-      if (r.error) { b.disabled = false; console.log("[ALB DEBUG] ouvrir le questionnaire suivant :", r.error); retour("erreur", messageErreur(r.error)); return; }
-      fiche.statut = "oriente";
-      await enregistrerPart(f, fiche);
+      const ouv = fichesPart.find(function (x) { return x.id === ouverte; });
+      const memeFamille = ouv && racineDe(ouv).id === racine.id;
+      // On enregistre d'abord la fiche ouverte : rien ne se perd
+      let src = racine, ficheOuverte = null;
+      if (memeFamille && el("p-resume")) {
+        ficheOuverte = lirePart(ouv);
+        if (!(await enregistrerPart(ouv, ficheOuverte))) { b.disabled = false; return; }
+        src = ficheOuverte;
+      }
+      const nouveau = { parcours: b.dataset.parcours, origine: racine.origine, parent_id: racine.id, prenom: src.prenom || "", nom: src.nom || "", telephone: src.telephone || "", email: src.email || "", commune: src.commune || "", statut: "en_cours", reponses: {} };
+      const r = await albSupabase.rpc("alb_gestion_questionnaire_particulier_enregistrer", { p_id: null, p_fiche: nouveau });
+      if (r.error) { b.disabled = false; console.log("[ALB DEBUG] ajouter un questionnaire :", r.error); retour("erreur", messageErreur(r.error)); return; }
+      // L'accueil passe en « orienté » : tu peux le remettre « en cours » à tout moment
+      if (ficheOuverte && ouv.parcours === "accueil" && ficheOuverte.statut === "en_cours") {
+        ficheOuverte.statut = "oriente";
+        await enregistrerPart(ouv, ficheOuverte);
+      }
       b.disabled = false;
       cacherRetour();
       ouverte = r.data;
       await recharger();
-      const z = el("fiche-" + r.data); if (z) z.scrollIntoView({ behavior: "smooth", block: "start" });
+      const z = el("fiche-" + r.data) || el("fam-" + racine.id); if (z) z.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
