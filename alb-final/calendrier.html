@@ -112,6 +112,16 @@
     .chip.petit-chip { font-size: 0.78rem; padding: 5px 11px; }
     .panneau-filtre { background: #FCFBFA; border: 1px solid #E2D6E8; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
     .panneau-filtre h2 { font-family: 'Montserrat', sans-serif; font-size: 0.92rem; color: #4B1A3E; margin: 0 0 4px; }
+    .sms { width: 100%; background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 8px; padding: 10px; margin-top: 4px; font-size: 0.84rem; }
+    .sms textarea { width: 100%; min-height: 110px; font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; margin: 6px 0; background: #fff; }
+    .sms select, .sms input { font-family: inherit; font-size: 0.84rem; padding: 6px; border: 1px solid #E8E6E1; border-radius: 8px; background: #fff; }
+    .sms .ligne-sms { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .sms .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+    .nouveau-sms { background: #fff; border: 1px solid #E2D6E8; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .nouveau-sms .grille-sms { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 8px; }
+    .nouveau-sms label { display: flex; flex-direction: column; gap: 3px; font-size: 0.74rem; font-weight: 600; color: #7a7a75; }
+    .nouveau-sms input, .nouveau-sms select { font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; background: #fff; }
+    .apercu { font-size: 0.78rem; color: #5f5e5a; margin-top: 2px; }
     .appel { width: 100%; background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 8px; padding: 10px; margin-top: 4px; font-size: 0.84rem; }
     .appel .journal { color: #5f5e5a; white-space: pre-wrap; margin: 4px 0 8px; }
     .appel .resultats { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -506,6 +516,77 @@
   function ficheDeMembre(id) { return questionnaires.find(function (f) { return f.profile_id === id; }); }
 
   const NOM_METIER_PLUS = Object.assign({}, NOM_METIER, { particulier: 'Particulier' });
+
+  // ---------- 📱 SMS : à envoyer, et nouveau SMS avec création de la fiche ----------
+  // Rien ne part tout seul : le SMS s'ouvre dans ton téléphone, c'est toi qui l'envoies.
+  // Puis « Envoyé » le note dans la fiche (Carnet) et prévoit la relance.
+  // Tutoiement pour les pros, vouvoiement pour les particuliers et pour le salon à Paris (modifiable).
+  const MODELES_SMS = {
+    merci:     { nom: '🤝 Ravie de notre rencontre', jours: 5 },
+    test:      { nom: '⭐ Tester gratuitement', jours: 4 },
+    rdv:       { nom: '📅 Proposer un rendez-vous', jours: 3 },
+    pasrep:    { nom: '📵 J\'ai essayé de t\'appeler', jours: 2 },
+    relance:   { nom: '🔔 Relance', jours: 4 },
+    contrat:   { nom: '✍️ Envoyer le contrat', jours: 4 },
+    bienvenue: { nom: '🎉 Bienvenue', jours: null },
+    libre:     { nom: '✏️ Message libre', jours: 3 }
+  };
+  const SIGNATURE_SMS = ' À la bien, toujours ✨';
+  function texteSms(cle, prenom, tu, salon) {
+    const T = function (a, b) { return tu ? a : b; };
+    const debut = 'Bonjour ' + prenom + ', c\'est Jocelyne d\'ALB Sud Immobilier. ';
+    switch (cle) {
+      case 'merci': return debut + 'Ravie d\'avoir échangé avec ' + T('toi', 'vous') + (salon ? ' au salon RENT' : '') + ' ! Quand ' + T('serais-tu', 'seriez-vous') + ' disponible pour un petit appel ?' + SIGNATURE_SMS;
+      case 'test': return debut + 'Comme convenu, ' + T('tu peux', 'vous pouvez') + ' tester ALB Immobilier gratuitement jusqu\'à fin 2026. ' + T('Dis-moi', 'Dites-moi') + ' quand ' + T('tu es prêt', 'vous êtes prêt') + ', je crée ' + T('ton', 'votre') + ' espace.' + SIGNATURE_SMS;
+      case 'rdv': return debut + 'Je ' + T('te', 'vous') + ' propose qu\'on prenne un moment pour en parler. Quel jour et quelle heure ' + T('t\'arrangent', 'vous arrangent') + ' cette semaine ?' + SIGNATURE_SMS;
+      case 'pasrep': return debut + 'J\'ai essayé de ' + T('t\'appeler', 'vous appeler') + '. Quand puis-je ' + T('te', 'vous') + ' joindre ? Merci !';
+      case 'relance': return debut + 'Je reviens vers ' + T('toi', 'vous') + ' suite à notre dernier échange. ' + T('Peux-tu', 'Pouvez-vous') + ' me rappeler quand ' + T('tu as', 'vous avez') + ' un moment ? Merci !';
+      case 'contrat': return debut + 'Comme convenu, je ' + T('t\'envoie', 'vous envoie') + ' le contrat de notre partenariat par e-mail. ' + T('Prends', 'Prenez') + ' le temps de le lire, je reste disponible pour toute question.' + SIGNATURE_SMS;
+      case 'bienvenue': return 'Bonjour ' + prenom + ', merci pour ' + T('ta', 'votre') + ' confiance et bienvenue chez ALB Immobilier ! Je reste à ' + T('tes', 'vos') + ' côtés pour ' + T('tes', 'vos') + ' premières demandes.' + SIGNATURE_SMS + ' Jocelyne';
+      default: return 'Bonjour ' + prenom + ', ';
+    }
+  }
+  function estSalon(c) { return /rent/i.test(String(c.origine || '')); }
+  function tonPour(c) { return (c.metier === 'particulier' || estSalon(c)) ? 'vous' : 'tu'; }
+  let smsOuverts = {};        // cle (« c-… ») → { modele, ton, texte } : les SMS en cours de préparation
+  function dansJoursIso(n) { return ajouterJours(iso(new Date()), n); }
+  function jjmmaaaa() { const d = new Date(); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function dejaSmsAujourdhui(c) { const jj = jjmmaaaa(); return String(c.journal || '').split('\n').some(function (l) { return l.indexOf(jj) === 0 && l.indexOf('SMS envoyé') !== -1; }); }
+  function dejaSms(c) { return String(c.journal || '').indexOf('SMS envoyé') !== -1; }
+
+  // Les SMS à envoyer : les relances dues, et les rencontres du salon pas encore remerciées
+  function fileSms() {
+    const liste = [];
+    carnet.forEach(function (c) {
+      if (!c.telephone || !carnetActif(c) || c.metier === 'particulier' || dejaSmsAujourdhui(c) || smsOuverts['c-' + c.id]) return;
+      const premiere = String(c.journal || '').split('\n')[0] || '';
+      if (/salon|rent|rencontre|afterwork|bni/i.test(c.origine || '') && !dejaSms(c)) liste.push({ c: c, modele: 'merci' });
+      else if (echu(c)) liste.push({ c: c, modele: /pas de réponse/i.test(premiere) ? 'pasrep' : 'relance' });
+    });
+    return liste;
+  }
+
+  function boiteSms(cle, c) {
+    const st = smsOuverts[cle];
+    const options = Object.keys(MODELES_SMS).map(function (k) { return '<option value="' + k + '"' + (k === st.modele ? ' selected' : '') + '>' + MODELES_SMS[k].nom + '</option>'; }).join('');
+    const jours = MODELES_SMS[st.modele].jours;
+    return '<div class="sms" id="sms-' + e(cle) + '"><div>📱 SMS à <strong>' + e(nomPersonne(c)) + '</strong> · ' + e(c.telephone || '') + '</div>' +
+      '<div class="ligne-sms" style="margin-top:6px;"><label>Modèle <select data-sms="' + e(cle) + '" id="sms-modele-' + e(cle) + '">' + options + '</select></label>' +
+      '<label>Ton <select data-sms="' + e(cle) + '" id="sms-ton-' + e(cle) + '"><option value="tu"' + (st.ton === 'tu' ? ' selected' : '') + '>Tutoiement</option><option value="vous"' + (st.ton === 'vous' ? ' selected' : '') + '>Vouvoiement</option></select></label></div>' +
+      '<textarea id="sms-texte-' + e(cle) + '">' + e(st.texte) + '</textarea>' +
+      '<div class="actions"><button type="button" class="bouton plein" data-action="sms-ouvrir" data-cle="' + e(cle) + '">📱 Ouvrir le SMS</button>' +
+      '<button type="button" class="bouton" data-action="sms-copier" data-cle="' + e(cle) + '">📋 Copier</button>' +
+      '<label class="petit">Relancer le <input type="date" id="sms-relance-' + e(cle) + '" value="' + (jours ? dansJoursIso(jours) : '') + '"></label>' +
+      '<button type="button" class="bouton vert" data-action="sms-envoye" data-cle="' + e(cle) + '" data-id="' + e(c.id) + '">✓ Envoyé</button>' +
+      '<button type="button" class="bouton" data-action="sms-fermer" data-cle="' + e(cle) + '">Annuler</button></div>' +
+      '<div class="petit" style="margin-top:6px;">Relis le texte : rien ne part tout seul. Une fois envoyé, « Envoyé » le note dans sa fiche.</div></div>';
+  }
+  function ouvrirBoiteSms(c, modele) {
+    const cle = 'c-' + c.id;
+    const ton = tonPour(c);
+    smsOuverts[cle] = { modele: modele, ton: ton, texte: texteSms(modele, c.prenom || '', ton === 'tu', estSalon(c)) };
+  }
+
   function ficheDeCarnetPart(id) { return fichesPart.find(function (f) { return f.carnet_id === id; }); }
   function echu(c) { return !!c.relancer_le && c.relancer_le <= jour; }
   function carnetActif(c) { return c.etape !== 'inscrit' && c.etape !== 'pas_interesse'; }
@@ -558,7 +639,8 @@
       (c.relancer_le ? ' · ' + (c.relancer_le <= jour ? '⏰ à relancer depuis le ' : 'relance le ') + e(c.relancer_le.split('-').reverse().join('/')) : '') + (c.ville ? ' · ' + e(c.ville) : '') + '</div></div>' +
       (tel(c.telephone) ? '<a class="bouton" href="tel:' + e(tel(c.telephone)) + '" data-action="appeler" data-cle="' + e(cle) + '">📞 Appeler</a>' : '<button type="button" class="bouton" data-action="appeler" data-cle="' + e(cle) + '">📞 Appeler</button>') +
       (peutQuestionnaire ? (f ? '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a>' : '<a class="bouton plein" href="questionnaires.html?commencer=carnet:' + e(c.id) + '">' + (part ? '🧭 Accueil' : '📝 Questionnaire') + '</a>') : '') +
-      boutonNoter(cle) + (appelEnCours === cle ? ficheAppel(c) : '') + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
+      (c.telephone ? '<button type="button" class="bouton" data-action="sms-preparer" data-cle="' + e(cle) + '" data-id="' + e(c.id) + '">📱 SMS</button>' : '') +
+      boutonNoter(cle) + (appelEnCours === cle ? ficheAppel(c) : '') + (smsOuverts[cle] ? boiteSms(cle, c) : '') + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
   }
   function ligneMembre(m) {
     return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(m)) + '</strong><div class="sous">' + e(NOM_METIER[metierMembre(m)] || '') + (m.telephone ? ' · ' + e(m.telephone) : '') + '</div></div>' +
@@ -601,7 +683,7 @@
   }
 
   // ---------- Les filtres de la journée ----------
-  const CATS = [['tout', 'Tout'], ['pros', '📞 Pros'], ['particuliers', '🙋 Particuliers'], ['relances', '⏰ Relances'], ['admin', '🧾 Administratif'], ['salon', '🎪 Salon']];
+  const CATS = [['tout', 'Tout'], ['pros', '📞 Pros'], ['particuliers', '🙋 Particuliers'], ['relances', '⏰ Relances'], ['sms', '📱 SMS'], ['admin', '🧾 Administratif'], ['salon', '🎪 Salon']];
   const SOUS = {
     pros: [['', 'Tous'], ['courtier', 'Courtiers'], ['immo', 'Agents / mandataires'], ['artisan', 'Artisans']],
     particuliers: [['', 'Tous'], ['accueil', 'Accueil'], ['vendeur', 'Vendeur'], ['acheteur', 'Acheteur'], ['besoin_pro', 'Besoin d\'un pro']]
@@ -617,6 +699,7 @@
     if (/relanc/i.test(t)) cats.push('relances');
     if (THEMES_ADMIN.indexOf(x.theme) !== -1 || /administratif|compta|factur/i.test(t)) cats.push('admin');
     if (/salon|\brent\b|belvaux/i.test(t)) cats.push('salon');
+    if (/sms|remercie|message/i.test(t)) cats.push('sms');
     return cats;
   }
   function sousDeCreneau(x, cat) {
@@ -652,6 +735,7 @@
     if (cat === 'pros') { const p = listesPros(null); return p.relances.length + p.aValider.length + p.enCours.length; }
     if (cat === 'particuliers') { const p = personnesParticuliers(); return rappels.filter(function (d) { return !d.traitee_le; }).length + p.fiches.length + p.car.length; }
     if (cat === 'relances') return carnetRelances().length;
+    if (cat === 'sms') return fileSms().length + Object.keys(smsOuverts).length;
     if (cat === 'admin') return tachesAdmin().length;
     if (cat === 'salon') return carnetSalon().length;
     return 0;
@@ -686,6 +770,33 @@
       if (p.fiches.length) h += '<h3>📝 Fiches en cours (' + p.fiches.length + ')</h3>' + p.fiches.map(ligneFichePart).join('');
       if (p.car.length) h += '<h3>📇 Particuliers de ton carnet à relancer (' + p.car.length + ')</h3>' + p.car.map(ligneCarnet).join('');
       h += '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><a class="bouton plein" href="questionnaires.html?groupe=particulier&ajouter=1">➕ Ajouter un particulier</a><a class="bouton" href="questionnaires.html?groupe=particulier">📝 Tous les questionnaires</a></div>';
+    } else if (cat === 'sms') {
+      titre = '📱 SMS';
+      const file = fileSms();
+      const ouvertsHors = Object.keys(smsOuverts).filter(function (k) { return !file.some(function (x) { return 'c-' + x.c.id === k; }); });
+      // Le nouveau SMS : on tape le numéro, la fiche se crée, le SMS s'ouvre. Autant qu'on veut.
+      h += '<div class="nouveau-sms"><strong>✍️ Nouveau SMS (la fiche se crée toute seule)</strong>' +
+        '<div class="grille-sms" style="margin-top:8px;"><label>Prénom<input id="ns-prenom" maxlength="80"></label><label>Nom<input id="ns-nom" maxlength="80"></label>' +
+        '<label>Téléphone<input id="ns-tel" type="tel" maxlength="30"></label>' +
+        '<label>C\'est…<select id="ns-metier"><option value="courtier">Courtier</option><option value="agent">Agent immobilier</option><option value="mandataire">Mandataire</option><option value="artisan">Artisan</option><option value="particulier">Particulier</option><option value="autre_pro">Autre pro</option></select></label>' +
+        '<label>D\'où il vient<input id="ns-origine" maxlength="200" placeholder="Ex. : Salon RENT"></label>' +
+        '<label>Modèle<select id="ns-modele">' + Object.keys(MODELES_SMS).map(function (k) { return '<option value="' + k + '"' + (k === 'merci' ? ' selected' : '') + '>' + MODELES_SMS[k].nom + '</option>'; }).join('') + '</select></label></div>' +
+        '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="bouton plein" data-action="ns-creer">📱 Créer la fiche et préparer le SMS</button></div>' +
+        '<div class="petit" style="margin-top:6px;">Si le numéro est déjà dans ton carnet, la fiche existante est reprise. Pas de limite : tu peux en faire autant que tu veux.</div></div>';
+      if (ouvertsHors.length) {
+        h += '<h3>📱 SMS en préparation (' + ouvertsHors.length + ')</h3>' + ouvertsHors.map(function (k) {
+          const c = carnet.find(function (x) { return 'c-' + x.id === k; });
+          return c ? '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER_PLUS[c.metier] || '') + ' · ' + e(c.telephone || '') + '</div></div>' + boiteSms(k, c) + '</div>' : '';
+        }).join('');
+      }
+      h += '<h3>📱 SMS à envoyer (' + file.length + ')</h3>';
+      if (!file.length) h += '<p class="petit">Aucun SMS à envoyer pour le moment. 🌿 Les relances dues et les rencontres du salon pas encore remerciées arrivent ici toutes seules.</p>';
+      h += file.map(function (x) {
+        const c = x.c, cle = 'c-' + c.id;
+        const apercu = texteSms(x.modele, c.prenom || '', tonPour(c) === 'tu', estSalon(c));
+        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER_PLUS[c.metier] || '') + ' · ' + e(c.telephone || '') + ' · ' + e(MODELES_SMS[x.modele].nom) + '</div><div class="apercu">' + e(apercu.length > 130 ? apercu.slice(0, 130) + '…' : apercu) + '</div></div>' +
+          '<button type="button" class="bouton plein" data-action="sms-preparer" data-cle="' + e(cle) + '" data-id="' + e(c.id) + '" data-modele="' + x.modele + '">📱 Préparer</button></div>';
+      }).join('');
     } else if (cat === 'relances') {
       const l = carnetRelances();
       titre = '⏰ Relances du carnet';
@@ -734,6 +845,50 @@
     appelEnCours = null;
     retour('succes', 'C\'est noté : ' + r[2] + (relance ? '. Relance prévue le ' + relance.split('-').reverse().join('/') + '.' : '.'));
     if (await charger()) dessiner();
+  }
+
+  async function copierSms(b) {
+    const t = el('sms-texte-' + b.dataset.cle); if (!t) return;
+    try { await navigator.clipboard.writeText(t.value); } catch (x) { t.select(); document.execCommand('copy'); }
+    const avant = b.textContent; b.textContent = '✓ Copié'; setTimeout(function () { b.textContent = avant; }, 1500);
+  }
+
+  // « Envoyé » : on le note dans la fiche, avec la date de relance
+  async function smsEnvoye(b) {
+    const cle = b.dataset.cle, st = smsOuverts[cle];
+    const c = carnet.find(function (x) { return x.id === b.dataset.id; });
+    if (!c || !st) return;
+    const relance = (el('sms-relance-' + cle) || {}).value || null;
+    const modeleNom = MODELES_SMS[(el('sms-modele-' + cle) || {}).value || st.modele].nom.replace(/^\S+\s/, '');
+    b.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_carnet_noter', { p_id: c.id, p_note: '📱 SMS envoyé : « ' + modeleNom + ' »', p_relancer_le: relance, p_etape: c.etape });
+    b.disabled = false;
+    if (error) { console.log('[ALB DEBUG] SMS envoyé :', error); retour('erreur', messageErreur()); return; }
+    delete smsOuverts[cle];
+    retour('succes', 'C\'est noté ✓ SMS envoyé à ' + nomPersonne(c) + (relance ? '. Relance prévue le ' + relance.split('-').reverse().join('/') + '.' : '.'));
+    if (await charger()) dessiner();
+  }
+
+  // Nouveau SMS : on crée la fiche (ou on reprend celle du même numéro), puis on prépare le SMS
+  async function nouveauSms(b) {
+    const v = function (id) { return ((el(id) || {}).value || '').trim(); };
+    const numero = v('ns-tel'), prenom = v('ns-prenom'), nom = v('ns-nom');
+    if (!numero || (!prenom && !nom)) { retour('erreur', 'Il me faut au moins un prénom (ou un nom) et un numéro de téléphone.'); return; }
+    const chiffres = numero.replace(/\D/g, '').slice(-9);
+    let c = chiffres.length >= 9 ? carnet.find(function (x) { return String(x.telephone || '').replace(/\D/g, '').slice(-9) === chiffres; }) : null;
+    b.disabled = true;
+    if (!c) {
+      const fiche = { prenom: prenom, nom: nom, metier: v('ns-metier'), telephone: numero, origine: v('ns-origine') || 'SMS', etape: 'a_relancer' };
+      const r = await albSupabase.rpc('alb_gestion_carnet_enregistrer', { p_id: null, p_fiche: fiche });
+      if (r.error) { b.disabled = false; console.log('[ALB DEBUG] nouvelle fiche SMS :', r.error); retour('erreur', messageErreur()); return; }
+      if (!(await charger())) { b.disabled = false; return; }
+      c = carnet.find(function (x) { return x.id === r.data; });
+    }
+    b.disabled = false;
+    if (!c) { retour('erreur', messageErreur()); return; }
+    ouvrirBoiteSms(c, v('ns-modele') || 'merci');
+    retour('succes', 'Fiche prête : ' + nomPersonne(c) + '. Ouvre le SMS, envoie-le, puis clique « Envoyé ».');
+    dessiner();
   }
 
   async function rappelFait(id, bouton) {
@@ -797,12 +952,31 @@
     if (a === 'sous') { filtre.sous = b.dataset.sous; ouvert = null; dessiner(); return; }
     if (a === 'appeler') { appelEnCours = (appelEnCours === b.dataset.cle) ? null : b.dataset.cle; dessinerPanneauFiltre(); dessinerDetail(); return; }
     if (a === 'resultat') { await resultatAppel(b); return; }
+    if (a === 'sms-preparer') {
+      const c = carnet.find(function (x) { return x.id === b.dataset.id; }); if (!c) return;
+      if (smsOuverts[b.dataset.cle]) delete smsOuverts[b.dataset.cle]; else ouvrirBoiteSms(c, b.dataset.modele || (echu(c) ? 'relance' : 'merci'));
+      dessiner(); return;
+    }
+    if (a === 'sms-fermer') { delete smsOuverts[b.dataset.cle]; dessiner(); return; }
+    if (a === 'sms-ouvrir') { const c = carnet.find(function (x) { return 'c-' + x.id === b.dataset.cle; }); const t = el('sms-texte-' + b.dataset.cle); if (c && t) window.location.href = 'sms:' + tel(c.telephone) + '?&body=' + encodeURIComponent(t.value); return; }
+    if (a === 'sms-copier') { await copierSms(b); return; }
+    if (a === 'sms-envoye') { await smsEnvoye(b); return; }
+    if (a === 'ns-creer') { await nouveauSms(b); return; }
     if (a === 'noter') { noterOuvert = (noterOuvert === b.dataset.cle) ? null : b.dataset.cle; dessinerPanneauFiltre(); dessinerDetail(); return; }
     if (a === 'noter-enregistrer') { await noterPersonne(b); return; }
     if (a === 'note-creneau') { await noteCreneau(b.dataset.id, b); return; }
   });
   document.addEventListener('change', function (ev) {
-    if (ev.target.id === 'opt-heures' || ev.target.id === 'opt-site') dessiner();
+    if (ev.target.id === 'opt-heures' || ev.target.id === 'opt-site') { dessiner(); return; }
+    const cle = ev.target.dataset && ev.target.dataset.sms;
+    if (cle && smsOuverts[cle]) {
+      const c = carnet.find(function (x) { return 'c-' + x.id === cle; }); if (!c) return;
+      const modele = el('sms-modele-' + cle).value, ton = el('sms-ton-' + cle).value;
+      smsOuverts[cle] = { modele: modele, ton: ton, texte: texteSms(modele, c.prenom || '', ton === 'tu', estSalon(c)) };
+      el('sms-texte-' + cle).value = smsOuverts[cle].texte;
+      const jours = MODELES_SMS[modele].jours;
+      el('sms-relance-' + cle).value = jours ? dansJoursIso(jours) : '';
+    }
   });
 
   async function demarrer() {
