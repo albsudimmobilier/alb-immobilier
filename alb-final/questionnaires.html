@@ -863,6 +863,55 @@
     if (action === 'refuser') { await refuserPro(f, b); return; }
   });
 
+  // Les liens qui viennent du Calendrier : ouvrir une fiche, ou commencer le questionnaire d'une personne
+  async function suivreLien() {
+    const p = new URLSearchParams(window.location.search);
+    const fiche = p.get('fiche'), commencerAvec = p.get('commencer');
+    if (!fiche && !commencerAvec) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    const groupeDe = function (m) { return (m === 'agent' || m === 'mandataire') ? 'immo' : m; };
+    if (fiche) {
+      const f = fiches.find(function (x) { return x.id === fiche; });
+      if (f) { groupe = groupeDe(f.metier); ouverte = f.id; return; }
+      const fp = fichesPart.find(function (x) { return x.id === fiche; });
+      if (fp) { groupe = 'particulier'; ouverte = fp.id; }
+      return;
+    }
+    const i = commencerAvec.indexOf(':');
+    const type = commencerAvec.slice(0, i), id = commencerAvec.slice(i + 1);
+    const faux = { disabled: false, dataset: {} };
+    if (type === 'rappel') {
+      groupe = 'particulier';
+      const deja = fichesPart.find(function (x) { return x.demande_rappel_id === id; });
+      if (deja) { ouverte = deja.id; return; }
+      await actionPart({ disabled: false, dataset: { action: 'p-commencer', type: 'rappel', id: id } });
+      return;
+    }
+    if (type === 'inscrit') {
+      const m = membreDe(id); if (!m || !metierMembre(m)) return;
+      groupe = groupeDe(metierMembre(m));
+      const deja = fiches.find(function (x) { return x.profile_id === id; });
+      if (deja) { ouverte = deja.id; return; }
+      await commencer('inscrit', id, faux);
+      return;
+    }
+    if (type === 'carnet') {
+      const c = carnet.find(function (x) { return x.id === id; }); if (!c) return;
+      if (c.metier === 'particulier') {
+        groupe = 'particulier';
+        const deja = fichesPart.find(function (x) { return x.carnet_id === id; });
+        if (deja) { ouverte = deja.id; return; }
+        await actionPart({ disabled: false, dataset: { action: 'p-commencer', type: 'carnet', id: id } });
+        return;
+      }
+      if (['agent', 'mandataire', 'artisan', 'courtier'].indexOf(c.metier) === -1) return;
+      groupe = groupeDe(c.metier);
+      const deja = fiches.find(function (x) { return x.carnet_id === id; });
+      if (deja) { ouverte = deja.id; return; }
+      await commencer('carnet', id, faux);
+    }
+  }
+
   async function demarrer() {
     const etat = el('etat');
     const { data: session } = await albSupabase.auth.getSession();
@@ -881,9 +930,11 @@
       etat.textContent = 'Les fiches n\'ont pas pu être chargées. Si c\'est la première fois, le tableau n\'est peut-être pas encore créé dans la base.';
       return;
     }
+    await suivreLien();
     etat.classList.add('cache');
     el('page').classList.remove('cache');
     dessinerTout();
+    if (ouverte) { const z = el('fiche-' + ouverte) || el('fam-' + ouverte); if (z) z.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }
 
   document.addEventListener('DOMContentLoaded', demarrer);

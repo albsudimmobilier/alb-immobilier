@@ -86,6 +86,26 @@
     .detail p { margin: 4px 0; white-space: pre-wrap; }
     .detail .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .vide { color: #7a7a75; font-size: 0.9rem; padding: 14px 4px; }
+    .prio { background: #FBF3E4; border: 1px solid #B28E3D; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .prio-titre { font-weight: 700; color: #8A6A1F; margin-bottom: 6px; }
+    .personne { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid #E8E6E1; font-size: 0.88rem; }
+    .prio .personne { border-top-color: #E8D9B5; }
+    .personne:first-of-type { border-top: none; }
+    .personne .qui { flex: 1; min-width: 170px; }
+    .personne .sous { font-size: 0.78rem; color: #7a7a75; }
+    .personne .bouton { padding: 5px 11px; font-size: 0.8rem; }
+    .bloc-personnes { margin-top: 12px; border-top: 1px dashed #D5C6DD; padding-top: 8px; }
+    .bloc-personnes h3 { font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: #5A3A6A; margin: 8px 0 2px; }
+    .noter { width: 100%; background: #fff; border: 1px solid #E2D6E8; border-radius: 8px; padding: 10px; margin-top: 4px; }
+    .noter textarea { width: 100%; min-height: 64px; font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; }
+    .noter input[type=date] { font-family: inherit; font-size: 0.85rem; padding: 6px; border: 1px solid #E8E6E1; border-radius: 8px; }
+    .noter .actions { margin-top: 8px; align-items: center; }
+    .note-creneau { margin-top: 12px; }
+    .note-creneau textarea { width: 100%; min-height: 64px; font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; }
+    .petit { font-size: 0.78rem; color: #7a7a75; }
+    .creneau.rappel { background: #FBF3E4 !important; border-color: #B28E3D !important; z-index: 4; }
+    .decale { display: block; font-size: 0.68rem; color: #8A6A1F; font-weight: 700; }
+    .plan-info { margin-top: 8px; font-size: 0.8rem; color: #8A6A1F; }
   </style>
 </head>
 <body>
@@ -130,6 +150,7 @@
           <button type="button" class="bouton" data-action="jour-plus" aria-label="Jour suivant">›</button>
           <button type="button" class="bouton plein" data-action="aujourdhui">Aujourd'hui</button>
         </div>
+        <div id="prioritaire"></div>
         <div id="detail" class="detail cache"></div>
         <div id="zone"></div>
       </section>
@@ -165,6 +186,10 @@
   let jour = iso(new Date());
   let mois = { a: new Date().getFullYear(), m: new Date().getMonth() };
   let ouvert = null;        // le créneau dont on voit le détail
+  let membres = [], rappels = [], questionnaires = [];
+  let noterOuvert = null;   // la personne pour qui on est en train d'écrire une note
+  const METIERS_PROS = ['courtier', 'artisan', 'agent', 'mandataire', 'autre_pro'];
+  const MOMENTS = { matin: 'le matin', midi: 'entre midi et deux', apres_midi: "l'après-midi", soir: 'en fin de journée', peu_importe: 'peu importe' };
 
   function e(t) { return albEchapper(t); }
   function el(id) { return document.getElementById(id); }
@@ -192,11 +217,20 @@
   function cacherRetour() { el('retour').className = 'message cache'; }
 
   async function charger() {
-    const [a, c] = await Promise.all([albSupabase.rpc('alb_gestion_agenda'), albSupabase.rpc('alb_gestion_carnet')]);
+    const [a, c, m, r, q] = await Promise.all([
+      albSupabase.rpc('alb_gestion_agenda'), albSupabase.rpc('alb_gestion_carnet'), albSupabase.rpc('alb_gestion_membres'),
+      albSupabase.rpc('alb_gestion_demandes_rappel'), albSupabase.rpc('alb_gestion_questionnaires')
+    ]);
     if (a.error) { console.log('[ALB DEBUG] agenda :', a.error); return false; }
     if (c.error) { console.log('[ALB DEBUG] carnet :', c.error); }
+    if (m.error) { console.log('[ALB DEBUG] membres :', m.error); }
+    if (r.error) { console.log('[ALB DEBUG] demandes de rappel :', r.error); }
+    if (q.error) { console.log('[ALB DEBUG] questionnaires :', q.error); }
     agenda = a.data || { rdv: [], rappels: [] };
     carnet = c.data || [];
+    membres = m.data || [];
+    rappels = r.data || [];
+    questionnaires = q.data || [];
     return true;
   }
 
@@ -253,7 +287,7 @@
   function dessinerJour() {
     const d = dateDe(jour);
     el('titre-jour').textContent = (jour === iso(new Date()) ? 'Aujourd\'hui · ' : '') + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const duJour = elements().filter(function (x) { return x.le === jour; });
+    const duJour = elementsAffiches().filter(function (x) { return x.le === jour; });
     const avecHeure = duJour.filter(function (x) { return x.debut !== null; }).sort(function (a, b) { return a.debut - b.debut; });
     const sansHeure = duJour.filter(function (x) { return x.debut === null; });
     if (!duJour.length) { el('zone').innerHTML = '<div class="vide">Rien de prévu ce jour-là. 🌿</div>'; return; }
@@ -303,9 +337,9 @@
     avecHeure.forEach(function (x) {
       const c = THEMES[x.theme] || '#78909C';
       const hauteur = Math.max(x.duree / 60 * PX - 2, 24);
-      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
+      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + (x.genre === 'rappel' ? ' rappel' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
         'left:calc(' + (x.col * 100 / x.cols) + '% + 2px);width:calc(' + (100 / x.cols) + '% - 4px);border-color:' + c + ';background:' + c + '1A;color:#3a3a37;">' +
-        '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + '</div>';
+        '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + (x.decalage ? '<span class="decale">décalé de ' + x.decalage + ' min</span>' : '') + '</div>';
     });
     if (jour === iso(new Date())) {
       const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
@@ -317,19 +351,183 @@
 
   function dessinerDetail() {
     const z = el('detail');
-    const x = ouvert ? elements().find(function (y) { return y.cle === ouvert; }) : null;
+    const x = ouvert ? elementsAffiches().find(function (y) { return y.cle === ouvert; }) : null;
     if (!x) { z.classList.add('cache'); return; }
     z.classList.remove('cache');
     z.innerHTML = '<div class="detail-titre">' + e(x.titre) + '</div>' +
       '<p>' + (x.debut !== null ? '🕐 ' + hCourte(x.debut) + (plageDuTitre(x.titre) ? ' (' + plageDuTitre(x.titre) + ' min)' : '') + ' · ' : '') + e(x.theme) + (x.genre === 'tache' ? ' · 📝 tâche' : '') + '</p>' +
       (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? '<p>' + e(x.note) + '</p>' : '') +
+      (x.decalage ? '<p>⏩ Décalé de ' + x.decalage + ' min pour faire de la place à un rappel. Ton Agenda n\'a pas changé.</p>' : '') +
       '<div class="actions">' +
+      (x.rappel ? (tel(x.rappel.telephone) ? '<a class="bouton" href="tel:' + e(tel(x.rappel.telephone)) + '">📞 Appeler</a>' : '') +
+        '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(x.rappel.id) + '">🧭 Accueil</a>' +
+        '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(x.rappel.id) + '">✓ C\'est fait</button>' : '') +
       (x.cochable ? '<button type="button" class="bouton ' + (x.fait ? '' : 'vert') + '" data-action="fait" data-id="' + e(x.id) + '" data-fait="' + (x.fait ? '0' : '1') + '">' + (x.fait ? '↩ Annuler « fait »' : '✓ Fait') + '</button>' : '') +
       (x.cochable ? '<a class="bouton" href="gestion-site.html">✏️ Modifier dans l\'Agenda</a>' : '') +
-      '<button type="button" class="bouton" data-action="fermer-detail">Fermer</button></div>';
+      '<button type="button" class="bouton" data-action="fermer-detail">Fermer</button></div>' +
+      (x.cochable ? '<div class="note-creneau"><label class="petit">Ajouter une note à ce créneau (elle est datée et gardée dans l\'Agenda)</label>' +
+        '<textarea id="note-creneau" placeholder="Ce qui s\'est passé, ce qu\'il faut retenir…"></textarea>' +
+        '<div style="margin-top:6px;"><button type="button" class="bouton vert" data-action="note-creneau" data-id="' + e(x.id) + '">💾 Enregistrer la note</button></div></div>' : '') +
+      (creneauPros(x) ? blocPersonnes() : '');
   }
 
-  function dessiner() { dessinerMois(); dessinerJour(); dessinerDetail(); }
+  // ---------- Les rappels se placent tout seuls dans la journée ----------
+  // Règles : les demandes de rappel (des particuliers) passent avant tout, à l'heure qu'elles demandent.
+  // Un vrai rendez-vous (sans plage dans le titre) ne bouge jamais. Un bloc de travail, par exemple
+  // « Administratif (9h–12h) », est décalé après le rappel s'il n'a pas encore commencé.
+  // Rien n'est écrit dans ton Agenda : c'est une vue, elle se recalcule à chaque fois.
+  const DUREE_RAPPEL = 15;
+  const FENETRES = { matin: [540, 720], midi: [720, 840], apres_midi: [840, 1020], soir: [1020, 1140], peu_importe: [540, 1020] };
+  function minutesMaintenant() { const n = new Date(); return Math.ceil((n.getHours() * 60 + n.getMinutes() + 1) / 5) * 5; }
+  function estBloc(x) { return x.cochable && plageDuTitre(x.titre) !== null; }
+  function seChevauchent(a, b) { return a.debut < b.debut + b.duree && b.debut < a.debut + a.duree; }
+  let rappelsPlaces = {};   // id de la demande → minutes de début
+  let decalages = [];       // les blocs décalés, pour le dire
+
+  function appliquerRappels(liste) {
+    rappelsPlaces = {}; decalages = [];
+    const attente = rappels.filter(function (d) { return !d.traitee_le; }).sort(function (a, b) { return new Date(a.cree_le) - new Date(b.cree_le); });
+    if (!attente.length) return liste;
+    const maintenant = minutesMaintenant();
+    const sansHeure = liste.filter(function (x) { return x.debut === null; });
+    const fixes = liste.filter(function (x) { return x.debut !== null && !estBloc(x); });
+    const blocs = liste.filter(function (x) { return x.debut !== null && estBloc(x); }).sort(function (a, b) { return a.debut - b.debut; });
+    const poses = [];
+    const libre = function (s, contre) { const test = { debut: s, duree: DUREE_RAPPEL }; return !contre.some(function (g) { return g.some(function (x) { return seChevauchent(test, x); }); }); };
+    attente.forEach(function (d) {
+      const fen = FENETRES[d.moment] || FENETRES.peu_importe;
+      const depart = Math.max(fen[0], maintenant);
+      let place = null, s;
+      // 1. un trou libre dans la fenêtre demandée
+      for (s = depart; s + DUREE_RAPPEL <= fen[1] && place === null; s += 5) { if (libre(s, [fixes, blocs, poses])) place = s; }
+      // 2. sinon, sur un bloc de travail (il sera décalé), jamais sur un vrai rendez-vous
+      for (s = depart; s + DUREE_RAPPEL <= Math.max(fen[1], depart + 60) && place === null; s += 5) { if (libre(s, [fixes, poses])) place = s; }
+      // 3. sinon, dès que possible après
+      for (s = Math.max(depart, fen[1]); s < 20 * 60 && place === null; s += 5) { if (libre(s, [fixes, poses])) place = s; }
+      if (place === null) place = Math.max(maintenant, 540);
+      rappelsPlaces[d.id] = place;
+      poses.push({ cle: 'd' + d.id, id: d.id, le: jour, debut: place, duree: DUREE_RAPPEL, titre: '📞 Rappeler ' + (d.prenom || 'une personne'), theme: 'Particuliers', genre: 'rappel',
+        fait: false, lieu: '', note: d.message || '', retard: false, cochable: false, rappel: d, decalage: 0 });
+    });
+    // Les blocs de travail pas encore commencés se décalent, en cascade ; ceux déjà commencés ne bougent pas
+    const obstacles = fixes.concat(poses);
+    const places = [];
+    blocs.forEach(function (b) {
+      if (b.debut < maintenant) { places.push(b); return; }
+      let s = b.debut, bouge = true;
+      while (bouge) {
+        bouge = false;
+        obstacles.concat(places).forEach(function (o) {
+          if (o === b) return;
+          if (o.debut < s + b.duree && o.debut + o.duree > s && !(o.debut < maintenant && o.genre !== 'rappel')) { s = o.debut + o.duree; bouge = true; }
+        });
+      }
+      const copie = Object.assign({}, b, { debut: s, decalage: s - b.debut });
+      if (copie.decalage > 0) decalages.push(copie);
+      places.push(copie);
+    });
+    return sansHeure.concat(fixes, poses, places);
+  }
+
+  // Ce qu'on affiche pour un jour : l'Agenda tel quel, sauf aujourd'hui où les rappels sont placés
+  function elementsAffiches() {
+    const tous = elements();
+    if (jour !== iso(new Date())) { rappelsPlaces = {}; decalages = []; return tous; }
+    const autres = tous.filter(function (x) { return x.le !== jour; });
+    return autres.concat(appliquerRappels(tous.filter(function (x) { return x.le === jour; })));
+  }
+
+  // ---------- Les demandes de rappel : toujours en haut, avant tout le reste ----------
+  function depuis(iso8601) {
+    const h = Math.max(0, Math.floor((Date.now() - new Date(iso8601).getTime()) / 3600000));
+    return h < 1 ? 'il y a moins d\'une heure' : h < 24 ? 'il y a ' + h + ' h' : 'depuis ' + Math.floor(h / 24) + ' j';
+  }
+  function tel(t) { return String(t || '').replace(/[^0-9+]/g, ''); }
+  function dessinerPrioritaire() {
+    const z = el('prioritaire');
+    const attente = rappels.filter(function (d) { return !d.traitee_le; });
+    if (!attente.length) { z.innerHTML = ''; return; }
+    if (jour !== iso(new Date())) {
+      z.innerHTML = '<div class="prio"><div class="prio-titre">📞 ' + attente.length + ' demande' + (attente.length > 1 ? 's' : '') + ' de rappel en attente</div><button type="button" class="bouton plein" data-action="aujourdhui">Voir aujourd\'hui</button></div>';
+      return;
+    }
+    z.innerHTML = '<div class="prio"><div class="prio-titre">📞 À rappeler en priorité (' + attente.length + ')</div>' + attente.map(function (d) {
+      const retard = (Date.now() - new Date(d.cree_le).getTime()) > 24 * 3600000;
+      return '<div class="personne"><div class="qui"><strong>' + e(d.prenom || 'Sans prénom') + '</strong>' + (retard ? ' <span style="color:#D93025;font-weight:700;">⏳ ' + e(depuis(d.cree_le)) + '</span>' : '') +
+        '<div class="sous">' + e(d.telephone || '') + (d.code_postal ? ' · 📍 ' + e(d.code_postal) : '') + ' · demande ' + e(depuis(d.cree_le)) + (d.moment ? ' · préfère ' + e(MOMENTS[d.moment] || '') : '') + '</div>' +
+        (rappelsPlaces[d.id] !== undefined ? '<div class="sous" style="color:#8A6A1F;font-weight:700;">📅 Placé dans ta journée à ' + hCourte(rappelsPlaces[d.id]) + '</div>' : '') +
+        (d.message ? '<div class="sous">💬 « ' + e(d.message) + ' »</div>' : '') + '</div>' +
+        (tel(d.telephone) ? '<a class="bouton" href="tel:' + e(tel(d.telephone)) + '">📞 Appeler</a>' : '') +
+        '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(d.id) + '">🧭 Accueil</a>' +
+        '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(d.id) + '">✓ C\'est fait</button></div>';
+    }).join('') +
+      (decalages.length ? '<div class="plan-info">⏩ Décalé pour leur faire de la place : ' + decalages.map(function (b) { return e(b.titre.replace(/\s*\(.*$/, '')) + ' (+' + b.decalage + ' min)'; }).join(', ') + '. Ton Agenda n\'a pas changé.</div>' : '') + '</div>';
+  }
+
+  // ---------- Les personnes d'un créneau « Appels aux pros » ----------
+  function metierMembre(m) {
+    if (m.role === 'courtier') return 'courtier';
+    if (m.role === 'artisan') return 'artisan';
+    if (m.role === 'immo') return m.sous_role_immo === 'mandataire' ? 'mandataire' : 'agent';
+    return null;
+  }
+  const NOM_METIER = { agent: 'Agent', mandataire: 'Mandataire', artisan: 'Artisan', courtier: 'Courtier', autre_pro: 'Autre pro' };
+  function creneauPros(x) { return x.cochable && x.theme === 'Pros' && /appel|relanc|questionnaire/i.test(x.titre); }
+  function nomPersonne(p) { return ((p.prenom || '') + ' ' + (p.nom || '')).trim() || p.entreprise || p.nom_entreprise || 'Sans nom'; }
+  function ficheDeCarnet(id) { return questionnaires.find(function (f) { return f.carnet_id === id; }); }
+  function ficheDeMembre(id) { return questionnaires.find(function (f) { return f.profile_id === id; }); }
+
+  function personnesPros() {
+    const auj = iso(new Date());
+    const peutEtreRelance = jour >= auj ? jour : jour; // les contacts à relancer jusqu'au jour affiché
+    const relances = carnet.filter(function (c) {
+      return c.relancer_le && c.relancer_le <= peutEtreRelance && c.etape !== 'inscrit' && c.etape !== 'pas_interesse' && METIERS_PROS.indexOf(c.metier) !== -1;
+    });
+    const seulementAujourdhui = jour === auj;
+    const aValider = seulementAujourdhui ? membres.filter(function (m) { return metierMembre(m) && !m.statut_verifie && m.statut !== 'refuse' && !ficheDeMembre(m.id); }) : [];
+    const enCours = seulementAujourdhui ? questionnaires.filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; }) : [];
+    return { relances: relances, aValider: aValider, enCours: enCours };
+  }
+
+  function boutonNoter(cle) { return '<button type="button" class="bouton" data-action="noter" data-cle="' + e(cle) + '">✍️ Noter</button>'; }
+  function formulaireNoter(cle, etape) {
+    return '<div class="noter"><textarea id="nt-' + e(cle) + '" placeholder="Ce que vous vous êtes dit…"></textarea>' +
+      '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;"><label class="petit">Le relancer le <input type="date" id="nr-' + e(cle) + '"></label>' +
+      '<button type="button" class="bouton vert" data-action="noter-enregistrer" data-id="' + e(cle.replace(/^c-/, '')) + '" data-etape="' + e(etape || 'a_relancer') + '" data-cle="' + e(cle) + '">💾 Enregistrer</button>' +
+      '<button type="button" class="bouton" data-action="noter" data-cle="' + e(cle) + '">Annuler</button></div></div>';
+  }
+
+  function blocPersonnes() {
+    const p = personnesPros();
+    if (!p.relances.length && !p.aValider.length && !p.enCours.length) return '<div class="bloc-personnes"><p class="petit">Personne à traiter dans ce créneau pour le moment. 🌿</p></div>';
+    let h = '<div class="bloc-personnes">';
+    if (p.relances.length) {
+      h += '<h3>📇 À relancer (' + p.relances.length + ')</h3>' + p.relances.map(function (c) {
+        const f = ficheDeCarnet(c.id);
+        const cle = 'c-' + c.id;
+        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER[c.metier] || '') + (c.telephone ? ' · ' + e(c.telephone) : '') + ' · à relancer le ' + e(c.relancer_le.split('-').reverse().join('/')) + '</div></div>' +
+          (tel(c.telephone) ? '<a class="bouton" href="tel:' + e(tel(c.telephone)) + '">📞 Appeler</a>' : '') +
+          (c.metier !== 'autre_pro' ? (f ? '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a>' : '<a class="bouton plein" href="questionnaires.html?commencer=carnet:' + e(c.id) + '">📝 Questionnaire</a>') : '') +
+          boutonNoter(cle) + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
+      }).join('');
+    }
+    if (p.aValider.length) {
+      h += '<h3>📞 Inscrits, à valider (' + p.aValider.length + ')</h3>' + p.aValider.map(function (m) {
+        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(m)) + '</strong><div class="sous">' + e(NOM_METIER[metierMembre(m)] || '') + (m.telephone ? ' · ' + e(m.telephone) : '') + '</div></div>' +
+          (tel(m.telephone) ? '<a class="bouton" href="tel:' + e(tel(m.telephone)) + '">📞 Appeler</a>' : '') +
+          '<a class="bouton plein" href="questionnaires.html?commencer=inscrit:' + e(m.id) + '">📝 Questionnaire</a></div>';
+      }).join('');
+    }
+    if (p.enCours.length) {
+      h += '<h3>📝 Questionnaires en cours (' + p.enCours.length + ')</h3>' + p.enCours.map(function (f) {
+        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(f)) + '</strong><div class="sous">' + e(NOM_METIER[f.metier] || '') + (f.telephone ? ' · ' + e(f.telephone) : '') + '</div></div>' +
+          '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a></div>';
+      }).join('');
+    }
+    return h + '</div>';
+  }
+
+  function dessiner() { dessinerMois(); elementsAffiches(); dessinerPrioritaire(); dessinerJour(); dessinerDetail(); }
 
   function allerAuJour(s) {
     jour = s; const d = dateDe(s); mois = { a: d.getFullYear(), m: d.getMonth() }; ouvert = null; dessiner();
@@ -341,6 +539,49 @@
     bouton.disabled = false;
     if (error) { console.log('[ALB DEBUG] cocher :', error); retour('erreur', messageErreur()); return; }
     cacherRetour();
+    if (await charger()) dessiner();
+  }
+
+  async function rappelFait(id, bouton) {
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_demande_rappel_traitee', { p_id: id, p_note: null, p_fait: true });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] rappel fait :', error); retour('erreur', messageErreur()); return; }
+    retour('succes', 'Rappel noté ✓');
+    if (await charger()) dessiner();
+  }
+
+  // Une note sur une personne du carnet : elle est gardée dans sa fiche, avec la date de relance
+  async function noterPersonne(b) {
+    const cle = b.dataset.cle;
+    const note = (el('nt-' + cle) || {}).value || '';
+    const relance = (el('nr-' + cle) || {}).value || null;
+    if (!note.trim() && !relance) { retour('erreur', 'Écris une note ou choisis une date de relance.'); return; }
+    b.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_carnet_noter', { p_id: b.dataset.id, p_note: note, p_relancer_le: relance, p_etape: b.dataset.etape });
+    b.disabled = false;
+    if (error) { console.log('[ALB DEBUG] noter :', error); retour('erreur', messageErreur()); return; }
+    noterOuvert = null;
+    retour('succes', 'C\'est noté ✓' + (relance ? ' Relance prévue le ' + relance.split('-').reverse().join('/') + '.' : ''));
+    if (await charger()) dessiner();
+  }
+
+  // Une note sur un créneau de l'Agenda : on l'ajoute à la suite, avec la date du jour
+  async function noteCreneau(id, bouton) {
+    const r = (agenda.rdv || []).find(function (x) { return x.id === id; });
+    const texte = ((el('note-creneau') || {}).value || '').trim();
+    if (!r || !texte) { retour('erreur', 'Écris d\'abord ta note.'); return; }
+    const d = new Date();
+    const ligne = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' — ' + texte;
+    const nouvelle = ((r.note ? r.note + '\n' : '') + ligne);
+    if (nouvelle.length > 1000) { retour('erreur', 'Cette note est trop longue pour le créneau (1000 signes au total). Raccourcis-la, ou ajoute-la dans la fiche de la personne.'); return; }
+    bouton.disabled = true;
+    const fiche = { le: r.le, heure: r.heure ? String(r.heure).slice(0, 5) : '', titre: r.titre, lieu: r.lieu || '', note: nouvelle, genre: r.genre, theme: r.theme || '', repete: r.repete || '',
+      lien_type: r.lien_type || '', lien_id: r.lien_id || '', lien_nom: r.lien_nom || '' };
+    const { error } = await albSupabase.rpc('alb_gestion_agenda_enregistrer', { p_id: id, p_rdv: fiche });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] note créneau :', error); retour('erreur', messageErreur()); return; }
+    retour('succes', 'Note ajoutée ✓');
     if (await charger()) dessiner();
   }
 
@@ -357,6 +598,10 @@
     if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); return; }
     if (a === 'fermer-detail') { ouvert = null; dessinerDetail(); return; }
     if (a === 'fait') { await cocher(b.dataset.id, b.dataset.fait === '1', b); return; }
+    if (a === 'rappel-fait') { await rappelFait(b.dataset.id, b); return; }
+    if (a === 'noter') { noterOuvert = (noterOuvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); return; }
+    if (a === 'noter-enregistrer') { await noterPersonne(b); return; }
+    if (a === 'note-creneau') { await noteCreneau(b.dataset.id, b); return; }
   });
   document.addEventListener('change', function (ev) {
     if (ev.target.id === 'opt-heures' || ev.target.id === 'opt-site') dessiner();
