@@ -103,6 +103,9 @@
     .note-creneau { margin-top: 12px; }
     .note-creneau textarea { width: 100%; min-height: 64px; font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; }
     .petit { font-size: 0.78rem; color: #7a7a75; }
+    .creneau.rappel { background: #FBF3E4 !important; border-color: #B28E3D !important; z-index: 4; }
+    .decale { display: block; font-size: 0.68rem; color: #8A6A1F; font-weight: 700; }
+    .plan-info { margin-top: 8px; font-size: 0.8rem; color: #8A6A1F; }
   </style>
 </head>
 <body>
@@ -284,7 +287,7 @@
   function dessinerJour() {
     const d = dateDe(jour);
     el('titre-jour').textContent = (jour === iso(new Date()) ? 'Aujourd\'hui · ' : '') + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const duJour = elements().filter(function (x) { return x.le === jour; });
+    const duJour = elementsAffiches().filter(function (x) { return x.le === jour; });
     const avecHeure = duJour.filter(function (x) { return x.debut !== null; }).sort(function (a, b) { return a.debut - b.debut; });
     const sansHeure = duJour.filter(function (x) { return x.debut === null; });
     if (!duJour.length) { el('zone').innerHTML = '<div class="vide">Rien de prévu ce jour-là. 🌿</div>'; return; }
@@ -334,9 +337,9 @@
     avecHeure.forEach(function (x) {
       const c = THEMES[x.theme] || '#78909C';
       const hauteur = Math.max(x.duree / 60 * PX - 2, 24);
-      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
+      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + (x.genre === 'rappel' ? ' rappel' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
         'left:calc(' + (x.col * 100 / x.cols) + '% + 2px);width:calc(' + (100 / x.cols) + '% - 4px);border-color:' + c + ';background:' + c + '1A;color:#3a3a37;">' +
-        '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + '</div>';
+        '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + (x.decalage ? '<span class="decale">décalé de ' + x.decalage + ' min</span>' : '') + '</div>';
     });
     if (jour === iso(new Date())) {
       const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
@@ -348,13 +351,17 @@
 
   function dessinerDetail() {
     const z = el('detail');
-    const x = ouvert ? elements().find(function (y) { return y.cle === ouvert; }) : null;
+    const x = ouvert ? elementsAffiches().find(function (y) { return y.cle === ouvert; }) : null;
     if (!x) { z.classList.add('cache'); return; }
     z.classList.remove('cache');
     z.innerHTML = '<div class="detail-titre">' + e(x.titre) + '</div>' +
       '<p>' + (x.debut !== null ? '🕐 ' + hCourte(x.debut) + (plageDuTitre(x.titre) ? ' (' + plageDuTitre(x.titre) + ' min)' : '') + ' · ' : '') + e(x.theme) + (x.genre === 'tache' ? ' · 📝 tâche' : '') + '</p>' +
       (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? '<p>' + e(x.note) + '</p>' : '') +
+      (x.decalage ? '<p>⏩ Décalé de ' + x.decalage + ' min pour faire de la place à un rappel. Ton Agenda n\'a pas changé.</p>' : '') +
       '<div class="actions">' +
+      (x.rappel ? (tel(x.rappel.telephone) ? '<a class="bouton" href="tel:' + e(tel(x.rappel.telephone)) + '">📞 Appeler</a>' : '') +
+        '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(x.rappel.id) + '">🧭 Accueil</a>' +
+        '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(x.rappel.id) + '">✓ C\'est fait</button>' : '') +
       (x.cochable ? '<button type="button" class="bouton ' + (x.fait ? '' : 'vert') + '" data-action="fait" data-id="' + e(x.id) + '" data-fait="' + (x.fait ? '0' : '1') + '">' + (x.fait ? '↩ Annuler « fait »' : '✓ Fait') + '</button>' : '') +
       (x.cochable ? '<a class="bouton" href="gestion-site.html">✏️ Modifier dans l\'Agenda</a>' : '') +
       '<button type="button" class="bouton" data-action="fermer-detail">Fermer</button></div>' +
@@ -362,6 +369,72 @@
         '<textarea id="note-creneau" placeholder="Ce qui s\'est passé, ce qu\'il faut retenir…"></textarea>' +
         '<div style="margin-top:6px;"><button type="button" class="bouton vert" data-action="note-creneau" data-id="' + e(x.id) + '">💾 Enregistrer la note</button></div></div>' : '') +
       (creneauPros(x) ? blocPersonnes() : '');
+  }
+
+  // ---------- Les rappels se placent tout seuls dans la journée ----------
+  // Règles : les demandes de rappel (des particuliers) passent avant tout, à l'heure qu'elles demandent.
+  // Un vrai rendez-vous (sans plage dans le titre) ne bouge jamais. Un bloc de travail, par exemple
+  // « Administratif (9h–12h) », est décalé après le rappel s'il n'a pas encore commencé.
+  // Rien n'est écrit dans ton Agenda : c'est une vue, elle se recalcule à chaque fois.
+  const DUREE_RAPPEL = 15;
+  const FENETRES = { matin: [540, 720], midi: [720, 840], apres_midi: [840, 1020], soir: [1020, 1140], peu_importe: [540, 1020] };
+  function minutesMaintenant() { const n = new Date(); return Math.ceil((n.getHours() * 60 + n.getMinutes() + 1) / 5) * 5; }
+  function estBloc(x) { return x.cochable && plageDuTitre(x.titre) !== null; }
+  function seChevauchent(a, b) { return a.debut < b.debut + b.duree && b.debut < a.debut + a.duree; }
+  let rappelsPlaces = {};   // id de la demande → minutes de début
+  let decalages = [];       // les blocs décalés, pour le dire
+
+  function appliquerRappels(liste) {
+    rappelsPlaces = {}; decalages = [];
+    const attente = rappels.filter(function (d) { return !d.traitee_le; }).sort(function (a, b) { return new Date(a.cree_le) - new Date(b.cree_le); });
+    if (!attente.length) return liste;
+    const maintenant = minutesMaintenant();
+    const sansHeure = liste.filter(function (x) { return x.debut === null; });
+    const fixes = liste.filter(function (x) { return x.debut !== null && !estBloc(x); });
+    const blocs = liste.filter(function (x) { return x.debut !== null && estBloc(x); }).sort(function (a, b) { return a.debut - b.debut; });
+    const poses = [];
+    const libre = function (s, contre) { const test = { debut: s, duree: DUREE_RAPPEL }; return !contre.some(function (g) { return g.some(function (x) { return seChevauchent(test, x); }); }); };
+    attente.forEach(function (d) {
+      const fen = FENETRES[d.moment] || FENETRES.peu_importe;
+      const depart = Math.max(fen[0], maintenant);
+      let place = null, s;
+      // 1. un trou libre dans la fenêtre demandée
+      for (s = depart; s + DUREE_RAPPEL <= fen[1] && place === null; s += 5) { if (libre(s, [fixes, blocs, poses])) place = s; }
+      // 2. sinon, sur un bloc de travail (il sera décalé), jamais sur un vrai rendez-vous
+      for (s = depart; s + DUREE_RAPPEL <= Math.max(fen[1], depart + 60) && place === null; s += 5) { if (libre(s, [fixes, poses])) place = s; }
+      // 3. sinon, dès que possible après
+      for (s = Math.max(depart, fen[1]); s < 20 * 60 && place === null; s += 5) { if (libre(s, [fixes, poses])) place = s; }
+      if (place === null) place = Math.max(maintenant, 540);
+      rappelsPlaces[d.id] = place;
+      poses.push({ cle: 'd' + d.id, id: d.id, le: jour, debut: place, duree: DUREE_RAPPEL, titre: '📞 Rappeler ' + (d.prenom || 'une personne'), theme: 'Particuliers', genre: 'rappel',
+        fait: false, lieu: '', note: d.message || '', retard: false, cochable: false, rappel: d, decalage: 0 });
+    });
+    // Les blocs de travail pas encore commencés se décalent, en cascade ; ceux déjà commencés ne bougent pas
+    const obstacles = fixes.concat(poses);
+    const places = [];
+    blocs.forEach(function (b) {
+      if (b.debut < maintenant) { places.push(b); return; }
+      let s = b.debut, bouge = true;
+      while (bouge) {
+        bouge = false;
+        obstacles.concat(places).forEach(function (o) {
+          if (o === b) return;
+          if (o.debut < s + b.duree && o.debut + o.duree > s && !(o.debut < maintenant && o.genre !== 'rappel')) { s = o.debut + o.duree; bouge = true; }
+        });
+      }
+      const copie = Object.assign({}, b, { debut: s, decalage: s - b.debut });
+      if (copie.decalage > 0) decalages.push(copie);
+      places.push(copie);
+    });
+    return sansHeure.concat(fixes, poses, places);
+  }
+
+  // Ce qu'on affiche pour un jour : l'Agenda tel quel, sauf aujourd'hui où les rappels sont placés
+  function elementsAffiches() {
+    const tous = elements();
+    if (jour !== iso(new Date())) { rappelsPlaces = {}; decalages = []; return tous; }
+    const autres = tous.filter(function (x) { return x.le !== jour; });
+    return autres.concat(appliquerRappels(tous.filter(function (x) { return x.le === jour; })));
   }
 
   // ---------- Les demandes de rappel : toujours en haut, avant tout le reste ----------
@@ -382,11 +455,13 @@
       const retard = (Date.now() - new Date(d.cree_le).getTime()) > 24 * 3600000;
       return '<div class="personne"><div class="qui"><strong>' + e(d.prenom || 'Sans prénom') + '</strong>' + (retard ? ' <span style="color:#D93025;font-weight:700;">⏳ ' + e(depuis(d.cree_le)) + '</span>' : '') +
         '<div class="sous">' + e(d.telephone || '') + (d.code_postal ? ' · 📍 ' + e(d.code_postal) : '') + ' · demande ' + e(depuis(d.cree_le)) + (d.moment ? ' · préfère ' + e(MOMENTS[d.moment] || '') : '') + '</div>' +
+        (rappelsPlaces[d.id] !== undefined ? '<div class="sous" style="color:#8A6A1F;font-weight:700;">📅 Placé dans ta journée à ' + hCourte(rappelsPlaces[d.id]) + '</div>' : '') +
         (d.message ? '<div class="sous">💬 « ' + e(d.message) + ' »</div>' : '') + '</div>' +
         (tel(d.telephone) ? '<a class="bouton" href="tel:' + e(tel(d.telephone)) + '">📞 Appeler</a>' : '') +
         '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(d.id) + '">🧭 Accueil</a>' +
         '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(d.id) + '">✓ C\'est fait</button></div>';
-    }).join('') + '</div>';
+    }).join('') +
+      (decalages.length ? '<div class="plan-info">⏩ Décalé pour leur faire de la place : ' + decalages.map(function (b) { return e(b.titre.replace(/\s*\(.*$/, '')) + ' (+' + b.decalage + ' min)'; }).join(', ') + '. Ton Agenda n\'a pas changé.</div>' : '') + '</div>';
   }
 
   // ---------- Les personnes d'un créneau « Appels aux pros » ----------
@@ -452,7 +527,7 @@
     return h + '</div>';
   }
 
-  function dessiner() { dessinerMois(); dessinerPrioritaire(); dessinerJour(); dessinerDetail(); }
+  function dessiner() { dessinerMois(); elementsAffiches(); dessinerPrioritaire(); dessinerJour(); dessinerDetail(); }
 
   function allerAuJour(s) {
     jour = s; const d = dateDe(s); mois = { a: d.getFullYear(), m: d.getMonth() }; ouvert = null; dessiner();
