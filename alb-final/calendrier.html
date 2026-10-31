@@ -368,7 +368,7 @@
       (x.cochable ? '<div class="note-creneau"><label class="petit">Ajouter une note à ce créneau (elle est datée et gardée dans l\'Agenda)</label>' +
         '<textarea id="note-creneau" placeholder="Ce qui s\'est passé, ce qu\'il faut retenir…"></textarea>' +
         '<div style="margin-top:6px;"><button type="button" class="bouton vert" data-action="note-creneau" data-id="' + e(x.id) + '">💾 Enregistrer la note</button></div></div>' : '') +
-      (creneauPros(x) ? blocPersonnes() : '');
+      (creneauPros(x) ? blocPersonnes(x) : '');
   }
 
   // ---------- Les rappels se placent tout seuls dans la journée ----------
@@ -472,21 +472,37 @@
     return null;
   }
   const NOM_METIER = { agent: 'Agent', mandataire: 'Mandataire', artisan: 'Artisan', courtier: 'Courtier', autre_pro: 'Autre pro' };
-  function creneauPros(x) { return x.cochable && x.theme === 'Pros' && /appel|relanc|questionnaire/i.test(x.titre); }
+  function creneauPros(x) {
+    return x.cochable && (x.theme === 'Pros' || x.theme === 'Réseau et prospection') && /appel|relanc|questionnaire|courtier|agent|mandataire|artisan/i.test(x.titre);
+  }
+  // Si le titre parle d'un métier (« Appeler 3 à 5 courtiers du Var »), on ne montre que ce métier
+  function metiersDuCreneau(x) {
+    const t = x.titre || '';
+    if (/courtier/i.test(t)) return ['courtier'];
+    if (/artisan/i.test(t)) return ['artisan'];
+    if (/agent|mandataire/i.test(t)) return ['agent', 'mandataire'];
+    return null;
+  }
+  const GROUPE_DE = { courtier: 'courtier', artisan: 'artisan', agent: 'immo', mandataire: 'immo' };
   function nomPersonne(p) { return ((p.prenom || '') + ' ' + (p.nom || '')).trim() || p.entreprise || p.nom_entreprise || 'Sans nom'; }
   function ficheDeCarnet(id) { return questionnaires.find(function (f) { return f.carnet_id === id; }); }
   function ficheDeMembre(id) { return questionnaires.find(function (f) { return f.profile_id === id; }); }
 
-  function personnesPros() {
+  function personnesPros(x) {
     const auj = iso(new Date());
-    const peutEtreRelance = jour >= auj ? jour : jour; // les contacts à relancer jusqu'au jour affiché
-    const relances = carnet.filter(function (c) {
-      return c.relancer_le && c.relancer_le <= peutEtreRelance && c.etape !== 'inscrit' && c.etape !== 'pas_interesse' && METIERS_PROS.indexOf(c.metier) !== -1;
-    });
+    const metiers = metiersDuCreneau(x);
+    const choisi = function (m) { return !metiers || metiers.indexOf(m) !== -1; };
+    const echu = function (c) { return !!c.relancer_le && c.relancer_le <= jour; };
+    const decide = function (c) { const f = ficheDeCarnet(c.id); return !!f && (f.decision === 'oui' || f.decision === 'non'); };
+    const actifs = carnet.filter(function (c) { return METIERS_PROS.indexOf(c.metier) !== -1 && choisi(c.metier) && c.etape !== 'inscrit' && c.etape !== 'pas_interesse'; });
+    // Créneau d'un métier précis : tout le carnet de ce métier, ceux à relancer d'abord. Sinon : seulement ceux à relancer.
+    const relances = metiers
+      ? actifs.filter(function (c) { return !decide(c); }).sort(function (a, b) { return (echu(b) ? 1 : 0) - (echu(a) ? 1 : 0) || String(a.relancer_le || '9').localeCompare(String(b.relancer_le || '9')); })
+      : actifs.filter(echu);
     const seulementAujourdhui = jour === auj;
-    const aValider = seulementAujourdhui ? membres.filter(function (m) { return metierMembre(m) && !m.statut_verifie && m.statut !== 'refuse' && !ficheDeMembre(m.id); }) : [];
-    const enCours = seulementAujourdhui ? questionnaires.filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; }) : [];
-    return { relances: relances, aValider: aValider, enCours: enCours };
+    const aValider = seulementAujourdhui ? membres.filter(function (m) { return metierMembre(m) && choisi(metierMembre(m)) && !m.statut_verifie && m.statut !== 'refuse' && !ficheDeMembre(m.id); }) : [];
+    const enCours = seulementAujourdhui ? questionnaires.filter(function (f) { return choisi(f.metier) && (f.decision === 'a_decider' || f.decision === 'creuser'); }) : [];
+    return { relances: relances, aValider: aValider, enCours: enCours, metiers: metiers };
   }
 
   function boutonNoter(cle) { return '<button type="button" class="bouton" data-action="noter" data-cle="' + e(cle) + '">✍️ Noter</button>'; }
@@ -497,19 +513,20 @@
       '<button type="button" class="bouton" data-action="noter" data-cle="' + e(cle) + '">Annuler</button></div></div>';
   }
 
-  function blocPersonnes() {
-    const p = personnesPros();
-    if (!p.relances.length && !p.aValider.length && !p.enCours.length) return '<div class="bloc-personnes"><p class="petit">Personne à traiter dans ce créneau pour le moment. 🌿</p></div>';
+  function blocPersonnes(x) {
+    const p = personnesPros(x);
+    const LIMITE = 8;
     let h = '<div class="bloc-personnes">';
+    if (!p.relances.length && !p.aValider.length && !p.enCours.length) h += '<p class="petit">Personne à traiter dans ce créneau pour le moment. 🌿</p>';
     if (p.relances.length) {
-      h += '<h3>📇 À relancer (' + p.relances.length + ')</h3>' + p.relances.map(function (c) {
+      h += '<h3>📇 ' + (p.metiers ? 'Dans ton carnet' : 'À relancer') + ' (' + p.relances.length + ')</h3>' + p.relances.slice(0, LIMITE).map(function (c) {
         const f = ficheDeCarnet(c.id);
         const cle = 'c-' + c.id;
-        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER[c.metier] || '') + (c.telephone ? ' · ' + e(c.telephone) : '') + ' · à relancer le ' + e(c.relancer_le.split('-').reverse().join('/')) + '</div></div>' +
+        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER[c.metier] || '') + (c.telephone ? ' · ' + e(c.telephone) : '') + (c.relancer_le ? ' · ' + (c.relancer_le <= jour ? '⏰ à relancer depuis le ' : 'relance le ') + e(c.relancer_le.split('-').reverse().join('/')) : '') + (c.ville ? ' · ' + e(c.ville) : '') + '</div></div>' +
           (tel(c.telephone) ? '<a class="bouton" href="tel:' + e(tel(c.telephone)) + '">📞 Appeler</a>' : '') +
           (c.metier !== 'autre_pro' ? (f ? '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a>' : '<a class="bouton plein" href="questionnaires.html?commencer=carnet:' + e(c.id) + '">📝 Questionnaire</a>') : '') +
           boutonNoter(cle) + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
-      }).join('');
+      }).join('') + (p.relances.length > LIMITE ? '<p class="petit">Et ' + (p.relances.length - LIMITE) + ' autre' + (p.relances.length - LIMITE > 1 ? 's' : '') + ' dans les questionnaires.</p>' : '');
     }
     if (p.aValider.length) {
       h += '<h3>📞 Inscrits, à valider (' + p.aValider.length + ')</h3>' + p.aValider.map(function (m) {
@@ -523,6 +540,14 @@
         return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(f)) + '</strong><div class="sous">' + e(NOM_METIER[f.metier] || '') + (f.telephone ? ' · ' + e(f.telephone) : '') + '</div></div>' +
           '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a></div>';
       }).join('');
+    }
+    // Les raccourcis du métier : ouvrir tous ses questionnaires, ou en ajouter un
+    if (p.metiers) {
+      const g = GROUPE_DE[p.metiers[0]];
+      const nom = { courtier: 'courtier', artisan: 'artisan', agent: 'agent ou mandataire' }[p.metiers[0]] || 'pro';
+      h += '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">' +
+        '<a class="bouton plein" href="questionnaires.html?groupe=' + g + '&ajouter=1">➕ Ajouter un ' + e(nom) + '</a>' +
+        '<a class="bouton" href="questionnaires.html?groupe=' + g + '">📝 Tous les questionnaires</a></div>';
     }
     return h + '</div>';
   }
