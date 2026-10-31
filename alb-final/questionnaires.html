@@ -78,6 +78,10 @@
     .ligne-note { display: grid; grid-template-columns: 1fr; gap: 8px; }
     @media (min-width: 600px) { .ligne-note { grid-template-columns: 1fr 170px; } }
     .decision { background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 10px; padding: 12px; margin-top: 14px; }
+    .ecoute { background: #F4EEF6; color: #5A3A6A; border-radius: 8px; padding: 7px 10px; font-size: 0.82rem; margin-bottom: 8px; }
+    .cases { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .case { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
+    .case input { width: auto; }
     details > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #5A3A6A; margin: 14px 0 8px; }
   </style>
 </head>
@@ -102,7 +106,7 @@
 
   <div id="page" class="cache">
     <h1>📝 Questionnaires d'entrée</h1>
-    <p class="aide">Ton appel avec chaque pro avant de l'intégrer. Les pros déjà inscrits (dans « Pros à valider ») et les contacts de ton « Carnet » arrivent ici tout seuls. Choisis le métier, ouvre une fiche, note pendant l'appel, puis décide. Rien n'est validé ni envoyé sans ton clic.</p>
+    <p class="aide">Ton appel avec chaque pro avant de l'intégrer, et ton accueil des particuliers. Les pros déjà inscrits (dans « Pros à valider »), les demandes de rappel et les contacts de ton « Carnet » arrivent ici tout seuls. Choisis un onglet, ouvre une fiche, note pendant l'appel, puis décide. Rien n'est validé ni envoyé sans ton clic.</p>
 
     <div class="ligne-filtres" id="onglets"></div>
     <div id="zone"></div>
@@ -120,7 +124,8 @@
   const GROUPES = {
     immo:     { nom: '🏠 Agents / mandataires', metiers: ['agent', 'mandataire'] },
     artisan:  { nom: '🔨 Artisans',             metiers: ['artisan'] },
-    courtier: { nom: '💼 Courtiers',            metiers: ['courtier'] }
+    courtier: { nom: '💼 Courtiers',            metiers: ['courtier'] },
+    particulier: { nom: '🙋 Particuliers',       metiers: [] }
   };
   const NOM_METIER = { agent: 'Agent immobilier', mandataire: 'Mandataire', artisan: 'Artisan', courtier: 'Courtier' };
   const DECISIONS = { a_decider: '⏳ À décider', oui: '✅ Oui, je l\'intègre', creuser: '🔎 Je creuse encore', non: '🚫 Non retenu' };
@@ -227,10 +232,12 @@
   function cacherRetour() { el('retour').className = 'message cache'; }
 
   async function charger() {
-    const [q, m, c] = await Promise.all([
+    const [q, m, c, qp, dr] = await Promise.all([
       albSupabase.rpc('alb_gestion_questionnaires'),
       albSupabase.rpc('alb_gestion_membres'),
-      albSupabase.rpc('alb_gestion_carnet')
+      albSupabase.rpc('alb_gestion_carnet'),
+      albSupabase.rpc('alb_gestion_questionnaires_particuliers'),
+      albSupabase.rpc('alb_gestion_demandes_rappel')
     ]);
     if (q.error) { console.log('[ALB DEBUG] questionnaires :', q.error); return false; }
     if (m.error) { console.log('[ALB DEBUG] membres :', m.error); }
@@ -238,6 +245,12 @@
     fiches = q.data || [];
     membres = m.data || [];
     carnet = c.data || [];
+    // Les particuliers : si leur tableau n'existe pas encore, les autres onglets marchent quand même
+    partDisponible = !qp.error;
+    if (qp.error) { console.log('[ALB DEBUG] questionnaires particuliers :', qp.error); }
+    fichesPart = qp.data || [];
+    if (dr.error) { console.log('[ALB DEBUG] demandes de rappel :', dr.error); }
+    demandesRappel = dr.data || [];
     return true;
   }
 
@@ -265,6 +278,7 @@
     });
   }
   function nbAFaire(g) {
+    if (g === 'particulier') return partDisponible ? nbAFairePart() : 0;
     const avant = groupe; groupe = g;
     const n = inscritsAFaire().length + carnetAFaire().length + fichesDuGroupe().filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; }).length;
     groupe = avant;
@@ -370,6 +384,7 @@
   }
 
   function dessinerZone() {
+    if (groupe === 'particulier') { dessinerZonePart(); return; }
     const liste = fichesDuGroupe();
     const enCours = liste.filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; });
     const decidees = liste.filter(function (f) { return f.decision === 'oui' || f.decision === 'non'; });
@@ -492,11 +507,296 @@
     await recharger();
   }
 
+  // ============================================================
+  // 🙋 Particuliers : l'accueil (« je ne sais pas où j'en suis »), puis Acheteur, Vendeur ou Besoin d'un pro.
+  // Tu n'appelles que quelqu'un qui a demandé à être rappelé, ou qui t'a appelée : tu ne notes que ce qui sert à l'aider.
+  // Cette fiche garde ton compte rendu. Elle n'envoie rien aux pros toute seule.
+  // ============================================================
+  const PARCOURS = { accueil: "🧭 Accueil", acheteur: "🔎 Acheteur", vendeur: "🏡 Vendeur", besoin_pro: "🛠️ Besoin d'un pro" };
+  const ORIENTATIONS = {
+    courtier: "🏦 Courtier", artisan: "🔨 Artisan", agent: "🏠 Agent ou mandataire", annonce_vendeur: "📣 Annonce vendeur ALB",
+    diagnostiqueur: "📋 Diagnostiqueur", autre_pro: "🤝 Autre pro (notaire, architecte, avocat…)", hors_alb: "🚪 Ne relève pas d'ALB", a_revoir: "🔁 À revoir"
+  };
+  const STATUTS_PART = { en_cours: "⏳ En cours", oriente: "➡️ Orienté vers un autre questionnaire", termine: "✅ Terminé" };
+  const ORIGINES_PART = { rappel: "📞 Demande de rappel", carnet: "📇 Carnet", direct: "☎️ Il t'a appelée" };
+  const MOMENTS_PART = { matin: "🌅 Le matin", midi: "🍽️ Entre midi et deux", apres_midi: "☀️ L'après-midi", soir: "🌆 En fin de journée", peu_importe: "🕐 Peu importe" };
+
+  let fichesPart = [];
+  let demandesRappel = [];
+  let partDisponible = true;
+  let formulaireAjoutPart = false;
+
+  function QP(id, point, q, ecoute) { return { id: id, point: point, q: q, ecoute: ecoute || "" }; }
+  const FIN_PART = [
+    QP("contact", "Son contact", "Quand et comment préférez-vous être recontacté(e) ?", ""),
+    QP("aide", "Ce qui l'aiderait vraiment", "Qu'est-ce qui ferait que, dans un mois, vous diriez : ils m'ont vraiment aidé(e) ?", "")
+  ];
+  const QUESTIONS_PART = {
+    accueil: [
+      QP("ouverture", "Pour ouvrir", "Racontez-moi ce qui vous a amené(e) jusqu'à nous.", "Laisse-le parler sans l'aider. Note ses mots."),
+      QP("six_mois", "Dans six mois", "Si tout était simple, qu'est-ce que vous aimeriez qu'il se passe d'ici six mois ?", ""),
+      QP("blocage", "Ce qui le bloque", "Qu'est-ce qui vous empêche d'avancer aujourd'hui ?", "Le prix, la peur de ne pas pouvoir emprunter, les démarches, l'entourage, le manque de temps."),
+      QP("entourage", "L'entourage", "Il y a quelqu'un d'autre concerné par ce projet (conjoint, famille) ?", "Ne note que ce qu'il te dit de lui-même."),
+      QP("fit", "ALB peut-il l'aider ?", "Le bien est dans le Var ou les Bouches-du-Rhône ? C'est une maison ou un appartement ancien ?", "Location, neuf ou autre secteur : dis-le-lui avec chaleur et oriente-le ailleurs si tu peux.")
+    ],
+    acheteur: [
+      QP("projet", "Le projet", "Vous achetez pour y habiter, pour des vacances ou pour investir ? Qui habitera là ?", ""),
+      QP("pourquoi", "Pourquoi maintenant", "Pourquoi maintenant ?", ""),
+      QP("bien", "Le bien cherché", "Quel secteur, et pourquoi celui-là ? Une maison ou un appartement ancien ?", ""),
+      QP("criteres", "Ses critères", "Quelles sont les trois choses indispensables, et ce qui est négociable ?", ""),
+      QP("banque", "Sa banque", "Vous avez déjà vu une banque ou un courtier ?", "Pas encore vu : propose un courtier, avec son accord."),
+      QP("moyens", "Ses moyens", "Un apport, en fourchette si vous préférez. Quelle mensualité serait confortable ?", "Une fourchette suffit. Pas de chiffres exacts, pas de documents."),
+      QP("vendre", "Vendre avant d'acheter", "Faut-il vendre un bien avant d'acheter ?", "Si oui, ouvre aussi le questionnaire Vendeur."),
+      QP("visites", "Ses visites", "Vous avez déjà visité ? Combien de biens ? Qu'est-ce qui a bloqué ?", ""),
+      QP("accompagne", "Déjà accompagné ?", "Une agence vous accompagne déjà dans votre recherche ?", ""),
+      QP("peur", "Sa peur", "Qu'est-ce qui vous fait le plus peur ? Qu'est-ce qui vous aiderait ?", "")
+    ].concat(FIN_PART),
+    vendeur: [
+      QP("bien", "Le bien", "Où est le bien (commune), maison ou appartement, dans quel état ? Il est occupé, loué ou libre ?", ""),
+      QP("pourquoi", "Pourquoi et quand", "Pourquoi vendre, et pour quand ?", ""),
+      QP("rachat", "Il rachète ?", "Vous rachetez derrière ?", "Si oui, ouvre aussi le questionnaire Acheteur."),
+      QP("prix", "Le prix", "Le bien a-t-il déjà été estimé, par qui ? D'où vient le prix que vous espérez ?", ""),
+      QP("mandat", "Un mandat en cours ?", "Un mandat est-il en cours, surtout exclusif ? Jusqu'à quand ?", "Mandat exclusif en cours : pas de mise en relation sur ce bien. Tu l'aides pour le reste."),
+      QP("seul", "Seul ou accompagné", "Vous préférez vendre seul ou être accompagné(e) ?", "Les deux sont légitimes. Tu ne pousses ni l'un ni l'autre."),
+      QP("verif", "Les points à vérifier", "Y a-t-il des points que vous aimeriez vérifier avant de vendre (diagnostics, travaux, urbanisme, servitudes) ?", ""),
+      QP("peur", "Son inquiétude", "Qu'est-ce qui vous inquiète le plus ?", "")
+    ].concat(FIN_PART),
+    besoin_pro: [
+      QP("quel", "Quel pro ?", "De quel professionnel avez-vous besoin ?", "Courtier, artisan, diagnostiqueur, notaire, architecte, avocat. Artisan sans métier précis : la demande vient chez toi."),
+      QP("besoin", "Son besoin", "Décrivez-moi ce dont vous avez besoin.", ""),
+      QP("bien", "Le bien et où il en est", "Pour quel bien (commune, type, ancien) ? Où en êtes-vous : un devis déjà reçu, un pro déjà contacté ?", ""),
+      QP("delai", "Le délai", "Pour quand ? C'est urgent ?", ""),
+      QP("budget", "Le budget", "Vous avez un budget en tête ?", "Une fourchette suffit."),
+      QP("choix", "Comment il choisit", "Vous savez déjà qui vous voulez, ou je vous propose ?", "Il choisit jusqu'à 3 pros, ou la demande part à tout le secteur : les premiers qui acceptent la remportent, et il choisit combien de gagnants (1 à 3).")
+    ].concat(FIN_PART)
+  };
+
+  function demandeDe(f) { return f.demande_rappel_id ? demandesRappel.find(function (d) { return d.id === f.demande_rappel_id; }) : null; }
+  function demandesAFaire() {
+    return demandesRappel.filter(function (d) { return !d.traitee_le && !fichesPart.some(function (f) { return f.demande_rappel_id === d.id; }); });
+  }
+  function carnetPartAFaire() {
+    return carnet.filter(function (c) {
+      return c.metier === "particulier" && c.etape !== "inscrit" && c.etape !== "pas_interesse" && !fichesPart.some(function (f) { return f.carnet_id === c.id; });
+    });
+  }
+  function nbAFairePart() { return demandesAFaire().length + carnetPartAFaire().length + fichesPart.filter(function (f) { return f.statut === "en_cours"; }).length; }
+
+  function carteCandidatPart(type, x) {
+    const rappel = type === "rappel";
+    const nom = rappel ? (x.prenom || "Sans nom") : nomDe(x);
+    return '<div class="carte"><div class="carte-tete"><div>' +
+      '<div class="carte-nom">' + e(nom) + '</div>' +
+      '<div class="carte-sous">' + (x.telephone ? e(x.telephone) : "") + (rappel && x.code_postal ? " · 📍 " + e(x.code_postal) : "") + (!rappel && x.email ? " · " + e(x.email) : "") + (rappel && x.moment ? " · " + e(MOMENTS_PART[x.moment] || "") : "") + "</div>" +
+      (rappel && x.message ? '<div class="carte-sous" style="margin-top:4px;">💬 « ' + e(x.message) + " »</div>" : "") +
+      '<div style="margin-top:6px;"><span class="etiquette ' + (rappel ? "or" : "") + '">' + (rappel ? "📞 A demandé à être rappelé(e)" : "📇 Dans ton carnet") + "</span></div>" +
+      '</div><button type="button" class="bouton" data-action="p-commencer" data-type="' + type + '" data-id="' + e(x.id) + '">🧭 Commencer l\'accueil</button></div></div>';
+  }
+
+  function carteFichePart(f) {
+    const ouvert = ouverte === f.id;
+    const parent = f.parent_id ? fichesPart.find(function (x) { return x.id === f.parent_id; }) : null;
+    return '<div class="carte" id="fiche-' + e(f.id) + '"><div class="carte-tete"><div>' +
+      '<div class="carte-nom">' + e(nomDe(f)) + "</div>" +
+      '<div class="carte-sous">' + e(PARCOURS[f.parcours] || f.parcours) + (f.telephone ? " · " + e(f.telephone) : "") + (f.commune ? " · 📍 " + e(f.commune) : "") + "</div>" +
+      '<div style="margin-top:6px;"><span class="etiquette ' + (f.statut === "termine" ? "vert" : "or") + '">' + e(STATUTS_PART[f.statut] || f.statut) + "</span>" +
+      '<span class="etiquette">' + e(ORIGINES_PART[f.origine] || "") + "</span>" +
+      (parent ? '<span class="etiquette">↩ Ouvert depuis l\'accueil</span>' : "") +
+      (f.prochaine_date ? '<span class="etiquette">📅 Prochaine étape le ' + e(f.prochaine_date.split("-").reverse().join("/")) + "</span>" : "") + "</div>" +
+      '</div><button type="button" class="bouton ' + (ouvert ? "clair" : "") + '" data-action="p-ouvrir" data-id="' + e(f.id) + '">' + (ouvert ? "✖ Fermer" : "📝 Ouvrir la fiche") + "</button></div>" +
+      (ouvert ? formulaireFichePart(f) : "") + "</div>";
+  }
+
+  function formulaireFichePart(f) {
+    const d = demandeDe(f);
+    const rep = f.reponses || {};
+    const questions = QUESTIONS_PART[f.parcours] || [];
+    const coches = f.orientations || [];
+    return '<div class="fiche">' +
+      (d && d.message ? '<p class="aide">💬 Son message : « ' + e(d.message) + " »</p>" : "") +
+      "<h3>Qui est-ce ?</h3><div class=\"grille\">" +
+        champ("p-prenom", "Prénom", f.prenom) + champ("p-nom", "Nom", f.nom) +
+        champ("p-telephone", "Téléphone", f.telephone, "tel") + champ("p-email", "E-mail", f.email, "email") +
+        champ("p-commune", "Commune ou code postal", f.commune) +
+      "</div>" +
+      "<h3>" + e(PARCOURS[f.parcours] || "") + "</h3>" +
+      questions.map(function (q) {
+        const r = rep[q.id] || {};
+        return '<div class="question"><div class="question-point">' + e(q.point) + '</div><div class="question-texte">« ' + e(q.q) + " »</div>" +
+          (q.ecoute ? '<div class="ecoute"><strong>Tu écoutes :</strong> ' + e(q.ecoute) + "</div>" : "") +
+          '<label class="petit-champ">Mes notes<textarea id="pn-' + q.id + '">' + e(r.notes || "") + "</textarea></label></div>";
+      }).join("") +
+      (f.parcours === "accueil"
+        ? '<div class="decision"><strong>Où l\'envoyer ?</strong><p class="aide">Ce que tu as noté est enregistré, et ses coordonnées sont reprises dans le nouveau questionnaire.</p><div class="actions">' +
+            '<button type="button" class="bouton or" data-action="p-vers" data-vers="vendeur" data-id="' + e(f.id) + '">🏡 Questionnaire Vendeur</button>' +
+            '<button type="button" class="bouton or" data-action="p-vers" data-vers="acheteur" data-id="' + e(f.id) + '">🔎 Questionnaire Acheteur</button>' +
+            '<button type="button" class="bouton or" data-action="p-vers" data-vers="besoin_pro" data-id="' + e(f.id) + '">🛠️ Besoin d\'un pro</button></div>' +
+            '<p class="aide" style="margin-top:8px;">Il veut vendre et acheter ? Commence par Vendeur : la vente décide de l\'achat.</p></div>'
+        : "") +
+      "<h3>Ce que j'ai compris, et la suite</h3>" +
+      '<label class="petit-champ">Ce que j\'ai compris (trois lignes)<textarea id="p-resume">' + e(f.resume || "") + "</textarea></label>" +
+      '<p class="aide" style="margin-top:10px;">Vers quel pro l\'orienter ?</p><div class="cases">' +
+      Object.keys(ORIENTATIONS).map(function (k) {
+        return '<label class="case"><input type="checkbox" name="po-orient" value="' + k + '"' + (coches.indexOf(k) !== -1 ? " checked" : "") + "> " + e(ORIENTATIONS[k]) + "</label>";
+      }).join("") + "</div>" +
+      '<label class="case" style="margin-top:10px;"><input type="checkbox" id="p-accord"' + (f.accord_transmission ? " checked" : "") + "> Il est d'accord pour que je transmette ses coordonnées à un pro (3 au maximum)</label>" +
+      '<div class="grille" style="margin-top:10px;"><label class="petit-champ">Prochaine étape<textarea id="p-etape">' + e(f.prochaine_etape || "") + "</textarea></label>" +
+      champ("p-date", "Date de la prochaine étape", f.prochaine_date, "date") + "</div>" +
+      '<div class="decision"><label class="petit-champ">Où en est cette fiche<select id="p-statut">' +
+      Object.keys(STATUTS_PART).map(function (k) { return '<option value="' + k + '"' + (f.statut === k ? " selected" : "") + ">" + STATUTS_PART[k] + "</option>"; }).join("") +
+      '</select></label><p class="aide" style="margin-top:8px;">Cette fiche garde ton compte rendu. Elle n\'envoie rien aux pros toute seule.</p>' +
+      '<div class="actions"><button type="button" class="bouton vert" data-action="p-enregistrer" data-id="' + e(f.id) + '">💾 Enregistrer</button>' +
+      (d && !d.traitee_le ? '<button type="button" class="bouton or" data-action="p-rappelfait" data-id="' + e(f.id) + '">✓ Marquer le rappel comme fait</button>' : "") +
+      "</div></div></div>";
+  }
+
+  function lirePart(f) {
+    const v = function (id) { const x = el(id); return x ? x.value.trim() : ""; };
+    const reponses = {};
+    (QUESTIONS_PART[f.parcours] || []).forEach(function (q) {
+      const n = el("pn-" + q.id);
+      if (n && n.value.trim()) reponses[q.id] = { notes: n.value.trim() };
+    });
+    const orientations = Array.prototype.map.call(document.querySelectorAll('input[name="po-orient"]:checked'), function (c) { return c.value; });
+    return {
+      parcours: f.parcours, origine: f.origine, demande_rappel_id: f.demande_rappel_id || "", carnet_id: f.carnet_id || "", parent_id: f.parent_id || "",
+      prenom: v("f-p-prenom"), nom: v("f-p-nom"), telephone: v("f-p-telephone"), email: v("f-p-email"), commune: v("f-p-commune"),
+      reponses: reponses, resume: v("p-resume"), orientations: orientations, accord_transmission: !!(el("p-accord") && el("p-accord").checked),
+      prochaine_etape: v("p-etape"), prochaine_date: v("f-p-date"), statut: v("p-statut") || "en_cours"
+    };
+  }
+
+  async function enregistrerPart(f, fiche) {
+    const { error } = await albSupabase.rpc("alb_gestion_questionnaire_particulier_enregistrer", { p_id: f.id, p_fiche: fiche || lirePart(f) });
+    if (error) { console.log("[ALB DEBUG] enregistrer fiche particulier :", error); retour("erreur", messageErreur(error)); return false; }
+    return true;
+  }
+
+  function dessinerZonePart() {
+    if (!partDisponible) {
+      el("zone").innerHTML = '<div class="carte vide">Les fiches des particuliers ne sont pas encore prêtes : le tableau n\'est pas encore créé dans la base. Colle le SQL « particuliers » dans Supabase, puis recharge la page.</div>';
+      return;
+    }
+    const enCours = fichesPart.filter(function (f) { return f.statut === "en_cours"; });
+    const autres = fichesPart.filter(function (f) { return f.statut !== "en_cours"; });
+    const dem = demandesAFaire();
+    const car = carnetPartAFaire();
+    let h = '<div class="actions" style="margin:0 0 12px;"><button type="button" class="bouton" data-action="p-ajout">' + (formulaireAjoutPart ? "✖ Fermer" : "➕ Ajouter un particulier") + "</button></div>";
+    if (formulaireAjoutPart) {
+      h += '<div class="carte"><div class="carte-nom">➕ Ajouter un particulier</div><p class="aide">Pour quelqu\'un qui t\'appelle directement : note ses coordonnées avec son accord. Il est aussi ajouté à ton « Carnet ».</p><div class="grille">' +
+        '<label class="petit-champ">Prénom<input id="ajp-prenom" maxlength="80"></label><label class="petit-champ">Nom<input id="ajp-nom" maxlength="80"></label>' +
+        '<label class="petit-champ">Téléphone<input id="ajp-telephone" type="tel" maxlength="30"></label><label class="petit-champ">E-mail<input id="ajp-email" type="email" maxlength="200"></label>' +
+        '<label class="petit-champ">Commune ou code postal<input id="ajp-commune" maxlength="120"></label>' +
+        '<label class="petit-champ">Par quoi commencer ?<select id="ajp-depart"><option value="accueil">Il ne sait pas encore où il en est</option><option value="vendeur">Il veut vendre</option><option value="acheteur">Il veut acheter</option><option value="besoin_pro">Il cherche un pro</option></select></label></div>' +
+        '<div class="actions"><button type="button" class="bouton vert" data-action="p-ajouter">💾 Ajouter et ouvrir sa fiche</button><button type="button" class="bouton clair" data-action="p-fermer-ajout">Annuler</button></div></div>';
+    }
+    h += '<h2 class="titre-section">📝 Fiches en cours (' + enCours.length + ")</h2>";
+    h += enCours.length ? enCours.map(carteFichePart).join("") : '<div class="carte vide">Aucune fiche en cours. 🌿</div>';
+    h += '<h2 class="titre-section">📞 Demandes de rappel à faire (' + dem.length + ")</h2>";
+    h += dem.length ? dem.map(function (d) { return carteCandidatPart("rappel", d); }).join("") : '<div class="carte vide">Aucune demande de rappel en attente.</div>';
+    h += '<h2 class="titre-section">📇 Particuliers de ton carnet (' + car.length + ")</h2>";
+    h += car.length ? car.map(function (c) { return carteCandidatPart("carnet", c); }).join("") : '<div class="carte vide">Aucun particulier dans ton carnet.</div>';
+    if (autres.length) {
+      h += "<details" + (autres.some(function (f) { return f.id === ouverte; }) ? " open" : "") + "><summary>✅ Orientés ou terminés (" + autres.length + ")</summary>" + autres.map(carteFichePart).join("") + "</details>";
+    }
+    el("zone").innerHTML = h;
+  }
+
+  async function ouvrirNouvelle(fiche) {
+    const { data, error } = await albSupabase.rpc("alb_gestion_questionnaire_particulier_enregistrer", { p_id: null, p_fiche: fiche });
+    if (error) { console.log("[ALB DEBUG] créer fiche particulier :", error); retour("erreur", messageErreur(error)); return null; }
+    cacherRetour();
+    ouverte = data;
+    await recharger();
+    const z = el("fiche-" + data); if (z) z.scrollIntoView({ behavior: "smooth", block: "start" });
+    return data;
+  }
+
+  async function actionPart(b) {
+    const action = b.dataset.action;
+    const f = b.dataset.id ? fichesPart.find(function (x) { return x.id === b.dataset.id; }) : null;
+    if (action === "p-ajout") { formulaireAjoutPart = !formulaireAjoutPart; dessinerZonePart(); return; }
+    if (action === "p-fermer-ajout") { formulaireAjoutPart = false; dessinerZonePart(); return; }
+    if (action === "p-ouvrir") { ouverte = (ouverte === b.dataset.id) ? null : b.dataset.id; dessinerZonePart(); return; }
+
+    if (action === "p-commencer") {
+      b.disabled = true;
+      let fiche;
+      if (b.dataset.type === "rappel") {
+        const d = demandesRappel.find(function (x) { return x.id === b.dataset.id; });
+        if (!d) { b.disabled = false; return; }
+        fiche = { parcours: "accueil", origine: "rappel", demande_rappel_id: d.id, prenom: d.prenom || "", telephone: d.telephone || "", commune: d.code_postal || "", statut: "en_cours", reponses: {} };
+      } else {
+        const c = carnet.find(function (x) { return x.id === b.dataset.id; });
+        if (!c) { b.disabled = false; return; }
+        fiche = { parcours: "accueil", origine: "carnet", carnet_id: c.id, prenom: c.prenom || "", nom: c.nom || "", telephone: c.telephone || "", email: c.email || "", commune: c.ville || "", statut: "en_cours", reponses: {} };
+      }
+      await ouvrirNouvelle(fiche);
+      b.disabled = false;
+      return;
+    }
+
+    if (action === "p-ajouter") {
+      const v = function (id) { const x = el("ajp-" + id); return x ? x.value.trim() : ""; };
+      if (!v("prenom") && !v("nom") && !v("telephone")) { retour("erreur", messageErreur({ message: "NOM_CONTACT_MANQUANT" })); return; }
+      b.disabled = true;
+      const contact = { prenom: v("prenom"), nom: v("nom"), metier: "particulier", telephone: v("telephone"), email: v("email"), ville: v("commune"), origine: "Appel direct", etape: "en_discussion" };
+      const r1 = await albSupabase.rpc("alb_gestion_carnet_enregistrer", { p_id: null, p_fiche: contact });
+      if (r1.error) { b.disabled = false; console.log("[ALB DEBUG] ajout carnet :", r1.error); retour("erreur", messageErreur(r1.error)); return; }
+      formulaireAjoutPart = false;
+      await ouvrirNouvelle({ parcours: v("depart") || "accueil", origine: "direct", carnet_id: r1.data, prenom: v("prenom"), nom: v("nom"), telephone: v("telephone"), email: v("email"), commune: v("commune"), statut: "en_cours", reponses: {} });
+      b.disabled = false;
+      return;
+    }
+
+    if (!f) return;
+
+    if (action === "p-enregistrer") {
+      b.disabled = true;
+      const ok = await enregistrerPart(f);
+      b.disabled = false;
+      if (ok) { retour("succes", "Fiche enregistrée ✓"); await recharger(); }
+      return;
+    }
+
+    if (action === "p-vers") {
+      b.disabled = true;
+      const fiche = lirePart(f);
+      if (!(await enregistrerPart(f, fiche))) { b.disabled = false; return; }
+      const enfant = { parcours: b.dataset.vers, origine: f.origine, parent_id: f.id, prenom: fiche.prenom, nom: fiche.nom, telephone: fiche.telephone, email: fiche.email, commune: fiche.commune, statut: "en_cours", reponses: {} };
+      const r = await albSupabase.rpc("alb_gestion_questionnaire_particulier_enregistrer", { p_id: null, p_fiche: enfant });
+      if (r.error) { b.disabled = false; console.log("[ALB DEBUG] ouvrir le questionnaire suivant :", r.error); retour("erreur", messageErreur(r.error)); return; }
+      fiche.statut = "oriente";
+      await enregistrerPart(f, fiche);
+      b.disabled = false;
+      cacherRetour();
+      ouverte = r.data;
+      await recharger();
+      const z = el("fiche-" + r.data); if (z) z.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (action === "p-rappelfait") {
+      const d = demandeDe(f);
+      if (!d) return;
+      b.disabled = true;
+      if (!(await enregistrerPart(f))) { b.disabled = false; return; }
+      const note = (el("p-resume") || {}).value || null;
+      const { error } = await albSupabase.rpc("alb_gestion_demande_rappel_traitee", { p_id: d.id, p_note: note, p_fait: true });
+      b.disabled = false;
+      if (error) { console.log("[ALB DEBUG] rappel fait :", error); retour("erreur", messageErreur(error)); await recharger(); return; }
+      retour("succes", "Rappel noté ✓ La demande passe dans « Déjà rappelés » (Gestion du site).");
+      await recharger();
+      return;
+    }
+  }
+
   document.addEventListener('click', async function (ev) {
     const b = ev.target.closest('button[data-action], button[data-groupe]');
     if (!b) return;
-    if (b.dataset.groupe) { groupe = b.dataset.groupe; ouverte = null; formulaireAjout = false; cacherRetour(); dessinerTout(); return; }
+    if (b.dataset.groupe) { groupe = b.dataset.groupe; ouverte = null; formulaireAjout = false; formulaireAjoutPart = false; cacherRetour(); dessinerTout(); return; }
     const action = b.dataset.action;
+    if (action && action.indexOf('p-') === 0) { await actionPart(b); return; }
     const f = b.dataset.id ? fiches.find(function (x) { return x.id === b.dataset.id; }) : null;
     if (action === 'ajout') { formulaireAjout = !formulaireAjout; dessinerZone(); return; }
     if (action === 'fermer-ajout') { formulaireAjout = false; dessinerZone(); return; }
