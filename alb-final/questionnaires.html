@@ -867,6 +867,11 @@
   async function suivreLien() {
     const p = new URLSearchParams(window.location.search);
     const fiche = p.get('fiche'), commencerAvec = p.get('commencer');
+    if (p.get('groupe') && GROUPES[p.get('groupe')]) {
+      groupe = p.get('groupe');
+      if (p.get('ajouter')) { if (groupe === 'particulier') formulaireAjoutPart = true; else formulaireAjout = true; }
+      if (!fiche && !commencerAvec) { window.history.replaceState(null, '', window.location.pathname); return; }
+    }
     if (!fiche && !commencerAvec) return;
     window.history.replaceState(null, '', window.location.pathname);
     const groupeDe = function (m) { return (m === 'agent' || m === 'mandataire') ? 'immo' : m; };

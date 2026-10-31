@@ -103,6 +103,18 @@
     .note-creneau { margin-top: 12px; }
     .note-creneau textarea { width: 100%; min-height: 64px; font-family: inherit; font-size: 0.88rem; padding: 8px; border: 1px solid #E8E6E1; border-radius: 8px; }
     .petit { font-size: 0.78rem; color: #7a7a75; }
+    .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+    .filtres.sous { margin: 0 0 12px; padding-left: 8px; border-left: 3px solid #E2D6E8; }
+    .chip { font-family: inherit; font-size: 0.82rem; font-weight: 600; padding: 7px 13px; border-radius: 18px; border: 1px solid #E2D6E8; background: #fff; color: #5A3A6A; cursor: pointer; }
+    .chip:hover { background: #F4EEF6; }
+    .chip.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
+    .chip .nb { display: inline-block; margin-left: 6px; background: #B28E3D; color: #fff; border-radius: 10px; padding: 0 7px; font-size: 0.72rem; }
+    .chip.petit-chip { font-size: 0.78rem; padding: 5px 11px; }
+    .panneau-filtre { background: #FCFBFA; border: 1px solid #E2D6E8; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+    .panneau-filtre h2 { font-family: 'Montserrat', sans-serif; font-size: 0.92rem; color: #4B1A3E; margin: 0 0 4px; }
+    .appel { width: 100%; background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 8px; padding: 10px; margin-top: 4px; font-size: 0.84rem; }
+    .appel .journal { color: #5f5e5a; white-space: pre-wrap; margin: 4px 0 8px; }
+    .appel .resultats { display: flex; flex-wrap: wrap; gap: 6px; }
     .creneau.rappel { background: #FBF3E4 !important; border-color: #B28E3D !important; z-index: 4; }
     .decale { display: block; font-size: 0.68rem; color: #8A6A1F; font-weight: 700; }
     .plan-info { margin-top: 8px; font-size: 0.8rem; color: #8A6A1F; }
@@ -150,7 +162,9 @@
           <button type="button" class="bouton" data-action="jour-plus" aria-label="Jour suivant">›</button>
           <button type="button" class="bouton plein" data-action="aujourdhui">Aujourd'hui</button>
         </div>
+        <div id="filtres"></div>
         <div id="prioritaire"></div>
+        <div id="panneau-filtre"></div>
         <div id="detail" class="detail cache"></div>
         <div id="zone"></div>
       </section>
@@ -186,7 +200,9 @@
   let jour = iso(new Date());
   let mois = { a: new Date().getFullYear(), m: new Date().getMonth() };
   let ouvert = null;        // le créneau dont on voit le détail
-  let membres = [], rappels = [], questionnaires = [];
+  let membres = [], rappels = [], questionnaires = [], fichesPart = [];
+  let filtre = { cat: 'tout', sous: '' };
+  let appelEnCours = null;  // la personne qu'on est en train d'appeler
   let noterOuvert = null;   // la personne pour qui on est en train d'écrire une note
   const METIERS_PROS = ['courtier', 'artisan', 'agent', 'mandataire', 'autre_pro'];
   const MOMENTS = { matin: 'le matin', midi: 'entre midi et deux', apres_midi: "l'après-midi", soir: 'en fin de journée', peu_importe: 'peu importe' };
@@ -217,9 +233,9 @@
   function cacherRetour() { el('retour').className = 'message cache'; }
 
   async function charger() {
-    const [a, c, m, r, q] = await Promise.all([
+    const [a, c, m, r, q, qp] = await Promise.all([
       albSupabase.rpc('alb_gestion_agenda'), albSupabase.rpc('alb_gestion_carnet'), albSupabase.rpc('alb_gestion_membres'),
-      albSupabase.rpc('alb_gestion_demandes_rappel'), albSupabase.rpc('alb_gestion_questionnaires')
+      albSupabase.rpc('alb_gestion_demandes_rappel'), albSupabase.rpc('alb_gestion_questionnaires'), albSupabase.rpc('alb_gestion_questionnaires_particuliers')
     ]);
     if (a.error) { console.log('[ALB DEBUG] agenda :', a.error); return false; }
     if (c.error) { console.log('[ALB DEBUG] carnet :', c.error); }
@@ -231,6 +247,7 @@
     membres = m.data || [];
     rappels = r.data || [];
     questionnaires = q.data || [];
+    fichesPart = qp.error ? [] : (qp.data || []);
     return true;
   }
 
@@ -287,10 +304,10 @@
   function dessinerJour() {
     const d = dateDe(jour);
     el('titre-jour').textContent = (jour === iso(new Date()) ? 'Aujourd\'hui · ' : '') + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const duJour = elementsAffiches().filter(function (x) { return x.le === jour; });
+    const duJour = elementsAffiches().filter(function (x) { return x.le === jour; }).filter(garder);
     const avecHeure = duJour.filter(function (x) { return x.debut !== null; }).sort(function (a, b) { return a.debut - b.debut; });
     const sansHeure = duJour.filter(function (x) { return x.debut === null; });
-    if (!duJour.length) { el('zone').innerHTML = '<div class="vide">Rien de prévu ce jour-là. 🌿</div>'; return; }
+    if (!duJour.length) { el('zone').innerHTML = '<div class="vide">' + (filtre.cat === 'tout' ? 'Rien de prévu ce jour-là. 🌿' : 'Aucun créneau dans ce filtre ce jour-là. Choisis « Tout » pour voir toute la journée.') + '</div>'; return; }
 
     if (!el('opt-heures').checked) {
       // Sans le détail des heures : juste la liste du jour
@@ -368,7 +385,7 @@
       (x.cochable ? '<div class="note-creneau"><label class="petit">Ajouter une note à ce créneau (elle est datée et gardée dans l\'Agenda)</label>' +
         '<textarea id="note-creneau" placeholder="Ce qui s\'est passé, ce qu\'il faut retenir…"></textarea>' +
         '<div style="margin-top:6px;"><button type="button" class="bouton vert" data-action="note-creneau" data-id="' + e(x.id) + '">💾 Enregistrer la note</button></div></div>' : '') +
-      (creneauPros(x) ? blocPersonnes() : '');
+      (creneauPros(x) ? blocPersonnes(x) : '');
   }
 
   // ---------- Les rappels se placent tout seuls dans la journée ----------
@@ -472,20 +489,39 @@
     return null;
   }
   const NOM_METIER = { agent: 'Agent', mandataire: 'Mandataire', artisan: 'Artisan', courtier: 'Courtier', autre_pro: 'Autre pro' };
-  function creneauPros(x) { return x.cochable && x.theme === 'Pros' && /appel|relanc|questionnaire/i.test(x.titre); }
+  function creneauPros(x) {
+    return x.cochable && (x.theme === 'Pros' || x.theme === 'Réseau et prospection') && /appel|relanc|questionnaire|courtier|agent|mandataire|artisan/i.test(x.titre);
+  }
+  // Si le titre parle d'un métier (« Appeler 3 à 5 courtiers du Var »), on ne montre que ce métier
+  function metiersDuCreneau(x) {
+    const t = x.titre || '';
+    if (/courtier/i.test(t)) return ['courtier'];
+    if (/artisan/i.test(t)) return ['artisan'];
+    if (/agent|mandataire/i.test(t)) return ['agent', 'mandataire'];
+    return null;
+  }
+  const GROUPE_DE = { courtier: 'courtier', artisan: 'artisan', agent: 'immo', mandataire: 'immo' };
   function nomPersonne(p) { return ((p.prenom || '') + ' ' + (p.nom || '')).trim() || p.entreprise || p.nom_entreprise || 'Sans nom'; }
   function ficheDeCarnet(id) { return questionnaires.find(function (f) { return f.carnet_id === id; }); }
   function ficheDeMembre(id) { return questionnaires.find(function (f) { return f.profile_id === id; }); }
 
-  function personnesPros() {
+  const NOM_METIER_PLUS = Object.assign({}, NOM_METIER, { particulier: 'Particulier' });
+  function ficheDeCarnetPart(id) { return fichesPart.find(function (f) { return f.carnet_id === id; }); }
+  function echu(c) { return !!c.relancer_le && c.relancer_le <= jour; }
+  function carnetActif(c) { return c.etape !== 'inscrit' && c.etape !== 'pas_interesse'; }
+  function decideCarnet(c) { const f = ficheDeCarnet(c.id); return !!f && (f.decision === 'oui' || f.decision === 'non'); }
+
+  // Les listes de pros : si on précise un métier, tout son carnet ; sinon seulement ceux à relancer
+  function listesPros(metiers) {
     const auj = iso(new Date());
-    const peutEtreRelance = jour >= auj ? jour : jour; // les contacts à relancer jusqu'au jour affiché
-    const relances = carnet.filter(function (c) {
-      return c.relancer_le && c.relancer_le <= peutEtreRelance && c.etape !== 'inscrit' && c.etape !== 'pas_interesse' && METIERS_PROS.indexOf(c.metier) !== -1;
-    });
-    const seulementAujourdhui = jour === auj;
-    const aValider = seulementAujourdhui ? membres.filter(function (m) { return metierMembre(m) && !m.statut_verifie && m.statut !== 'refuse' && !ficheDeMembre(m.id); }) : [];
-    const enCours = seulementAujourdhui ? questionnaires.filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; }) : [];
+    const choisi = function (m) { return !metiers || metiers.indexOf(m) !== -1; };
+    const actifs = carnet.filter(function (c) { return METIERS_PROS.indexOf(c.metier) !== -1 && choisi(c.metier) && carnetActif(c); });
+    const relances = metiers
+      ? actifs.filter(function (c) { return !decideCarnet(c); }).sort(function (a, b) { return (echu(b) ? 1 : 0) - (echu(a) ? 1 : 0) || String(a.relancer_le || '9').localeCompare(String(b.relancer_le || '9')); })
+      : actifs.filter(echu);
+    const aujourdhui = jour === auj;
+    const aValider = aujourdhui ? membres.filter(function (m) { return metierMembre(m) && choisi(metierMembre(m)) && !m.statut_verifie && m.statut !== 'refuse' && !ficheDeMembre(m.id); }) : [];
+    const enCours = aujourdhui ? questionnaires.filter(function (f) { return choisi(f.metier) && (f.decision === 'a_decider' || f.decision === 'creuser'); }) : [];
     return { relances: relances, aValider: aValider, enCours: enCours };
   }
 
@@ -497,37 +533,180 @@
       '<button type="button" class="bouton" data-action="noter" data-cle="' + e(cle) + '">Annuler</button></div></div>';
   }
 
-  function blocPersonnes() {
-    const p = personnesPros();
-    if (!p.relances.length && !p.aValider.length && !p.enCours.length) return '<div class="bloc-personnes"><p class="petit">Personne à traiter dans ce créneau pour le moment. 🌿</p></div>';
-    let h = '<div class="bloc-personnes">';
-    if (p.relances.length) {
-      h += '<h3>📇 À relancer (' + p.relances.length + ')</h3>' + p.relances.map(function (c) {
-        const f = ficheDeCarnet(c.id);
-        const cle = 'c-' + c.id;
-        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER[c.metier] || '') + (c.telephone ? ' · ' + e(c.telephone) : '') + ' · à relancer le ' + e(c.relancer_le.split('-').reverse().join('/')) + '</div></div>' +
-          (tel(c.telephone) ? '<a class="bouton" href="tel:' + e(tel(c.telephone)) + '">📞 Appeler</a>' : '') +
-          (c.metier !== 'autre_pro' ? (f ? '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a>' : '<a class="bouton plein" href="questionnaires.html?commencer=carnet:' + e(c.id) + '">📝 Questionnaire</a>') : '') +
-          boutonNoter(cle) + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
-      }).join('');
-    }
-    if (p.aValider.length) {
-      h += '<h3>📞 Inscrits, à valider (' + p.aValider.length + ')</h3>' + p.aValider.map(function (m) {
-        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(m)) + '</strong><div class="sous">' + e(NOM_METIER[metierMembre(m)] || '') + (m.telephone ? ' · ' + e(m.telephone) : '') + '</div></div>' +
-          (tel(m.telephone) ? '<a class="bouton" href="tel:' + e(tel(m.telephone)) + '">📞 Appeler</a>' : '') +
-          '<a class="bouton plein" href="questionnaires.html?commencer=inscrit:' + e(m.id) + '">📝 Questionnaire</a></div>';
-      }).join('');
-    }
-    if (p.enCours.length) {
-      h += '<h3>📝 Questionnaires en cours (' + p.enCours.length + ')</h3>' + p.enCours.map(function (f) {
-        return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(f)) + '</strong><div class="sous">' + e(NOM_METIER[f.metier] || '') + (f.telephone ? ' · ' + e(f.telephone) : '') + '</div></div>' +
-          '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a></div>';
-      }).join('');
-    }
-    return h + '</div>';
+  // La fiche d'appel : elle s'ouvre quand tu appuies sur « Appeler ». Un clic note le résultat et prévoit la relance.
+  const RESULTATS = [
+    ['interesse', '😊 Intéressé', 'Appelé : intéressé', 'interesse', null],
+    ['discussion', '💬 À rediscuter', 'Appelé : à rediscuter', 'en_discussion', 3],
+    ['repondeur', '📵 Pas de réponse', 'Pas de réponse', null, 2],
+    ['non', '🚫 Pas intéressé', 'Appelé : pas intéressé', 'pas_interesse', null]
+  ];
+  function ficheAppel(c) {
+    const lignes = String(c.journal || '').split('\n').filter(Boolean).slice(0, 3).join('\n');
+    return '<div class="appel"><strong>📞 ' + e(nomPersonne(c)) + '</strong>' + (c.telephone ? ' · ' + e(c.telephone) : '') + (c.email ? ' · ' + e(c.email) : '') +
+      (c.origine ? '<div class="petit">Vient de : ' + e(c.origine) + '</div>' : '') +
+      (lignes ? '<div class="journal">' + e(lignes) + '</div>' : '<div class="petit" style="margin:4px 0 8px;">Pas encore de note.</div>') +
+      '<div class="petit" style="margin-bottom:4px;">Comment ça s\'est passé ? Un clic note le résultat et prévoit la relance.</div><div class="resultats">' +
+      RESULTATS.map(function (r) { return '<button type="button" class="bouton" data-action="resultat" data-id="' + e(c.id) + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div></div>';
   }
 
-  function dessiner() { dessinerMois(); elementsAffiches(); dessinerPrioritaire(); dessinerJour(); dessinerDetail(); }
+  function ligneCarnet(c) {
+    const cle = 'c-' + c.id;
+    const part = c.metier === 'particulier';
+    const f = part ? ficheDeCarnetPart(c.id) : ficheDeCarnet(c.id);
+    const peutQuestionnaire = part || (c.metier !== 'autre_pro');
+    return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(c)) + '</strong><div class="sous">' + e(NOM_METIER_PLUS[c.metier] || '') + (c.telephone ? ' · ' + e(c.telephone) : '') +
+      (c.relancer_le ? ' · ' + (c.relancer_le <= jour ? '⏰ à relancer depuis le ' : 'relance le ') + e(c.relancer_le.split('-').reverse().join('/')) : '') + (c.ville ? ' · ' + e(c.ville) : '') + '</div></div>' +
+      (tel(c.telephone) ? '<a class="bouton" href="tel:' + e(tel(c.telephone)) + '" data-action="appeler" data-cle="' + e(cle) + '">📞 Appeler</a>' : '<button type="button" class="bouton" data-action="appeler" data-cle="' + e(cle) + '">📞 Appeler</button>') +
+      (peutQuestionnaire ? (f ? '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a>' : '<a class="bouton plein" href="questionnaires.html?commencer=carnet:' + e(c.id) + '">' + (part ? '🧭 Accueil' : '📝 Questionnaire') + '</a>') : '') +
+      boutonNoter(cle) + (appelEnCours === cle ? ficheAppel(c) : '') + (noterOuvert === cle ? formulaireNoter(cle, c.etape) : '') + '</div>';
+  }
+  function ligneMembre(m) {
+    return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(m)) + '</strong><div class="sous">' + e(NOM_METIER[metierMembre(m)] || '') + (m.telephone ? ' · ' + e(m.telephone) : '') + '</div></div>' +
+      (tel(m.telephone) ? '<a class="bouton" href="tel:' + e(tel(m.telephone)) + '">📞 Appeler</a>' : '') +
+      '<a class="bouton plein" href="questionnaires.html?commencer=inscrit:' + e(m.id) + '">📝 Questionnaire</a></div>';
+  }
+  function ligneFichePro(f) {
+    return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(f)) + '</strong><div class="sous">' + e(NOM_METIER[f.metier] || '') + (f.telephone ? ' · ' + e(f.telephone) : '') + '</div></div>' +
+      '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a></div>';
+  }
+  const PARCOURS_NOM = { accueil: '🧭 Accueil', acheteur: '🔎 Acheteur', vendeur: '🏡 Vendeur', besoin_pro: '🛠️ Besoin d\'un pro' };
+  function ligneFichePart(f) {
+    return '<div class="personne"><div class="qui"><strong>' + e(nomPersonne(f)) + '</strong><div class="sous">' + e(PARCOURS_NOM[f.parcours] || '') + (f.telephone ? ' · ' + e(f.telephone) : '') + (f.prochaine_date ? ' · 📅 ' + e(f.prochaine_date.split('-').reverse().join('/')) : '') + '</div></div>' +
+      (tel(f.telephone) ? '<a class="bouton" href="tel:' + e(tel(f.telephone)) + '">📞 Appeler</a>' : '') +
+      '<a class="bouton plein" href="questionnaires.html?fiche=' + e(f.id) + '">📝 Reprendre la fiche</a></div>';
+  }
+
+  const LIMITE = 8;
+  function htmlListesPros(p, metiers) {
+    let h = '';
+    if (!p.relances.length && !p.aValider.length && !p.enCours.length) h += '<p class="petit">Personne à traiter pour le moment. 🌿</p>';
+    if (p.relances.length) {
+      h += '<h3>📇 ' + (metiers ? 'Dans ton carnet' : 'À relancer') + ' (' + p.relances.length + ')</h3>' + p.relances.slice(0, LIMITE).map(ligneCarnet).join('') +
+        (p.relances.length > LIMITE ? '<p class="petit">Et ' + (p.relances.length - LIMITE) + ' autre' + (p.relances.length - LIMITE > 1 ? 's' : '') + ' dans les questionnaires.</p>' : '');
+    }
+    if (p.aValider.length) h += '<h3>📞 Inscrits, à valider (' + p.aValider.length + ')</h3>' + p.aValider.map(ligneMembre).join('');
+    if (p.enCours.length) h += '<h3>📝 Questionnaires en cours (' + p.enCours.length + ')</h3>' + p.enCours.map(ligneFichePro).join('');
+    if (metiers) {
+      const g = GROUPE_DE[metiers[0]];
+      const nom = { courtier: 'courtier', artisan: 'artisan', agent: 'agent ou mandataire' }[metiers[0]] || 'pro';
+      h += '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">' +
+        '<a class="bouton plein" href="questionnaires.html?groupe=' + g + '&ajouter=1">➕ Ajouter un ' + e(nom) + '</a>' +
+        '<a class="bouton" href="questionnaires.html?groupe=' + g + '">📝 Tous les questionnaires</a></div>';
+    }
+    return h;
+  }
+  function blocPersonnes(x) {
+    const m = metiersDuCreneau(x);
+    return '<div class="bloc-personnes">' + htmlListesPros(listesPros(m), m) + '</div>';
+  }
+
+  // ---------- Les filtres de la journée ----------
+  const CATS = [['tout', 'Tout'], ['pros', '📞 Pros'], ['particuliers', '🙋 Particuliers'], ['relances', '⏰ Relances'], ['admin', '🧾 Administratif'], ['salon', '🎪 Salon']];
+  const SOUS = {
+    pros: [['', 'Tous'], ['courtier', 'Courtiers'], ['immo', 'Agents / mandataires'], ['artisan', 'Artisans']],
+    particuliers: [['', 'Tous'], ['accueil', 'Accueil'], ['vendeur', 'Vendeur'], ['acheteur', 'Acheteur'], ['besoin_pro', 'Besoin d\'un pro']]
+  };
+  const THEMES_ADMIN = ['Compta et factures', 'TVA et impôts', 'Banque et trésorerie', 'Juridique et administratif', 'Assurances', 'Site ALB Immobilier'];
+  function metiersDeSous(sous) { return sous === 'courtier' ? ['courtier'] : sous === 'artisan' ? ['artisan'] : sous === 'immo' ? ['agent', 'mandataire'] : null; }
+
+  // Dans quelles catégories entre un créneau ?
+  function categoriesDe(x) {
+    const t = x.titre || '', cats = [];
+    if (x.genre === 'rappel' || x.theme === 'Particuliers' || /particulier|accueil/i.test(t)) cats.push('particuliers');
+    if (x.theme === 'Pros' || /courtier|agent|mandataire|artisan|\bpros?\b/i.test(t)) cats.push('pros');
+    if (/relanc/i.test(t)) cats.push('relances');
+    if (THEMES_ADMIN.indexOf(x.theme) !== -1 || /administratif|compta|factur/i.test(t)) cats.push('admin');
+    if (/salon|\brent\b|belvaux/i.test(t)) cats.push('salon');
+    return cats;
+  }
+  function sousDeCreneau(x, cat) {
+    const t = x.titre || '';
+    if (cat === 'pros') return /courtier/i.test(t) ? 'courtier' : /artisan/i.test(t) ? 'artisan' : /agent|mandataire/i.test(t) ? 'immo' : null;
+    if (cat === 'particuliers') return (x.genre === 'rappel' || /accueil/i.test(t)) ? 'accueil' : /vendeur/i.test(t) ? 'vendeur' : /acheteur/i.test(t) ? 'acheteur' : /besoin/i.test(t) ? 'besoin_pro' : null;
+    return null;
+  }
+  function garder(x) {
+    if (filtre.cat === 'tout') return true;
+    if (categoriesDe(x).indexOf(filtre.cat) === -1) return false;
+    if (!filtre.sous) return true;
+    const s = sousDeCreneau(x, filtre.cat);
+    return s === null || s === filtre.sous;
+  }
+
+  function personnesParticuliers() {
+    const sous = filtre.sous;
+    const fiches = fichesPart.filter(function (f) { return f.statut === 'en_cours' && (!sous || f.parcours === sous); });
+    const car = (!sous || sous === 'accueil') ? carnet.filter(function (c) { return c.metier === 'particulier' && carnetActif(c) && echu(c) && !ficheDeCarnetPart(c.id); }) : [];
+    return { fiches: fiches, car: car };
+  }
+  function carnetSalon() {
+    return carnet.filter(function (c) { return /salon|\brent\b|rencontre|afterwork|bni/i.test(c.origine || '') && carnetActif(c) && !decideCarnet(c); });
+  }
+  function tachesAdmin() {
+    return elements().filter(function (x) { return x.cochable && x.genre === 'tache' && !x.fait && x.le <= jour && categoriesDe(x).indexOf('admin') !== -1; });
+  }
+  function carnetRelances() { return carnet.filter(function (c) { return carnetActif(c) && echu(c); }); }
+
+  function compteCat(cat) {
+    if (cat === 'tout') return 0;
+    if (cat === 'pros') { const p = listesPros(null); return p.relances.length + p.aValider.length + p.enCours.length; }
+    if (cat === 'particuliers') { const p = personnesParticuliers(); return rappels.filter(function (d) { return !d.traitee_le; }).length + p.fiches.length + p.car.length; }
+    if (cat === 'relances') return carnetRelances().length;
+    if (cat === 'admin') return tachesAdmin().length;
+    if (cat === 'salon') return carnetSalon().length;
+    return 0;
+  }
+
+  function dessinerFiltres() {
+    let h = '<div class="filtres">' + CATS.map(function (c) {
+      const n = compteCat(c[0]);
+      return '<button type="button" class="chip' + (filtre.cat === c[0] ? ' actif' : '') + '" data-action="filtre" data-cat="' + c[0] + '">' + c[1] + (n ? '<span class="nb">' + n + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
+    if (SOUS[filtre.cat]) {
+      h += '<div class="filtres sous">' + SOUS[filtre.cat].map(function (c) {
+        return '<button type="button" class="chip petit-chip' + (filtre.sous === c[0] ? ' actif' : '') + '" data-action="sous" data-sous="' + c[0] + '">' + c[1] + '</button>';
+      }).join('') + '</div>';
+    }
+    el('filtres').innerHTML = h;
+  }
+
+  function dessinerPanneauFiltre() {
+    const z = el('panneau-filtre');
+    const cat = filtre.cat;
+    if (cat === 'tout') { z.innerHTML = ''; return; }
+    let titre = '', h = '';
+    if (cat === 'pros') {
+      const m = metiersDeSous(filtre.sous);
+      titre = '📞 Pros' + (filtre.sous ? ' · ' + SOUS.pros.find(function (s) { return s[0] === filtre.sous; })[1] : '');
+      h = htmlListesPros(listesPros(m), m);
+    } else if (cat === 'particuliers') {
+      const p = personnesParticuliers();
+      titre = '🙋 Particuliers' + (filtre.sous ? ' · ' + SOUS.particuliers.find(function (s) { return s[0] === filtre.sous; })[1] : '');
+      if (!p.fiches.length && !p.car.length) h += '<p class="petit">Rien à traiter ici pour le moment. Les demandes de rappel sont juste au-dessus. 🌿</p>';
+      if (p.fiches.length) h += '<h3>📝 Fiches en cours (' + p.fiches.length + ')</h3>' + p.fiches.map(ligneFichePart).join('');
+      if (p.car.length) h += '<h3>📇 Particuliers de ton carnet à relancer (' + p.car.length + ')</h3>' + p.car.map(ligneCarnet).join('');
+      h += '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><a class="bouton plein" href="questionnaires.html?groupe=particulier&ajouter=1">➕ Ajouter un particulier</a><a class="bouton" href="questionnaires.html?groupe=particulier">📝 Tous les questionnaires</a></div>';
+    } else if (cat === 'relances') {
+      const l = carnetRelances();
+      titre = '⏰ Relances du carnet';
+      h = l.length ? l.map(ligneCarnet).join('') : '<p class="petit">Aucune relance à faire. 🌿</p>';
+    } else if (cat === 'admin') {
+      const l = tachesAdmin();
+      titre = '🧾 Administratif : tâches à faire';
+      h = l.length ? l.map(function (x) {
+        return '<div class="personne"><div class="qui"><strong>' + e(x.titre) + '</strong><div class="sous">' + e(x.theme) + ' · prévu le ' + e(x.le.split('-').reverse().join('/')) + (x.le < iso(new Date()) ? ' · ⏳ en retard' : '') + (x.note ? ' · ' + e(x.note) : '') + '</div></div>' +
+          '<button type="button" class="bouton vert" data-action="fait" data-id="' + e(x.id) + '" data-fait="1">✓ Fait</button><a class="bouton" href="gestion-site.html">✏️ Agenda</a></div>';
+      }).join('') : '<p class="petit">Aucune tâche administrative en attente. 🌿</p>';
+    } else if (cat === 'salon') {
+      const l = carnetSalon();
+      titre = '🎪 Rencontres du salon et du réseau';
+      h = l.length ? l.map(ligneCarnet).join('') : '<p class="petit">Personne du salon à traiter pour le moment. 🌿</p>';
+      h += '<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><a class="bouton" href="contacts-salon.html">📇 Contacts du salon</a></div>';
+    }
+    z.innerHTML = '<div class="panneau-filtre"><h2>' + titre + '</h2>' + h + '</div>';
+  }
+
+  function dessiner() { dessinerMois(); elementsAffiches(); dessinerFiltres(); dessinerPrioritaire(); dessinerPanneauFiltre(); dessinerJour(); dessinerDetail(); }
 
   function allerAuJour(s) {
     jour = s; const d = dateDe(s); mois = { a: d.getFullYear(), m: d.getMonth() }; ouvert = null; dessiner();
@@ -539,6 +718,21 @@
     bouton.disabled = false;
     if (error) { console.log('[ALB DEBUG] cocher :', error); retour('erreur', messageErreur()); return; }
     cacherRetour();
+    if (await charger()) dessiner();
+  }
+
+  // Le résultat d'un appel : une note automatique, la bonne étape, et la relance prévue
+  async function resultatAppel(b) {
+    const r = RESULTATS.find(function (x) { return x[0] === b.dataset.r; });
+    const c = carnet.find(function (x) { return x.id === b.dataset.id; });
+    if (!r || !c) return;
+    b.disabled = true;
+    const relance = r[4] ? ajouterJours(iso(new Date()), r[4]) : null;
+    const { error } = await albSupabase.rpc('alb_gestion_carnet_noter', { p_id: c.id, p_note: r[2], p_relancer_le: relance, p_etape: r[3] || c.etape });
+    b.disabled = false;
+    if (error) { console.log('[ALB DEBUG] résultat d\'appel :', error); retour('erreur', messageErreur()); return; }
+    appelEnCours = null;
+    retour('succes', 'C\'est noté : ' + r[2] + (relance ? '. Relance prévue le ' + relance.split('-').reverse().join('/') + '.' : '.'));
     if (await charger()) dessiner();
   }
 
@@ -599,7 +793,11 @@
     if (a === 'fermer-detail') { ouvert = null; dessinerDetail(); return; }
     if (a === 'fait') { await cocher(b.dataset.id, b.dataset.fait === '1', b); return; }
     if (a === 'rappel-fait') { await rappelFait(b.dataset.id, b); return; }
-    if (a === 'noter') { noterOuvert = (noterOuvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); return; }
+    if (a === 'filtre') { filtre = { cat: b.dataset.cat, sous: '' }; ouvert = null; dessiner(); return; }
+    if (a === 'sous') { filtre.sous = b.dataset.sous; ouvert = null; dessiner(); return; }
+    if (a === 'appeler') { appelEnCours = (appelEnCours === b.dataset.cle) ? null : b.dataset.cle; dessinerPanneauFiltre(); dessinerDetail(); return; }
+    if (a === 'resultat') { await resultatAppel(b); return; }
+    if (a === 'noter') { noterOuvert = (noterOuvert === b.dataset.cle) ? null : b.dataset.cle; dessinerPanneauFiltre(); dessinerDetail(); return; }
     if (a === 'noter-enregistrer') { await noterPersonne(b); return; }
     if (a === 'note-creneau') { await noteCreneau(b.dataset.id, b); return; }
   });
