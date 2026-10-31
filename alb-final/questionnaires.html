@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Questionnaires d'entrée — ALB Immobilier</title>
+  <link rel="stylesheet" href="polices/polices.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.5; }
+    h1, h2 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    .cache { display: none !important; }
+
+    /* Bandeau (le même que Gestion du site) */
+    .bandeau { background: #4B1A3E; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
+    .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
+    .bandeau-titre { font-weight: 700; font-size: 1rem; }
+    .bandeau-droite { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; align-items: center; }
+    .bandeau a { color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem; text-decoration: none; }
+    .bandeau a:hover { background: #B28E3D; border-color: #B28E3D; }
+
+    .contenu { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+    .aide { font-size: 0.8rem; color: #7a7a75; margin: 4px 0 12px; }
+    .message { padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 0.9rem; background: #F4EEF6; color: #5A3A6A; border: 1px solid #E2D6E8; }
+    .message.erreur { background: #FBECEC; color: #8A2D2D; border-color: #F0CACA; }
+    .message.succes { background: #EEF6EE; color: #2E6B34; border-color: #CFE4CF; }
+
+    /* Sous-onglets par métier */
+    .ligne-filtres { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0 10px; }
+    .filtre { border: 1px solid #E8E6E1; background: #fff; color: #4A4A47; border-radius: 16px; padding: 8px 16px; font-family: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; }
+    .filtre.actif { background: #5A3A6A; border-color: #5A3A6A; color: #fff; }
+    .filtre .nb { display: inline-block; margin-left: 6px; background: #B28E3D; color: #fff; border-radius: 10px; padding: 0 7px; font-size: 0.74rem; }
+
+    .titre-section { font-size: 1.1rem; margin: 22px 0 6px; }
+
+    /* Cartes */
+    .carte { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .carte.vide { color: #7a7a75; font-size: 0.9rem; }
+    .carte-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .carte-nom { font-weight: 700; font-size: 1.02rem; color: #4B1A3E; }
+    .carte-sous { font-size: 0.84rem; color: #7a7a75; }
+    .etiquette { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 10px; background: #F4EEF6; color: #5A3A6A; margin-right: 4px; }
+    .etiquette.vert { background: #EEF6EE; color: #2E6B34; }
+    .etiquette.or { background: #FBF3E4; color: #8A6A1F; }
+    .etiquette.rouge { background: #FBECEC; color: #8A2D2D; }
+
+    .bouton { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A3A6A; background: #5A3A6A; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+    .bouton.clair { background: #fff; color: #5A3A6A; }
+    .bouton.vert { background: #2E6B34; border-color: #2E6B34; }
+    .bouton.rouge { background: #fff; color: #8A2D2D; border-color: #8A2D2D; }
+    .bouton.or { background: #B28E3D; border-color: #B28E3D; }
+    .bouton:disabled { opacity: 0.5; cursor: wait; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: flex-end; }
+
+    /* Fiche */
+    .fiche { margin-top: 14px; border-top: 1px dashed #E2D6E8; padding-top: 14px; }
+    .fiche h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; font-size: 1.02rem; margin: 14px 0 8px; }
+    .grille { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 600px) { .grille { grid-template-columns: 1fr 1fr; } }
+    .petit-champ { display: flex; flex-direction: column; gap: 3px; font-size: 0.78rem; font-weight: 600; color: #7a7a75; }
+    .petit-champ input, .petit-champ select, .petit-champ textarea { font-family: inherit; font-size: 0.9rem; padding: 9px; border: 1px solid #E8E6E1; border-radius: 8px; background: #fff; color: #4A4A47; width: 100%; }
+    .petit-champ textarea { min-height: 70px; resize: vertical; }
+
+    .question { border: 1px solid #E8E6E1; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #FCFBFA; }
+    .question-point { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #8A6A1F; }
+    .question-texte { font-weight: 600; margin: 4px 0 8px; color: #4B1A3E; }
+    .reperes { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 8px; font-size: 0.82rem; }
+    @media (min-width: 600px) { .reperes { grid-template-columns: 1fr 1fr; } }
+    .repere { border-radius: 8px; padding: 7px 10px; }
+    .repere.bon { background: #EEF6EE; color: #2E6B34; }
+    .repere.non { background: #FBECEC; color: #8A2D2D; }
+    .repere strong { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .ligne-note { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media (min-width: 600px) { .ligne-note { grid-template-columns: 1fr 170px; } }
+    .decision { background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 10px; padding: 12px; margin-top: 14px; }
+    details > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #5A3A6A; margin: 14px 0 8px; }
+  </style>
+</head>
+<body>
+
+<header class="bandeau">
+  <div class="bandeau-gauche">
+    <img src="logo-signature.png" alt="ALB Sud Immobilier">
+    <span class="bandeau-titre">Questionnaires d'entrée</span>
+  </div>
+  <div class="bandeau-droite">
+    <a href="gestion-site.html">← Gestion du site</a>
+    <a href="contacts-salon.html">📇 Contacts du salon</a>
+    <a href="statistiques.html">📈 Statistiques</a>
+    <a href="index.html" target="_blank">Voir le site</a>
+  </div>
+</header>
+
+<main class="contenu">
+  <div id="etat" class="message">Chargement…</div>
+  <div id="retour" class="message cache"></div>
+
+  <div id="page" class="cache">
+    <h1>📝 Questionnaires d'entrée</h1>
+    <p class="aide">Ton appel avec chaque pro avant de l'intégrer. Les pros déjà inscrits (dans « Pros à valider ») et les contacts de ton « Carnet » arrivent ici tout seuls. Choisis le métier, ouvre une fiche, note pendant l'appel, puis décide. Rien n'est validé ni envoyé sans ton clic.</p>
+
+    <div class="ligne-filtres" id="onglets"></div>
+    <div id="zone"></div>
+  </div>
+</main>
+
+<script>
+  // ============================================================
+  // Questionnaires d'entrée : réservé à Jocelyne (même accès que Gestion du site)
+  // Les fiches sont enregistrées par des fonctions Supabase qui vérifient d'abord
+  // que tu es bien administratrice. Rien n'est supprimé : un pro non retenu
+  // reste classé « Non retenu ».
+  // ============================================================
+
+  const GROUPES = {
+    immo:     { nom: '🏠 Agents / mandataires', metiers: ['agent', 'mandataire'] },
+    artisan:  { nom: '🔨 Artisans',             metiers: ['artisan'] },
+    courtier: { nom: '💼 Courtiers',            metiers: ['courtier'] }
+  };
+  const NOM_METIER = { agent: 'Agent immobilier', mandataire: 'Mandataire', artisan: 'Artisan', courtier: 'Courtier' };
+  const DECISIONS = { a_decider: '⏳ À décider', oui: '✅ Oui, je l\'intègre', creuser: '🔎 Je creuse encore', non: '🚫 Non retenu' };
+  const VERDICTS = { '': '—', ok: '✅ Ça le fait', creuser: '🔎 À creuser', non: '🚫 Non' };
+
+  // ---------- Les questions de chaque métier ----------
+  function Q(id, point, q, bon, non) { return { id: id, point: point, q: q, bon: bon, non: non }; }
+
+  const Q_DEBUT = [
+    Q('inscrire', 'S\'inscrire', 'Qu\'est-ce qui t\'a poussé à t\'inscrire sur ALB ?', 'Parle des gens et de faire autrement', 'Ne parle que de contacts ou de volume'),
+    Q('attend', 'Ce qu\'il attend d\'ALB', 'Qu\'est-ce que tu attends d\'ALB ? Qu\'est-ce que tu voudrais qu\'on t\'apporte ?', 'Attentes réalistes, comprend que ça démarre doucement', 'Veut un flot de contacts tout de suite'),
+    Q('apporte', 'Ce qu\'il apporte', 'Et toi, qu\'est-ce que tu peux apporter aux particuliers qui passent par ALB ?', 'Exemples concrets de sa façon de travailler', 'Réponse vague, ne parle que de lui')
+  ];
+  const Q_FIN = [
+    Q('premiere', 'Sa première question à lui', '(c\'est lui qui la pose)', 'Demande comment tu protèges les particuliers', 'Demande seulement combien de demandes il va recevoir'),
+    Q('repere', 'Mon repère', '(ce que tu ressens)', 'Ça rigole, c\'est sérieux, c\'est fluide', 'Réponses récitées ou trop lisses, mal à l\'aise')
+  ];
+  const Q_ERREUR = Q('erreur', 'Une vraie erreur', 'Raconte-moi une vraie erreur que tu as faite avec un client.', 'Erreur réelle, qu\'il a réparée', 'N\'en a jamais fait, ou toujours la faute du client (à creuser : « trop perfectionniste »)');
+  const Q_CONTOURNER = Q('contourner', 'Passer par-dessus', 'Un client t\'a-t-il déjà proposé de contourner ton agence, ton réseau ou celui qui te l\'avait adressé ? Et si ça arrive avec quelqu\'un venu par ALB ?', 'Histoire sincère, même si elle ne le met pas en valeur', 'A déjà accepté sans gêne, ou « ça se fait tout le temps »');
+  const Q_CONFRERES = Q('confreres', 'Les confrères', 'Qu\'est-ce que tu vois faire dans ton métier et que tu trouves pas correct ? Dis-moi du mal de ton plus gros concurrent.', 'Exemple précis sans salir personne, ou refus amusé', 'Dénigre avec plaisir');
+  const Q_AGACE = Q('agace', 'Le client qui l\'agace', 'Le dernier client qui t\'a vraiment agacé : qu\'est-ce que tu lui as dit ?', 'Reste calme, comprend, parle du client avec respect', 'Se moque ou parle de lui avec mépris');
+  const PETITE = 'Imagine que je te dise : pour les dossiers que je t\'envoie, tu n\'as pas besoin de me prévenir tout de suite quand tu signes, on s\'arrangera plus tard.';
+
+  const QUESTIONS = {
+    agent: [].concat(Q_DEBUT, [
+      Q('metier', 'Son métier', 'Agent ou mandataire ? Quel réseau, quelle zone, quelle part d\'ancien ?', 'Réponses claires, cohérentes avec ses papiers', 'Statut qui ne colle pas avec ses papiers'),
+      Q('prix', 'a. Le prix honnête', 'Raconte-moi un mandat que tu as perdu parce que ton prix était plus bas que ce que le vendeur espérait.', 'Histoire précise (le bien, le prix, la suite), sans se vanter', 'Annoncer haut pour avoir le mandat puis baisser, c\'est normal pour lui'),
+      Q('nondit', 'b. Ce qui n\'a pas été dit', 'Une fois, tu as su quelque chose sur un bien que le vendeur n\'avait pas dit. Qu\'est-ce que tu as fait ?', 'Il l\'a dit à l\'acheteur, ou il a fait parler le vendeur', 'Il l\'a gardé pour lui, « ce n\'était pas mon rôle »'),
+      Q_ERREUR,
+      Q('forcer', 'd. Quand il aurait pu forcer', 'Tu aurais pu faire signer plus vite en mettant la pression, et tu ne l\'as pas fait ?', 'Cas précis, avec ce que ça lui a coûté', '« Ça fait partie du métier », ou a déjà dit qu\'une autre offre arrivait alors que c\'était faux'),
+      Q_AGACE, Q_CONTOURNER, Q_CONFRERES,
+      Q('petite', 'La petite question pour toi', PETITE, 'Refuse tout de suite', 'Hésite, sourit, ou accepte')
+    ], Q_FIN),
+    artisan: [].concat(Q_DEBUT, [
+      Q('metier', 'Son métier', 'Quel corps de métier, depuis quand, quelle zone ?', 'Réponses claires, cohérentes avec ses papiers', 'Statut qui ne colle pas avec ses papiers'),
+      Q('devis', 'a. Le devis dépassé', 'Raconte-moi un chantier où le prix final a dépassé le devis. Qu\'as-tu dit au client, et quand ?', 'Il l\'a prévenu avant, et parfois pris le surcoût sur lui', 'Il l\'a facturé en plus à la fin sans rien dire'),
+      Q('repris', 'b. Le chantier repris', 'Un chantier que tu as dû refaire parce qu\'il n\'était pas bien fait : qui a payé ?', 'Il le reconnaît et répare à ses frais', 'C\'est toujours la faute du client ou du fournisseur'),
+      Q('refuse', 'c. Le chantier refusé', 'Une fois où tu as refusé un chantier alors que tu aurais pu le prendre : pourquoi ?', 'Hors de son métier, pas le temps, trop risqué : dit franchement', 'Il prend tout, même ce qu\'il ne sait pas faire'),
+      Q('retard', 'd. Le retard', 'Raconte-moi un chantier en retard. Comment as-tu prévenu le client ?', 'Il prévient dès qu\'il le sait', 'Il ne répond plus, ou change de sujet'),
+      Q('facture', 'e. Sans facture', 'On t\'a déjà proposé un chantier sans facture, ou en espèces ? Que s\'est-il passé ?', 'Il refuse et explique pourquoi (la garantie du client)', 'Il l\'a déjà fait sans gêne'),
+      Q('erreur', 'f. Une vraie erreur', Q_ERREUR.q, Q_ERREUR.bon, Q_ERREUR.non),
+      Q_AGACE, Q_CONTOURNER, Q_CONFRERES,
+      Q('petite', 'La petite question pour toi', 'Imagine que je te dise : pour les chantiers que je t\'envoie, tu n\'as pas besoin de me prévenir tout de suite quand le devis est signé, on s\'arrangera plus tard.', 'Refuse tout de suite', 'Hésite, sourit, ou accepte')
+    ], Q_FIN),
+    courtier: [].concat(Q_DEBUT, [
+      Q('metier', 'Son métier', 'Cabinet ou mandant ? Quelle zone ? Quelle part de particuliers ?', 'Réponses claires, cohérentes avec ses papiers', 'Statut qui ne colle pas avec ses papiers'),
+      Q('refus', 'a. Le dossier refusé', 'Raconte-moi un dossier que tu as refusé de monter, ou pour lequel tu as dit au client que ça ne passerait pas.', 'Il l\'explique et propose une piste', 'Il monte tout pour toucher sa commission'),
+      Q('taux', 'b. Le taux annoncé', 'Raconte-moi une fois où le taux final était moins bon que celui annoncé au départ. Qu\'as-tu dit au client ?', 'Il l\'a prévenu tout de suite', 'Il a attendu que le client s\'en aperçoive'),
+      Q('remuneration', 'c. Sa rémunération', 'Comment tu te rémunères, et à quel moment tu le dis au client ?', 'Clair dès le premier échange', 'Flou, ou le client le découvre à la fin'),
+      Q('banque', 'd. La banque qui paie mieux', 'T\'est-il déjà arrivé de choisir une banque parce qu\'elle te payait mieux ?', 'Réponse franche, avec un exemple où il a choisi la moins bien payée', 'Oui, sans gêne et sans le dire au client'),
+      Q('budget', 'e. Le budget trop juste', 'Le dernier client dont le budget était trop serré : qu\'est-ce que tu lui as dit ?', 'Il ne culpabilise pas et propose des pistes', 'Il fait miroiter, ou le renvoie sèchement'),
+      Q('erreur', 'f. Une vraie erreur', Q_ERREUR.q, Q_ERREUR.bon, Q_ERREUR.non),
+      Q_CONTOURNER, Q_CONFRERES,
+      Q('petite', 'La petite question pour toi', 'Imagine que je te dise : pour les dossiers que je t\'envoie, tu n\'as pas besoin de me prévenir tout de suite quand le prêt est signé, on s\'arrangera plus tard.', 'Refuse tout de suite', 'Hésite, sourit, ou accepte')
+    ], Q_FIN)
+  };
+  QUESTIONS.mandataire = QUESTIONS.agent;
+
+  const PAPIERS = {
+    agent: 'Carte professionnelle en cours de validité, assurance responsabilité civile professionnelle, SIRET.',
+    mandataire: 'Attestation d\'habilitation du réseau, inscription au registre des agents commerciaux, assurance responsabilité civile professionnelle, SIRET (à faire confirmer par ta juriste).',
+    artisan: 'Assurance décennale à jour, responsabilité civile professionnelle (ou couverte par la décennale), SIRET.',
+    courtier: 'Immatriculation ORIAS, assurance responsabilité civile professionnelle, SIRET.'
+  };
+
+  // ---------- Données ----------
+  let fiches = [];     // questionnaires enregistrés
+  let membres = [];    // tous les membres (pour « Pros à valider »)
+  let carnet = [];     // contacts du carnet
+  let groupe = 'immo';
+  let ouverte = null;  // id de la fiche ouverte
+  let formulaireAjout = false;
+
+  function e(t) { return albEchapper(t); }
+  function el(id) { return document.getElementById(id); }
+  function aujourdhui() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function nomDe(x) { return ((x.prenom || '') + ' ' + (x.nom || '')).trim() || x.entreprise || x.nom_entreprise || 'Sans nom'; }
+
+  function messageErreur(erreur) {
+    const t = (erreur && (erreur.message || '')) + '';
+    const textes = {
+      SIRET_INVALIDE: 'Le numéro SIRET doit avoir exactement 14 chiffres.',
+      SIRET_MANQUANT: 'Il manque le SIRET : ajoute-le dans la fiche, enregistre, puis valide.',
+      METIER_INVALIDE: 'Le métier choisi n\'est pas reconnu.',
+      METIER_A_CHOISIR: 'Ce pro n\'a pas de métier attribué : choisis-le d\'abord dans « Pros à valider ».',
+      DECISION_INVALIDE: 'La décision choisie n\'est pas reconnue.',
+      DATE_INVALIDE: 'La date n\'est pas valide.',
+      PROFIL_INTROUVABLE: 'Ce pro n\'existe plus.',
+      QUESTIONNAIRE_INTROUVABLE: 'Cette fiche n\'existe plus. Recharge la page.',
+      NOM_CONTACT_MANQUANT: 'Donne au moins un prénom, un nom ou une entreprise.'
+    };
+    const cle = Object.keys(textes).find(function (k) { return t.indexOf(k) !== -1; });
+    return cle ? textes[cle] : 'Ça n\'a pas marché. Réessaie dans un instant.';
+  }
+  function retour(type, texte) {
+    const z = el('retour');
+    z.className = 'message ' + (type || '');
+    z.textContent = texte;
+    z.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function cacherRetour() { el('retour').className = 'message cache'; }
+
+  async function charger() {
+    const [q, m, c] = await Promise.all([
+      albSupabase.rpc('alb_gestion_questionnaires'),
+      albSupabase.rpc('alb_gestion_membres'),
+      albSupabase.rpc('alb_gestion_carnet')
+    ]);
+    if (q.error) { console.log('[ALB DEBUG] questionnaires :', q.error); return false; }
+    if (m.error) { console.log('[ALB DEBUG] membres :', m.error); }
+    if (c.error) { console.log('[ALB DEBUG] carnet :', c.error); }
+    fiches = q.data || [];
+    membres = m.data || [];
+    carnet = c.data || [];
+    return true;
+  }
+
+  // Le métier d'un membre inscrit, dans le vocabulaire des questionnaires
+  function metierMembre(m) {
+    if (m.role === 'courtier') return 'courtier';
+    if (m.role === 'artisan') return 'artisan';
+    if (m.role === 'immo') return m.sous_role_immo === 'mandataire' ? 'mandataire' : 'agent';
+    return null;
+  }
+  function membreDe(id) { return membres.find(function (m) { return m.id === id; }); }
+
+  function fichesDuGroupe() { return fiches.filter(function (f) { return GROUPES[groupe].metiers.indexOf(f.metier) !== -1; }); }
+  function inscritsAFaire() {
+    return membres.filter(function (m) {
+      const met = metierMembre(m);
+      return met && GROUPES[groupe].metiers.indexOf(met) !== -1 && !m.statut_verifie && m.statut !== 'refuse'
+        && !fiches.some(function (f) { return f.profile_id === m.id; });
+    });
+  }
+  function carnetAFaire() {
+    return carnet.filter(function (c) {
+      return GROUPES[groupe].metiers.indexOf(c.metier) !== -1 && c.etape !== 'inscrit' && c.etape !== 'pas_interesse'
+        && !fiches.some(function (f) { return f.carnet_id === c.id; });
+    });
+  }
+  function nbAFaire(g) {
+    const avant = groupe; groupe = g;
+    const n = inscritsAFaire().length + carnetAFaire().length + fichesDuGroupe().filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; }).length;
+    groupe = avant;
+    return n;
+  }
+
+  // ---------- Affichage ----------
+  function dessinerOnglets() {
+    el('onglets').innerHTML = Object.keys(GROUPES).map(function (g) {
+      const n = nbAFaire(g);
+      return '<button type="button" class="filtre' + (g === groupe ? ' actif' : '') + '" data-groupe="' + g + '">' + GROUPES[g].nom + (n ? '<span class="nb">' + n + '</span>' : '') + '</button>';
+    }).join('');
+  }
+
+  function carteCandidat(type, x) {
+    // type : 'inscrit' (Pros à valider) ou 'carnet'
+    const nom = type === 'inscrit' ? nomDe(x) : nomDe(x);
+    const entreprise = type === 'inscrit' ? x.nom_entreprise : x.entreprise;
+    return '<div class="carte"><div class="carte-tete"><div>' +
+      '<div class="carte-nom">' + e(nom) + '</div>' +
+      '<div class="carte-sous">' + (entreprise ? e(entreprise) + ' · ' : '') + (x.telephone ? e(x.telephone) + ' · ' : '') + (x.email ? e(x.email) : '') + '</div>' +
+      '<div style="margin-top:6px;"><span class="etiquette ' + (type === 'inscrit' ? 'or' : '') + '">' + (type === 'inscrit' ? '📞 Dans « Pros à valider »' : '📇 Dans ton carnet') + '</span></div>' +
+      '</div><button type="button" class="bouton" data-action="commencer" data-type="' + type + '" data-id="' + e(x.id) + '">📝 Faire son questionnaire</button></div></div>';
+  }
+
+  function carteFiche(f) {
+    const ouvert = ouverte === f.id;
+    const m = f.profile_id ? membreDe(f.profile_id) : null;
+    const valide = m && m.statut_verifie;
+    return '<div class="carte" id="fiche-' + e(f.id) + '"><div class="carte-tete"><div>' +
+      '<div class="carte-nom">' + e(nomDe(f)) + '</div>' +
+      '<div class="carte-sous">' + e(NOM_METIER[f.metier] || f.metier) + (f.entreprise ? ' · ' + e(f.entreprise) : '') + (f.telephone ? ' · ' + e(f.telephone) : '') + '</div>' +
+      '<div style="margin-top:6px;"><span class="etiquette ' + (f.decision === 'oui' ? 'vert' : f.decision === 'non' ? 'rouge' : 'or') + '">' + e(DECISIONS[f.decision] || f.decision) + '</span>' +
+      (valide ? '<span class="etiquette vert">✅ Validé sur ALB</span>' : f.profile_id ? '<span class="etiquette">📞 Inscrit, à valider</span>' : f.carnet_id ? '<span class="etiquette">📇 Carnet</span>' : '') +
+      (f.date_appel ? '<span class="etiquette">📅 Appel du ' + e(f.date_appel.split('-').reverse().join('/')) + '</span>' : '') + '</div>' +
+      '</div><button type="button" class="bouton ' + (ouvert ? 'clair' : '') + '" data-action="ouvrir" data-id="' + e(f.id) + '">' + (ouvert ? '✖ Fermer' : '📝 Ouvrir la fiche') + '</button></div>' +
+      (ouvert ? formulaireFiche(f, m) : '') + '</div>';
+  }
+
+  function champ(id, libelle, valeur, type, extra) {
+    return '<label class="petit-champ">' + libelle + '<input id="f-' + id + '" type="' + (type || 'text') + '" maxlength="200" value="' + e(valeur || '') + '"' + (extra || '') + '></label>';
+  }
+
+  function formulaireFiche(f, m) {
+    const questions = QUESTIONS[f.metier] || [];
+    const rep = f.reponses || {};
+    const optionsDecision = Object.keys(DECISIONS).map(function (k) { return '<option value="' + k + '"' + (f.decision === k ? ' selected' : '') + '>' + DECISIONS[k] + '</option>'; }).join('');
+    const metierChoix = (f.metier === 'agent' || f.metier === 'mandataire')
+      ? '<label class="petit-champ">Agent ou mandataire<select id="f-metier"><option value="agent"' + (f.metier === 'agent' ? ' selected' : '') + '>Agent immobilier</option><option value="mandataire"' + (f.metier === 'mandataire' ? ' selected' : '') + '>Mandataire</option></select></label>'
+      : '<input type="hidden" id="f-metier" value="' + e(f.metier) + '">';
+    return '<div class="fiche">' +
+      '<h3>Qui est-ce ?</h3><div class="grille">' +
+        champ('prenom', 'Prénom', f.prenom) + champ('nom', 'Nom', f.nom) +
+        champ('entreprise', 'Entreprise', f.entreprise) + champ('siret', 'N° SIRET (14 chiffres)', f.siret, 'text', ' inputmode="numeric" maxlength="17"') +
+        champ('telephone', 'Téléphone', f.telephone, 'tel') + champ('email', 'E-mail', f.email, 'email') +
+        champ('reseau_agence', 'Agence, réseau ou cabinet', f.reseau_agence) + champ('zone', 'Zone', f.zone) +
+        champ('date_appel', 'Date de l\'appel', f.date_appel, 'date') + metierChoix +
+      '</div>' +
+      '<h3>Les questions</h3>' +
+      questions.map(function (q) {
+        const r = rep[q.id] || {};
+        return '<div class="question"><div class="question-point">' + e(q.point) + '</div><div class="question-texte">« ' + e(q.q) + ' »</div>' +
+          '<div class="reperes"><div class="repere bon"><strong>Bon signe</strong>' + e(q.bon) + '</div><div class="repere non"><strong>Non</strong>' + e(q.non) + '</div></div>' +
+          '<div class="ligne-note"><label class="petit-champ">Mes notes<textarea id="n-' + q.id + '">' + e(r.notes || '') + '</textarea></label>' +
+          '<label class="petit-champ">Verdict<select id="v-' + q.id + '">' + Object.keys(VERDICTS).map(function (k) { return '<option value="' + k + '"' + ((r.verdict || '') === k ? ' selected' : '') + '>' + VERDICTS[k] + '</option>'; }).join('') + '</select></label></div></div>';
+      }).join('') +
+      '<h3>Pour décider</h3>' +
+      '<p class="aide">Papiers à demander : ' + e(PAPIERS[f.metier] || '') + '</p>' +
+      '<label class="petit-champ">Papiers reçus<textarea id="f-papiers">' + e(f.papiers || '') + '</textarea></label>' +
+      '<label class="petit-champ" style="margin-top:10px;">Trois lignes à chaud, juste après l\'appel<textarea id="f-notes_chaud">' + e(f.notes_chaud || '') + '</textarea></label>' +
+      '<label class="petit-champ" style="margin-top:10px;">Ce que j\'en pense le lendemain<textarea id="f-notes_lendemain">' + e(f.notes_lendemain || '') + '</textarea></label>' +
+      '<div class="decision"><label class="petit-champ">Ma décision<select id="f-decision">' + optionsDecision + '</select></label>' +
+      '<div class="actions"><button type="button" class="bouton vert" data-action="enregistrer" data-id="' + e(f.id) + '">💾 Enregistrer</button>' + boutonsSuite(f, m) + '</div></div>' +
+    '</div>';
+  }
+
+  // Les boutons qui apparaissent selon la décision enregistrée : c'est toi qui cliques
+  function boutonsSuite(f, m) {
+    if (m && m.statut_verifie) return '<span class="aide" style="margin:0;">✅ Déjà validé : il est dans « Pros validés » puis « Suivi des membres » (Gestion du site).</span>';
+    if (f.decision === 'oui' && f.profile_id) {
+      return '<button type="button" class="bouton or" data-action="valider" data-id="' + e(f.id) + '">✅ Valider ce pro (il reçoit son e-mail de bienvenue)</button>';
+    }
+    if (f.decision === 'oui' && f.carnet_id) {
+      return '<a class="bouton or" href="gestion-site.html?inscrire=' + encodeURIComponent(f.carnet_id) + '">✅ Créer son espace (Gestion du site)</a>';
+    }
+    if (f.decision === 'non' && f.profile_id) {
+      return '<button type="button" class="bouton rouge" data-action="refuser" data-id="' + e(f.id) + '">✗ Le refuser sur ALB</button>';
+    }
+    if (f.decision !== 'oui' && f.decision !== 'non') return '<span class="aide" style="margin:0;">Choisis « Oui » ou « Non », enregistre : les boutons de suite apparaissent.</span>';
+    return '';
+  }
+
+  function formulaireAjoutPro() {
+    const choixMetier = groupe === 'immo'
+      ? '<label class="petit-champ">Agent ou mandataire<select id="aj-metier"><option value="agent">Agent immobilier</option><option value="mandataire">Mandataire</option></select></label>'
+      : '<input type="hidden" id="aj-metier" value="' + GROUPES[groupe].metiers[0] + '">';
+    return '<div class="carte"><div class="carte-nom">➕ Ajouter un pro</div><p class="aide">Il est aussi ajouté à ton « Carnet », pour que tu le retrouves partout.</p><div class="grille">' +
+      '<label class="petit-champ">Prénom<input id="aj-prenom" maxlength="80"></label><label class="petit-champ">Nom<input id="aj-nom" maxlength="80"></label>' +
+      '<label class="petit-champ">Entreprise<input id="aj-entreprise" maxlength="150"></label><label class="petit-champ">N° SIRET (facultatif)<input id="aj-siret" inputmode="numeric" maxlength="17"></label>' +
+      '<label class="petit-champ">Téléphone<input id="aj-telephone" type="tel" maxlength="30"></label><label class="petit-champ">E-mail<input id="aj-email" type="email" maxlength="200"></label>' +
+      choixMetier + '</div>' +
+      '<div class="actions"><button type="button" class="bouton vert" data-action="ajouter">💾 Ajouter et ouvrir sa fiche</button><button type="button" class="bouton clair" data-action="fermer-ajout">Annuler</button></div></div>';
+  }
+
+  function dessinerZone() {
+    const liste = fichesDuGroupe();
+    const enCours = liste.filter(function (f) { return f.decision === 'a_decider' || f.decision === 'creuser'; });
+    const decidees = liste.filter(function (f) { return f.decision === 'oui' || f.decision === 'non'; });
+    const ins = inscritsAFaire();
+    const car = carnetAFaire();
+    let h = '<div class="actions" style="margin:0 0 12px;"><button type="button" class="bouton" data-action="ajout">' + (formulaireAjout ? '✖ Fermer' : '➕ Ajouter un pro') + '</button></div>';
+    if (formulaireAjout) h += formulaireAjoutPro();
+
+    h += '<h2 class="titre-section">📝 Fiches en cours (' + enCours.length + ')</h2>';
+    h += enCours.length ? enCours.map(carteFiche).join('') : '<div class="carte vide">Aucune fiche en cours pour ce métier. 🌿</div>';
+
+    h += '<h2 class="titre-section">📞 Déjà inscrits, dans « Pros à valider » (' + ins.length + ')</h2>';
+    h += ins.length ? ins.map(function (m) { return carteCandidat('inscrit', m); }).join('') : '<div class="carte vide">Personne en attente pour ce métier.</div>';
+
+    h += '<h2 class="titre-section">📇 Dans ton carnet (' + car.length + ')</h2>';
+    h += car.length ? car.map(function (c) { return carteCandidat('carnet', c); }).join('') : '<div class="carte vide">Aucun contact du carnet pour ce métier.</div>';
+
+    if (decidees.length) {
+      h += '<details' + (decidees.some(function (f) { return f.id === ouverte; }) ? ' open' : '') + '><summary>✅ Déjà décidés (' + decidees.length + ')</summary>' + decidees.map(carteFiche).join('') + '</details>';
+    }
+    el('zone').innerHTML = h;
+  }
+
+  function dessinerTout() { dessinerOnglets(); dessinerZone(); }
+
+  // ---------- Actions ----------
+  function lireFiche(f) {
+    const reponses = {};
+    (QUESTIONS[f.metier] || []).forEach(function (q) {
+      const n = el('n-' + q.id), v = el('v-' + q.id);
+      const notes = n ? n.value.trim() : '', verdict = v ? v.value : '';
+      if (notes || verdict) reponses[q.id] = { notes: notes, verdict: verdict };
+    });
+    const val = function (id) { const x = el('f-' + id); return x ? x.value.trim() : ''; };
+    return {
+      metier: val('metier') || f.metier, profile_id: f.profile_id || '', carnet_id: f.carnet_id || '',
+      prenom: val('prenom'), nom: val('nom'), entreprise: val('entreprise'), siret: val('siret'),
+      telephone: val('telephone'), email: val('email'), reseau_agence: val('reseau_agence'), zone: val('zone'),
+      date_appel: val('date_appel'), papiers: val('papiers'), notes_chaud: val('notes_chaud'), notes_lendemain: val('notes_lendemain'),
+      decision: val('decision') || 'a_decider', reponses: reponses
+    };
+  }
+
+  async function enregistrer(f, bouton) {
+    const fiche = lireFiche(f);
+    const { error } = await albSupabase.rpc('alb_gestion_questionnaire_enregistrer', { p_id: f.id, p_fiche: fiche });
+    if (error) { console.log('[ALB DEBUG] enregistrer fiche :', error); retour('erreur', messageErreur(error)); return false; }
+    return true;
+  }
+
+  async function recharger() {
+    if (await charger()) { dessinerTout(); }
+  }
+
+  async function commencer(type, id, bouton) {
+    bouton.disabled = true;
+    let fiche;
+    if (type === 'inscrit') {
+      const m = membreDe(id); if (!m) { bouton.disabled = false; return; }
+      fiche = { metier: metierMembre(m), profile_id: m.id, prenom: m.prenom || '', nom: m.nom || '', entreprise: m.nom_entreprise || '', siret: m.siret || '', telephone: m.telephone || '', email: m.email || '', reseau_agence: m.reseau_agence || '', date_appel: aujourdhui(), decision: 'a_decider', reponses: {} };
+    } else {
+      const c = carnet.find(function (x) { return x.id === id; }); if (!c) { bouton.disabled = false; return; }
+      fiche = { metier: c.metier, carnet_id: c.id, prenom: c.prenom || '', nom: c.nom || '', entreprise: c.entreprise || '', telephone: c.telephone || '', email: c.email || '', date_appel: aujourdhui(), decision: 'a_decider', reponses: {} };
+    }
+    const { data, error } = await albSupabase.rpc('alb_gestion_questionnaire_enregistrer', { p_id: null, p_fiche: fiche });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] créer fiche :', error); retour('erreur', messageErreur(error)); return; }
+    cacherRetour();
+    ouverte = data;
+    await recharger();
+    const z = el('fiche-' + data); if (z) z.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function ajouterPro(bouton) {
+    const v = function (id) { const x = el('aj-' + id); return x ? x.value.trim() : ''; };
+    const metier = v('metier');
+    if (!v('prenom') && !v('nom') && !v('entreprise')) { retour('erreur', messageErreur({ message: 'NOM_CONTACT_MANQUANT' })); return; }
+    bouton.disabled = true;
+    // 1. Le contact entre dans le carnet (comme tous tes contacts)
+    const contact = { prenom: v('prenom'), nom: v('nom'), entreprise: v('entreprise'), metier: metier, telephone: v('telephone'), email: v('email'), origine: 'Questionnaire d\'entrée', etape: 'en_discussion' };
+    const r1 = await albSupabase.rpc('alb_gestion_carnet_enregistrer', { p_id: null, p_fiche: contact });
+    if (r1.error) { bouton.disabled = false; console.log('[ALB DEBUG] ajout carnet :', r1.error); retour('erreur', messageErreur(r1.error)); return; }
+    // 2. Sa fiche de questionnaire est créée, reliée au carnet
+    const fiche = { metier: metier, carnet_id: r1.data, prenom: v('prenom'), nom: v('nom'), entreprise: v('entreprise'), siret: v('siret'), telephone: v('telephone'), email: v('email'), date_appel: aujourdhui(), decision: 'a_decider', reponses: {} };
+    const r2 = await albSupabase.rpc('alb_gestion_questionnaire_enregistrer', { p_id: null, p_fiche: fiche });
+    bouton.disabled = false;
+    if (r2.error) { console.log('[ALB DEBUG] ajout fiche :', r2.error); retour('erreur', messageErreur(r2.error)); await recharger(); return; }
+    formulaireAjout = false;
+    cacherRetour();
+    ouverte = r2.data;
+    await recharger();
+    const z = el('fiche-' + r2.data); if (z) z.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function validerPro(f, bouton) {
+    if (!f.profile_id) return;
+    bouton.disabled = true;
+    if (!(await enregistrer(f))) { bouton.disabled = false; return; }
+    const siret = (el('f-siret') || {}).value || '';
+    if (!siret.replace(/\s/g, '') && !(membreDe(f.profile_id) || {}).siret) {
+      bouton.disabled = false; retour('erreur', messageErreur({ message: 'SIRET_MANQUANT' })); return;
+    }
+    if (!confirm('Valider ce pro ? Il recevra son e-mail de bienvenue.')) { bouton.disabled = false; return; }
+    const { error } = await albSupabase.rpc('alb_gestion_valider_pro', { p_id: f.profile_id, p_siret: siret || null });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] valider pro :', error); retour('erreur', messageErreur(error)); await recharger(); return; }
+    retour('succes', 'Pro validé 🎉 Son e-mail de bienvenue est parti. Complète sa fiche dans « Pros validés » (Gestion du site), puis mets-le en ligne.');
+    await recharger();
+  }
+
+  async function refuserPro(f, bouton) {
+    if (!f.profile_id) return;
+    if (!confirm('Refuser ce professionnel sur ALB ? Il ne pourra pas apparaître sur « Nos pros ALB ». Sa fiche reste gardée ici.')) return;
+    bouton.disabled = true;
+    if (!(await enregistrer(f))) { bouton.disabled = false; return; }
+    const { error } = await albSupabase.rpc('alb_gestion_refuser_pro', { p_id: f.profile_id });
+    bouton.disabled = false;
+    if (error) { console.log('[ALB DEBUG] refuser pro :', error); retour('erreur', messageErreur(error)); await recharger(); return; }
+    retour('succes', 'Pro refusé. Il reste visible dans « Suivi des membres ».');
+    await recharger();
+  }
+
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest('button[data-action], button[data-groupe]');
+    if (!b) return;
+    if (b.dataset.groupe) { groupe = b.dataset.groupe; ouverte = null; formulaireAjout = false; cacherRetour(); dessinerTout(); return; }
+    const action = b.dataset.action;
+    const f = b.dataset.id ? fiches.find(function (x) { return x.id === b.dataset.id; }) : null;
+    if (action === 'ajout') { formulaireAjout = !formulaireAjout; dessinerZone(); return; }
+    if (action === 'fermer-ajout') { formulaireAjout = false; dessinerZone(); return; }
+    if (action === 'ajouter') { await ajouterPro(b); return; }
+    if (action === 'commencer') { await commencer(b.dataset.type, b.dataset.id, b); return; }
+    if (action === 'ouvrir') { ouverte = (ouverte === b.dataset.id) ? null : b.dataset.id; dessinerZone(); return; }
+    if (!f) return;
+    if (action === 'enregistrer') {
+      b.disabled = true;
+      const ok = await enregistrer(f);
+      b.disabled = false;
+      if (ok) { retour('succes', 'Fiche enregistrée ✓'); await recharger(); }
+      return;
+    }
+    if (action === 'valider') { await validerPro(f, b); return; }
+    if (action === 'refuser') { await refuserPro(f, b); return; }
+  });
+
+  async function demarrer() {
+    const etat = el('etat');
+    const { data: session } = await albSupabase.auth.getSession();
+    if (!session?.session) {
+      etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.';
+      return;
+    }
+    const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
+    if (estAdmin !== true) {
+      etat.className = 'message erreur';
+      etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.';
+      return;
+    }
+    if (!(await charger())) {
+      etat.className = 'message erreur';
+      etat.textContent = 'Les fiches n\'ont pas pu être chargées. Si c\'est la première fois, le tableau n\'est peut-être pas encore créé dans la base.';
+      return;
+    }
+    etat.classList.add('cache');
+    el('page').classList.remove('cache');
+    dessinerTout();
+  }
+
+  document.addEventListener('DOMContentLoaded', demarrer);
+</script>
+</body>
+</html>

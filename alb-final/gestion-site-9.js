@@ -1185,3 +1185,19 @@ function blocBilanPro(m) {
     await toutRechargerAvantBilan();
   };
 })();
+
+// ----- 📝 Depuis la page « Questionnaires » : « Créer son espace » -----
+// Le lien gestion-site.html?inscrire=<numéro du contact> ouvre « Ajouter un membre »
+// déjà rempli avec ce contact du carnet. Rien n'est créé tant que tu ne cliques pas
+// « ✅ Créer son espace ».
+(function () {
+  const voulu = new URLSearchParams(window.location.search).get('inscrire');
+  if (!voulu) return;
+  let essais = 0;
+  const attente = setInterval(function () {
+    essais++;
+    const pret = typeof carnet !== 'undefined' && carnet.some(function (c) { return c.id === voulu; }) && typeof carnetInscrire === 'function' && document.getElementById('panneau-membres');
+    if (pret) { clearInterval(attente); carnetInscrire(voulu); }
+    else if (essais > 60) { clearInterval(attente); }
+  }, 500);
+})();
