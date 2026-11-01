@@ -4,22 +4,18 @@
 
 User-agent: *
 Allow: /
-Disallow: /gestion-site.html
-Disallow: /espace-alb.html
-Disallow: /espace-perso.html
-Disallow: /nouveau-code.html
-Disallow: /pin-oublie.html
-Disallow: /verify-code.html
-Disallow: /connexion.html
-Disallow: /login.html
-Disallow: /login-pro.html
-Disallow: /dashboard-courtier.html
-Disallow: /dashboard-validation.html
-Disallow: /formulaire-annonce.html
-Disallow: /questionnaire-inscription.html
-Disallow: /inscription-particulier-acheteur.html
-Disallow: /inscription-particulier-vendeur.html
-Disallow: /inscription-pro.html
+Disallow: /gestion-site
+Disallow: /espace-alb
+Disallow: /espace-perso
+Disallow: /nouveau-code
+Disallow: /pin-oublie
+Disallow: /verify-code
+Disallow: /connexion
+Disallow: /login
+Disallow: /dashboard-
+Disallow: /formulaire-annonce
+Disallow: /questionnaire-inscription
+Disallow: /inscription-
 Disallow: /api/
 
 Sitemap: https://albimmobilier.fr/sitemap.xml
