@@ -10,21 +10,36 @@ ALB Sud Immobilier a été fondée par Jocelyne Rimlinger. Sa devise : « Quand 
 - **Annonces des professionnels** : les agents et mandataires immobiliers peuvent aussi publier leurs propres annonces de maisons et d'appartements anciens.
 - **Annonces relues et validées** : chaque annonce, qu'elle vienne d'un particulier ou d'un professionnel, est relue et validée par ALB Sud Immobilier avant d'être en ligne.
 - **Acheter** : l'acheteur consulte les annonces et demande une visite après être passé par le simulateur budget.
-- **Financer et rénover** : ALB Sud Immobilier oriente les particuliers vers des courtiers et des artisans vérifiés, selon leur projet.
+- **Financer un achat** : le particulier qui achète demande un financement ; ALB Sud Immobilier l'oriente vers un courtier vérifié. Le simulateur budget est intégré à la demande.
+- **Rénover** : le particulier décrit ses travaux ; ALB Sud Immobilier l'oriente vers un artisan vérifié. Le simulateur budget est intégré à la demande, et le particulier peut cocher une case s'il a aussi besoin d'un financement.
+- **Être accompagné** : le particulier qui vend ou qui achète peut demander un accompagnement à ALB Sud Immobilier pour son projet.
 - **Nos pros ALB** : un annuaire de professionnels rencontrés et validés un par un (appel obligatoire avant validation, numéros officiels vérifiés : ORIAS, carte T, RGE…). Chaque professionnel validé reçoit un badge ALB. Les particuliers peuvent laisser des avis sur les professionnels ; chaque avis est vérifié par ALB Sud Immobilier avant d'être publié.
 - **Pas de démarchage** : les professionnels ne contactent jamais un particulier de leur propre initiative ; c'est toujours le particulier qui choisit de les contacter, en passant par ALB.
 
 ## Pages principales
 
 - [Accueil](https://albimmobilier.fr/) : présentation d'ALB Immobilier et des différents parcours
-- [Nos pros ALB](https://albimmobilier.fr/vitrine-pros.html) : les professionnels validés dans le Var et les Bouches-du-Rhône, avec leur badge ALB et les avis vérifiés
-- [Annonces](https://albimmobilier.fr/annonces.html) : maisons et appartements anciens à vendre, publiés par des particuliers et des professionnels
-- [Projets ALB](https://albimmobilier.fr/projets-alb.html) : financement, travaux, accompagnement vente ou achat
+- [Annonces](https://albimmobilier.fr/annonces) : maisons et appartements anciens à vendre, pour les acheteurs, publiés par des particuliers et des professionnels
+- [Vendre mon bien](https://albimmobilier.fr/vendre-mon-bien) : déposer une annonce, pour les vendeurs particuliers et pour les agents et mandataires immobiliers
+- [Nos pros ALB](https://albimmobilier.fr/vitrine-pros) : les professionnels validés dans le Var et les Bouches-du-Rhône, avec leur badge ALB et les avis vérifiés
+- [Projets ALB](https://albimmobilier.fr/projets-alb) : financement, travaux, accompagnement vente ou achat
+- [Projet de financement (achat)](https://albimmobilier.fr/projet-demande.html?module=financement) : demande de financement pour un achat, avec simulateur budget intégré
+- [Projet de travaux](https://albimmobilier.fr/projet-demande.html?module=travaux) : demande de travaux, avec simulateur budget intégré et possibilité de demander un financement
+- [Projet d'accompagnement](https://albimmobilier.fr/projet-demande.html?module=accompagnement) : demande d'accompagnement pour une vente ou un achat
 - [Inscription et connexion](https://albimmobilier.fr/espace-alb#inscription) : création d'un compte, pour les particuliers comme pour les professionnels (les professionnels sont validés un par un après un appel)
 
-## Informations pratiques
+## Contact
 
-- Entreprise : ALB Sud Immobilier (SASU), Le Val (83), Var
-- Contact : contact@albimmobilier.fr — 07 45 60 28 05 (du lundi au vendredi)
-- [Conditions générales](https://albimmobilier.fr/cgu.html)
-- [Politique de confidentialité](https://albimmobilier.fr/confidentialite.html)
+- Responsable : Jocelyne Rimlinger, fondatrice d'ALB Sud Immobilier
+- E-mail : contact@albimmobilier.fr
+- Téléphone : 07 45 60 28 05
+- Joignable du lundi au vendredi (pas de support le week-end)
+- Site : https://albimmobilier.fr/
+- Zone : Var (83) et Bouches-du-Rhône (13)
+
+## Informations sur l'entreprise
+
+- Entreprise : ALB Sud Immobilier, société par actions simplifiée unipersonnelle (SASU), capital de 100 €
+- Siège social : 18 Rue du Langramue, 83143 Le Val
+- Immatriculation : 130 077 068 R.C.S. Draguignan
+- Activité : apporteur d'affaires en immobilier ancien (maisons et appartements anciens, transactions uniquement, pas de location ni de gestion locative)
