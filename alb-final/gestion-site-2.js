@@ -650,7 +650,7 @@ function formulaireFiche(m, metier) {
         '</div></div>';
       }).join('') +
       '<div class="champ large"><label>Autres zones (séparées par une virgule)</label><input name="autres_zones" maxlength="200" placeholder="Ex. : Sainte-Maxime, Avignon" value="' + albEchapper(zones.filter(function (z) { return !ZONES.includes(z); }).join(', ')) + '"><div class="aide">Elles apparaîtront aussi dans les filtres de « Nos pros ALB ».</div></div>' +
-      '<div class="champ"><label>Photo ou logo (adresse de l\'image)</label><input name="photo_url" value="' + albEchapper(m.photo_url || '') + '"><div class="aide">Facultatif — l\'envoi de photo depuis le site arrive bientôt.</div></div>' +
+      '<div class="champ"><label>Photo ou logo (adresse de l\'image)</label><input name="photo_url" value="' + albEchapper(m.photo_url || '') + '">' + (m.photo_url ? '<div class="aide"><button type="button" class="bouton discret" data-url="' + albEchapper(m.photo_url) + '" data-nom="' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '" onclick="telechargerPhotoPro(this)">⬇️ Télécharger la photo</button></div>' : '') + '</div>' +
       (metier === 'courtier' ? '<div class="champ"><label>Numéro ORIAS</label><input name="numero_orias" value="' + albEchapper(m.numero_orias || '') + '"></div>' : '') +
       (metier === 'agent' || metier === 'mandataire' ? '<div class="champ"><label>Numéro de carte T</label><input name="numero_carte_t" value="' + albEchapper(m.numero_carte_t || '') + '"></div>' : '') +
       (metier === 'artisan' ? '<div class="champ"><label>&nbsp;</label><div class="cases"><label><input type="checkbox" name="label_rge"' + (m.label_rge ? ' checked' : '') + '> Label RGE</label></div></div>' : '') +
@@ -884,6 +884,31 @@ async function copier(bouton) {
   const avant = bouton.textContent;
   bouton.textContent = '✓ Copié';
   setTimeout(function () { bouton.textContent = avant; }, 1500);
+}
+
+async function telechargerPhotoPro(bouton) {
+  const url = bouton.dataset.url;
+  const nom = (bouton.dataset.nom || 'photo-pro').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'photo-pro';
+  const avant = bouton.textContent;
+  bouton.disabled = true;
+  bouton.textContent = 'Téléchargement…';
+  try {
+    const reponse = await fetch(url);
+    if (!reponse.ok) throw new Error(reponse.status);
+    const blob = await reponse.blob();
+    const lien = document.createElement('a');
+    lien.href = URL.createObjectURL(blob);
+    lien.download = nom + (blob.type.indexOf('png') !== -1 ? '.png' : '.jpg');
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    setTimeout(function () { URL.revokeObjectURL(lien.href); }, 2000);
+  } catch (err) {
+    console.error('[ALB DEBUG] téléchargement photo :', err);
+    window.open(url, '_blank');
+  }
+  bouton.disabled = false;
+  bouton.textContent = avant;
 }
 
 document.addEventListener('DOMContentLoaded', demarrer);
