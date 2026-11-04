@@ -87,6 +87,31 @@
     message('pp-msg-fiche', 'info', 'Photo prête : cliquez sur « Enregistrer ma fiche » pour la mettre en ligne.');
   }
 
+  // ---------- Télécharger sa photo ----------
+  async function telechargerPhoto(bouton) {
+    const url = bouton.dataset.url;
+    const avant = bouton.textContent;
+    bouton.disabled = true;
+    bouton.textContent = 'Téléchargement…';
+    try {
+      const reponse = await fetch(url);
+      if (!reponse.ok) throw new Error(reponse.status);
+      const blob = await reponse.blob();
+      const lien = document.createElement('a');
+      lien.href = URL.createObjectURL(blob);
+      lien.download = 'ma-photo-alb' + (blob.type.indexOf('png') !== -1 ? '.png' : '.jpg');
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      setTimeout(function () { URL.revokeObjectURL(lien.href); }, 2000);
+    } catch (err) {
+      console.error('[ALB DEBUG] téléchargement photo :', err);
+      window.open(url, '_blank');
+    }
+    bouton.disabled = false;
+    bouton.textContent = avant;
+  }
+
   // ---------- Affichage ----------
   function blocFiche() {
     const f = fiche;
@@ -102,6 +127,7 @@
       '<form id="pp-form" class="pp-form">' +
         '<div class="pp-photo"><span id="pp-apercu">' + (photo ? '<img src="' + e(photo) + '" alt="">' : '<span class="pp-sans-photo">👤</span>') + '</span>' +
           '<label class="pp-btn">📷 ' + (photo ? 'Changer la photo' : 'Ajouter une photo ou un logo') + '<input type="file" accept="image/*" id="pp-fichier" hidden></label>' +
+          (photo ? '<button type="button" class="pp-btn" id="pp-telecharger" data-url="' + e(photo) + '">⬇️ Télécharger</button>' : '') +
           (photo ? '<button type="button" class="pp-btn pp-lien" id="pp-sans-photo">Retirer</button>' : '') + '</div>' +
         '<div class="pp-champ"><label for="pp-dispo">Ma disponibilité</label><select id="pp-dispo">' +
           Object.keys(DISPOS).map(function (k) { return '<option value="' + e(k) + '"' + (f.disponibilite === k ? ' selected' : '') + '>' + e(DISPOS[k]) + '</option>'; }).join('') +
@@ -302,6 +328,7 @@
       photoEnAttente = ''; el('pp-apercu').innerHTML = '<span class="pp-sans-photo">👤</span>';
       message('pp-msg-fiche', 'info', 'Photo retirée : cliquez sur « Enregistrer ma fiche » pour confirmer.');
     });
+    if (el('pp-telecharger')) el('pp-telecharger').addEventListener('click', function () { telechargerPhoto(this); });
     el('pp-form').addEventListener('submit', function (ev) { ev.preventDefault(); enregistrer(profilId); });
   }
 
