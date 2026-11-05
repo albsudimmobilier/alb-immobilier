@@ -1,7 +1,8 @@
 // ============================================================
 // mon-profil-pro.js — « Mon activité pro » dans Mon espace ALB
 //  • Ma fiche sur « Nos pros ALB » : photo, présentation, zones,
-//    types de rendez-vous, disponibilité (en ligne tout de suite,
+//    types de rendez-vous, disponibilité (enregistré tout seul et en ligne tout de suite ;
+//    une nouvelle photo attend la validation de Jocelyne ; pas de coordonnées dans le texte ;
 //    Jocelyne est prévenue par e-mail)
 //  • Mes papiers : numéros et attestations demandés selon le métier,
 //    vérifiés ensuite par Jocelyne dans Gestion du site (dont le lien
@@ -84,7 +85,7 @@
     if (envoi.error) { console.error('[ALB DEBUG] photo pro :', envoi.error); message('pp-msg-fiche', 'erreur', 'La photo n’a pas pu être envoyée. Réessayez.'); return; }
     photoEnAttente = albSupabase.storage.from('pro-photos').getPublicUrl(chemin).data.publicUrl;
     el('pp-apercu').innerHTML = '<img src="' + e(photoEnAttente) + '" alt="">';
-    message('pp-msg-fiche', 'info', 'Photo prête : cliquez sur « Enregistrer ma fiche » pour la mettre en ligne.');
+    enregistrer(profilId, true);
   }
 
   // ---------- Télécharger sa photo ----------
@@ -129,6 +130,7 @@
           '<label class="pp-btn">📷 ' + (photo ? 'Changer la photo' : 'Ajouter une photo ou un logo') + '<input type="file" accept="image/*" id="pp-fichier" hidden></label>' +
           (photo ? '<button type="button" class="pp-btn" id="pp-telecharger" data-url="' + e(photo) + '">⬇️ Télécharger</button>' : '') +
           (photo ? '<button type="button" class="pp-btn pp-lien" id="pp-sans-photo">Retirer</button>' : '') + '</div>' +
+        (f.photo_a_valider ? '<div class="pp-aide pp-attente-photo">⏳ Votre nouvelle photo est bien reçue : Jocelyne la regarde avant de la mettre en ligne. En attendant, c’est celle-ci qui s’affiche.<br><img src="' + e(f.photo_a_valider) + '" alt="Nouvelle photo en attente" style="width:64px;height:64px;object-fit:cover;border-radius:50%;margin-top:6px;"></div>' : '') +
         '<div class="pp-champ"><label for="pp-dispo">Ma disponibilité</label><select id="pp-dispo">' +
           Object.keys(DISPOS).map(function (k) { return '<option value="' + e(k) + '"' + (f.disponibilite === k ? ' selected' : '') + '>' + e(DISPOS[k]) + '</option>'; }).join('') +
         '</select><div class="pp-aide">« Indisponible » : vous ne recevez plus de nouvelles demandes (ou votre remplaçant les reçoit, voir plus bas).</div></div>' +
@@ -317,41 +319,89 @@
       }).join('') + '</div>';
   }
 
+  // Ce que le pro a déjà changé dans sa fiche sans l'enregistrer
+  // (pour ne pas le perdre quand la page se redessine après l'envoi d'un papier)
+  let ficheVientDEtreEnregistree = false;
+  function lireBrouillon() {
+    if (!el('pp-form')) return null;
+    return {
+      dispo: el('pp-dispo').value, tel: el('pp-tel').checked, visio: el('pp-visio').checked, physique: el('pp-physique').checked,
+      presentation: el('pp-presentation').value, ville: el('pp-ville').value, cp: el('pp-cp').value, autres: el('pp-autres').value,
+      zones: Array.from(document.querySelectorAll('.pp-zone')).map(function (c) { return [c.value, c.checked]; })
+    };
+  }
+  function remettreBrouillon(b) {
+    if (!b || !el('pp-form')) return;
+    el('pp-dispo').value = b.dispo; el('pp-tel').checked = b.tel; el('pp-visio').checked = b.visio; el('pp-physique').checked = b.physique;
+    el('pp-presentation').value = b.presentation; el('pp-ville').value = b.ville; el('pp-cp').value = b.cp; el('pp-autres').value = b.autres;
+    const cases = {};
+    b.zones.forEach(function (z) { cases[z[0]] = z[1]; });
+    document.querySelectorAll('.pp-zone').forEach(function (c) { if (c.value in cases) c.checked = cases[c.value]; });
+  }
+
   function dessiner(profilId) {
     const zone = el('profil-pro');
     if (!zone || !fiche) return;
+    const brouillon = ficheVientDEtreEnregistree ? null : lireBrouillon();
+    ficheVientDEtreEnregistree = false;
     zone.innerHTML = blocFiche() + blocPapiers() + blocRenvoi() + blocDemandesRecues();
+    remettreBrouillon(brouillon);
     const compteur = function () { el('pp-compteur').textContent = '— ' + el('pp-presentation').value.length + ' / 500'; };
     el('pp-presentation').addEventListener('input', compteur); compteur();
     el('pp-fichier').addEventListener('change', function () { changerPhoto(this.files[0], profilId); });
     if (el('pp-sans-photo')) el('pp-sans-photo').addEventListener('click', function () {
       photoEnAttente = ''; el('pp-apercu').innerHTML = '<span class="pp-sans-photo">👤</span>';
-      message('pp-msg-fiche', 'info', 'Photo retirée : cliquez sur « Enregistrer ma fiche » pour confirmer.');
+      enregistrer(profilId, true);
     });
     if (el('pp-telecharger')) el('pp-telecharger').addEventListener('click', function () { telechargerPhoto(this); });
-    el('pp-form').addEventListener('submit', function (ev) { ev.preventDefault(); enregistrer(profilId); });
+    el('pp-form').addEventListener('submit', function (ev) { ev.preventDefault(); enregistrer(profilId, false); });
+    // Enregistrement tout seul : une case cochée, un choix fait, un texte terminé (quand on passe au champ suivant)
+    el('pp-form').addEventListener('change', function (ev) {
+      if (ev.target && ev.target.id === 'pp-fichier') return;
+      clearTimeout(attenteAuto);
+      attenteAuto = setTimeout(function () { enregistrer(profilId, true); }, 400);
+    });
   }
 
   // ---------- Actions ----------
-  async function enregistrer(profilId) {
+  let attenteAuto = null;
+  let enregistrementEnCours = false;
+  let enregistrementARefaire = false;
+  const NOMS_CHAMPS = { presentation: 'votre présentation', ville: 'votre ville', zones: 'vos zones' };
+  async function enregistrer(profilId, auto) {
+    if (enregistrementEnCours) { enregistrementARefaire = true; return; }
     const cp = el('pp-cp').value.trim();
     if (cp && !/^[0-9]{5}$/.test(cp)) { message('pp-msg-fiche', 'erreur', ERREURS.CP_INVALIDE); return; }
     const zones = Array.from(document.querySelectorAll('.pp-zone:checked')).map(function (c) { return c.value; })
       .concat(el('pp-autres').value.split(',').map(function (z) { return z.trim(); }).filter(Boolean));
     const bouton = document.querySelector('.pp-enregistrer');
+    const photoAvant = fiche.photo_a_valider || null;
+    enregistrementEnCours = true;
     bouton.disabled = true;
-    const { error } = await albSupabase.rpc('alb_pro_modifier_fiche', { p_fiche: {
+    if (auto) message('pp-msg-fiche', 'info', 'Enregistrement…');
+    const { data, error } = await albSupabase.rpc('alb_pro_modifier_fiche', { p_fiche: {
       presentation: el('pp-presentation').value.trim(), ville: el('pp-ville').value.trim(), code_postal: cp, zones: zones,
       photo_url: photoEnAttente !== null ? photoEnAttente : (fiche.photo_url || ''),
       modes: { telephone: el('pp-tel').checked, visio: el('pp-visio').checked, physique: el('pp-physique').checked },
       disponibilite: el('pp-dispo').value
     } });
     bouton.disabled = false;
+    enregistrementEnCours = false;
     if (error) { console.error('[ALB DEBUG] fiche pro :', error); message('pp-msg-fiche', 'erreur', erreurDe(error)); return; }
     photoEnAttente = null;
     await charger();
-    dessiner(profilId);
-    message('pp-msg-fiche', 'succes', fiche.en_ligne ? 'C’est enregistré ✅ Votre fiche est déjà à jour sur « Nos pros ALB ».' : 'C’est enregistré ✅');
+    // La page ne se redessine que si la photo a changé (pour ne pas couper le pro en pleine saisie)
+    if ((fiche.photo_a_valider || null) !== photoAvant) dessiner(profilId);
+    const refuses = (data && data.refuses) || [];
+    if (refuses.length) {
+      message('pp-msg-fiche', 'erreur', '🚫 ' + refuses.map(function (c) { return NOMS_CHAMPS[c] || c; }).join(', ').replace(/^./, function (l) { return l.toUpperCase(); }) +
+        ' : pas enregistré. Pour la sécurité de tous, pas de téléphone, d’e-mail ni de site dans votre fiche : les particuliers vous contactent par la messagerie ALB. Retirez-les et c’est réglé. Une question ? Jocelyne : 07 45 60 28 05.');
+    } else if (fiche.photo_a_valider && fiche.photo_a_valider !== photoAvant) {
+      message('pp-msg-fiche', 'succes', 'Merci ✅ Votre nouvelle photo est bien reçue : Jocelyne la regarde et la met en ligne très vite.');
+    } else {
+      message('pp-msg-fiche', 'succes', fiche.en_ligne ? 'C’est enregistré ✅ Votre fiche est déjà à jour sur « Nos pros ALB ».' : 'C’est enregistré ✅');
+    }
+    if (enregistrementARefaire) { enregistrementARefaire = false; enregistrer(profilId, true); }
   }
 
   async function envoyerPapierTexte(bouton, profilId) {
