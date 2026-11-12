@@ -650,7 +650,9 @@ function formulaireFiche(m, metier) {
         '</div></div>';
       }).join('') +
       '<div class="champ large"><label>Autres zones (séparées par une virgule)</label><input name="autres_zones" maxlength="200" placeholder="Ex. : Sainte-Maxime, Avignon" value="' + albEchapper(zones.filter(function (z) { return !ZONES.includes(z); }).join(', ')) + '"><div class="aide">Elles apparaîtront aussi dans les filtres de « Nos pros ALB ».</div></div>' +
-      '<div class="champ"><label>Photo ou logo (adresse de l\'image)</label><input name="photo_url" value="' + albEchapper(m.photo_url || '') + '">' + (m.photo_url ? '<div class="aide"><button type="button" class="bouton discret" data-url="' + albEchapper(m.photo_url) + '" data-nom="' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '" onclick="telechargerPhotoPro(this)">⬇️ Télécharger la photo</button></div>' : '') + '</div>' +
+      '<div class="champ"><label>Photo ou logo</label>' +
+        '<div class="aide" style="margin:0 0 6px;"><label class="bouton discret" style="cursor:pointer;display:inline-block;">📁 Choisir une image sur mon ordinateur<input type="file" accept="image/*" hidden onchange="envoyerLogoPro(this)"></label> <span class="logo-pro-etat"></span></div>' +
+        '<input name="photo_url" placeholder="ou colle ici l\'adresse de l\'image" value="' + albEchapper(m.photo_url || '') + '">' + (m.photo_url ? '<div class="aide"><button type="button" class="bouton discret" data-url="' + albEchapper(m.photo_url) + '" data-nom="' + albEchapper(m.nom_entreprise || ((m.prenom || '') + ' ' + (m.nom || ''))) + '" onclick="telechargerPhotoPro(this)">⬇️ Télécharger la photo</button></div>' : '') + '</div>' +
       (metier === 'courtier' ? '<div class="champ"><label>Numéro ORIAS</label><input name="numero_orias" value="' + albEchapper(m.numero_orias || '') + '"></div>' : '') +
       (metier === 'agent' || metier === 'mandataire' ? '<div class="champ"><label>Numéro de carte T</label><input name="numero_carte_t" value="' + albEchapper(m.numero_carte_t || '') + '"></div>' : '') +
       (metier === 'artisan' ? '<div class="champ"><label>&nbsp;</label><div class="cases"><label><input type="checkbox" name="label_rge"' + (m.label_rge ? ' checked' : '') + '> Label RGE</label></div></div>' : '') +
@@ -909,6 +911,52 @@ async function telechargerPhotoPro(bouton) {
   }
   bouton.disabled = false;
   bouton.textContent = avant;
+}
+
+// Envoie une image (logo ou photo) choisie sur l'ordinateur de Jocelyne, puis remplit le champ de la fiche
+function reduireLogoPro(fichier) {
+  return new Promise(function (resoudre) {
+    const lecteur = new FileReader();
+    lecteur.onload = function () {
+      const image = new Image();
+      image.onload = function () {
+        // Carré de 500 × 500, image entière (le logo n'est jamais coupé), fond blanc
+        const toile = document.createElement('canvas');
+        toile.width = 500; toile.height = 500;
+        const ctx = toile.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, 500, 500);
+        const ratio = Math.min(500 / image.width, 500 / image.height);
+        const l = image.width * ratio, h = image.height * ratio;
+        ctx.drawImage(image, (500 - l) / 2, (500 - h) / 2, l, h);
+        toile.toBlob(function (blob) { resoudre(blob); }, 'image/jpeg', 0.9);
+      };
+      image.onerror = function () { resoudre(null); };
+      image.src = lecteur.result;
+    };
+    lecteur.onerror = function () { resoudre(null); };
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+async function envoyerLogoPro(input) {
+  const fichier = input.files && input.files[0];
+  if (!fichier) return;
+  const etat = input.closest('.champ').querySelector('.logo-pro-etat');
+  const champ = input.closest('.champ').querySelector('input[name="photo_url"]');
+  if (!/^image\//.test(fichier.type)) { etat.textContent = '⚠️ Choisis une image (PNG ou JPG).'; return; }
+  etat.textContent = 'Envoi en cours…';
+  const blob = await reduireLogoPro(fichier);
+  if (!blob) { etat.textContent = '⚠️ Cette image n\'a pas pu être lue. Essaie-en une autre.'; return; }
+  const { data: session } = await albSupabase.auth.getSession();
+  const moi = session && session.session && session.session.user ? session.session.user.id : null;
+  if (!moi) { etat.textContent = '⚠️ Tu n\'es plus connectée. Recharge la page.'; return; }
+  const chemin = moi + '/logo-pro-' + Date.now() + '.jpg';
+  const envoi = await albSupabase.storage.from('pro-photos').upload(chemin, blob, { contentType: 'image/jpeg', upsert: false });
+  if (envoi.error) { console.error('[ALB DEBUG] logo pro :', envoi.error); etat.textContent = '⚠️ L\'image n\'a pas pu être envoyée. Réessaie.'; return; }
+  champ.value = albSupabase.storage.from('pro-photos').getPublicUrl(chemin).data.publicUrl;
+  etat.textContent = '✓ Image prête : clique sur « Enregistrer la fiche » pour la mettre en place.';
+  input.value = '';
 }
 
 document.addEventListener('DOMContentLoaded', demarrer);
