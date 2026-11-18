@@ -376,6 +376,12 @@
     el('zone').innerHTML = h;
   }
 
+  // Point maintenance du site : le bouton ouvre une conversation avec Claude, demande déjà écrite.
+  // Rien ne part tout seul : Jocelyne appuie sur « Envoyer » elle-même.
+  const TEXTE_POINT_MAINTENANCE = 'Fais le point maintenance du site ALB Immobilier (albimmobilier.fr) : vérifie les liens et les pages principales, le plan du site, la date de version des guides, puis rappelle-moi le nom de domaine OVH, les abonnements (Netlify, Supabase, Brevo), la Search Console et les prochaines échéances des contrats. Ne modifie rien : dis-moi simplement ce qui est à faire, une action par point.';
+  const LIEN_POINT_MAINTENANCE = 'https://claude.ai/new?q=' + encodeURIComponent(TEXTE_POINT_MAINTENANCE);
+  function estPointMaintenance(x) { return x.genre === 'tache' && /^point maintenance du site/i.test(x.titre || ''); }
+
   function dessinerDetail() {
     const z = el('detail');
     const x = ouvert ? elementsAffiches().find(function (y) { return y.cle === ouvert; }) : null;
@@ -389,6 +395,7 @@
       (x.rappel ? (tel(x.rappel.telephone) ? '<a class="bouton" href="tel:' + e(tel(x.rappel.telephone)) + '">📞 Appeler</a>' : '') +
         '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(x.rappel.id) + '">🧭 Accueil</a>' +
         '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(x.rappel.id) + '">✓ C\'est fait</button>' : '') +
+      (x.cochable && estPointMaintenance(x) ? '<a class="bouton plein" target="_blank" rel="noopener" href="' + e(LIEN_POINT_MAINTENANCE) + '">▶ Lancer le point maintenance</a>' : '') +
       (x.cochable ? '<button type="button" class="bouton ' + (x.fait ? '' : 'vert') + '" data-action="fait" data-id="' + e(x.id) + '" data-fait="' + (x.fait ? '0' : '1') + '">' + (x.fait ? '↩ Annuler « fait »' : '✓ Fait') + '</button>' : '') +
       (x.cochable ? '<a class="bouton" href="gestion-site.html">✏️ Modifier dans l\'Agenda</a>' : '') +
       '<button type="button" class="bouton" data-action="fermer-detail">Fermer</button></div>' +
