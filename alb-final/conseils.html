@@ -180,6 +180,10 @@
     .legal-content .voie { border: 1px solid #E8E6E0; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 14px 16px 4px; }
     .legal-content .voie h4 { margin-top: 0; }
     .legal-content .carte-conseil { display: block; border: 1px solid #E8E6E0; border-left: 4px solid #4B1A3E; border-radius: 8px; padding: 18px 20px; margin: 18px 0; text-decoration: none; background: #fff; }
+    .legal-content .partie { border: 1px solid #E8E6E0; border-radius: 12px; overflow: hidden; margin: 32px 0; background: #fff; }
+    .legal-content .partie h2 { background: #4B1A3E; color: #fff; margin: 0; padding: 16px 22px; }
+    .legal-content .partie-corps { padding: 6px 22px 18px; }
+    .legal-content .partie-corps .carte-conseil { margin: 14px 0; }
     .legal-content .carte-conseil:hover { background: #F5F3F0; }
     .legal-content .carte-conseil strong { display: block; font-family: 'Playfair Display', serif; font-size: 1.15rem; margin-bottom: 6px; }
     .legal-content .carte-conseil span { color: #4A4A47; font-size: 0.95rem; }
@@ -433,15 +437,21 @@
       <h1>Conseils ALB</h1>
       <p class="sous-titre">Des repères simples, pour avancer dans votre projet immobilier en confiance.</p>
 
+      <div class="partie">
       <h2 id="particuliers">Pour les particuliers</h2>
+      <div class="partie-corps">
       <p>Vendre, acheter, financer, rénover : on vous explique chaque étape, avec des sources que vous pouvez vérifier.</p>
       <a class="carte-conseil" href="/guide-vendre-entre-particuliers">
         <strong>Vendre sa maison ou son appartement entre particuliers</strong>
         <span>Acte de propriété, diagnostics, budget, avant-contrat, notaire : les étapes, de la préparation à la signature.</span>
       </a>
       <p>D'autres conseils arrivent bientôt.</p>
+      </div>
+      </div>
 
+      <div class="partie">
       <h2 id="professionnels">Pour les professionnels</h2>
+      <div class="partie-corps">
       <p>Courtiers, artisans, agents et mandataires immobiliers : voici ce qui fait la qualité du réseau ALB.</p>
       <a class="carte-conseil" href="/charte">
         <strong>La charte de qualité des professionnels ALB</strong>
@@ -451,6 +461,9 @@
         <strong>Nos pros ALB</strong>
         <span>Découvrez les professionnels du réseau, par métier.</span>
       </a>
+
+      </div>
+      </div>
 
       <p class="mention">Conseils publiés par la SASU ALB Sud Immobilier.</p>
 
