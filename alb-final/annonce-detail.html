@@ -650,7 +650,8 @@
   function dessinerGalerie() {
     const zone = document.getElementById('galerie');
     const statut = annonce.statut === 'compromis' ? '<span class="bandeau-statut">Sous compromis</span>'
-      : annonce.statut === 'sous_offre' ? '<span class="bandeau-statut">Sous offre</span>' : '';
+      : annonce.statut === 'sous_offre' ? '<span class="bandeau-statut">Sous offre</span>'
+      : annonce.statut === 'vendu' ? '<span class="bandeau-statut">Vendu</span>' : '';
     if (!photos.length) {
       zone.innerHTML = '<div class="grande"><div class="sans-photo">🏡<span>Les photos arrivent bientôt</span></div>' + statut + '</div>';
       return;
@@ -762,8 +763,10 @@
 
     // Visite selon le statut
     const alerte = document.getElementById('alerte-statut');
-    if (a.statut === 'compromis' || a.statut === 'sous_offre') {
-      alerte.textContent = a.statut === 'compromis'
+    if (a.statut === 'compromis' || a.statut === 'sous_offre' || a.statut === 'vendu') {
+      alerte.textContent = a.statut === 'vendu'
+        ? 'Ce bien est vendu : il n\'est plus possible de le visiter. D\'autres biens vous attendent sur ALB Immobilier.'
+        : a.statut === 'compromis'
         ? 'Ce bien est sous compromis : les visites sont suspendues pour le moment. Si la vente ne se fait pas, l\'annonce redeviendra disponible.'
         : 'Une offre est en cours sur ce bien : les visites sont suspendues pour le moment. Si l\'offre n\'aboutit pas, l\'annonce redeviendra disponible.';
       alerte.classList.remove('cache');
@@ -773,7 +776,7 @@
       ? 'Demandez une visite : le professionnel qui vend ce bien vous rappelle pour fixer un rendez-vous.'
       : 'Demandez une visite : vous choisissez un créneau parmi les disponibilités du propriétaire.';
 
-    if (a.statut !== 'compromis' && a.statut !== 'sous_offre') {
+    if (a.statut === 'disponible') {
       document.getElementById('barre-prix').textContent = prix(a.prix);
       document.getElementById('barre-visite').classList.remove('cache');
       document.body.classList.add('avec-barre');
