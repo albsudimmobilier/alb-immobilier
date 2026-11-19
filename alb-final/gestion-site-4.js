@@ -5,7 +5,7 @@
 // Rien n'est facturé ni changé sans la décision de Jocelyne.
 // ============================================================
 
-let pointsPros = { desaccords: [], ventes: [], points: [] };
+let pointsPros = { desaccords: [], ventes: [], points: [], visites: [] };
 let filtrePoints = null;
 
 ERREURS.INTROUVABLE = "Cet élément est introuvable : il a peut-être déjà été traité. Recharge la page.";
@@ -17,9 +17,11 @@ const MODULES_POINTS = { financement: '💶 Financement', travaux: '🔧 Travaux
 const METIERS_POINTS = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', immo: '🏠 Agent / mandataire', autre: '🤝 Autre métier' };
 
 function desaccordsOuverts() { return pointsPros.desaccords.filter(function (d) { return !d.traite_le; }); }
+function visitesContesteesOuvertes() { return pointsPros.visites.filter(function (v) { return !v.traite_le; }); }
 
 const FILTRES_POINTS = [
   ['desaccords', '⚠️ Désaccords', function () { return desaccordsOuverts(); }],
+  ['visites', '🏠 Visites contestées', function () { return pointsPros.visites; }],
   ['ventes', '🎉 Ventes à confirmer', function () { return pointsPros.ventes; }],
   ['reponses', '📆 Réponses des pros', function () { return pointsPros.points; }],
   ['regles', '✓ Désaccords réglés', function () { return pointsPros.desaccords.filter(function (d) { return d.traite_le; }); }]
@@ -29,6 +31,10 @@ async function chargerPoints() {
   const { data, error } = await albSupabase.rpc('alb_gestion_points');
   if (error) { console.error('[ALB DEBUG] points des pros :', error); return; }
   pointsPros = data || { desaccords: [], ventes: [], points: [] };
+  // Visites que le pro et le visiteur ne racontent pas pareil (liste à part)
+  const rv = await albSupabase.rpc('alb_gestion_visites_contestees');
+  if (rv.error) console.error('[ALB DEBUG] visites contestées :', rv.error);
+  pointsPros.visites = rv.error ? [] : (rv.data || []);
   afficherPoints();
 }
 
@@ -39,8 +45,9 @@ function montantLisible(m) { return m != null ? ' · ' + prixLisible(m) : ''; }
 function afficherPoints() {
   const ouverts = desaccordsOuverts().length;
   const ventes = pointsPros.ventes.length;
-  document.getElementById('pastille-points').textContent = ouverts + ventes;
-  if (!filtrePoints) filtrePoints = ouverts ? 'desaccords' : ventes ? 'ventes' : 'reponses';
+  const visitesOuvertes = visitesContesteesOuvertes().length;
+  document.getElementById('pastille-points').textContent = ouverts + ventes + visitesOuvertes;
+  if (!filtrePoints) filtrePoints = ouverts ? 'desaccords' : visitesOuvertes ? 'visites' : ventes ? 'ventes' : 'reponses';
 
   document.getElementById('filtres-points').innerHTML = FILTRES_POINTS.map(function (f) {
     return '<button type="button" class="filtre' + (filtrePoints === f[0] ? ' actif' : '') + '" onclick="choisirFiltrePoints(\'' + f[0] + '\')">' +
@@ -52,6 +59,7 @@ function afficherPoints() {
   if (!liste.length) {
     const vides = {
       desaccords: 'Aucun désaccord en ce moment. Les pros et les particuliers disent la même chose. 🌿',
+      visites: 'Aucune visite contestée. Les pros et les visiteurs disent la même chose. 🌿',
       ventes: 'Aucune vente à confirmer. 🌿',
       reponses: 'Pas encore de point du mois. Les premiers mails partent le 25 à 9 h, seulement aux pros à qui ALB a apporté quelque chose.',
       regles: 'Aucun désaccord réglé ces 60 derniers jours.'
@@ -60,6 +68,7 @@ function afficherPoints() {
     return;
   }
   if (filtrePoints === 'desaccords' || filtrePoints === 'regles') zone.innerHTML = liste.map(ficheDesaccord).join('');
+  else if (filtrePoints === 'visites') zone.innerHTML = liste.map(ficheVisiteContestee).join('');
   else if (filtrePoints === 'ventes') zone.innerHTML = liste.map(ficheVente).join('');
   else zone.innerHTML = liste.map(fichePoint).join('');
 }
@@ -87,6 +96,44 @@ function ficheDesaccord(d) {
       '<p class="ligne-info">' + lienTelephone(d.particulier_tel) + '</p></div>' +
     regle +
   '</div>';
+}
+
+const REPONSES_VISITE = { effectuee: '✅ La visite a eu lieu', non_effectuee: '✗ La visite n\'a pas eu lieu', oui: '✅ La visite a eu lieu', non: '✗ La visite n\'a pas eu lieu' };
+
+function ficheVisiteContestee(v) {
+  const quand = v.creneau_date ? dateLisible(v.creneau_date) + (v.creneau_heure ? ' à ' + String(v.creneau_heure).replace(':', 'h') : '') : '';
+  const decision = v.traite_le
+    ? '<div class="point-a-faire">✓ Réglé par toi le ' + albEchapper(dateLisible(v.traite_le)) + ' : ' + (v.a_facturer ? 'visite facturée (2 € HT)' : 'visite non facturée') + (v.note ? ' · « ' + albEchapper(v.note) + ' »' : '') + '</div>'
+    : '<div class="decision"><div class="decision-titre">Après tes appels, qu\'as-tu décidé ?</div>' +
+        '<textarea class="texte-pret" id="note-visite-' + albEchapper(v.id) + '" maxlength="1000" placeholder="Ex. : appelé les deux, la visite a bien eu lieu"></textarea>' +
+        '<p class="aide">Tant que tu n\'as rien cliqué, la visite n\'est pas facturée.</p>' +
+        '<div class="actions">' +
+          '<button type="button" class="bouton vert" onclick="trancherVisite(\'' + albEchapper(v.id) + '\', true, this)">✓ Visite faite : la facturer (2 € HT)</button>' +
+          '<button type="button" class="bouton rouge" onclick="trancherVisite(\'' + albEchapper(v.id) + '\', false, this)">✗ Ne pas la facturer</button>' +
+        '</div></div>';
+  return '<div class="carte' + (v.traite_le ? '' : ' a-faire') + '">' +
+    '<h3>⚠️ Visite contestée : ' + albEchapper(v.titre || 'Annonce') + '</h3>' +
+    '<p class="ligne-info">' + albEchapper(v.ville || '') + (quand ? ' · rendez-vous le ' + albEchapper(quand) : '') + '</p>' +
+    '<div class="prive"><div class="prive-titre">🧰 Le pro : ' + albEchapper(v.pro || '') + '</div>' +
+      '<p class="ligne-info"><strong>' + albEchapper(REPONSES_VISITE[v.reponse_pro] || 'Pas répondu') + '</strong></p>' +
+      '<p class="ligne-info">' + lienTelephone(v.pro_tel) + '</p></div>' +
+    '<div class="prive"><div class="prive-titre">🏠 Le visiteur : ' + albEchapper(v.particulier || '') + '</div>' +
+      '<p class="ligne-info"><strong>' + albEchapper(REPONSES_VISITE[v.reponse_particulier] || 'Pas répondu') + '</strong></p>' +
+      '<p class="ligne-info">' + lienTelephone(v.particulier_tel) + '</p></div>' +
+    decision +
+  '</div>';
+}
+
+async function trancherVisite(id, facturer, bouton) {
+  const note = (document.getElementById('note-visite-' + id).value || '').trim();
+  if (!confirm(facturer ? 'Confirmer : la visite a eu lieu et elle sera facturée 2 € HT au pro ?' : 'Confirmer : cette visite ne sera pas facturée ?')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_visite_trancher', { p_id: id, p_facturer: facturer, p_note: note });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerPoints();
+  afficherAFaire();
+  afficherMessage('message-general', 'succes', facturer ? 'C\'est noté ✓ La visite sera sur la facture du pro.' : 'C\'est noté ✓ La visite ne sera pas facturée.');
 }
 
 function ficheVente(v) {
@@ -156,6 +203,7 @@ async function ecarterVente(ligne, bouton) {
 
 // Les deux lignes les plus importantes passent en tête de « À faire aujourd'hui »
 LIGNES_A_FAIRE.unshift(
+  { calcul: function () { return visitesContesteesOuvertes().length; }, un: 'visite contestée (le pro et le visiteur ne disent pas pareil) : appelle-les pour trancher', plusieurs: 'visites contestées : appelle-les pour trancher', emoji: '🏠', onglet: 'points', filtre: function () { choisirFiltrePoints('visites'); } },
   { calcul: function () { return desaccordsOuverts().length; }, un: 'désaccord entre un pro et un particulier : appelle-les pour trancher', plusieurs: 'désaccords entre pros et particuliers : appelle-les pour trancher', emoji: '⚠️', onglet: 'points', filtre: function () { choisirFiltrePoints('desaccords'); } },
   { calcul: function () { return pointsPros.ventes.length; }, un: 'vente annoncée par un pro, à confirmer', plusieurs: 'ventes annoncées par des pros, à confirmer', emoji: '🎉', onglet: 'points', filtre: function () { choisirFiltrePoints('ventes'); } }
 );
