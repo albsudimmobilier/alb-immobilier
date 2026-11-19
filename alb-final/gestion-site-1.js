@@ -232,6 +232,7 @@ const STATUTS_ANNONCE = {
 const FILTRES_STATUT = [
   ['a_etudier', '⏳ À étudier', function (a) { return a.statut === 'en_attente'; }],
   ['points', '📆 Points à faire', function (a) { return a.point_a_faire; }],
+  ['rappel90', '📞 Appels des 90 jours', function (a) { return a.rappel_90j_a_faire; }],
   ['en_ligne', '🌐 En ligne', function (a) { return a.statut === 'disponible'; }],
   ['compromis', '✍️ Offre / compromis', function (a) { return a.statut === 'sous_offre' || a.statut === 'compromis'; }],
   ['pause', '⏸️ En pause', function (a) { return a.statut === 'en_pause'; }],
@@ -256,7 +257,7 @@ function afficherAnnonces() {
     'c-mandats': rappelsMandat.length
   };
   Object.keys(valeurs).forEach(function (id) { document.getElementById(id).textContent = valeurs[id]; });
-  document.getElementById('pastille-annonces').textContent = aEtudier + points;
+  document.getElementById('pastille-annonces').textContent = aEtudier + points + annonces.filter(function (a) { return a.rappel_90j_a_faire; }).length;
 
   document.getElementById('filtres-statut').innerHTML = FILTRES_STATUT.map(function (f) {
     const nb = annonces.filter(f[2]).length;
@@ -347,6 +348,10 @@ function ficheAnnonce(a) {
     (pro && a.honoraires_texte ? '<p class="ligne-info">💶 Honoraires : ' + albEchapper(a.honoraires_texte) + '</p>' : '') +
     (photos ? '<div class="photos-annonce">' + photos + '</div>' : '<p class="ligne-info">📷 Aucune photo</p>') +
     (a.point_a_faire ? '<div class="point-a-faire">📆 <strong>Point mensuel à faire</strong> avec le propriétaire (prévu le ' + dateLisible(a.prochain_point_le) + ').</div>' : '') +
+    (a.rappel_90j_a_faire ? '<div class="point-a-faire">📞 <strong>Annonce en ligne depuis ' + (a.jours_en_ligne || 90) + ' jours</strong> : appelle ' +
+      albEchapper(((a.proprietaire || {}).prenom || '') + ' ' + ((a.proprietaire || {}).nom || '')) + (pro && (a.proprietaire || {}).nom_entreprise ? ' (' + albEchapper(a.proprietaire.nom_entreprise) + ')' : '') +
+      (tel ? ' au <a href="tel:' + albEchapper(tel) + '">' + albEchapper((a.proprietaire || {}).telephone || a.telephone_annonce) + '</a>' : '') +
+      ' pour faire le point sur la diffusion. <button class="bouton discret" onclick="rappel90Fait(\'' + a.id + '\', this)">✓ Appel fait (prochain rappel dans 90 jours)</button></div>' : '') +
     (a.message_jocelyne ? '<p class="ligne-info mot">💬 « ' + albEchapper(a.message_jocelyne) + ' »</p>' : '') +
     '<details class="historique"><summary>📝 Description</summary><p style="white-space:pre-line;margin-top:6px;">' + albEchapper(a.description || '') + '</p></details>' +
     '<div class="prive"><div class="prive-titre">🔒 Jamais public</div>' +
@@ -455,6 +460,15 @@ async function decisionAnnonce(id, decision, bouton) {
   if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
   await toutRecharger();
   afficherMessage('message-general', decision === 'refuser' ? 'info' : 'succes', MESSAGES_DECISION[decision] || 'C\'est enregistré ✓');
+}
+
+async function rappel90Fait(id, bouton) {
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_rappel_90j_fait', { p_id: id });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await toutRecharger();
+  afficherMessage('message-general', 'succes', 'Appel noté ✓ Prochain rappel dans 90 jours.');
 }
 
 async function corrigerAnnonce(event, id) {
