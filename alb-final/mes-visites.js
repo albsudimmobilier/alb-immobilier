@@ -64,6 +64,18 @@
     corps += '<p class="mv-budget">Budget estimé : <strong>' + e(euros(d.budget_estime)) + '</strong>' + (d.dans_budget ? ' ✅' : '') +
       (d.courtier_souhaite ? ' · Rappel courtier demandé' : '') + '</p>';
 
+    // Vente accompagnée : une fois le jour du rendez-vous arrivé, le visiteur confirme si la visite a eu lieu
+    let question = '';
+    if (d.type_vente === 'accompagnee' && (d.statut === 'acceptee' || d.statut === 'effectuee') && d.creneau_date && d.creneau_date <= aujourdhui()) {
+      if (!d.visite_confirmee_acheteur) {
+        question = '<div class="mv-question"><strong>La visite a-t-elle eu lieu ?</strong>' +
+          '<div class="mv-boutons"><button type="button" class="mv-btn mv-btn-oui" data-action="visite-oui" data-demande="' + e(d.id) + '">✅ Oui, j’ai visité</button>' +
+          '<button type="button" class="mv-btn" data-action="visite-non" data-demande="' + e(d.id) + '">Non, elle n’a pas eu lieu</button></div></div>';
+      } else {
+        corps += '<p class="mv-budget">Merci, votre réponse est bien enregistrée.</p>';
+      }
+    }
+
     let boutons = '<button type="button" class="mv-btn" data-action="ecrire" data-demande="' + e(d.id) + '">💬 Écrire ' + (d.type_vente === 'accompagnee' ? 'au professionnel' : 'au vendeur') + '</button>';
     if (!passee) {
       if (d.statut === 'autre_moment') {
@@ -81,6 +93,7 @@
         '<span class="mv-titre">' + e(d.titre) + '</span>' +
         '<span class="mv-prix">' + e(euros(d.prix)) + ' · ' + e(d.ville) + '</span></span>' +
       '</a>' + corps +
+      question +
       '<div class="message" id="mv-msg-' + e(d.id) + '"></div>' +
       (boutons ? '<div class="mv-boutons">' + boutons + '</div>' : '') +
     '</div>';
@@ -100,6 +113,21 @@
 
   async function agir(bouton) {
     const id = bouton.dataset.demande, action = bouton.dataset.action;
+    if (action === 'visite-oui' || action === 'visite-non') {
+      bouton.disabled = true;
+      const reponse = action === 'visite-oui' ? 'oui' : 'non';
+      const { data, error } = await albSupabase.rpc('alb_confirmer_visite', { p_demande: id, p_reponse: reponse });
+      if (error || data !== 'OK') {
+        bouton.disabled = false;
+        const textesConf = { PAS_ENCORE: 'Cette visite n’a pas encore eu lieu.', DEJA_DECLAREE: 'Vous avez déjà répondu pour cette visite.', DECISION_IMPOSSIBLE: 'Cette demande a déjà changé : rechargez la page.', NON_CONNECTE: 'Votre session a expiré : reconnectez-vous.' };
+        message('mv-msg-' + id, 'erreur', textesConf[data] || 'Une erreur est survenue. Réessayez dans un instant.');
+        return;
+      }
+      try { await charger(); } catch (ex) { /* on garde l'affichage */ }
+      dessiner();
+      message('mv-msg-' + id, 'succes', 'Merci, votre réponse est enregistrée.');
+      return;
+    }
     if (action === 'annuler' && !window.confirm('Vous confirmez ? Le vendeur sera prévenu.')) return;
     bouton.disabled = true;
     const r = await albAppelerGuichet({ action: 'reponse_visite', demande_id: id, decision: action });
@@ -145,6 +173,7 @@
       '.mv-btn{border:1px solid #D8D5CE;background:#FBF8F3;color:#4A4A47;border-radius:6px;padding:9px 12px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;}',
       '.mv-btn:hover{border-color:#5A3A6A;color:#5A3A6A;}',
       '.mv-btn-oui{background:#EEF6EE;border-color:#CBE3CD;color:#2E6B34;}',
+      '.mv-question{background:#F4EEF6;border-radius:8px;padding:10px 12px;margin-top:12px;}',
     ].join('\n');
     document.head.appendChild(s);
   }
