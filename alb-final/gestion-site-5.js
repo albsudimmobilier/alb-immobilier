@@ -15,7 +15,7 @@ ERREURS.DESACCORD_OUVERT = 'Un désaccord est encore ouvert sur une ligne : règ
 ERREURS.MONTANT_INVALIDE = 'Ce montant ne semble pas juste.';
 
 const METIERS_FACTURE = { courtier: '🏦 Courtier', artisan: '🔨 Artisan', immo: '🏠 Agent / mandataire', particulier: '🏡 Particulier vendeur', autre: '🤝 Autre métier' };
-const UNITES_TARIF = { taux_artisan: '%', pret_courtier: '€ HT', abonnement_immo: '€ HT', immo_par_contact: '€ HT', abonnement_vendeur: '€ TTC', taux_tva: '%' };
+const UNITES_TARIF = { taux_artisan: '%', pret_courtier: '€ HT', abonnement_immo: '€ HT', immo_par_contact: '€ HT', immo_par_visite: '€ HT', abonnement_vendeur: '€ TTC', taux_tva: '%' };
 
 function debutMois(decalage) {
   const d = new Date();
