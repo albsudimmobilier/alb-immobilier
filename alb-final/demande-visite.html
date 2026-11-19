@@ -898,7 +898,7 @@
       .select('id, titre, prix, ville, code_postal, statut, type_vente, agence_nom, disponibilites_visite, photos')
       .eq('id', id).maybeSingle();
     if (error) { console.error('[ALB DEBUG] annonce :', error); indisponible('L\'annonce n\'a pas pu être chargée. Rechargez la page dans un instant.'); return; }
-    if (!data || ['disponible', 'sous_offre'].indexOf(data.statut) === -1) { indisponible(data && data.statut === 'compromis' ? 'Ce bien est sous compromis : les visites sont suspendues pour le moment.' : null); return; }
+    if (!data || data.statut !== 'disponible') { indisponible(data && data.statut === 'compromis' ? 'Ce bien est sous compromis : les visites sont suspendues pour le moment.' : (data && data.statut === 'sous_offre' ? 'Une offre est en cours sur ce bien : les visites sont suspendues pour le moment.' : null)); return; }
     annonce = data;
 
     // Le taux du moment (mis à jour par Jocelyne), sinon une valeur prudente

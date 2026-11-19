@@ -762,19 +762,18 @@
 
     // Visite selon le statut
     const alerte = document.getElementById('alerte-statut');
-    if (a.statut === 'compromis') {
-      alerte.textContent = 'Ce bien est sous compromis : les visites sont suspendues pour le moment. Si la vente ne se fait pas, l\'annonce redeviendra disponible.';
+    if (a.statut === 'compromis' || a.statut === 'sous_offre') {
+      alerte.textContent = a.statut === 'compromis'
+        ? 'Ce bien est sous compromis : les visites sont suspendues pour le moment. Si la vente ne se fait pas, l\'annonce redeviendra disponible.'
+        : 'Une offre est en cours sur ce bien : les visites sont suspendues pour le moment. Si l\'offre n\'aboutit pas, l\'annonce redeviendra disponible.';
       alerte.classList.remove('cache');
       document.getElementById('visite-ouverte').classList.add('cache');
-    } else if (a.statut === 'sous_offre') {
-      alerte.textContent = 'Une offre est en cours sur ce bien. Vous pouvez tout de même demander une visite : on vous tiendra au courant.';
-      alerte.classList.remove('cache');
     }
     document.getElementById('texte-visite').textContent = a.type_vente === 'accompagnee'
       ? 'Demandez une visite : le professionnel qui vend ce bien vous rappelle pour fixer un rendez-vous.'
       : 'Demandez une visite : vous choisissez un créneau parmi les disponibilités du propriétaire.';
 
-    if (a.statut !== 'compromis') {
+    if (a.statut !== 'compromis' && a.statut !== 'sous_offre') {
       document.getElementById('barre-prix').textContent = prix(a.prix);
       document.getElementById('barre-visite').classList.remove('cache');
       document.body.classList.add('avec-barre');
