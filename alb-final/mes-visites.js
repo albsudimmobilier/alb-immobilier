@@ -86,6 +86,10 @@
       }
     }
 
+    const aideDeplacement = (!passee && d.statut === 'acceptee')
+      ? '<div class="mv-question" style="margin-top:10px;font-size:14px;">Un empêchement ? Écrivez ' + (d.type_vente === 'accompagnee' ? 'au professionnel' : 'au vendeur') + ' pour trouver un autre moment ensemble : il pourra déplacer la visite, et vous recevrez la nouvelle confirmation par e-mail.</div>'
+      : '';
+
     return '<div class="mv-carte">' +
       '<a class="mv-tete" href="annonce-detail.html?id=' + encodeURIComponent(d.annonce_id) + '">' +
         (photo ? '<img src="' + e(photo) + '" alt="" loading="lazy">' : '<span class="mv-sans-photo">🏡</span>') +
@@ -94,6 +98,7 @@
         '<span class="mv-prix">' + e(euros(d.prix)) + ' · ' + e(d.ville) + '</span></span>' +
       '</a>' + corps +
       question +
+      aideDeplacement +
       '<div class="message" id="mv-msg-' + e(d.id) + '"></div>' +
       (boutons ? '<div class="mv-boutons">' + boutons + '</div>' : '') +
     '</div>';
