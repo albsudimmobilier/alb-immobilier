@@ -510,7 +510,8 @@
           html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="visite-autre" data-demande="' + e(d.id) + '">📅 Proposer un autre moment</button>' +
             '<button type="button" class="ma-btn" data-action="visite" data-decision="refuser" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Refuser</button></div>';
         } else if (d.statut === 'acceptee') {
-          html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="visite" data-decision="annuler" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Annuler la visite</button></div>';
+          html += '<div class="ma-boutons"><button type="button" class="ma-btn" data-action="visite-autre" data-demande="' + e(d.id) + '">📅 Déplacer la visite</button>' +
+            '<button type="button" class="ma-btn" data-action="visite" data-decision="annuler" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Annuler la visite</button></div>';
         }
         html += '<div class="ma-autre cache" id="ma-autre-' + e(d.id) + '">' +
           '<div class="ma-nouveau-dispo">' +
@@ -518,7 +519,7 @@
             '<div class="champ"><label for="va-heure-' + e(d.id) + '">Heure</label><input type="time" id="va-heure-' + e(d.id) + '" step="900" value="14:00"></div>' +
           '</div>' +
           '<div class="champ"><label for="va-mot-' + e(d.id) + '">Un petit mot <span style="font-weight:400;">(facultatif)</span></label><input type="text" id="va-mot-' + e(d.id) + '" maxlength="300"></div>' +
-          '<button type="button" class="bouton" data-action="visite" data-decision="autre_moment" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Envoyer ma proposition</button>' +
+          '<button type="button" class="bouton" data-action="visite" data-decision="autre_moment"' + (d.statut === 'acceptee' ? ' data-rouvrir="1"' : '') + ' data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Envoyer ma proposition</button>' +
         '</div>';
       }
       return html + '</div>';
@@ -558,6 +559,18 @@
       return;
     }
     bouton.disabled = true;
+    // Visite déjà confirmée entre particuliers : on la rouvre, puis le nouveau moment est proposé au visiteur
+    // (il reçoit un e-mail ; à son accord, confirmation et rappel de la veille repartent avec la nouvelle date)
+    if (decision === 'autre_moment') {
+      if (bouton.dataset.rouvrir === '1') {
+        const { data: ouvert1 } = await albSupabase.rpc('alb_rouvrir_visite', { p_demande: demande });
+        if (ouvert1 !== 'OK') {
+          bouton.disabled = false;
+          montrerMessage('ma-msg-' + id, 'erreur', 'Cette demande a déjà changé : rechargez la page.');
+          return;
+        }
+      }
+    }
     const r = await albAppelerGuichet(corps);
     if (!r.ok) {
       bouton.disabled = false;
@@ -568,7 +581,7 @@
     await rafraichir();
     montrerMessage('ma-msg-' + id, 'succes', {
       accepter: 'Visite confirmée ✅ Vous recevez tous les deux un e-mail avec les coordonnées.',
-      autre_moment: 'Votre proposition est partie 📅 Il vous répondra depuis son espace.',
+      autre_moment: 'Votre proposition est partie 📅 Le visiteur est prévenu : à son accord, vous recevez tous les deux la confirmation et un rappel la veille.',
       fixer: 'Date enregistrée ✅ L’acheteur reçoit la confirmation, et un rappel partira la veille.',
       refuser: 'C’est noté. L’acheteur est prévenu.',
       annuler: 'Visite annulée. Le visiteur est prévenu.',
