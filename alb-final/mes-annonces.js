@@ -489,6 +489,16 @@
             '<div class="ma-petit" style="margin-top:8px;">L’acheteur reçoit la confirmation avec la fiche du bien, et vous recevez tous les deux un rappel la veille.</div>' +
           '</div>';
       }
+      // Vente accompagnée : une fois le jour du rendez-vous arrivé, le pro déclare si la visite a eu lieu (2 € HT par visite validée)
+      if (d.type_vente === 'accompagnee' && d.statut === 'acceptee' && d.creneau_date && d.creneau_date <= aujourdhui()) {
+        if (d.visite_declaree_pro === 'non_effectuee') {
+          html += '<div class="ma-petit">⏳ Vous avez indiqué que la visite n’a pas eu lieu. Nous attendons la confirmation du visiteur.</div>';
+        } else {
+          html += '<div class="ma-petit" style="margin-top:8px;"><strong>La visite a-t-elle eu lieu ?</strong> Une visite effectuée est facturée 2 € HT. Le visiteur pourra confirmer de son côté.</div>' +
+            '<div class="ma-boutons"><button type="button" class="ma-btn ma-btn-oui" data-action="visite" data-decision="effectuee" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">✅ Visite effectuée</button>' +
+            '<button type="button" class="ma-btn" data-action="visite" data-decision="non_effectuee" data-demande="' + e(d.id) + '" data-id="' + e(x.a.id) + '">Visite non effectuée</button></div>';
+        }
+      }
       if (d.type_vente === 'particulier' && !passee) {
         if (d.statut === 'en_attente') {
           html += '<div class="ma-boutons">' +
@@ -532,6 +542,21 @@
     }
     if (decision === 'refuser' && !window.confirm('Refuser cette demande de visite ? L’acheteur sera prévenu gentiment.')) return;
     if (decision === 'annuler' && !window.confirm('Annuler cette visite ? Le visiteur sera prévenu par e-mail.')) return;
+    if (decision === 'effectuee' || decision === 'non_effectuee') {
+      bouton.disabled = true;
+      const { data, error } = await albSupabase.rpc('alb_declarer_visite', { p_demande: demande, p_decision: decision });
+      if (error || data !== 'OK') {
+        bouton.disabled = false;
+        const textesDecl = { PAS_ENCORE: 'Cette visite n’a pas encore eu lieu : revenez le jour du rendez-vous.', DEJA_DECLAREE: 'Vous avez déjà répondu pour cette visite.', DECISION_IMPOSSIBLE: 'Cette demande a déjà changé : rechargez la page.', NON_CONNECTE: 'Votre session a expiré : reconnectez-vous.' };
+        montrerMessage('ma-msg-' + id, 'erreur', textesDecl[data] || 'Une erreur est survenue. Réessayez dans un instant.');
+        return;
+      }
+      await rafraichir();
+      montrerMessage('ma-msg-' + id, 'succes', decision === 'effectuee'
+        ? 'Merci, la visite est enregistrée comme effectuée ✅'
+        : 'C’est noté. Nous demandons confirmation au visiteur.');
+      return;
+    }
     bouton.disabled = true;
     const r = await albAppelerGuichet(corps);
     if (!r.ok) {
