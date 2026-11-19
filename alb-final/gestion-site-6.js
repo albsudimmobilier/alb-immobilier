@@ -55,7 +55,7 @@ function dessinerFormulairePrevisionnel() {
       '</div>';
   }).join('');
   document.getElementById('prev-tarifs').innerHTML = 'Tarifs utilisés (réglage « ⚙️ Tarifs » de l\'onglet Factures) : agents ' + tarifPrev('abonnement_immo', 60) + ' € HT/mois · annonce de particulier ' +
-    String(tarifPrev('abonnement_vendeur', 9.9)).replace('.', ',') + ' € TTC/mois · prêt ' + tarifPrev('pret_courtier', 150) + ' € HT · chantier ' + tarifPrev('taux_artisan', 10) + ' % HT · mise en relation agent ' + tarifPrev('immo_par_contact', 0) + ' € HT.';
+    String(tarifPrev('abonnement_vendeur', 9.9)).replace('.', ',') + ' € TTC/mois · prêt ' + tarifPrev('pret_courtier', 150) + ' € HT · chantier ' + tarifPrev('taux_artisan', 10) + ' % HT · mise en relation agent ' + tarifPrev('immo_par_contact', 0) + ' € HT · visite validée (agents) ' + tarifPrev('immo_par_visite', 2) + ' € HT (pas encore comptée dans les courbes).';
   dessinerCharges(f.charges || []);
 }
 
