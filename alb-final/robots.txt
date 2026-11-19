@@ -5,7 +5,6 @@
 User-agent: *
 Allow: /
 Disallow: /gestion-site
-Disallow: /espace-alb
 Disallow: /espace-perso
 Disallow: /nouveau-code
 Disallow: /pin-oublie
