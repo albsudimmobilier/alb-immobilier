@@ -529,6 +529,11 @@
   // ========== POINT DU MOIS DES PROS ==========
   // Le pro répond sans se connecter, grâce au lien personnel reçu par e-mail le 25 du mois.
   const CHOIX_MER = [['signe', '✅ Signé'], ['en_cours', '🔄 En cours'], ['a_relancer', '📞 À relancer'], ['sans_suite', '✗ Sans suite'], ['refuse', '✗ Refusé']];
+  // Pour un agent ou un mandataire, « signé » veut dire : acte authentique signé et commission perçue
+  function choixMiseEnRelation() {
+    const agent = infos && (infos.metier === 'agent' || infos.metier === 'mandataire');
+    return agent ? [['signe', '✅ Acte signé et commission perçue']].concat(CHOIX_MER.slice(1)) : CHOIX_MER;
+  }
   const CHOIX_ANNONCE = [['en_vente', '🌐 Toujours en vente'], ['pause', '⏸️ En pause'], ['compromis', '✍️ Sous compromis'], ['vendu', '🎉 Vendu']];
   const MODULES = { financement: '💶 Financement', travaux: '🔧 Travaux', accompagnement: '🤝 Vente / achat' };
   const LIBELLE_MONTANT = { artisan: 'Montant des travaux facturés (€ HT)', courtier: 'Montant emprunté (€)' };
@@ -577,7 +582,7 @@
       '<div class="element-titre">' + e(MODULES[l.module] || 'Projet') + ' · ' + e(l.client || '') + '</div>' +
       '<div class="element-detail">' + e([l.secteur, l.depuis ? 'accepté le ' + new Date(l.depuis).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : ''].filter(Boolean).join(' · ')) +
         (l.resume ? '<br>« ' + e(l.resume) + ' »' : '') + '</div>' +
-      options(l.id, CHOIX_MER, l.reponse) +
+      options(l.id, choixMiseEnRelation(), l.reponse) +
       (montant ? '<div class="champ bloc-montant' + (l.reponse === 'signe' || l.reponse === 'en_cours' ? '' : ' cache') + '"><label>' + e(montant) + '</label><input type="number" class="montant" min="0" step="1" inputmode="numeric" value="' + (l.montant != null ? e(l.montant) : '') + '"></div>' : '') +
       '<div class="champ"><label>Un mot ? <span style="font-weight:400;color:#7a7a75;">(facultatif)</span></label><textarea class="commentaire" maxlength="500">' + e(l.commentaire || '') + '</textarea></div>' +
     '</div>';
