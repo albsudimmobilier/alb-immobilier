@@ -95,7 +95,7 @@
   // ---------- Chargement ----------
   async function charger() {
     const { data: annoncesBrutes, error } = await albSupabase.from('annonces')
-      .select('id, titre, description, prix, ville, code_postal, type_bien, surface_m2, nb_pieces, surface_terrain_m2, dpe, ges, depenses_energie_min, depenses_energie_max, type_vente, agence_nom, honoraires_texte, statut, date_creation, mis_en_ligne_le, date_fin_compromis, disponibilites_visite')
+      .select('id, titre, description, prix, ville, code_postal, type_bien, surface_m2, nb_pieces, surface_terrain_m2, dpe, ges, depenses_energie_min, depenses_energie_max, type_vente, agence_nom, honoraires_texte, statut, date_creation, mis_en_ligne_le, date_fin_compromis, disponibilites_visite, expire_le, expiree')
       .eq('vendeur_id', monId)
       .order('date_creation', { ascending: false });
     if (error) { console.error('[ALB DEBUG] mes annonces :', error); throw error; }
@@ -147,6 +147,20 @@
     let aide = st.aide;
     if (a.statut === 'compromis' && a.date_fin_compromis) aide = 'Compromis signé, jusqu’au ' + dateCourte(a.date_fin_compromis) + '.';
     if (a.statut === 'disponible' && a.mis_en_ligne_le) aide = 'En ligne depuis le ' + dateCourte(a.mis_en_ligne_le) + '. Jocelyne vous appelle chaque mois pour faire le point.';
+    // Vente accompagnée : une annonce est publiée 90 jours, à renouveler (e-mail 14 jours avant)
+    let blocExpiration = '';
+    let boutonRenouveler = '';
+    if (a.type_vente === 'accompagnee' && !vendu && a.statut !== 'refusee' && a.statut !== 'en_attente' && a.expire_le) {
+      const joursRestants = Math.round((new Date(a.expire_le + 'T12:00:00') - new Date(aujourdhui() + 'T12:00:00')) / 86400000);
+      if (a.expiree) {
+        blocExpiration = '<div class="ma-rappel">⏳ Cette annonce a expiré le ' + e(dateCourte(a.expire_le)) + ' : elle n’est plus sur le site. Renouvelez-la pour la remettre en ligne.</div>';
+      } else if (joursRestants <= 14) {
+        blocExpiration = '<div class="ma-rappel">⏳ Cette annonce expire le ' + e(dateCourte(a.expire_le)) + '. Renouvelez-la pour la garder en ligne 90 jours de plus.</div>';
+      } else {
+        aide = (aide ? aide + ' ' : '') + 'Publiée jusqu’au ' + dateCourte(a.expire_le) + '.';
+      }
+      if (a.expiree || joursRestants <= 14) boutonRenouveler = '<button type="button" class="ma-btn ma-btn-oui" data-action="renouveler" data-id="' + e(a.id) + '">🔄 Renouveler pour 90 jours</button>';
+    }
     const typeVente = a.type_vente === 'accompagnee' ? '<span class="ma-type ma-type-pro">🤝 Vente accompagnée</span>' : '<span class="ma-type">🏡 Entre particuliers</span>';
 
     let rappelDispos = '';
@@ -163,6 +177,7 @@
       }
     }
 
+    boutons += boutonRenouveler;
     const aTraiter = x.visites.filter(function (d) { return d.statut === 'en_attente'; }).length;
     if (x.visites.length) {
       boutons += '<button type="button" class="ma-btn ma-btn-visites' + (ouvert[a.id] === 'visites' ? ' actif' : '') + (aTraiter ? ' ma-a-traiter' : '') + '" data-action="ouvrir" data-panneau="visites" data-id="' + e(a.id) + '">📬 Demandes de visite (' + x.visites.length + ')' + (aTraiter ? ' · ' + aTraiter + ' à traiter' : '') + '</button>';
@@ -184,7 +199,7 @@
         '</div>' +
       '</div>' +
       (aide ? '<p class="ma-aide">' + e(aide) + '</p>' : '') +
-      rappelDispos +
+      rappelDispos + blocExpiration +
       '<div class="message" id="ma-msg-' + e(a.id) + '"></div>' +
       (boutons ? '<div class="ma-boutons">' + boutons + '</div>' : '') +
       panneau +
@@ -624,6 +639,14 @@
       } else if (action === 'visite-autre') {
         const bloc = el('ma-autre-' + cible.dataset.demande);
         if (bloc) bloc.classList.toggle('cache');
+      } else if (action === 'renouveler') {
+        cible.disabled = true;
+        albSupabase.rpc('alb_renouveler_mon_annonce', { p_id: id }).then(async function (r) {
+          cible.disabled = false;
+          if (r.error || !r.data || !r.data.ok) { montrerMessage('ma-msg-' + id, 'erreur', 'Le renouvellement n’a pas pu être fait. Réessayez dans un instant.'); return; }
+          await rafraichir();
+          montrerMessage('ma-msg-' + id, 'succes', 'C’est fait ✅ Votre annonce est en ligne 90 jours de plus.');
+        });
       } else if (action === 'retirer-dispo') {
         retirerDispo(id, Number(cible.dataset.index));
       }
