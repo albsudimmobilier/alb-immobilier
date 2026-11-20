@@ -423,9 +423,39 @@ function formulaireAnnonce(a) {
       champ('depenses_energie_min', 'Énergie : de (€/an)', a.depenses_energie_min, 'numeric') + champ('depenses_energie_max', 'à (€/an)', a.depenses_energie_max, 'numeric') +
       (a.type_vente === 'accompagnee' ? champ('agence_nom', 'Agence', a.agence_nom) + champ('honoraires_texte', 'Honoraires', a.honoraires_texte) : '') +
       '<div class="champ large"><label>Description</label><textarea name="description" maxlength="4000" rows="6">' + albEchapper(a.description || '') + '</textarea></div>' +
+      '<div class="champ large"><label>🏠 Étage par étage (sous-sol, rez-de-chaussée, étage, combles…)</label>' +
+        '<div id="etages-' + a.id + '">' + (a.etages || []).map(ligneEtage).join('') + '</div>' +
+        '<button type="button" class="bouton discret" onclick="ajouterEtage(\'' + a.id + '\')">+ Ajouter un étage</button></div>' +
+      '<div class="champ large"><label style="color:#4B1A3E;">💶 Côté finances</label></div>' +
+      champ('taxe_fonciere_annuelle', 'Taxe foncière (€ par an)', a.taxe_fonciere_annuelle, 'numeric') +
+      champ('charges_mensuelles', 'Charges (€ par mois, appartement)', a.charges_mensuelles, 'numeric') +
+      '<div class="champ large"><label>🌳 Les environs (commerces, école, transports, ambiance, nuisances connues)</label><textarea name="environnement" maxlength="1500" rows="4">' + albEchapper(a.environnement || '') + '</textarea></div>' +
+      '<div class="champ large"><label>➕ Les + du bien (un point par ligne)</label><textarea name="points_plus" maxlength="1500" rows="4" placeholder="Ex. : Piscine chauffée&#10;Garage de 36 m²&#10;Vue dégagée">' + albEchapper(a.points_plus || '') + '</textarea></div>' +
+      '<div class="champ large"><label>⚠️ Points d\'attention (un point par ligne, dits avec honnêteté)</label><textarea name="points_attention" maxlength="1500" rows="4" placeholder="Ex. : Peintures et sols à rafraîchir&#10;Électricité à prévoir">' + albEchapper(a.points_attention || '') + '</textarea></div>' +
     '</div>' +
     '<div class="actions"><button class="bouton" type="submit">💾 Enregistrer</button><button class="bouton discret" type="button" onclick="basculer(\'modif-' + a.id + '\')">Annuler</button></div>' +
   '</form>';
+}
+
+// Une ligne « étage » du formulaire : un nom (ex. Rez-de-chaussée) et ce qu'on y trouve
+function ligneEtage(e) {
+  e = e || {};
+  return '<div class="ligne-etage" style="display:grid;gap:6px;margin-bottom:10px;padding:10px;background:#F7F3EA;border:1px solid #E8E6E0;border-radius:6px;">' +
+    '<input class="etage-nom" maxlength="60" placeholder="Ex. : Rez-de-chaussée" value="' + albEchapper(e.nom || '') + '">' +
+    '<textarea class="etage-texte" maxlength="1200" rows="3" placeholder="Ce que l\'on trouve à cet étage (pièces, surfaces…)">' + albEchapper(e.texte || '') + '</textarea>' +
+    '<div><button type="button" class="bouton discret" onclick="retirerEtage(this)">Retirer cet étage</button></div>' +
+  '</div>';
+}
+function ajouterEtage(id) {
+  const zone = document.getElementById('etages-' + id);
+  if (zone.querySelectorAll('.ligne-etage').length >= 8) return;
+  zone.insertAdjacentHTML('beforeend', ligneEtage({}));
+  const noms = zone.querySelectorAll('.etage-nom');
+  noms[noms.length - 1].focus();
+}
+// Ne fait que retirer la ligne du formulaire : rien n'est changé tant que tu n'as pas cliqué sur « Enregistrer »
+function retirerEtage(bouton) {
+  bouton.closest('.ligne-etage').remove();
 }
 
 function historiqueAnnonce(a) {
@@ -480,6 +510,16 @@ async function corrigerAnnonce(event, id) {
     const v = el.value.trim();
     if (v !== '') champs[el.name] = ['prix', 'surface_m2', 'nb_pieces', 'surface_terrain_m2', 'depenses_energie_min', 'depenses_energie_max'].includes(el.name)
       ? v.replace(/[^0-9.,]/g, '').replace(',', '.') : v;
+  });
+  // Les nouvelles parties sont toujours envoyées, même vides, pour pouvoir les effacer
+  ['taxe_fonciere_annuelle', 'charges_mensuelles'].forEach(function (nom) {
+    champs[nom] = (f.elements[nom].value || '').replace(/[^0-9]/g, '');
+  });
+  ['environnement', 'points_plus', 'points_attention'].forEach(function (nom) {
+    champs[nom] = f.elements[nom].value.trim();
+  });
+  champs.etages = Array.from(f.querySelectorAll('.ligne-etage')).map(function (l) {
+    return { nom: l.querySelector('.etage-nom').value.trim(), texte: l.querySelector('.etage-texte').value.trim() };
   });
   const bouton = f.querySelector('button[type="submit"]');
   bouton.disabled = true;
