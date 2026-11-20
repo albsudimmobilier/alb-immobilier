@@ -63,6 +63,15 @@
     .contact textarea { width: 100%; margin-top: 10px; padding: 9px; font-family: inherit; font-size: 0.88rem; border: 1px solid #E8E6E1; border-radius: 8px; min-height: 56px; resize: vertical; }
     .vide { text-align: center; padding: 24px 10px; color: #7a7a75; font-size: 0.92rem; background: #fff; border-radius: 10px; border: 1px solid #E8E6E1; }
 
+    /* Annonce liée au questionnaire */
+    .annonce-liee { margin-top: 10px; padding: 10px 12px; background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 10px; font-size: 0.88rem; }
+    .annonce-titre { font-weight: 700; color: #4B1A3E; word-break: break-word; }
+    .annonce-infos { color: #7a7a75; font-size: 0.8rem; margin-top: 2px; }
+    .miniatures { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .miniatures img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #E8E6E1; display: block; }
+    .annonce-videos { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .annonce-videos a { color: #5A3A6A; font-weight: 600; }
+
     /* Détail des réponses */
     .detail { margin-top: 12px; padding: 12px; background: #FBF8F3; border: 1px solid #E8E6E1; border-radius: 10px; }
     .detail-titre { font-weight: 700; color: #4B1A3E; margin: 10px 0 4px; font-size: 0.9rem; }
@@ -235,6 +244,38 @@
     return '<div class="detail">' + (contenu || '<p class="aide">Aucune réponse remplie pour le moment.</p>') + '</div>';
   }
 
+  // ----- Annonce liée : titre, prix, photos et vidéos de l'annonce du pro -----
+  const STATUTS_ANNONCE = {
+    en_attente: 'En cours d\'étude', disponible: 'En ligne', en_pause: 'En pause', sous_offre: 'Sous offre',
+    compromis: 'Sous compromis', vendu: 'Vendu', refusee: 'Non publiée'
+  };
+
+  function lienSur(url) { return /^https:\/\//i.test(String(url || '')); }
+
+  function blocAnnonce(q) {
+    const a = q.annonce;
+    if (!a) { return ''; }
+    const prix = (a.prix !== null && a.prix !== undefined && isFinite(Number(a.prix))) ? Number(a.prix).toLocaleString('fr-FR') + ' €' : '';
+    const infos = [prix, a.ville, STATUTS_ANNONCE[a.statut] || a.statut].filter(Boolean).join(' · ');
+    const photos = (a.photos || []).filter(lienSur);
+    const videos = (a.videos || []).filter(lienSur);
+
+    let html = '<div class="annonce-liee"><div class="annonce-titre">🏡 ' + e(a.titre || 'Annonce') + '</div>' +
+      '<div class="annonce-infos">' + e(infos) + ' · ' + photos.length + ' photo' + (photos.length > 1 ? 's' : '') +
+      ' · ' + (videos.length ? videos.length + ' vidéo' + (videos.length > 1 ? 's' : '') : 'pas de vidéo') + '</div>';
+    if (photos.length) {
+      html += '<div class="miniatures">' + photos.map(function (url, i) {
+        return '<a href="' + e(url) + '" target="_blank" rel="noopener"><img src="' + e(url) + '" alt="Photo ' + (i + 1) + ' de l\'annonce" loading="lazy"></a>';
+      }).join('') + '</div>';
+    }
+    if (videos.length) {
+      html += '<div class="annonce-videos">' + videos.map(function (url, i) {
+        return '<a href="' + e(url) + '" target="_blank" rel="noopener">▶️ Vidéo ' + (i + 1) + '</a>';
+      }).join('') + '</div>';
+    }
+    return html + '</div>';
+  }
+
   function dessinerFiche(q) {
     const traite = !!q.traite_le;
     const noteTexte = (notesEnCours[q.id] !== undefined) ? notesEnCours[q.id] : (q.note || '');
@@ -262,6 +303,7 @@
       '<div class="contact-date">Envoyé le ' + e(formatDateFr(q.envoye_le)) +
         (q.fin_mandat ? ' · fin de mandat le ' + e(formatJourFr(q.fin_mandat)) : ' · pas de date de fin de mandat') +
         (traite ? ' · traité le ' + e(formatDateFr(q.traite_le)) : '') + '</div>' +
+      blocAnnonce(q) +
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button></div>' +
       blocDetail(q) +
