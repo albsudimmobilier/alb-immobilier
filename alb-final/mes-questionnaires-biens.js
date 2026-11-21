@@ -22,6 +22,7 @@
   const ETATS_TRAVAUX = ['Déjà refait', 'Rien à prévoir', 'À rafraîchir', 'À refaire'];
   const TROIS = ['Fait', 'À faire', 'Ne sait pas'];
   const NIV_MAISON = ['Sous-sol', 'RDC', '1er étage', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
+  const TYPES_LIBELLE = { appartement: 'appartement', maison: 'maison', village: 'maison de village' };
   const NIV_APPART = ['RDC', 'Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
   const NIV4 = NIV_MAISON;
   const CUISINE_TYPE = ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'];
@@ -272,7 +273,7 @@
     if (b.k === 'sous') return '<div class="mqb-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqb-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqb-note">' + e(b.texte) + '</p>';
-    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && etat.admin)) ? globalThis.albDiagnostics.html() : '';
+    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && (etat.admin || !(etat.annonce && etat.annonce.id)))) ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'photos') return '<p class="mqb-note" id="mqb-photos-info"></p><div id="mqb-photos-vignettes" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px;"></div>';
 
     if (b.k === 'champs') {
@@ -607,7 +608,11 @@
       }
       try {
         const { data, error } = etat.admin
-          ? (etat.adminParId
+          ? (etat.adminMembre && !etat.qid
+            ? await albSupabase.rpc('alb_admin_questionnaire_creer_membre', {
+                p_profile_id: etat.adminMembre, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null,
+              })
+            : etat.adminParId
             ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
                 p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null,
               })
@@ -699,6 +704,7 @@
     if (act === 'fermer' || act === 'plus-tard') fermer();
     else if (act === 'brouillon') sauvegarder(false, false);
     else if (act === 'envoyer') { b.disabled = true; envoyer().finally(function () { b.disabled = false; }); }
+    else if (act === 'type-appartement') afficherFormulaire('appartement');
     else if (act === 'type-maison') afficherFormulaire('maison');
     else if (act === 'type-village') afficherFormulaire('village');
     else if (act === 'ouvrir-ajout') {
@@ -736,10 +742,10 @@
   // ---------- Écrans ----------
   const INTRO = 'Pour que Jocelyne puisse vous aider à rédiger la description de votre annonce, remplissez le questionnaire de ce bien. Vous pouvez l’enregistrer en brouillon et le terminer plus tard.';
 
-  function afficherChoixType() {
+  function afficherChoixType(avecAppartement) {
     creerFenetre('Questionnaire du bien',
       '<h3>Questionnaire du bien</h3><p>' + e(INTRO) + '</p>' +
-      '<div class="mqb-choix"><button type="button" class="mqb-grand" data-mqb-act="type-maison">🏠<br>Maison</button>' +
+      '<div class="mqb-choix">' + (avecAppartement ? '<button type="button" class="mqb-grand" data-mqb-act="type-appartement">🏢<br>Appartement</button>' : '') + '<button type="button" class="mqb-grand" data-mqb-act="type-maison">🏠<br>Maison</button>' +
       '<button type="button" class="mqb-grand" data-mqb-act="type-village">🏘️<br>Maison de village</button></div>',
       '<button type="button" class="bouton bouton-discret" data-mqb-act="plus-tard">Plus tard</button>');
   }
@@ -900,6 +906,40 @@
     await afficherFormulaire(q.type_bien, q);
   }
 
+  // Valeurs déjà connues du compte, pour un questionnaire sans annonce
+  function defautsCompte(pf) {
+    const V = 'Vous et le bien', D = {};
+    D[V + '|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
+    D[V + '|Agence ou réseau'] = pf.nom_entreprise || '';
+    D[V + '|Téléphone'] = pf.telephone || '';
+    D[V + '|E-mail'] = pf.email || '';
+    return D;
+  }
+
+  // Le pro ouvre un questionnaire que Jocelyne a préparé pour lui (sans annonce)
+  async function ouvrirSansAnnonce(qid) {
+    const existant = questionnaires.find(function (q) { return q.id === qid; });
+    if (!existant) return;
+    etat = { annonce: { id: null }, qid: null, type: null, modifie: false, nbPhotos: 0, photos: [], defauts: {} };
+    if (existant.statut === 'envoye') { afficherEnvoye(existant); return; }
+    const rProfil = await albSupabase.from('profiles').select('prenom, nom, nom_entreprise, email, telephone').eq('id', monId).maybeSingle();
+    etat.defauts = defautsCompte(rProfil.data || {});
+    const { data, error } = await albSupabase.rpc('alb_pro_questionnaire_lire', { p_id: qid });
+    if (error || !data) { console.log('[ALB DEBUG] questionnaire sans annonce : lecture impossible', error); return; }
+    etat.qid = qid;
+    await afficherFormulaire(data.type_bien, data);
+  }
+
+  // Jocelyne prépare un questionnaire vierge pour une personne qui n'a pas (encore) d'annonce
+  async function ouvrirPourAdminMembre(profileId, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger_membre', { p_profile_id: profileId });
+    if (error || !data) { console.log('[ALB DEBUG] questionnaire admin : membre introuvable', error); alert('La personne n\u2019a pas été trouvée.'); return; }
+    etat = { annonce: { id: null }, qid: null, type: null, modifie: false, nbPhotos: 0, photos: [], defauts: defautsCompte(data.profil || {}), admin: true, adminParId: true, adminMembre: profileId, dejaEnvoye: false };
+    afficherChoixType(true);
+  }
+
   // ---------- Dans « Mes annonces » ----------
   async function charger() {
     const r1 = await albSupabase.from('annonces').select('id, titre, type_vente, statut, type_bien').eq('vendeur_id', monId);
@@ -915,9 +955,31 @@
     injecter();
   }
 
+  // Les questionnaires préparés avec Jocelyne, qui ne sont pas liés à une annonce
+  function injecterSansAnnonce(zone) {
+    const sans = questionnaires.filter(function (q) { return !q.annonce_id; });
+    const ancien = zone.querySelector('.mqb-sans');
+    if (!sans.length) { if (ancien) ancien.parentNode.removeChild(ancien); return; }
+    const html = '<div class="mqb-offre-titre">Questionnaire préparé avec Jocelyne</div>' +
+      '<p>Vérifiez-le, complétez-le si besoin, puis envoyez-le : vous seul(e) décidez.</p><div class="mqb-offre-boutons">' +
+      sans.map(function (q) {
+        const nom = TYPES_LIBELLE[q.type_bien] || 'bien';
+        const lib = q.statut === 'envoye' ? '✅ Questionnaire envoyé' : '📝 Continuer le questionnaire';
+        return '<button type="button" class="ma-btn' + (q.statut === 'envoye' ? '' : ' ma-btn-oui') + '" data-mqb-sans="' + e(q.id) + '">' + lib + ' (' + e(q.adresse || nom) + ')</button>';
+      }).join('') + '</div>';
+    if (ancien && ancien.dataset.sig === html) return;
+    if (ancien) ancien.parentNode.removeChild(ancien);
+    const w = document.createElement('div');
+    w.className = 'mqb-offre mqb-sans';
+    w.dataset.sig = html;
+    w.innerHTML = html;
+    zone.insertBefore(w, zone.firstChild);
+  }
+
   function injecter() {
     const zoneAnnonces = document.getElementById('mes-annonces');
     if (!estPro || !zoneAnnonces) return;
+    injecterSansAnnonce(zoneAnnonces);
     zoneAnnonces.querySelectorAll('.ma-annonce').forEach(function (carte) {
       if (carte.querySelector('.mqb-ajout')) return;
       const id = String(carte.id || '').replace(/^ma-/, '');
@@ -944,6 +1006,8 @@
   }
 
   document.addEventListener('click', function (ev) {
+    const s = ev.target.closest && ev.target.closest('[data-mqb-sans]');
+    if (s) { ouvrirSansAnnonce(s.dataset.mqbSans); return; }
     const o = ev.target.closest && ev.target.closest('[data-mqb-ouvrir]');
     if (o) { ouvrir(o.dataset.mqbOuvrir); return; }
     const c = ev.target.closest && ev.target.closest('[data-mqb-complete]');
@@ -1068,6 +1132,6 @@
     tour();
   }
 
-  window.albQuestionnaireBien = { ouvrir: ouvrir, ouvrirPourAdmin: ouvrirPourAdmin, ouvrirPourAdminId: ouvrirPourAdminId };
+  window.albQuestionnaireBien = { ouvrir: ouvrir, ouvrirPourAdmin: ouvrirPourAdmin, ouvrirPourAdminId: ouvrirPourAdminId, ouvrirPourAdminMembre: ouvrirPourAdminMembre };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();

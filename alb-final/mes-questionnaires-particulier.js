@@ -272,7 +272,7 @@
     if (b.k === 'sous') return '<div class="mqp-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqp-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqp-note">' + e(b.texte) + '</p>';
-    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && etat.admin)) ? globalThis.albDiagnostics.html() : '';
+    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && (etat.admin || !(etat.annonce && etat.annonce.id)))) ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'champs') return htmlChamps(sec, b.items);
 
     if (b.k === 'loyer') {
@@ -606,12 +606,16 @@
             ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
                 p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: null,
               })
-            : await albSupabase.rpc('alb_admin_questionnaire_creer', {
-                p_annonce_id: etat.annonce.id, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep,
-              }))
+            : (etat.adminMembre
+              ? await albSupabase.rpc('alb_admin_questionnaire_creer_membre', {
+                  p_profile_id: etat.adminMembre, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep,
+                })
+              : await albSupabase.rpc('alb_admin_questionnaire_creer', {
+                  p_annonce_id: etat.annonce.id, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep,
+                })))
           : await albSupabase.rpc('alb_part_questionnaire_enregistrer', {
           p_id: etat.qid || null,
-          p_annonce_id: etat.annonce.id,
+          p_annonce_id: etat.annonce.id || null,
           p_type: etat.type,
           p_adresse: d.adresse,
           p_reponses: d.rep,
@@ -862,6 +866,39 @@
     afficherChoixType(an.type_bien === 'appartement' || an.type_bien === 'maison' ? an.type_bien : '');
   }
 
+  // Valeurs déjà connues du compte, pour un questionnaire sans annonce
+  function defautsCompte(pf) {
+    const D = {};
+    D['Vous|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
+    D['Vous|Téléphone'] = pf.telephone || '';
+    D['Vous|E-mail'] = pf.email || '';
+    return D;
+  }
+
+  // La personne ouvre le questionnaire que Jocelyne a préparé avec elle (sans annonce)
+  async function ouvrirSansAnnonce(qid) {
+    const existant = questionnaires.find(function (q) { return q.id === qid; });
+    if (!existant) return;
+    etat = { annonce: { id: null }, qid: null, type: null, modifie: false, defauts: {} };
+    if (existant.statut === 'envoye') { afficherEnvoye(); return; }
+    const rProfil = await albSupabase.from('profiles').select('prenom, nom, email, telephone').eq('id', monId).maybeSingle();
+    etat.defauts = defautsCompte(rProfil.data || {});
+    const { data, error } = await albSupabase.rpc('alb_part_questionnaire_lire_id', { p_id: qid });
+    if (error || !data || !CFG[data.type_bien]) { console.log('[ALB DEBUG] questionnaire sans annonce : lecture impossible', error); return; }
+    etat.qid = qid;
+    await afficherFormulaire(data.type_bien, data);
+  }
+
+  // Jocelyne prépare un questionnaire vierge pour une personne qui n'a pas (encore) d'annonce
+  async function ouvrirPourAdminMembre(profileId, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger_membre', { p_profile_id: profileId });
+    if (error || !data) { console.log('[ALB DEBUG] questionnaire admin : membre introuvable', error); alert('La personne n\u2019a pas été trouvée.'); return; }
+    etat = { annonce: { id: null }, qid: null, type: null, modifie: false, defauts: defautsCompte(data.profil || {}), admin: true, adminMembre: profileId, dejaEnvoye: false };
+    afficherChoixType('');
+  }
+
   // Jocelyne ouvre un questionnaire déjà lancé (brouillon ou envoyé), à partir de son numéro
   let surFermetureAdmin = null;
   async function ouvrirPourAdminId(qid, quandFerme) {
@@ -890,9 +927,31 @@
     injecter();
   }
 
+  // Les questionnaires préparés avec Jocelyne, qui ne sont pas liés à une annonce
+  function injecterSansAnnonce(zone) {
+    const sans = questionnaires.filter(function (q) { return !q.annonce_id; });
+    const ancien = zone.querySelector('.mqp-sans');
+    if (!sans.length) { if (ancien) ancien.parentNode.removeChild(ancien); return; }
+    const html = '<div class="mqp-offre-titre">Le questionnaire de votre bien, préparé avec Jocelyne</div>' +
+      '<p>Vérifiez-le, complétez-le si besoin, puis envoyez-le quand vous êtes prêt(e) : vous seul(e) décidez.</p><div class="mqp-offre-boutons">' +
+      sans.map(function (q) {
+        const nom = { appartement: 'appartement', maison: 'maison', village: 'maison de village' }[q.type_bien] || 'bien';
+        const lib = q.statut === 'envoye' ? '✅ Questionnaire envoyé' : '📝 Continuer le questionnaire';
+        return '<button type="button" class="ma-btn' + (q.statut === 'envoye' ? '' : ' ma-btn-oui') + '" data-mqp-sans="' + e(q.id) + '">' + lib + ' (' + e(nom) + ')</button>';
+      }).join('') + '</div>';
+    if (ancien && ancien.dataset.sig === html) return;
+    if (ancien) ancien.parentNode.removeChild(ancien);
+    const w = document.createElement('div');
+    w.className = 'mqp-offre mqp-sans';
+    w.dataset.sig = html;
+    w.innerHTML = html;
+    zone.insertBefore(w, zone.firstChild);
+  }
+
   function injecter() {
     const zoneAnnonces = document.getElementById('mes-annonces');
     if (!estPart || !zoneAnnonces) return;
+    injecterSansAnnonce(zoneAnnonces);
     zoneAnnonces.querySelectorAll('.ma-annonce').forEach(function (carte) {
       if (carte.querySelector('.mqp-ajout')) return;
       const id = String(carte.id || '').replace(/^ma-/, '');
@@ -919,6 +978,8 @@
   }
 
   document.addEventListener('click', function (ev) {
+    const s = ev.target.closest && ev.target.closest('[data-mqp-sans]');
+    if (s) { ouvrirSansAnnonce(s.dataset.mqpSans); return; }
     const o = ev.target.closest && ev.target.closest('[data-mqp-ouvrir]');
     if (o) { ouvrir(o.dataset.mqpOuvrir); return; }
     const c = ev.target.closest && ev.target.closest('[data-mqp-complete]');
@@ -1044,6 +1105,6 @@
     tour();
   }
 
-  window.albQuestionnaireParticulier = { ouvrir: ouvrir, ouvrirPourAdminId: ouvrirPourAdminId, ouvrirPourAdminAnnonce: ouvrirPourAdminAnnonce };
+  window.albQuestionnaireParticulier = { ouvrir: ouvrir, ouvrirPourAdminId: ouvrirPourAdminId, ouvrirPourAdminAnnonce: ouvrirPourAdminAnnonce, ouvrirPourAdminMembre: ouvrirPourAdminMembre };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();

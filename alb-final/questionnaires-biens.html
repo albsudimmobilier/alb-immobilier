@@ -144,7 +144,7 @@
   <div id="fenetre-nouveau" class="cache" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;overflow:auto;padding:20px;">
     <div style="background:#fff;max-width:560px;margin:0 auto;border-radius:10px;padding:18px;">
       <h3 style="margin-top:0;">➕ Nouveau questionnaire pour un membre</h3>
-      <p class="aide">Choisis le bien. Tu remplis le questionnaire avec la personne : il arrive dans son espace ALB en brouillon, elle vérifie et l'envoie elle-même. Si un questionnaire existe déjà pour ce bien, il s'ouvre à la place.</p>
+      <p class="aide">Choisis le bien. Tu remplis le questionnaire avec la personne : il arrive dans son espace ALB en brouillon, elle vérifie et l'envoie elle-même. Si un questionnaire existe déjà, il s'ouvre à la place. La personne n'a pas encore d'espace ? Crée-le d'abord dans <a href="gestion-site.html">Gestion du site → Suivi des membres → ➕ Ajouter un membre</a>.</p>
       <select id="nouveau-choix" style="width:100%;padding:8px;margin:8px 0;"></select>
       <p id="nouveau-message" class="aide"></p>
       <div class="contact-actions"><button type="button" class="bouton-petit or" id="nouveau-ouvrir">Ouvrir le questionnaire</button><button type="button" class="bouton-petit clair" id="nouveau-fermer">Annuler</button></div>
@@ -555,10 +555,14 @@
 
   // ----- Nouveau questionnaire préparé par Jocelyne pour un membre -----
   let biensChoisissables = [];
+  let membresChoisissables = [];
 
   async function ouvrirNouveau() {
     el('nouveau-message').textContent = 'Chargement…';
     el('fenetre-nouveau').classList.remove('cache');
+    const rm = await albSupabase.rpc('alb_gestion_membres_pour_questionnaire');
+    if (rm.error) { console.log('[ALB DEBUG] nouveau questionnaire : liste des personnes impossible', rm.error); }
+    membresChoisissables = rm.data || [];
     const { data, error } = await albSupabase.rpc('alb_gestion_annonces_pour_questionnaire');
     if (error) {
       console.log('[ALB DEBUG] nouveau questionnaire : liste impossible', error);
@@ -566,16 +570,23 @@
       return;
     }
     biensChoisissables = data || [];
-    el('nouveau-message').textContent = biensChoisissables.length ? '' : 'Aucun bien en ligne pour le moment.';
-    el('nouveau-choix').innerHTML = biensChoisissables.map(function (b, i) {
-      const qui = [b.prenom, b.nom].filter(Boolean).join(' ') || b.email || 'Membre';
-      const etat = b.questionnaire_statut === 'brouillon' ? ' — questionnaire commencé' : (b.questionnaire_statut === 'envoye' ? ' — déjà envoyé' : '');
-      return '<option value="' + i + '">' + e(qui + ' · ' + (b.titre || 'Bien') + (b.ville ? ' (' + b.ville + ')' : '') + ' · ' + (b.origine === 'particulier' ? '🏠 Particulier' : '🤝 Pro') + etat) + '</option>';
-    }).join('');
+    el('nouveau-message').textContent = (biensChoisissables.length || membresChoisissables.length) ? '' : 'Aucun bien ni aucune personne pour le moment.';
+    const nomDe = function (b) { return [b.prenom, b.nom].filter(Boolean).join(' ') || b.email || 'Membre'; };
+    el('nouveau-choix').innerHTML =
+      '<optgroup label="👤 Une personne, sans annonce (questionnaire vierge)">' + membresChoisissables.map(function (m, i) {
+        const etat = m.questionnaire_statut === 'brouillon' ? ' — questionnaire commencé' : (m.questionnaire_statut === 'envoye' ? ' — déjà envoyé' : '');
+        return '<option value="m:' + i + '">' + e(nomDe(m) + (m.entreprise ? ' · ' + m.entreprise : '') + ' · ' + (m.origine === 'particulier' ? '🏠 Particulier' : '🤝 Pro') + etat) + '</option>';
+      }).join('') + '</optgroup>' +
+      '<optgroup label="🏡 Un bien déjà en ligne">' + biensChoisissables.map(function (b, i) {
+        const etat = b.questionnaire_statut === 'brouillon' ? ' — questionnaire commencé' : (b.questionnaire_statut === 'envoye' ? ' — déjà envoyé' : '');
+        return '<option value="a:' + i + '">' + e(nomDe(b) + ' · ' + (b.titre || 'Bien') + (b.ville ? ' (' + b.ville + ')' : '') + ' · ' + (b.origine === 'particulier' ? '🏠 Particulier' : '🤝 Pro') + etat) + '</option>';
+      }).join('') + '</optgroup>';
   }
 
   function lancerNouveau() {
-    const b = biensChoisissables[Number(el('nouveau-choix').value)];
+    const choisi = String(el('nouveau-choix').value || '').split(':');
+    const sansAnnonce = choisi[0] === 'm';
+    const b = (sansAnnonce ? membresChoisissables : biensChoisissables)[Number(choisi[1])];
     if (!b) { return; }
     el('fenetre-nouveau').classList.add('cache');
     const apres = async function () { if (await chargerQuestionnaires()) { dessinerTout(); } chargerAInviter(); };
@@ -583,6 +594,7 @@
     const module = part ? window.albQuestionnaireParticulier : window.albQuestionnaireBien;
     if (!module) { alert('Le questionnaire n\u2019est pas encore prêt, réessaie dans un instant.'); return; }
     if (b.questionnaire_id) { module.ouvrirPourAdminId(b.questionnaire_id, apres); }
+    else if (sansAnnonce) { module.ouvrirPourAdminMembre(b.profile_id, apres); }
     else if (part) { module.ouvrirPourAdminAnnonce(b.annonce_id, apres); }
     else { module.ouvrirPourAdmin(b.annonce_id, apres); }
   }
