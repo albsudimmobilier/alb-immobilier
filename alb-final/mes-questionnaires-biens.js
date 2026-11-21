@@ -272,7 +272,7 @@
     if (b.k === 'sous') return '<div class="mqb-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqb-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqb-note">' + e(b.texte) + '</p>';
-    if (b.k === 'fichiers') return globalThis.albDiagnostics ? globalThis.albDiagnostics.html() : '';
+    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && etat.admin)) ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'photos') return '<p class="mqb-note" id="mqb-photos-info"></p>';
 
     if (b.k === 'champs') {
@@ -606,7 +606,11 @@
         if (lien && !/^https:\/\//i.test(lien)) { afficherMessage('erreur', 'Le lien de la vidéo doit commencer par https://'); return false; }
       }
       try {
-        const { data, error } = await albSupabase.rpc('alb_pro_questionnaire_enregistrer', {
+        const { data, error } = etat.admin
+          ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer', {
+              p_id: etat.qid || null, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null, p_annonce_id: etat.annonce.id,
+            })
+          : await albSupabase.rpc('alb_pro_questionnaire_enregistrer', {
           p_id: etat.qid || null,
           p_type: etat.type,
           p_adresse: d.adresse,
@@ -668,8 +672,10 @@
     if (etat && etat.modifie && racine && racine.querySelector('.mqb-formulaire')) await sauvegarder(false, true);
     clearTimeout(minuteur);
     fermerFenetre();
+    const etaitAdmin = !!(etat && etat.admin);
     etat = null;
     champs = [];
+    if (etaitAdmin) { if (typeof surFermetureAdmin === 'function') surFermetureAdmin(); return; }
     await rafraichir();
   }
 
@@ -753,9 +759,16 @@
     creerFenetre('Questionnaire du bien — ' + CFG[type].libelle, html,
       '<div id="mqb-msg" class="mqb-msg" aria-live="polite"></div>' +
       '<div class="mqb-boutons"><button type="button" class="bouton bouton-discret" data-mqb-act="brouillon">Enregistrer le brouillon</button>' +
-      '<button type="button" class="bouton" data-mqb-act="envoyer">Envoyer à Jocelyne</button></div>');
+      (etat.admin ? '<button type="button" class="bouton" data-mqb-act="fermer">Fermer</button>' : '<button type="button" class="bouton" data-mqb-act="envoyer">Envoyer à Jocelyne</button>') + '</div>');
 
-    if (globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
+    if (etat.admin) {
+      const ban = document.createElement('p');
+      ban.className = 'mqb-note';
+      ban.style.cssText = 'background:#FFF6DC;border:1px solid #E5C770;padding:8px 10px;border-radius:6px;';
+      ban.textContent = 'Tu remplis ce questionnaire à la place du professionnel. Il reste en brouillon dans son espace : c\u2019est lui qui l\u2019enverra.';
+      racine.querySelector('.mqb-formulaire').insertBefore(ban, racine.querySelector('.mqb-formulaire').firstChild);
+    }
+    if (!etat.admin && globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
     const info = racine.querySelector('#mqb-photos-info');
     if (info) {
       info.textContent = etat.nbPhotos > 0
@@ -816,6 +829,36 @@
     if (an.type_bien === 'appartement') await afficherFormulaire('appartement');
     else if (an.type_bien === 'maison' && Number(an.surface_terrain_m2) > 0) await afficherFormulaire('maison');
     else afficherChoixType();
+  }
+
+  // ---------- Jocelyne remplit à la place du pro (depuis Gestion du site) ----------
+  let surFermetureAdmin = null;
+  async function ouvrirPourAdmin(annonceId, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger', { p_annonce_id: annonceId });
+    if (error || !data) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
+    const an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
+    etat = { annonce: { id: annonceId }, qid: null, type: null, modifie: false, nbPhotos: Number(data.nb_photos) || 0, defauts: {}, admin: true };
+    const V = 'Vous et le bien';
+    etat.defauts[V + '|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
+    etat.defauts[V + '|Agence ou réseau'] = an.agence_nom || pf.nom_entreprise || '';
+    etat.defauts[V + '|Téléphone'] = pr.telephone || pf.telephone || '';
+    etat.defauts[V + '|E-mail'] = pf.email || '';
+    etat.defauts[V + '|N° et rue'] = pr.adresse || '';
+    etat.defauts[V + '|Code postal'] = an.code_postal || '';
+    etat.defauts[V + '|Commune'] = an.ville || '';
+    etat.defauts['Le financier|Prix de vente (€)'] = an.prix != null ? String(an.prix) : '';
+    etat.defauts['Le financier|Honoraires (€ ou %)'] = an.honoraires_texte || '';
+    etat.defauts['Le bien en chiffres|Surface habitable (m²)'] = an.surface_m2 != null ? String(an.surface_m2) : '';
+    etat.defauts['Le bien en chiffres|Nombre de pièces'] = an.nb_pieces != null ? String(an.nb_pieces) : '';
+    etat.defauts['Le bien en chiffres|Terrain (m²)'] = an.surface_terrain_m2 != null ? String(an.surface_terrain_m2) : '';
+    etat.defauts['Accès et équipements|Diagnostic énergie (DPE) — classe'] = an.dpe || '';
+    etat.defauts['Accès et équipements|Gaz à effet de serre (GES) — classe'] = an.ges || '';
+    const q = data.questionnaire;
+    if (q) { etat.qid = q.id; await afficherFormulaire(q.type_bien, q); return; }
+    const type = an.type_bien === 'appartement' ? 'appartement' : 'maison';
+    await afficherFormulaire(type);
   }
 
   // ---------- Dans « Mes annonces » ----------
@@ -986,6 +1029,6 @@
     tour();
   }
 
-  window.albQuestionnaireBien = { ouvrir: ouvrir };
+  window.albQuestionnaireBien = { ouvrir: ouvrir, ouvrirPourAdmin: ouvrirPourAdmin };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();

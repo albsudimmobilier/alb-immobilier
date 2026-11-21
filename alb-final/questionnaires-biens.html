@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="alb-connexion.js"></script>
   <script src="annonce-proposee.js"></script>
+  <script src="mes-questionnaires-biens.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -708,6 +709,10 @@
       el('mail-message').textContent = '';
       el('mail-envoyer').disabled = false;
       el('fenetre-mail').classList.remove('cache');
+    }
+    const mq = e.target.closest('[data-modifier-quest]');
+    if (mq && window.albQuestionnaireBien) {
+      window.albQuestionnaireBien.ouvrirPourAdmin(mq.dataset.modifierQuest, function () { chargerAInviter(); });
     }
     const vq = e.target.closest('[data-voir-quest]');
     if (vq) {
