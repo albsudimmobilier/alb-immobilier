@@ -690,6 +690,7 @@
         + '<br><span style="font-size:14px;">' + echapper((b.pro_prenom || '') + ' ' + (b.pro_nom || '')) + ' · ' + echapper(b.pro_email || '') + '</span>'
         + '<br><span style="font-size:14px;">' + (b.brouillon ? '📝 Brouillon déjà prérempli dans son espace · ' : '') + quand + '</span>'
         + '<br><button type="button" data-voir-quest="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir le questionnaire prérempli</button> '
+        + '<button type="button" data-modifier-quest="' + echapper(b.annonce_id) + '" style="margin-top:8px;">✏️ Modifier le questionnaire</button> '
         + '<button type="button" data-voir-mail="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir et modifier l\'e-mail</button>'
         + '<div class="detail cache" id="quest-' + echapper(b.annonce_id) + '" style="margin-top:10px;"></div></div>';
     }).join('');
