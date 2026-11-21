@@ -893,6 +893,19 @@
     el('page').classList.remove('cache');
     dessinerTout();
     chargerAInviter();
+    ouvrirDepuisLien();
+  }
+
+  // Lien venant d'une fiche d'entrée : #membre=<id> ouvre le questionnaire du bien de cette personne (son nom est repris)
+  async function ouvrirDepuisLien() {
+    const m = /^#membre=([0-9a-f-]{36})$/i.exec(window.location.hash || '');
+    if (!m) { return; }
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger_membre', { p_profile_id: m[1] });
+    if (error || !data) { console.log('[ALB DEBUG] ouverture depuis une fiche d\'entrée impossible', error); alert('Cette personne n\u2019a pas pu être ouverte.'); return; }
+    const module = data.origine === 'particulier' ? window.albQuestionnaireParticulier : window.albQuestionnaireBien;
+    if (!module) { alert('Le questionnaire n\u2019est pas encore prêt, réessaie dans un instant.'); return; }
+    module.ouvrirPourAdminMembre(m[1], async function () { if (await chargerQuestionnaires()) { dessinerTout(); } chargerAInviter(); });
   }
 
   document.addEventListener('DOMContentLoaded', demarrer);

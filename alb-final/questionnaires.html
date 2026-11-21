@@ -326,6 +326,141 @@
     return '<label class="petit-champ">' + libelle + '<input id="f-' + id + '" type="' + (type || 'text') + '" maxlength="200" value="' + e(valeur || '') + '"' + (extra || '') + '></label>';
   }
 
+
+  // ============================================================
+  // 👤 Créer l'espace ALB de la personne, depuis sa fiche d'entrée
+  // Même fonction que « Ajouter un membre » de Gestion du site. Aucun e-mail ni SMS ne part tout seul :
+  // tu reçois un lien d'activation à lui envoyer toi-même ; en l'ouvrant, elle choisit son code PIN.
+  // On ne redessine que ce petit cadre : ce que tu as tapé dans la fiche n'est jamais perdu.
+  // ============================================================
+  const espaceOuvert = {};
+  const espaceDefauts = {};
+  const espaceLiens = {};
+  function ficheEsp(type, id) { return (type === 'pro' ? fiches : fichesPart).find(function (x) { return x.id === id; }); }
+  function valChamp(ids) { for (let i = 0; i < ids.length; i++) { const x = el(ids[i]); if (x && x.value.trim()) return x.value.trim(); } return ''; }
+
+  function blocEspaceFiche(type, f) {
+    const id = f.id, part = type === 'part';
+    const cadre = function (contenu) { return '<div style="background:#F7F3EA;border:1px solid #E3D6B8;border-radius:8px;padding:12px;margin:12px 0;">' + contenu + '</div>'; };
+    const lienBien = f.profile_id ? '<a class="bouton or" href="questionnaires-biens.html#membre=' + encodeURIComponent(f.profile_id) + '">📝 Questionnaire du bien (son nom est repris)</a>' : '';
+    if (espaceLiens[id]) {
+      const l = espaceLiens[id];
+      const lien = location.origin + '/nouveau-code.html#jeton=' + l.jeton;
+      const tel = String(l.telephone || '').replace(/[^0-9+]/g, '');
+      const sms = 'Bonjour ' + (l.prenom || '') + ', c\'est Jocelyne d\'ALB Immobilier. Comme convenu, votre espace est prêt ! Pour l\'activer, choisissez votre code PIN ici (lien valable 7 jours) : ' + lien + ' À la bien !';
+      return cadre('<p style="margin:0 0 6px;font-weight:700;color:#4B1A3E;">✅ Espace créé pour ' + e(l.prenom) + ' · ' + e(l.email) + ' · ⏳ pas encore activé</p>' +
+        '<p class="aide">Envoie-lui son lien toi-même. Tant qu\'il ne l\'a pas ouvert, son espace reste « pas encore activé ». Le lien est valable 7 jours.</p>' +
+        '<textarea id="esp-sms-' + e(id) + '" readonly style="width:100%;min-height:90px;">' + e(sms) + '</textarea>' +
+        '<div class="actions">' + (tel ? '<a class="bouton" href="sms:' + e(tel) + '?&body=' + encodeURIComponent(sms) + '">📱 Ouvrir le SMS</a>' : '') +
+        '<button type="button" class="bouton clair" data-esp="copier" data-cible="esp-sms-' + e(id) + '">📋 Copier</button>' + lienBien + '</div>');
+    }
+    if (f.profile_id && !espaceOuvert[id]) {
+      return cadre('<p style="margin:0 0 6px;font-weight:700;color:#4B1A3E;">✅ Son espace ALB existe</p>' +
+        '<div class="actions"><button type="button" class="bouton clair" data-esp="lien" data-type="' + type + '" data-id="' + e(id) + '">🔗 Préparer son lien d\'activation</button>' + lienBien + '</div>' +
+        '<div class="message cache" id="esp-msg-' + e(id) + '"></div>');
+    }
+    if (!espaceOuvert[id]) {
+      return cadre('<p class="aide" style="margin:0 0 8px;">Pas encore d\'espace ALB ? Crée-le pendant l\'appel : il choisira son code PIN avec le lien que tu lui envoies, puis tu pourras remplir son questionnaire du bien avec lui.</p>' +
+        '<button type="button" class="bouton or" data-esp="ouvrir" data-type="' + type + '" data-id="' + e(id) + '">👤 Créer son espace ALB</button>');
+    }
+    const d = espaceDefauts[id] || {};
+    const coche = function (n, texte, on) { return '<label style="display:flex;gap:6px;align-items:center;margin:4px 14px 4px 0;"><input type="checkbox" style="width:auto;flex:none;" id="esp-' + n + '-' + e(id) + '"' + (on ? ' checked' : '') + '> ' + texte + '</label>'; };
+    const champEsp = function (n, lib, val, type2) { return '<label class="petit-champ">' + lib + '<input type="' + (type2 || 'text') + '" id="esp-' + n + '-' + e(id) + '" maxlength="200" value="' + e(val || '') + '"></label>'; };
+    return cadre('<p style="margin:0 0 6px;font-weight:700;color:#4B1A3E;">👤 Créer l\'espace de ' + e(d.prenom || '') + '</p>' +
+      '<p class="aide">Aucun e-mail ne part tout seul : tu reçois un lien d\'activation à lui envoyer toi-même.</p>' +
+      '<div class="grille">' + champEsp('prenom', 'Prénom', d.prenom) + champEsp('nom', 'Nom', d.nom) +
+        champEsp('email', 'E-mail (obligatoire)', d.email, 'email') + champEsp('tel', 'Téléphone (obligatoire)', d.tel, 'tel') +
+        (part ? '' : champEsp('entreprise', 'Entreprise', d.entreprise) + champEsp('siret', 'SIRET (facultatif)', d.siret)) + '</div>' +
+      (part ? '<p class="aide" style="margin:8px 0 2px;">Son projet (plusieurs choix possibles) :</p><div style="display:flex;flex-wrap:wrap;">' +
+        coche('acheteur', '🔎 Il achète', f.parcours === 'acheteur') + coche('vendeur', '🏡 Il vend', f.parcours === 'vendeur') + coche('clientpro', '🛠️ Il cherche un pro (travaux, financement…)', f.parcours === 'besoin_pro') + '</div>'
+        : '<p class="aide">Il arrivera dans « Pros à valider », comme une inscription normale.</p>') +
+      '<div class="actions"><button type="button" class="bouton vert" data-esp="creer" data-type="' + type + '" data-id="' + e(id) + '">✅ Créer son espace</button>' +
+      '<button type="button" class="bouton clair" data-esp="annuler" data-type="' + type + '" data-id="' + e(id) + '">Annuler</button></div>' +
+      '<div class="message cache" id="esp-msg-' + e(id) + '"></div>');
+  }
+
+  function redessinerEsp(type, id) {
+    const f = ficheEsp(type, id), z = el('esp-' + id);
+    if (f && z) z.innerHTML = blocEspaceFiche(type, f);
+  }
+  function messageEsp(id, texte, ok) {
+    const z = el('esp-msg-' + id); if (!z) { retour(ok ? 'succes' : 'erreur', texte); return; }
+    z.className = 'message ' + (ok ? 'succes' : 'erreur'); z.textContent = texte;
+  }
+
+  async function creerEspaceFiche(type, id, bouton) {
+    const f = ficheEsp(type, id); if (!f) return;
+    const part = type === 'part';
+    const v = function (n) { const x = el('esp-' + n + '-' + id); return x ? x.value.trim() : ''; };
+    const cochee = function (n) { const x = el('esp-' + n + '-' + id); return !!(x && x.checked); };
+    const metier = part ? '' : (valChamp(['f-metier']) || f.metier);
+    const donnees = {
+      demande_rappel: part ? (f.demande_rappel_id || '') : '',
+      prenom: v('prenom'), nom: v('nom'), email: v('email'), telephone: v('tel'), note: '',
+      metier_pro: metier, metier_autre: '', nom_entreprise: part ? '' : v('entreprise'), siret: part ? '' : v('siret'),
+      est_acquereur: part && cochee('acheteur'), est_vendeur: part && cochee('vendeur'), est_client_pro: part && cochee('clientpro')
+    };
+    espaceDefauts[id] = { prenom: donnees.prenom, nom: donnees.nom, email: donnees.email, tel: donnees.telephone, entreprise: donnees.nom_entreprise, siret: donnees.siret };
+    const MESSAGES = {
+      NOM_MANQUANT: 'Le prénom et le nom sont obligatoires.',
+      EMAIL_INVALIDE: 'Il faut son adresse e-mail pour créer son espace. Demande-la-lui pendant l\'appel.',
+      TELEPHONE_INVALIDE: 'Il faut son numéro de téléphone (10 chiffres), pour lui envoyer le lien par SMS.',
+      CASQUETTE_MANQUANTE: 'Coche au moins une case : il achète, il vend ou il cherche un pro.',
+      ENTREPRISE_MANQUANTE: 'Indique son entreprise.',
+      SIRET_INVALIDE: 'Le SIRET doit avoir 14 chiffres (ou reste vide).',
+      EMAIL_DEJA_UTILISE: 'Cette adresse e-mail a déjà un espace ALB. Cherche-la dans « Suivi des membres » de Gestion du site.'
+    };
+    bouton.disabled = true;
+    const r = await albCreerEspace(donnees);
+    if (!r.ok) {
+      bouton.disabled = false;
+      console.log('[ALB DEBUG] fiche d\'entrée : création d\'espace impossible', r.code);
+      messageEsp(id, MESSAGES[r.code] || albMessageErreur(r.code), false);
+      return;
+    }
+    // On garde le lien entre la fiche et l'espace, pour que son nom soit repris dans le questionnaire du bien
+    const lie = await albSupabase.rpc('alb_gestion_lier_fiche_espace', { p_type: part ? 'particulier' : 'pro', p_id: id, p_profile_id: r.profile_id });
+    if (lie.error) console.log('[ALB DEBUG] fiche d\'entrée : lien avec l\'espace non gardé', lie.error);
+    f.profile_id = r.profile_id;
+    espaceOuvert[id] = false;
+    espaceLiens[id] = { jeton: r.jeton, email: r.email || donnees.email, prenom: donnees.prenom, telephone: donnees.telephone };
+    redessinerEsp(type, id);
+    retour('succes', 'Espace créé ✓ Envoie-lui maintenant son lien d\'activation.');
+  }
+
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest('[data-esp]');
+    if (!b) return;
+    const action = b.dataset.esp, type = b.dataset.type, id = b.dataset.id;
+    if (action === 'ouvrir') {
+      const part = type === 'part', f = ficheEsp(type, id); if (!f) return;
+      espaceDefauts[id] = part
+        ? { prenom: valChamp(['f-p-prenom']) || f.prenom, nom: valChamp(['f-p-nom']) || f.nom, email: valChamp(['f-p-email']) || f.email, tel: valChamp(['f-p-telephone']) || f.telephone }
+        : { prenom: valChamp(['f-prenom']) || f.prenom, nom: valChamp(['f-nom']) || f.nom, email: valChamp(['f-email']) || f.email, tel: valChamp(['f-telephone']) || f.telephone, entreprise: valChamp(['f-entreprise']) || f.entreprise, siret: valChamp(['f-siret']) || f.siret };
+      espaceOuvert[id] = true; redessinerEsp(type, id); return;
+    }
+    if (action === 'annuler') { espaceOuvert[id] = false; redessinerEsp(type, id); return; }
+    if (action === 'creer') { await creerEspaceFiche(type, id, b); return; }
+    if (action === 'lien') {
+      const f = ficheEsp(type, id); if (!f || !f.profile_id) return;
+      b.disabled = true;
+      const { data, error } = await albSupabase.rpc('alb_gestion_lien_activation', { p_id: f.profile_id });
+      b.disabled = false;
+      if (error) {
+        const dejaActif = String(error.message || '').indexOf('DEJA_ACTIVE') !== -1;
+        messageEsp(id, dejaActif ? 'Il a déjà activé son espace ✓ Rien à lui envoyer.' : 'Le lien n\'a pas pu être préparé, réessaie.', dejaActif);
+        return;
+      }
+      espaceLiens[id] = { jeton: data.jeton, email: data.email, prenom: f.prenom || '', telephone: f.telephone || '' };
+      redessinerEsp(type, id); return;
+    }
+    if (action === 'copier') {
+      const zone = el(b.dataset.cible);
+      try { await navigator.clipboard.writeText(zone.value); } catch (x) { zone.select(); document.execCommand('copy'); }
+      const avant = b.textContent; b.textContent = '✓ Copié'; setTimeout(function () { b.textContent = avant; }, 1500);
+    }
+  });
+
   function formulaireFiche(f, m) {
     const questions = QUESTIONS[f.metier] || [];
     const rep = f.reponses || {};
@@ -341,6 +476,7 @@
         champ('reseau_agence', 'Agence, réseau ou cabinet', f.reseau_agence) + champ('zone', 'Zone', f.zone) +
         champ('date_appel', 'Date de l\'appel', f.date_appel, 'date') + metierChoix +
       '</div>' +
+      '<div id="esp-' + e(f.id) + '">' + blocEspaceFiche('pro', f) + '</div>' +
       '<h3>Les questions</h3>' +
       questions.map(function (q) {
         const r = rep[q.id] || {};
@@ -657,6 +793,7 @@
         champ("p-telephone", "Téléphone", f.telephone, "tel") + champ("p-email", "E-mail", f.email, "email") +
         champ("p-commune", "Commune ou code postal", f.commune) +
       "</div>" +
+      '<div id="esp-' + e(f.id) + '">' + blocEspaceFiche('part', f) + '</div>' +
       "<h3>" + e(PARCOURS[f.parcours] || "") + "</h3>" +
       questions.map(function (q) {
         const r = rep[q.id] || {};
