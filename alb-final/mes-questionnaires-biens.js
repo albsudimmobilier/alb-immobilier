@@ -808,7 +808,10 @@
         return;
       }
     }
+    // Le type de bien se reconnaît tout seul : un appartement, ou une maison avec un terrain (jardin)
+    // s'ouvre directement. Sans terrain, on laisse le choix (maison ou maison de village).
     if (an.type_bien === 'appartement') await afficherFormulaire('appartement');
+    else if (an.type_bien === 'maison' && Number(an.surface_terrain_m2) > 0) await afficherFormulaire('maison');
     else afficherChoixType();
   }
 
