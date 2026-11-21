@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Immobilier ancien à Marseille et environs · Vendre, acheter, rénover | ALB Immobilier</title>
+  <meta name="description" content="Marseille, Allauch, Plan-de-Cuques, Marignane, Côte Bleue… Vendre, acheter, financer ou rénover un bien ancien à Marseille et dans ses environs, avec des professionnels du secteur vérifiés par ALB.">
+  <link rel="stylesheet" href="polices/polices.css">
+  <link rel="canonical" href="https://albimmobilier.fr/immobilier-ancien-marseille">
+  <link rel="icon" type="image/png" href="https://albimmobilier.fr/logo-signature.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ALB Immobilier">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:url" content="https://albimmobilier.fr/immobilier-ancien-marseille">
+  <meta property="og:title" content="Immobilier ancien à Marseille et environs | ALB Immobilier">
+  <meta property="og:description" content="Marseille, Allauch, Plan-de-Cuques, Marignane, Côte Bleue… Vendre, acheter, financer ou rénover un bien ancien à Marseille et dans ses environs, avec des professionnels du secteur vérifiés par ALB.">
+  <meta property="og:image" content="https://albimmobilier.fr/logo-signature.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Immobilier ancien à Marseille et environs",
+    "description": "Marseille, Allauch, Plan-de-Cuques, Marignane, Côte Bleue… Vendre, acheter, financer ou rénover un bien ancien à Marseille et dans ses environs, avec des professionnels du secteur vérifiés par ALB.",
+    "url": "https://albimmobilier.fr/immobilier-ancien-marseille",
+    "inLanguage": "fr-FR",
+    "about": { "@type": "Place", "name": "Marseille et environs" },
+    "publisher": { "@id": "https://albimmobilier.fr/#entreprise" }
+  }
+  </script>
+
+  <style>
+    /* ========== BASE DE LA PAGE ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #F5F3F0;
+      color: #4A4A47;
+      line-height: 1.6;
+      /* Le pied de page reste toujours en bas de l'écran, même quand la page est courte */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+
+    /* ========== HEADER OFFICIEL (ne pas modifier) ========== */
+    .alb-header {
+      background: white;
+      border-bottom: 1px solid #E8E6E0;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header-wrapper {
+      width: 100%;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 50px;
+      height: 100%;
+    }
+    .logo-left {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 100%;
+    }
+    .logo-left img {
+      height: 100%;
+      object-fit: contain;
+      max-width: 200px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 45px;
+      flex-grow: 1;
+    }
+    .nav a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav a:hover {
+      color: #B28E3D;
+      border-bottom-color: #B28E3D;
+    }
+    .btn-cta {
+      background: #4B1A3E !important;
+      color: white !important;
+      padding: 10px 22px !important;
+      border-radius: 4px;
+      border: none !important;
+    }
+    .btn-cta:hover {
+      background: #B28E3D !important;
+    }
+
+    /* Téléphone : header à l'horizontale sur 2 lignes
+       ligne 1 = logo à gauche + bouton "Mon espace ALB" à droite
+       ligne 2 = les 4 liens côte à côte */
+    @media (max-width: 768px) {
+      .alb-header {
+        height: auto;
+      }
+      .header-wrapper {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding: 8px 12px 4px;
+        height: auto;
+      }
+      .logo-left {
+        order: 1;
+        height: 44px;
+      }
+      .logo-left img {
+        height: 44px;
+        max-width: 110px;
+      }
+      .nav {
+        display: contents;
+      }
+      .nav a.btn-cta {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 14px !important;
+        font-size: 0.85rem;
+        border-bottom: none !important;
+      }
+      .header-wrapper::after {
+        content: "";
+        order: 3;
+        flex-basis: 100%;
+        height: 0;
+      }
+      .nav a:not(.btn-cta) {
+        order: 4;
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 0.7rem;
+        padding: 8px 0 6px;
+        margin-top: 4px;
+      }
+    }
+    /* ========== CONTENU LÉGAL (mobile d'abord) ========== */
+    .legal-page { padding: 32px 16px; background: white; flex: 1 0 auto; }
+    .legal-content { max-width: 800px; margin: 0 auto; line-height: 1.8; color: #333; }
+    .legal-content h1 { font-family: 'Playfair Display', serif; font-size: 1.9rem;  line-height: 1.25; color: #4B1A3E; margin-bottom: 10px; border-bottom: 3px solid #B28E3D; padding-bottom: 15px; }
+    .legal-content .date { font-size: 13px; color: #999; margin-bottom: 30px; }
+    .legal-content h2 { font-size: 1.3rem; margin-top: 30px; margin-bottom: 15px; color: #4B1A3E; }
+    .legal-content p, .legal-content li { margin-bottom: 12px; color: #4A4A47; }
+    .legal-content ul { margin-left: 20px; margin-bottom: 15px; }
+    .legal-content li { margin-bottom: 8px; }
+    .legal-content h3 { font-family: 'Montserrat', sans-serif; font-size: 1.05rem; margin-top: 20px; margin-bottom: 10px; color: #5A3A6A; }
+    .legal-content h4 { font-size: 0.98rem; margin-top: 14px; margin-bottom: 8px; color: #4B1A3E; }
+    .legal-content strong { color: #4B1A3E; }
+    .info-box p { margin-bottom: 0; }
+    .info-box { background: #F5F3F0; border-left: 4px solid #B28E3D; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #4A4A47; }
+    @media (min-width: 700px) { .legal-page { padding: 60px 40px; } .legal-content h1 { font-size: 2.5rem; } .legal-content h2 { font-size: 1.4rem; } .legal-content p, .legal-content li { text-align: justify; } }
+
+    /* ========== PAGES CONSEILS ========== */
+    .legal-content .sous-titre { font-style: italic; color: #666; margin-top: 20px; margin-bottom: 10px; }
+    .legal-content .sources { font-size: 13px; color: #777; margin-top: 6px; }
+    .legal-content .sources a { color: #4B1A3E; text-decoration: underline; }
+    .legal-content .info-box a { color: #4B1A3E; }
+    .legal-content .sommaire { background: #F5F3F0; border-radius: 8px; padding: 16px 20px 6px; margin: 25px 0; }
+    .legal-content .sommaire p { font-weight: 600; color: #4B1A3E; margin-bottom: 8px; }
+    .legal-content .sommaire ol { margin-left: 22px; }
+    .legal-content .sommaire a { color: #4B1A3E; }
+    .legal-content .deux-voies { display: grid; gap: 14px; margin: 18px 0; }
+    .legal-content .voie { border: 1px solid #E8E6E0; border-left: 4px solid #B28E3D; border-radius: 6px; padding: 14px 16px 4px; }
+    .legal-content .voie h4 { margin-top: 0; }
+    .legal-content .carte-conseil { display: block; border: 1px solid #E8E6E0; border-left: 4px solid #4B1A3E; border-radius: 8px; padding: 18px 20px; margin: 18px 0; text-decoration: none; background: #fff; }
+    .legal-content .carte-conseil:hover { background: #F5F3F0; }
+    .legal-content .carte-conseil strong { display: block; font-family: 'Playfair Display', serif; font-size: 1.15rem; margin-bottom: 6px; }
+    .legal-content .carte-conseil span { color: #4A4A47; font-size: 0.95rem; }
+    .legal-content .bouton { display: inline-block; background: #4B1A3E; color: #fff; padding: 11px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 4px 8px 8px 0; }
+    .legal-content .bouton:hover { background: #3a132f; }
+    .legal-content .bouton.clair { background: #fff; color: #4B1A3E; border: 1px solid #4B1A3E; }
+    .legal-content .mention { font-size: 13px; color: #999; font-style: italic; margin-top: 30px; }
+    @media (min-width: 700px) { .legal-content .deux-voies { grid-template-columns: 1fr 1fr; } }
+
+    /* ========== FOOTER OFFICIEL (ne pas modifier) ========== */
+    .footer {
+      background: #1a1a1a;
+      color: white;
+      padding: 50px 40px 25px;
+      margin-top: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      padding-bottom: 35px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer-col h5 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: #B28E3D;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-col p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .footer-col a {
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease, text-decoration 0.25s ease;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .footer-col a:hover {
+      color: #B28E3D;
+      text-decoration: underline;
+    }
+
+    .footer-col.legal a {
+      color: #ffffff;
+    }
+
+    .footer-col.legal a:hover {
+      color: #B28E3D;
+    }
+
+    .footer-founder {
+      margin-top: 20px !important;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 25px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-slogan {
+      color: #B28E3D;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-content h2 {
+      color: #4B1A3E;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      line-height: 1.8;
+      color: #333333;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    .modal-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .modal-btn {
+      display: inline-block;
+      background: #4B1A3E;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .modal-btn:hover {
+      background: #B28E3D;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .footer-container { gap: 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        padding: 40px 20px 20px;
+      }
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        padding-bottom: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+      .footer-col p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+      .footer-bottom {
+        font-size: 0.8rem;
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer {
+        padding: 30px 15px 15px;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+      .footer-col h5 {
+        font-size: 0.88rem;
+      }
+      .footer-col p {
+        font-size: 0.8rem;
+      }
+    }
+    /* ========== PAGE SECTEUR ========== */
+    .projets { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0; }
+    @media (min-width: 700px) { .projets { grid-template-columns: 1fr 1fr; } }
+    .projet { background: #F5F3F0; border-radius: 12px; padding: 18px; }
+    .projet h3 { margin-top: 0 !important; }
+    .projet p { text-align: left !important; }
+    .projet a, .lien-or { color: #4B1A3E; font-weight: 600; }
+    .communes { background: #F5F3F0; border-radius: 12px; padding: 18px; text-align: left !important; line-height: 2; }
+    .pros-secteur li { text-align: left !important; }
+    .bouton-pros { display: inline-block; background: #4B1A3E; color: white !important; padding: 12px 22px; border-radius: 25px; text-decoration: none; font-weight: 600; margin: 10px 0 20px; }
+    .bon-a-savoir li { margin-bottom: 14px !important; }
+    .source-officielle { display: block; font-size: 0.82rem; color: #777; margin-top: 3px; }
+    .source-officielle a { color: #4B1A3E; text-decoration: underline; }
+    .mot-fondatrice { border-left: 4px solid #B28E3D; background: #FBF8F3; border-radius: 0 12px 12px 0; padding: 18px 22px; margin: 18px 0; }
+    .mot-fondatrice p { font-style: italic; text-align: left !important; }
+    .mot-fondatrice .signature { font-style: normal; font-weight: 600; color: #4B1A3E; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER OFFICIEL ========== -->
+<header class="alb-header">
+  <div class="header-wrapper">
+    <a href="index.html" class="logo-left">
+      <img src="LOGO.png" alt="ALB Sud Immobilier" />
+    </a>
+    <nav class="nav">
+      <a href="index.html">Accueil</a>
+      <a href="conseils.html">Conseils</a>
+      <a href="annonces.html">Annonces</a>
+      <a href="vitrine-pros.html">Nos pros ALB</a>
+      <a href="projets-alb.html">Projets ALB</a>
+      <a href="espace-alb.html" class="btn-cta">Mon espace ALB</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ========== CONTENU ========== -->
+  <section class="legal-page">
+    <div class="legal-content">
+      <h1>Immobilier ancien à Marseille et environs</h1>
+      <p class="sous-titre">Vendre, acheter, financer ou rénover une maison ou un appartement ancien, avec des professionnels qui connaissent le secteur.</p>
+
+      <p>Marseille et ses environs, c'est la ville et ses 16 arrondissements, mais aussi Allauch, Plan-de-Cuques, Septèmes, Marignane et les villages de la Côte Bleue, de Carry à Sausset. On y trouve des appartements anciens en immeubles du 19<sup>e</sup> siècle, des « trois fenêtres marseillais », des maisons de village et des villas dans les collines.</p>
+      <p>ALB Immobilier vous aide à y voir clair dans votre projet et vous met en relation avec des professionnels de Marseille et environs, choisis et vérifiés un par un.</p>
+
+      <h2>Vous avez un projet à Marseille et environs ?</h2>
+      <div class="projets">
+        <div class="projet"><h3>Vous vendez</h3><p>Préparez votre bien et vos documents, et faites-vous accompagner par un professionnel de l'immobilier du secteur si vous le souhaitez.</p><a href="vendre-mon-bien.html">Vendre mon bien →</a></div>
+        <div class="projet"><h3>Vous achetez</h3><p>Trouvez une maison ou un appartement ancien. Quand vous demandez une visite, notre simulateur vérifie votre budget, et un courtier peut vous rappeler si vous le souhaitez.</p><a href="annonces.html">Voir les annonces →</a><br><a href="projet-demande.html?module=financement">Vérifier mon budget avec un courtier →</a></div>
+        <div class="projet"><h3>Vous financez</h3><p>Un courtier étudie votre situation et cherche le financement adapté à votre projet.</p><a href="projet-demande.html?module=financement">Mon projet de financement →</a></div>
+        <div class="projet"><h3>Vous rénovez</h3><p>Maçonnerie, plomberie, électricité, climatisation, chauffage, peinture, menuiserie, toiture, façade… des artisans du secteur pour remettre votre bien ancien en valeur.</p><a href="projet-demande.html?module=travaux">Mon projet de travaux →</a></div>
+      </div>
+
+      <h2>Bon à savoir à Marseille et environs</h2>
+      <ul class="bon-a-savoir">
+        <li><strong>Immeuble ancien en centre-ville :</strong> avant de faire une offre, vérifiez que l'immeuble ne fait pas l'objet d'un arrêté de mise en sécurité (l'ancien « arrêté de péril »). La Ville de Marseille publie la liste de ces arrêtés, adresse par adresse.<span class="source-officielle">Source : <a href="https://www.marseille.fr/index.php/logement-urbanisme/amelioration-de-lhabitat/arretes-de-peril" target="_blank" rel="noopener">Ville de Marseille</a></span></li>
+        <li><strong>Copropriété :</strong> demandez les procès-verbaux des assemblées générales des 3 dernières années. Regardez aussi le montant du fonds de travaux et les charges impayées de l'immeuble : une copropriété en difficulté peut coûter cher.<span class="source-officielle">Source : <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F2604" target="_blank" rel="noopener">Service-public.fr</a></span></li>
+        <li><strong>Côte Bleue et collines</strong> (Allauch, Septèmes, Carry, Ensuès…) : beaucoup de maisons sont concernées par l'obligation de débroussailler, et le vendeur doit en informer l'acheteur dès l'annonce.<span class="source-officielle">Source : <a href="https://www.notaires.fr/fr/article/les-obligations-legales-de-debroussailler" target="_blank" rel="noopener">notaires.fr</a></span></li>
+      </ul>
+
+      <h2>Les pros ALB qui interviennent à Marseille et environs</h2>
+      <ul class="pros-secteur" id="pros-secteur"><li>Chargement…</li></ul>
+      <a class="bouton-pros" href="vitrine-pros.html?zone=Marseille%20et%20environs">Voir les pros de Marseille et environs</a>
+
+      <h2>Les communes de Marseille et environs</h2>
+      <p class="communes">Allauch · Carry-le-Rouet · Châteauneuf-les-Martigues · Ensuès-la-Redonne · Gignac-la-Nerthe · Marignane · Marseille (les 16 arrondissements) · Plan-de-Cuques · Le Rove · Saint-Victoret · Sausset-les-Pins · Septèmes-les-Vallons</p>
+
+      <h2>Pourquoi passer par ALB ?</h2>
+      <ul>
+        <li><strong>Des pros vérifiés :</strong> chaque professionnel passe un questionnaire et un appel avec Jocelyne avant d'être sur la plateforme.</li>
+        <li><strong>Gratuit pour être accompagné :</strong> l'accompagnement et la mise en relation avec nos pros ne vous coûtent rien. Seule la diffusion de votre annonce par vous-même, sans professionnel, sera payante à partir du 1er janvier 2027 : 9,90 € par mois.</li>
+        <li><strong>Vous restez libre :</strong> vous choisissez le pro avec qui vous voulez avancer, sans engagement.</li>
+        <li><strong>Une fondatrice de la région :</strong> Jocelyne vit entre le Var et les Bouches-du-Rhône et connaît le terrain.</li>
+      </ul>
+
+      <h2>Le mot de Jocelyne</h2>
+      <div class="mot-fondatrice"><p>« C'est Marseille, bébé ! Une ville de quartiers : chacun a son ambiance, ses prix et ses pièges. Mon rôle, c'est de vous mettre en relation avec des pros qui connaissent le terrain, pour que vous achetiez ou vendiez en toute confiance. »</p><p class="signature">Jocelyne, fondatrice d'ALB</p></div>
+
+      <h2>Une question sur votre projet ?</h2>
+      <p>Appelez Jocelyne au <a class="lien-or" href="tel:+33745602805">07 45 60 28 05</a>, du lundi au samedi de 9h à 18h.</p>
+      <p><strong>À la bien, toujours ✨</strong></p>
+    </div>
+  </section>
+
+<div id="apropos-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('apropos-modal')">&times;</span>
+    <h2>À propos d'ALB Immobilier</h2>
+    <p>ALB Immobilier est né d'une conviction simple : un projet immobilier ancien mérite bien plus qu'une simple annonce.</p>
+    <p>Derrière chaque maison, chaque appartement ou chaque rénovation, il y a des personnes, des histoires et parfois toute une vie qui s'apprête à changer.</p>
+    <p>Acheter, vendre, financer, rénover ou trouver le bon professionnel ne devrait jamais être un parcours semé d'incertitudes.</p>
+    <p>ALB Immobilier a été imaginé pour accompagner ces étapes avec une approche plus simple, plus humaine et plus transparente.</p>
+    <p>Ce n'est pas seulement un service en ligne. C'est un parcours d'accompagnement où particuliers et professionnels avancent ensemble, dans un climat de confiance, tout en gardant chacun leur liberté de choisir, d'échanger et de décider.</p>
+    <p>Parce que la technologie ne doit jamais remplacer la relation humaine. Elle doit simplement la rendre plus fluide.</p>
+    <p>Notre ambition est de construire, pas à pas, une nouvelle façon d'aborder l'immobilier ancien. Une façon où chaque projet compte. Où chaque utilisateur est écouté. Et où la confiance retrouve naturellement sa place.</p>
+    <p><strong>À la bien, toujours.</strong></p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('apropos-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<div id="jocelyne-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('jocelyne-modal')">&times;</span>
+    <h2>Le mot de la fondatrice</h2>
+    <p>Je m'appelle Jocelyne Rimlinger et je suis la fondatrice d'ALB Sud Immobilier, l'entreprise à l'origine d'ALB Immobilier.</p>
+    <p>Si vous prenez le temps de lire ces quelques lignes, c'est probablement que vous partagez, vous aussi, un projet immobilier. Alors, avant toute chose… bienvenue.</p>
+    <p>ALB Immobilier est né d'une idée très simple. Je me suis souvent demandé pourquoi un projet aussi important qu'un achat, une vente ou une rénovation pouvait parfois devenir si compliqué.</p>
+    <p>Trop d'interlocuteurs. Trop d'informations dispersées. Pas assez de repères. Et surtout, pas assez d'accompagnement.</p>
+    <p>J'ai alors décidé de créer ce que j'aurais aimé trouver moi-même : un espace où l'on avance avec plus de clarté, plus de confiance et plus d'humanité.</p>
+    <p>Je ne prétends pas réinventer l'immobilier. En revanche, je suis convaincue que l'on peut le vivre autrement. Avec davantage d'écoute. Davantage de simplicité. Et beaucoup de respect pour les personnes qui nous confient leur projet.</p>
+    <p>ALB Immobilier grandit chaque jour. Chaque nouvelle fonctionnalité, chaque amélioration et chaque détail sont pensés avec une seule ambition : rendre votre parcours un peu plus simple que la veille.</p>
+    <p>Je crois profondément qu'une belle entreprise ne se construit pas uniquement avec des outils. Elle se construit avec des valeurs. La confiance. La transparence. L'engagement. Et le plaisir de faire les choses bien.</p>
+    <p>Si aujourd'hui vous choisissez de faire un bout de chemin avec ALB Immobilier, j'espère que vous ressentirez cette philosophie à chaque étape de votre parcours.</p>
+    <p>Merci pour votre confiance. Et bienvenue dans cette belle aventure.</p>
+    <p style="margin-top: 30px; font-weight: 600;">Jocelyne Rimlinger<br>Fondatrice d'ALB Sud Immobilier</p>
+    <div class="modal-buttons">
+      <a class="modal-btn" onclick="closeModal('jocelyne-modal'); return false;">Fermer</a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FOOTER OFFICIEL ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h5>À propos</h5>
+        <p>
+          <a onclick="openModal('apropos-modal'); return false;">À propos d'ALB Immobilier</a><br>
+          <br>
+          <a onclick="openModal('jocelyne-modal'); return false;">Le mot de la fondatrice</a>
+        </p>
+        <h5 style="margin-top: 22px;">Nos secteurs</h5>
+        <div class="secteurs-dep">
+          <details style="margin:4px 0;">
+            <summary style="cursor:pointer;color:#fff;font-weight:500;font-size:0.9rem;">Var</summary>
+            <p style="margin:6px 0 0 14px;"><a href="https://albimmobilier.fr/immobilier-ancien-centre-var">Centre Var</a><br>
+            <a href="https://albimmobilier.fr/immobilier-ancien-toulon">Toulon et environs</a></p>
+          </details>
+          <details style="margin:4px 0;">
+            <summary style="cursor:pointer;color:#fff;font-weight:500;font-size:0.9rem;">Bouches-du-Rhône</summary>
+            <p style="margin:6px 0 0 14px;"><a href="https://albimmobilier.fr/immobilier-ancien-marseille">Marseille et environs</a><br>
+            <a href="https://albimmobilier.fr/immobilier-ancien-pays-d-aix">Pays d'Aix</a></p>
+          </details>
+        </div>
+      </div>
+      <div class="footer-col legal">
+        <h5>Légal</h5>
+        <p>
+          <a href="https://albimmobilier.fr/confidentialite">Politique de confidentialité</a><br>
+          <a href="https://albimmobilier.fr/cgu">Conditions générales</a><br>
+          <a href="https://albimmobilier.fr/charte">Charte de qualité</a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <p><a href="mailto:contact@albimmobilier.fr"><strong>📧 contact@albimmobilier.fr</strong></a></p>
+        <p><a href="tel:+33745602805">📱 07 45 60 28 05</a></p>
+        <p class="footer-founder">La fondatrice<br><strong>Jocelyne</strong> répond à toutes vos questions</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ALB Sud Immobilier • <span class="footer-slogan">à la bien, toujours</span> ✨</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ========== MODALES OFFICIELLES (ne pas modifier) ==========
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.classList.remove('active');
+    }
+  }
+</script>
+<script type="module">
+  // Pros du secteur : la liste se met à jour toute seule depuis les fiches des pros
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  const SECTEUR = 'Marseille et environs';
+  const CORPS = { macon: 'maçon', renovation: 'rénovation générale', plombier: 'plombier', electricien: 'électricien', peintre: 'peintre', menuisier: 'menuisier', couvreur: 'couvreur', carreleur: 'carreleur', chauffagiste: 'chauffagiste', climaticien: 'climaticien', pisciniste: 'pisciniste', paysagiste: 'paysagiste', terrassier: 'terrassier – assainissement', facadier: 'façadier – isolation' };
+  const METIER = { courtier: 'courtier', artisan: 'artisan', agent: 'agent immobilier', mandataire: 'mandataire immobilier' };
+  const echapper = t => String(t || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const liste = document.getElementById('pros-secteur');
+  try {
+    const supabase = createClient('https://kutbxyinpokebjdemlnq.supabase.co', 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ');
+    const { data, error } = await supabase.rpc('alb_pros_publics2');
+    if (error) throw error;
+    const pros = (data || []).filter(p => (p.zone_intervention || []).includes(SECTEUR));
+    liste.innerHTML = pros.length ? pros.map(p => {
+      let metier = p.role === 'immo' ? (METIER[p.sous_role_immo] || 'professionnel de l\'immobilier') : (METIER[p.role] || 'professionnel');
+      const corps = (p.metiers_artisan || []).map(c => CORPS[c]).filter(Boolean);
+      if (p.role === 'artisan' && corps.length) metier = 'artisan : ' + corps.join(', ');
+      const prenom = (p.prenom || '').charAt(0).toUpperCase() + (p.prenom || '').slice(1);
+      const nom = (p.nom || '').charAt(0).toUpperCase() + (p.nom || '').slice(1).toLowerCase();
+      return `<li><strong>${echapper(prenom + ' ' + nom)}</strong>, ${echapper(metier)}${p.nom_entreprise ? ' (' + echapper(p.nom_entreprise) + ')' : ''}</li>`;
+    }).join('') : '<li>Nos pros arrivent bientôt dans ce secteur.</li>';
+  } catch (e) {
+    console.error('[ALB DEBUG] Pros du secteur :', e);
+    liste.innerHTML = '<li>Retrouvez tous nos professionnels sur la page Nos pros ALB.</li>';
+  }
+</script>
+<script src="alb-mesure.js" defer></script>
+</body>
+</html>
