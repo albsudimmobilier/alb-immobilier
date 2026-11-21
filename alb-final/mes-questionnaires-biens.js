@@ -22,7 +22,7 @@
   const ETATS_TRAVAUX = ['Déjà refait', 'Rien à prévoir', 'À rafraîchir', 'À refaire'];
   const TROIS = ['Fait', 'À faire', 'Ne sait pas'];
   const NIV_MAISON = ['Sous-sol', 'RDC', '1er étage', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
-  const NIV_APPART = ['Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
+  const NIV_APPART = ['RDC', 'Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
   const NIV4 = NIV_MAISON;
   const CUISINE_TYPE = ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'];
   const CUISINE_EQ = ['Entièrement équipée', 'Aménagée (meubles, sans électroménager)', 'Non équipée'];
