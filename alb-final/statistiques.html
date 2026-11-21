@@ -119,6 +119,10 @@
       <div class="legende"><span><i style="background:#5A3A6A"></i>Particuliers</span><span><i style="background:#B28E3D"></i>Pros</span></div>
       <div id="t-entonnoir"></div>
     </div>
+    <div class="carte">
+      <h3 style="font-size:0.95rem;margin-bottom:4px;">🌐 Fréquentation du site</h3>
+      <div id="t-visites"></div>
+    </div>
     <div class="grille-ensemble">
       <div class="carte"><h3 style="font-size:0.95rem;margin-bottom:4px;">Qui nous rejoint</h3><div id="t-qui"></div></div>
       <div class="carte"><h3 style="font-size:0.95rem;margin-bottom:4px;">Les mandats qui se terminent</h3><div id="t-mandats"></div></div>
@@ -635,6 +639,41 @@
       '<span class="ent-nb">' + nb(total) + '<small>' + nb(part) + ' + ' + nb(pro) + '</small></span></div>';
   }
 
+  function dessinerVisites() {
+    const v = donnees.visiteurs || { par_jour: [], pages: [], sources: [], debut: null };
+    const zone = el('t-visites');
+    if (!v.par_jour.length) {
+      zone.innerHTML = '<p class="vide">Le comptage a commencé : les premières visites apparaîtront ici dès la première visite.</p>';
+      return;
+    }
+    const jours = v.par_jour.filter(function (j) { return dansPeriode(j.jour); });
+    const total = jours.reduce(function (t, j) { return t + j.visites; }, 0);
+    const moyenne = jours.length ? Math.round(total / jours.length) : 0;
+    // Visites par semaine (8 dernières semaines, du lundi au dimanche)
+    const lundi = new Date(); lundi.setHours(0, 0, 0, 0); lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
+    const semaines = [];
+    for (let k = 7; k >= 0; k--) { const d = new Date(lundi.getTime() - k * 7 * 86400000); semaines.push({ d: d, n: 0 }); }
+    v.par_jour.forEach(function (j) {
+      const d = new Date(j.jour + 'T00:00:00');
+      for (let k = semaines.length - 1; k >= 0; k--) { if (d >= semaines[k].d) { semaines[k].n += j.visites; break; } }
+    });
+    const maxS = Math.max.apply(null, semaines.map(function (x) { return x.n; }).concat([1]));
+    const colonnes = '<div class="mois-colonnes">' + semaines.map(function (x) {
+      const h = Math.round(x.n * 80 / maxS);
+      return '<div class="mois-col"><span class="nbm">' + (x.n || '') + '</span><div class="pile" style="height:' + h + 'px"><span style="height:' + h + 'px;background:#9A958C"></span></div>' +
+        '<span class="nom-mois">' + x.d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + '</span></div>';
+    }).join('') + '</div>';
+    const liste = function (titre, l, cle) {
+      return '<div><p style="font-size:0.86rem;font-weight:700;margin:6px 0 2px;">' + titre + '</p>' +
+        (l.length ? l.slice(0, 6).map(function (x) { return '<p style="font-size:0.84rem;margin:2px 0;">' + e(x[cle] || '/') + ' <strong>' + nb(x.visites) + '</strong></p>'; }).join('') : '<p class="aide">Rien pour l\'instant.</p>') + '</div>';
+    };
+    zone.innerHTML = '<p style="font-size:0.9rem;"><strong>' + nb(total) + ' visite' + (total > 1 ? 's' : '') + '</strong> sur la période · environ ' + nb(moyenne) + ' par jour</p>' +
+      colonnes + '<p class="aide">Visites par semaine (semaine commençant le jour indiqué).</p>' +
+      '<div class="grille-ensemble">' + liste('Pages les plus vues', v.pages, 'page') + liste('D\'où viennent les visiteurs', v.sources, 'source') + '</div>' +
+      '<p class="aide">Une personne qui revient un autre jour compte une nouvelle visite. Comptage lancé le ' + (v.debut ? new Date(v.debut + 'T00:00:00').toLocaleDateString('fr-FR') : '—') +
+      ', sans cookie. Le département ne s\'applique pas ici. Les robots et ton propre appareil ne sont pas comptés.</p>';
+  }
+
   function dessinerVueEnsemble() {
     const questionnaires = donnees.questionnaires || [];
     const envoyes = questionnaires.filter(function (q) { return q.statut === 'envoye'; });
@@ -672,10 +711,17 @@
       ['✅ Ventes et signatures', ventes.filter(function (a) { return a.type_vente === 'particulier'; }).length,
         ventes.filter(function (a) { return a.type_vente === 'accompagnee'; }).length + signes.length],
     ];
-    const max = Math.max.apply(null, lignes.map(function (l) { return l[1] + l[2]; }).concat([0]));
-    el('t-entonnoir').innerHTML = lignes.map(function (l) { return ligneEntonnoir(l[0], l[1], l[2], max); }).join('') +
+    const visitesPeriode = ((donnees.visiteurs && donnees.visiteurs.par_jour) || []).filter(function (j) { return dansPeriode(j.jour); })
+      .reduce(function (t, j) { return t + j.visites; }, 0);
+    const max = Math.max.apply(null, lignes.map(function (l) { return l[1] + l[2]; }).concat([visitesPeriode, 0]));
+    const ligneVisites = '<div class="ent-ligne"><span>🌐 Visites du site</span><div class="ent-piste"><div class="ent-barre" style="width:' +
+      (max && visitesPeriode ? Math.max(2, Math.round(visitesPeriode * 100 / max)) : 0) + '%"><span style="width:100%;background:#9A958C"></span></div></div>' +
+      '<span class="ent-nb">' + nb(visitesPeriode) + '<small>' + (visitesPeriode ? pct(lignes[0][1] + lignes[0][2], visitesPeriode) + ' % s\'inscrivent' : 'à partir de ce jour') + '</small></span></div>';
+    el('t-entonnoir').innerHTML = ligneVisites + lignes.map(function (l) { return ligneEntonnoir(l[0], l[1], l[2], max); }).join('') +
       (max ? '' : '<p class="vide">Les barres se rempliront avec les premières demandes.</p>') +
       '<p class="aide">Demandes déposées : projets, annonces et questionnaires envoyés. Mises en relation : pour les particuliers, les projets avec au moins un pro ; pour les pros, les demandes acceptées. Ventes et signatures : biens vendus, prêts, chantiers et apports signés.</p>';
+
+    dessinerVisites();
 
     // Qui nous rejoint
     const tous = donnees.membres.filter(bonDep);
@@ -735,7 +781,9 @@
     if (!session?.session) { etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.'; return; }
     const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
-    const [{ data, error }, devisRep, commercialRep, questRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats')]);
+    const [{ data, error }, devisRep, commercialRep, questRep, visitesRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats'), albSupabase.rpc('alb_gestion_visiteurs')]);
+    if (visitesRep.error) console.error('[ALB DEBUG] visiteurs :', visitesRep.error);
+    try { window.localStorage.setItem('alb-pas-compter', '1'); } catch (err) {}
     if (questRep.error) console.error('[ALB DEBUG] questionnaires :', questRep.error);
     if (devisRep.error) console.error('[ALB DEBUG] devis :', devisRep.error);
     if (commercialRep.error) console.error('[ALB DEBUG] suivi commercial :', commercialRep.error);
@@ -743,6 +791,7 @@
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
       signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
       questionnaires: questRep.data || [],
+      visiteurs: visitesRep.data || { par_jour: [], pages: [], sources: [], debut: null },
       devis: devisRep.data || [], commercial: Object.assign({ carnet: [], membres: [], rdv: [], factures: [] }, commercialRep.data || {}) };
     const t = data.tarifs || {};
     if (t.abonnement_immo != null) TARIF_AGENT_MOIS = Number(t.abonnement_immo);
