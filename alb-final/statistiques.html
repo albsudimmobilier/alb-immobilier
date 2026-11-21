@@ -687,11 +687,16 @@
     const enLigne = donnees.annonces.filter(function (a) { return bonDep(a) && ['disponible', 'sous_offre', 'compromis'].indexOf(a.statut) !== -1; });
     const valeurBiens = enLigne.reduce(function (t, a) { return t + Number(a.prix || 0); }, 0);
     const parOrigine = function (l, o) { return l.filter(function (q) { return q.origine === o; }).length; };
+    const carnet = (donnees.commercial && donnees.commercial.carnet) || [];
+    const carnetActifs = carnet.filter(function (c) { return c.etape !== 'pas_interesse'; });
+    const nbEtape = function (liste) { return carnet.filter(function (c) { return liste.indexOf(c.etape) !== -1; }).length; };
+    const carnetARelancer = nbEtape(['a_relancer']), carnetEnCours = nbEtape(['en_discussion', 'interesse', 'proposition']), carnetInscrits = nbEtape(['inscrit']);
     const val = valeurTarifs();
     el('c-ensemble').innerHTML =
       compteur(nb(aRappeler.length), '📞 À rappeler', 'ont dit oui au recontact · ' + plur(parOrigine(aRappeler, 'particulier'), 'particulier') + ', ' + plur(parOrigine(aRappeler, 'pro'), 'pro'), true) +
       compteur(nb(finissent.length), '📅 Mandats qui finissent', 'dans les 90 prochains jours · ' + plur(parOrigine(finissent, 'particulier'), 'particulier') + ', ' + plur(parOrigine(finissent, 'pro'), 'pro'), true) +
       compteur(euros(valeurBiens), '🏠 Valeur des biens en ligne', nb(enLigne.length) + ' bien' + (enLigne.length > 1 ? 's' : '') + ' · ' + nb(enLigne.filter(function (a) { return a.type_vente === 'particulier'; }).length) + ' entre particuliers, ' + nb(enLigne.filter(function (a) { return a.type_vente === 'accompagnee'; }).length) + ' accompagnés', true) +
+      compteur(nb(carnetActifs.length), '📇 Ton Carnet', carnetActifs.length ? nb(carnetARelancer) + ' à relancer · ' + nb(carnetEnCours) + ' en discussion · ' + nb(carnetInscrits) + ' inscrit' + (carnetInscrits > 1 ? 's' : '') : 'les contacts rencontrés apparaîtront ici') +
       compteur(euros(val.total) + ' HT', '💶 Avec les tarifs 2027', 'ce que la période choisie aurait rapporté', true);
 
     // Du premier contact au résultat
@@ -713,11 +718,15 @@
     ];
     const visitesPeriode = ((donnees.visiteurs && donnees.visiteurs.par_jour) || []).filter(function (j) { return dansPeriode(j.jour); })
       .reduce(function (t, j) { return t + j.visites; }, 0);
-    const max = Math.max.apply(null, lignes.map(function (l) { return l[1] + l[2]; }).concat([visitesPeriode, 0]));
+    const contratsCarnet = carnet.filter(function (c) { return c.contrat_le; }).length;
+    const max = Math.max.apply(null, lignes.map(function (l) { return l[1] + l[2]; }).concat([visitesPeriode, carnetActifs.length, 0]));
+    const ligneCarnet = '<div class="ent-ligne"><span>📇 Contacts du Carnet</span><div class="ent-piste"><div class="ent-barre" style="width:' +
+      (max && carnetActifs.length ? Math.max(2, Math.round(carnetActifs.length * 100 / max)) : 0) + '%"><span style="width:100%;background:' + COULEUR_PRO + '"></span></div></div>' +
+      '<span class="ent-nb">' + nb(carnetActifs.length) + '<small>' + nb(carnetInscrits) + ' inscrit' + (carnetInscrits > 1 ? 's' : '') + ' · ' + nb(contratsCarnet) + ' contrat' + (contratsCarnet > 1 ? 's' : '') + '</small></span></div>';
     const ligneVisites = '<div class="ent-ligne"><span>🌐 Visites du site</span><div class="ent-piste"><div class="ent-barre" style="width:' +
       (max && visitesPeriode ? Math.max(2, Math.round(visitesPeriode * 100 / max)) : 0) + '%"><span style="width:100%;background:#9A958C"></span></div></div>' +
       '<span class="ent-nb">' + nb(visitesPeriode) + '<small>' + (visitesPeriode ? pct(lignes[0][1] + lignes[0][2], visitesPeriode) + ' % s\'inscrivent' : 'à partir de ce jour') + '</small></span></div>';
-    el('t-entonnoir').innerHTML = ligneVisites + lignes.map(function (l) { return ligneEntonnoir(l[0], l[1], l[2], max); }).join('') +
+    el('t-entonnoir').innerHTML = ligneCarnet + ligneVisites + lignes.map(function (l) { return ligneEntonnoir(l[0], l[1], l[2], max); }).join('') +
       (max ? '' : '<p class="vide">Les barres se rempliront avec les premières demandes.</p>') +
       '<p class="aide">Demandes déposées : projets, annonces et questionnaires envoyés. Mises en relation : pour les particuliers, les projets avec au moins un pro ; pour les pros, les demandes acceptées. Ventes et signatures : biens vendus, prêts, chantiers et apports signés.</p>';
 
