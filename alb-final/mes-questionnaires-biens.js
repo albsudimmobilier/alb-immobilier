@@ -21,11 +21,22 @@
   const DISTANCES = ['À pied, moins de 5 min', 'À pied, moins de 15 min', 'En voiture, moins de 10 min', 'Plus loin'];
   const ETATS_TRAVAUX = ['Déjà refait', 'Rien à prévoir', 'À rafraîchir', 'À refaire'];
   const TROIS = ['Fait', 'À faire', 'Ne sait pas'];
-  const NIV4 = ['RDC', '1er étage', '2e étage', '3e étage'];
+  const NIV_MAISON = ['Sous-sol', 'RDC', '1er étage', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
+  const NIV_APPART = ['Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
+  const NIV4 = NIV_MAISON;
+  const CUISINE_TYPE = ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'];
+  const CUISINE_EQ = ['Entièrement équipée', 'Aménagée (meubles, sans électroménager)', 'Non équipée'];
+  const CUISINE_DEDANS = ['Plaque gaz', 'Plaque induction', 'Plaque électrique, vitrocéramique', 'Four', 'Four micro-ondes', 'Hotte', 'Réfrigérateur', 'Congélateur', 'Lave-vaisselle', 'Lave-linge', 'Meubles hauts et bas', 'Plan de travail', 'Évier', 'Cellier, arrière-cuisine'];
+  const TYPES_PIECES = ['Entrée', 'Séjour, salon', 'Cuisine', 'Chambre', 'Bureau', 'Salle de bains', "Salle d'eau", 'WC', 'Dressing', 'Buanderie, cellier', 'Couloir, palier', 'Balcon, terrasse', 'Cave', 'Garage', 'Véranda', 'Mezzanine', 'Combles, grenier', 'Toit-terrasse', 'Autre (à préciser)'];
+  const NUMEROTEES = ['Chambre', 'Salle de bains', "Salle d'eau", 'WC'];
+  const SEC_PIECES = 'Pièce par pièce';
+  const MSG_RECONTACT = 'Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.';
+  const TEXTE_RECONTACT = "Je souhaite être recontacté(e) par Jocelyne, d'ALB Sud Immobilier.";
   const SALLES = ['Baignoire', 'Douche', "Douche à l'italienne", 'Lavabo', 'Double vasque', 'Meuble vasque', 'WC', 'Bidet', 'Sèche-serviettes'];
 
   const ERREURS = {
     PAS_PRO: 'Ce questionnaire est réservé aux professionnels.',
+    RECONTACT_NON_ACCEPTE: MSG_RECONTACT,
     TROP_LONG: 'Le questionnaire est trop long : raccourcissez les textes libres.',
     ADRESSE_OBLIGATOIRE: "Indiquez l'adresse du bien pour envoyer le questionnaire.",
     INTROUVABLE_OU_DEJA_ENVOYE: 'Ce questionnaire a déjà été envoyé : il ne se modifie plus.',
@@ -52,7 +63,7 @@
       libelle: 'Appartement', copro: true, assainissement: false,
       diags: DIAGS_COMMUNS.concat([['Mesurage loi Carrez', 'Appartement en copropriété']]),
       chiffres: ['Surface habitable (m²)', 'Surface Carrez (m²)', 'Nombre de pièces', 'Chambres', 'Autre (à préciser)', 'Année de construction', 'Étage du logement', "Étages de l'immeuble", "Appartements dans l'immeuble", 'Extérieur : balcon, terrasse (m²)', 'Extérieur : jardin privatif (m²)'],
-      niveaux: ['Niveau 1', 'Niveau 2 (duplex)'],
+      niveaux: NIV_APPART, atelier: false,
       pieces: ['Entrée', 'Séjour, salle à manger', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Chambre 3', 'Bureau', 'Salle de bains 1', 'Salle de bains 2', "Salle d'eau 1", "Salle d'eau 2", 'WC 1', 'WC 2', 'Dressing', 'Buanderie, cellier', 'Couloir', 'Balcon, terrasse'],
       acces: [
         ["Entrée de l'immeuble", ['Interphone', 'Digicode', 'Visiophone', 'Gardien', 'Local vélos, poussettes', 'Porte blindée']],
@@ -69,7 +80,7 @@
       libelle: 'Maison', copro: false, assainissement: true,
       diags: DIAGS_MAISON,
       chiffres: ['Surface habitable (m²)', 'Nombre de pièces', 'Chambres', 'Autre (à préciser)', 'Année de construction', 'Nombre de niveaux', 'Terrain (m²)', 'Extérieur : terrasse (m²)'],
-      niveaux: NIV4,
+      niveaux: NIV4, atelier: true,
       pieces: ['Entrée', 'Séjour, salle à manger', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Chambre 3', 'Bureau', 'Salle de bains 1', 'Salle de bains 2', "Salle d'eau 1", "Salle d'eau 2", 'WC 1', 'WC 2', 'Dressing', 'Buanderie', 'Cellier', 'Palier, couloir', 'Véranda', 'Mezzanine', 'Combles, grenier', 'Garage', 'Cave'],
       acces: [
         ['Portail et entrée', ['Portail électrique', 'Portail manuel', 'Pas de portail', 'Interphone, visiophone', 'Clos entièrement', 'Non clos']],
@@ -89,7 +100,7 @@
       libelle: 'Maison de village', copro: false, assainissement: true,
       diags: DIAGS_MAISON,
       chiffres: ['Surface habitable (m²)', 'Nombre de pièces', 'Chambres', 'Autre (à préciser)', 'Année de construction', 'Étages (rez-de-chaussée compris)', 'Extérieur : cour (m²)', 'Extérieur : terrasse (m²)', 'Extérieur : jardin (m²)'],
-      niveaux: NIV4,
+      niveaux: NIV4, atelier: true,
       pieces: ['Entrée', 'Séjour, salle à manger', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Chambre 3', 'Bureau', 'Salle de bains 1', 'Salle de bains 2', "Salle d'eau 1", "Salle d'eau 2", 'WC 1', 'WC 2', 'Dressing', 'Buanderie', 'Cellier', 'Palier, couloir', 'Mezzanine', 'Combles, grenier', 'Toit-terrasse', 'Garage', 'Cave'],
       acces: [
         ['Accès à la maison', ['Rue étroite ou piétonne', "Voiture jusqu'à la porte", 'Rue calme', 'Rue animée', 'Interphone', 'Portail, porte de garage électrique']],
@@ -158,17 +169,7 @@
       { k: 'cases', l: 'État général', opts: ['Très bon état, rien à prévoir', 'Bon état', 'À rafraîchir (peintures, sols)', 'À rénover (travaux importants)'] },
     ] });
 
-    const blocsSalles = [{ k: 'pieces' }, { k: 'sous', l: "Salles de bains et salles d'eau : ce qu'il y a dedans" }];
-    ['Salle de bains 1', 'Salle de bains 2', "Salle d'eau 1", "Salle d'eau 2"].forEach(function (n) {
-      blocsSalles.push({ k: 'cases', l: 'Contenu — ' + n, aff: n, opts: SALLES });
-    });
-    S.push({ titre: 'Pièce par pièce', blocs: blocsSalles });
-
-    S.push({ titre: 'La cuisine', blocs: [
-      { k: 'cases', l: 'Type', opts: ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'] },
-      { k: 'cases', l: 'Équipement', opts: ['Entièrement équipée', 'Aménagée (meubles, sans électroménager)', 'Non équipée'] },
-      { k: 'cases', l: "Ce qu'il y a dedans", opts: ['Plaque gaz', 'Plaque induction', 'Plaque électrique, vitrocéramique', 'Four', 'Four micro-ondes', 'Hotte', 'Réfrigérateur', 'Congélateur', 'Lave-vaisselle', 'Lave-linge', 'Meubles hauts et bas', 'Plan de travail', 'Évier', 'Cellier, arrière-cuisine', 'Autre (à préciser) : ______'] },
-    ] });
+    S.push({ titre: 'Pièce par pièce', blocs: [{ k: 'pieces' }] });
 
     const blocsEq = [];
     cfg.acces.forEach(function (a) { blocsEq.push({ k: 'cases', l: a[0], opts: a[1] }); });
@@ -209,6 +210,7 @@
       { k: 'cases', l: 'Les moins du bien — à dire avec honnêteté', opts: cfg.moins },
       { k: 'champs', items: [{ l: 'Le point fort en une phrase' }, { l: "Le point d'attention en une phrase" }] },
       { k: 'long', l: 'Autre chose à nous dire sur ce bien (histoire, atouts, freins, travaux votés…)' },
+      { k: 'recontact' },
       { k: 'cases', l: 'Diffusion par ALB', opts: ["J'autorise ALB Sud Immobilier à diffuser l'annonce sur ses réseaux sociaux"] }
     );
     S.push({ titre: 'Travaux, plus et moins', blocs: blocsFinal });
@@ -315,32 +317,78 @@
         '<input type="text" class="mqb-t-rem" maxlength="150" placeholder="Remarques" aria-label="Remarques : ' + e(b.l) + '"></div></div>';
     }
 
+    if (b.k === 'recontact') {
+      const i = nouvelId({ k: 'cases', s: 'Accords', l: 'Recontact', opts: [TEXTE_RECONTACT] });
+      return '<div class="mqb-bloc"><div class="mqb-cases" data-i="' + i + '"><label class="mqb-case" id="mqb-recontact-case"><input type="checkbox" data-o="0"><span>' + e(TEXTE_RECONTACT) + '</span></label></div></div>';
+    }
+
     if (b.k === 'pieces') {
       const i = nouvelId({ k: 'pieces', s: sec.titre, l: 'pieces' });
-      return '<p class="mqb-note">Ouvrez une pièce pour indiquer son niveau, sa surface et son équipement. Une pièce que vous ne remplissez pas est simplement ignorée.</p>' +
-        '<div class="mqb-pieces" data-i="' + i + '">' + CFG[etat.type].pieces.map(function (n) { return htmlPiece(n, false, niveaux); }).join('') + '</div>' +
-        '<button type="button" class="bouton bouton-discret" data-mqb-act="ajouter-piece">➕ Ajouter une pièce</button>';
+      return '<p class="mqb-note">Ajoutez une pièce à la fois : pour chacune, indiquez le niveau, la surface, le sol et ce qui s’y trouve. Une case vide veut dire « non » ou « je ne sais pas ».</p>' +
+        '<div class="mqb-pieces" data-i="' + i + '"></div>' +
+        '<p class="mqb-vide mqb-note">Aucune pièce pour l’instant.</p>' +
+        '<button type="button" class="mqb-ajouter" data-mqb-act="ouvrir-ajout">+ Ajouter une pièce</button>' +
+        '<div class="mqb-ajout-panneau" hidden></div>';
     }
     return '';
   }
 
-  function htmlPiece(nom, perso, niveaux) {
-    function groupe(titre, g, liste) {
-      return '<div class="mqb-sous">' + titre + '</div><div class="mqb-cases">' + liste.map(function (v) {
-        return '<label class="mqb-case"><input type="checkbox" data-g="' + g + '" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
+  // Une carte de pièce
+  function htmlCarte(nom, type, niveau, ouverte) {
+    const niveaux = CFG[etat.type].niveaux;
+    function groupe(titre, liste) {
+      return '<div class="mqb-sous">' + e(titre) + '</div><div class="mqb-cases">' + liste.map(function (v) {
+        return '<label class="mqb-case"><input type="checkbox" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
       }).join('') + '</div>';
     }
-    return '<details class="mqb-piece" data-perso="' + (perso ? 1 : 0) + '" data-nom="' + e(nom) + '"' + (perso ? ' open' : '') + '>' +
+    let extra = '';
+    if (type === 'Cuisine') {
+      extra = groupe('Type de cuisine', CUISINE_TYPE) + groupe('Équipement de la cuisine', CUISINE_EQ) + groupe("Ce qu'il y a dedans", CUISINE_DEDANS);
+    } else if (type === 'Salle de bains' || type === "Salle d'eau") {
+      extra = groupe("Ce qu'il y a dedans", SALLES);
+    }
+    return '<details class="mqb-piece" data-type="' + e(type) + '" data-nom="' + e(nom) + '"' + (ouverte ? ' open' : '') + '>' +
       '<summary><span class="mqb-piece-nom">' + e(nom || 'Nouvelle pièce') + '</span><span class="mqb-resume"></span></summary>' +
       '<div class="mqb-piece-corps">' +
-        (perso ? '<div class="mqb-champ"><label>Nom de la pièce</label><input type="text" class="mqb-nom" maxlength="60" value="' + e(nom) + '"></div>' : '') +
+        (type === 'Autre (à préciser)' ? '<div class="mqb-champ"><label>Nom de la pièce</label><input type="text" class="mqb-nom" maxlength="60" value="' + e(nom === 'Autre pièce' ? '' : nom) + '"></div>' : '') +
         '<div class="mqb-grille"><div class="mqb-champ"><label>Niveau</label><select class="mqb-niv"><option value="">—</option>' +
-          niveaux.map(function (n) { return '<option value="' + e(n) + '">' + e(n) + '</option>'; }).join('') + '</select></div>' +
+          niveaux.map(function (n) { return '<option value="' + e(n) + '"' + (n === niveau ? ' selected' : '') + '>' + e(n) + '</option>'; }).join('') + '</select></div>' +
         '<div class="mqb-champ"><label>Surface (m²)</label><input type="text" class="mqb-m2" inputmode="decimal" maxlength="8"></div></div>' +
-        groupe('Sol', 'sol', SOL) + groupe('Équipement', 'eq', EQUIP) + groupe('Fenêtres', 'fen', FENETRES) +
+        groupe('Sol', SOL) + groupe('Équipement', EQUIP) + groupe('Fenêtres', FENETRES) + extra +
         '<div class="mqb-champ"><label>Notes</label><input type="text" class="mqb-notes" maxlength="200"></div>' +
-        (perso ? '<button type="button" class="bouton bouton-discret" data-mqb-act="retirer-piece">Retirer cette pièce</button>' : '') +
+        '<button type="button" class="mqb-supprimer" data-mqb-act="retirer-piece">Supprimer cette pièce</button>' +
       '</div></details>';
+  }
+
+  function typesDisponibles() {
+    return TYPES_PIECES.flatMap(function (t) { return t === 'Garage' && CFG[etat.type].atelier ? [t, 'Atelier'] : [t]; });
+  }
+  function typeDeNom(nom) {
+    const base = String(nom).replace(/\s\(\d+\)$/, '').replace(/\s\d+$/, '');
+    return typesDisponibles().indexOf(base) !== -1 ? base : 'Autre (à préciser)';
+  }
+  function nomSuivant(type) {
+    const n = racine.querySelectorAll('.mqb-piece[data-type="' + type.replace(/"/g, '') + '"]').length;
+    if (type === 'Autre (à préciser)') return 'Autre pièce';
+    if (NUMEROTEES.indexOf(type) !== -1) return type + ' ' + (n + 1);
+    return n === 0 ? type : type + ' (' + (n + 1) + ')';
+  }
+  function majVide() {
+    const v = racine.querySelector('.mqb-vide');
+    if (v) v.hidden = racine.querySelectorAll('.mqb-piece').length > 0;
+  }
+
+  function htmlPanneauAjout() {
+    const chip = function (nom, valeur) {
+      return '<label class="mqb-chip"><input type="radio" name="' + nom + '" value="' + e(valeur) + '"><span>' + e(valeur) + '</span></label>';
+    };
+    return '<div class="mqb-panneau"><div class="mqb-panneau-titre">Quelle pièce voulez-vous ajouter ?</div>' +
+      '<div class="mqb-sous">Type de pièce</div><div class="mqb-chips">' + typesDisponibles().map(function (t) { return chip('mqb-type', t); }).join('') + '</div>' +
+      '<div class="mqb-sous">Niveau</div><div class="mqb-chips">' + CFG[etat.type].niveaux.map(function (t) { return chip('mqb-niveau', t); }).join('') + '</div>' +
+      '<p class="mqb-note">Plusieurs chambres ? Ajoutez-les une par une : elles s’appellent « Chambre 1 », « Chambre 2 »… toutes seules.</p>' +
+      '<div id="mqb-ajout-msg" class="mqb-msg erreur" aria-live="polite"></div>' +
+      '<div class="mqb-boutons-ligne"><button type="button" class="bouton" data-mqb-act="valider-ajout">Ajouter cette pièce</button>' +
+      '<button type="button" class="bouton bouton-discret" data-mqb-act="annuler-ajout">Annuler</button></div></div>';
   }
 
   // ---------- Lecture et remise en place des réponses ----------
@@ -413,14 +461,16 @@
     }
   }
 
+  function nomDePiece(d) {
+    return d.dataset.type === 'Autre (à préciser)' ? nettoyer(d.querySelector('.mqb-nom').value) : d.dataset.nom;
+  }
   function lirePiece(d) {
-    const nom = d.dataset.perso === '1' ? nettoyer(d.querySelector('.mqb-nom').value) : d.dataset.nom;
     const t = [];
     const niv = d.querySelector('.mqb-niv').value; if (niv) t.push(niv);
     const m2 = nettoyer(d.querySelector('.mqb-m2').value); if (m2) t.push(m2 + ' m²');
     d.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { if (cb.checked) t.push(cb.dataset.v); });
     const notes = nettoyer(d.querySelector('.mqb-notes').value); if (notes) t.push('Notes : ' + notes);
-    return { nom: nom, valeur: t.join(SEP) };
+    return { nom: nomDePiece(d), valeur: t.join(SEP) };
   }
   function poserPiece(d, valeur) {
     const jetons = String(valeur || '').split(SEP);
@@ -436,10 +486,24 @@
     majResume(d);
   }
   function majResume(d) {
-    const r = d.querySelector('.mqb-resume');
     const p = lirePiece(d);
-    r.textContent = p.valeur ? '✔ ' + (d.querySelector('.mqb-m2').value ? d.querySelector('.mqb-m2').value + ' m²' : 'rempli') : '';
-    if (d.dataset.perso === '1') d.querySelector('.mqb-piece-nom').textContent = p.nom || 'Nouvelle pièce';
+    const m2 = d.querySelector('.mqb-m2').value;
+    d.querySelector('.mqb-resume').textContent = p.valeur ? '✔ ' + (m2 ? m2 + ' m²' : 'rempli') : '';
+    if (d.dataset.type === 'Autre (à préciser)') d.querySelector('.mqb-piece-nom').textContent = p.nom || 'Nouvelle pièce';
+  }
+
+  // Le rouge disparaît dès que la case « recontact » est cochée
+  function recontactCoche() {
+    const cb = racine && racine.querySelector('#mqb-recontact-case input');
+    return !!(cb && cb.checked);
+  }
+  function majAccord() {
+    const cas = racine && racine.querySelector('#mqb-recontact-case');
+    if (cas && recontactCoche()) {
+      cas.classList.remove('mqb-erreur');
+      const m = racine.querySelector('#mqb-msg');
+      if (m && m.textContent === MSG_RECONTACT) afficherMessage('', '');
+    }
   }
 
   function collecter() {
@@ -467,7 +531,7 @@
     });
     const sv = rep['Vous et le bien'] || {};
     const adresse = [sv['N° et rue'], [sv['Code postal'], sv['Commune']].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-    return { rep: rep, adresse: adresse, fin: fin, rue: sv['N° et rue'] || '', commune: sv['Commune'] || '' };
+    return { rep: rep, adresse: adresse, fin: fin, rue: sv['N° et rue'] || '', commune: sv['Commune'] || '', recontact: recontactCoche() };
   }
 
   function remettre(rep, fin) {
@@ -479,19 +543,12 @@
       const v = rep && rep[c.s] && rep[c.s][c.l];
       if (v != null) poserChamp(c, el, v);
     });
-    const sp = rep && rep['Pièce par pièce'];
+    const sp = rep && rep[SEC_PIECES];
     if (sp) {
       const conteneur = racine.querySelector('.mqb-pieces');
-      const niveaux = CFG[etat.type].niveaux;
       Object.keys(sp).forEach(function (nom) {
-        if (nom.indexOf('Contenu — ') === 0) return;
-        let d = Array.prototype.find.call(conteneur.querySelectorAll('.mqb-piece'), function (x) { return x.dataset.perso === '0' && x.dataset.nom === nom; });
-        if (!d) {
-          conteneur.insertAdjacentHTML('beforeend', htmlPiece(nom, true, niveaux));
-          d = conteneur.lastElementChild;
-          d.removeAttribute('open');
-        }
-        poserPiece(d, sp[nom]);
+        conteneur.insertAdjacentHTML('beforeend', htmlCarte(nom, typeDeNom(nom), '', false));
+        poserPiece(conteneur.lastElementChild, sp[nom]);
       });
     }
   }
@@ -531,6 +588,14 @@
       clearTimeout(minuteur);
       const d = collecter();
       if (envoyer) {
+        if (!d.recontact) {
+          // Sans l'accord de recontact, rien ne part : la case passe en rouge
+          const cas = racine.querySelector('#mqb-recontact-case');
+          cas.classList.add('mqb-erreur');
+          cas.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          afficherMessage('erreur', MSG_RECONTACT);
+          return false;
+        }
         if (!d.rue || !d.commune) { afficherMessage('erreur', ERREURS.ADRESSE_OBLIGATOIRE); return false; }
         const lien = d.rep['Photos et vidéos'] && d.rep['Photos et vidéos']['Lien YouTube de la vidéo ou de la visite virtuelle (facultatif)'];
         if (lien && !/^https:\/\//i.test(lien)) { afficherMessage('erreur', 'Le lien de la vidéo doit commencer par https://'); return false; }
@@ -605,8 +670,10 @@
 
   function surSaisie(ev) {
     if (!etat || !racine || !racine.querySelector('.mqb-formulaire')) return;
+    if (ev.target.closest && ev.target.closest('.mqb-ajout-panneau')) return; // le choix d'une pièce n'est pas une réponse
     const d = ev.target.closest && ev.target.closest('.mqb-piece');
     if (d) majResume(d);
+    majAccord();
     planifier();
   }
 
@@ -619,15 +686,36 @@
     else if (act === 'envoyer') { b.disabled = true; envoyer().finally(function () { b.disabled = false; }); }
     else if (act === 'type-maison') afficherFormulaire('maison');
     else if (act === 'type-village') afficherFormulaire('village');
-    else if (act === 'ajouter-piece') {
-      const conteneur = racine.querySelector('.mqb-pieces');
-      conteneur.insertAdjacentHTML('beforeend', htmlPiece('', true, CFG[etat.type].niveaux));
-      const d = conteneur.lastElementChild;
-      d.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    } else if (act === 'retirer-piece') {
-      const d = b.closest('.mqb-piece');
-      if (d && window.confirm('Retirer cette pièce du questionnaire ?')) { d.parentNode.removeChild(d); planifier(); }
+    else if (act === 'ouvrir-ajout') {
+      const pa = racine.querySelector('.mqb-ajout-panneau');
+      pa.innerHTML = htmlPanneauAjout();
+      pa.hidden = false;
+      pa.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
+    else if (act === 'annuler-ajout') {
+      const pa = racine.querySelector('.mqb-ajout-panneau');
+      pa.hidden = true; pa.innerHTML = '';
+    }
+    else if (act === 'valider-ajout') ajouterPiece();
+    else if (act === 'retirer-piece') {
+      const d = b.closest('.mqb-piece');
+      if (d && window.confirm('Supprimer cette pièce du questionnaire ?')) { d.parentNode.removeChild(d); majVide(); planifier(); }
+    }
+  }
+
+  function ajouterPiece() {
+    const type = (racine.querySelector('input[name="mqb-type"]:checked') || {}).value;
+    const niveau = (racine.querySelector('input[name="mqb-niveau"]:checked') || {}).value || '';
+    const msg = racine.querySelector('#mqb-ajout-msg');
+    if (!type) { msg.textContent = 'Choisissez d’abord le type de pièce.'; msg.classList.add('visible'); return; }
+    const conteneur = racine.querySelector('.mqb-pieces');
+    conteneur.insertAdjacentHTML('beforeend', htmlCarte(nomSuivant(type), type, niveau, true));
+    const carte = conteneur.lastElementChild;
+    racine.querySelector('.mqb-ajout-panneau').hidden = true;
+    racine.querySelector('.mqb-ajout-panneau').innerHTML = '';
+    majVide();
+    carte.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    planifier();
   }
 
   // ---------- Écrans ----------
@@ -671,6 +759,7 @@
     if (brouillon) remettre(brouillon.reponses || {}, brouillon.fin_mandat || '');
     preremplir(etat.defauts);
     racine.querySelectorAll('.mqb-piece').forEach(majResume);
+    majVide();
     etat.modifie = false;
   }
 
@@ -826,6 +915,18 @@
       '.mqb-grand:hover{border-color:#5A3A6A;background:#F4EEF6;}',
       '.mqb-fin{text-align:center;padding:30px 10px;}',
       '.mqb-fin h3{color:#5A3A6A;margin-bottom:8px;}',
+      '.mqb-boutons-ligne{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}',
+      '.mqb-case.mqb-erreur{color:#B00020;font-weight:700;border:2px solid #B00020;border-radius:6px;padding:6px 8px;background:#FDF0F0;}',
+      '.mqb-ajouter{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border:1.5px dashed #5A3A6A;border-radius:6px;background:#FFFFFF;color:#5A3A6A;font:inherit;font-weight:600;cursor:pointer;margin:4px 0 10px;}',
+      '.mqb-supprimer{margin-top:6px;min-height:36px;padding:0 12px;border:1px solid #D8B4B4;border-radius:6px;background:#FFFFFF;color:#8A2D2D;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;}',
+      '.mqb-panneau{border:2px solid #5A3A6A;border-radius:10px;background:#FFFFFF;padding:16px;margin-bottom:10px;}',
+      '.mqb-panneau-titre{font-size:1.05rem;font-weight:700;color:#5A3A6A;margin-bottom:4px;}',
+      '.mqb-chips{display:flex;flex-wrap:wrap;gap:8px;}',
+      '.mqb-chip{cursor:pointer;}',
+      '.mqb-chip input{position:absolute;opacity:0;pointer-events:none;}',
+      '.mqb-chip span{display:inline-block;padding:7px 12px;border:1px solid #D8D5CE;border-radius:999px;font-size:.88rem;background:#FFFFFF;}',
+      '.mqb-chip input:checked+span{background:#5A3A6A;border-color:#5A3A6A;color:#FFFFFF;}',
+      '.mqb-chip input:focus-visible+span{outline:2px solid #B28E3D;outline-offset:2px;}',
       '@media (min-width:700px){',
       '.mqb-boite{max-width:860px;height:auto;max-height:92vh;margin:4vh 16px;border-radius:12px;}',
       '.mqb-grille{grid-template-columns:1fr 1fr;}',
