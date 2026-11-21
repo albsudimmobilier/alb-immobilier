@@ -43,7 +43,9 @@ export default async (req, context) => {
     const page = pageValide(corps.page);
     if (!page) return reponse();
     const monSite = req.headers.get('host') || '';
-    const source = sourceValide(corps.source, monSite);
+    let source = sourceValide(corps.source, monSite);
+    // Certains assistants IA n'envoient pas le site d'origine mais ajoutent ?utm_source=... au lien.
+    if (!source && typeof corps.utm === 'string' && /^[a-z0-9._-]{2,40}$/i.test(corps.utm)) source = corps.utm.toLowerCase();
 
     const ip = (context && context.ip) || req.headers.get('x-nf-client-connection-ip') ||
       (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || '';

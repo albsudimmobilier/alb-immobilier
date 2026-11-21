@@ -9,7 +9,8 @@
 
     var donnees = JSON.stringify({
       page: window.location.pathname,
-      source: document.referrer || ''
+      source: document.referrer || '',
+      utm: (new URLSearchParams(window.location.search).get('utm_source') || '').slice(0, 40)
     });
     var adresse = '/.netlify/functions/compter-visite';
 

@@ -643,7 +643,7 @@
     const v = donnees.visiteurs || { par_jour: [], pages: [], sources: [], debut: null };
     const zone = el('t-visites');
     if (!v.par_jour.length) {
-      zone.innerHTML = '<p class="vide">Le comptage a commencé : les premières visites apparaîtront ici dès la première visite.</p>';
+      zone.innerHTML = '<p class="vide">Le comptage a commencé : les chiffres apparaîtront dès la première visite.</p>';
       return;
     }
     const jours = v.par_jour.filter(function (j) { return dansPeriode(j.jour); });
@@ -663,15 +663,35 @@
       return '<div class="mois-col"><span class="nbm">' + (x.n || '') + '</span><div class="pile" style="height:' + h + 'px"><span style="height:' + h + 'px;background:#9A958C"></span></div>' +
         '<span class="nom-mois">' + x.d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + '</span></div>';
     }).join('') + '</div>';
+    // D'où viennent les visiteurs : moteurs de recherche, assistants IA, réseaux sociaux, autres
+    const FAMILLES = [
+      ['🤖 Assistants IA', /chatgpt|openai|perplexity|claude\.ai|anthropic|gemini|copilot|mistral|you\.com|poe\.com|deepseek|grok|meta\.ai|kagi|brave\.com\/leo/i],
+      ['🔎 Moteurs de recherche', /google|bing|duckduckgo|ecosia|qwant|yahoo|brave|startpage|lilo|ask\.com|yandex|baidu/i],
+      ['👥 Réseaux sociaux', /facebook|fb\.|instagram|linkedin|lnkd|tiktok|youtube|youtu\.be|twitter|x\.com|t\.co|pinterest|whatsapp|messenger|threads/i]
+    ];
+    const familleDe = function (src) { for (let i = 0; i < FAMILLES.length; i++) { if (FAMILLES[i][1].test(src)) return FAMILLES[i][0]; } return '🔗 Autres sites'; };
+    const sourcesPeriode = {};
+    let nbSource = 0;
+    (v.sources || []).forEach(function (x) { if (dansPeriode(x.jour)) { sourcesPeriode[x.source] = (sourcesPeriode[x.source] || 0) + x.visites; nbSource += x.visites; } });
+    const direct = Math.max(0, total - nbSource);
+    const familles = {};
+    Object.keys(sourcesPeriode).forEach(function (src) { const f = familleDe(src); familles[f] = (familles[f] || 0) + sourcesPeriode[src]; });
+    const ordreFam = FAMILLES.map(function (f) { return f[0]; }).concat(['🔗 Autres sites']);
+    const blocFamilles = '<div class="grille-ensemble" style="margin-top:6px;">' + ordreFam.map(function (f) {
+      const n = familles[f] || 0;
+      return '<div><p style="font-size:0.86rem;margin:2px 0;">' + f + ' <strong>' + nb(n) + '</strong>' + (total ? ' <span class="aide">(' + pct(n, total) + ' %)</span>' : '') + '</p></div>';
+    }).join('') + '<div><p style="font-size:0.86rem;margin:2px 0;">🚪 Arrivée directe ou inconnue <strong>' + nb(direct) + '</strong>' + (total ? ' <span class="aide">(' + pct(direct, total) + ' %)</span>' : '') + '</p></div></div>';
+    const detailSources = Object.keys(sourcesPeriode).map(function (k) { return { source: k, visites: sourcesPeriode[k] }; }).sort(function (a, b) { return b.visites - a.visites; });
     const liste = function (titre, l, cle) {
       return '<div><p style="font-size:0.86rem;font-weight:700;margin:6px 0 2px;">' + titre + '</p>' +
         (l.length ? l.slice(0, 6).map(function (x) { return '<p style="font-size:0.84rem;margin:2px 0;">' + e(x[cle] || '/') + ' <strong>' + nb(x.visites) + '</strong></p>'; }).join('') : '<p class="aide">Rien pour l\'instant.</p>') + '</div>';
     };
     zone.innerHTML = '<p style="font-size:0.9rem;"><strong>' + nb(total) + ' visite' + (total > 1 ? 's' : '') + '</strong> sur la période · environ ' + nb(moyenne) + ' par jour</p>' +
       colonnes + '<p class="aide">Visites par semaine (semaine commençant le jour indiqué).</p>' +
-      '<div class="grille-ensemble">' + liste('Pages les plus vues', v.pages, 'page') + liste('D\'où viennent les visiteurs', v.sources, 'source') + '</div>' +
+      '<p style="font-size:0.86rem;font-weight:700;margin:10px 0 2px;">Comment les gens arrivent</p>' + blocFamilles +
+      '<div class="grille-ensemble">' + liste('Pages les plus vues', v.pages, 'page') + liste('Sites qui nous envoient du monde', detailSources, 'source') + '</div>' +
       '<p class="aide">Une personne qui revient un autre jour compte une nouvelle visite. Comptage lancé le ' + (v.debut ? new Date(v.debut + 'T00:00:00').toLocaleDateString('fr-FR') : '—') +
-      ', sans cookie. Le département ne s\'applique pas ici. Les robots et ton propre appareil ne sont pas comptés.</p>';
+      ', sans cookie. Le département ne s\'applique pas ici. Seules les personnes sont comptées (pas les robots des moteurs ni de l\'IA, ni ton appareil). Beaucoup d\'assistants IA n\'indiquent pas d\'où vient le clic : leur part réelle est donc au moins celle affichée.</p>';
   }
 
   function dessinerVueEnsemble() {
