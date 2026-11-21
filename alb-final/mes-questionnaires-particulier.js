@@ -627,6 +627,7 @@
         if (error) throw error;
         etat.qid = data;
         etat.modifie = false;
+        if (etat.admin) await enregistrerMarques();
         if (!envoyer) afficherMessage('info', silencieux ? 'Brouillon enregistré automatiquement.' : 'Brouillon enregistré. Vous pourrez le terminer plus tard.');
         return true;
       } catch (ex) {
@@ -686,6 +687,84 @@
     await rafraichir();
   }
 
+  // ---------- ⚑ Questions à compléter (marquées par Jocelyne) ----------
+  function cleChamp(i) {
+    const c = champs[i];
+    return c && c.k !== 'pieces' && c.s !== 'Accords' && c.l ? c.s + '|' + c.l : null;
+  }
+  function enveloppeChamp(i) {
+    const z = zone(i);
+    return z && z.closest ? z.closest('.mqp-champ,.mqp-bloc,.mqp-ligne,.mqp-travail') : null;
+  }
+  function majMarques() {
+    if (!etat || !etat.aCompleter) return;
+    let restantes = 0;
+    champs.forEach(function (c, i) {
+      const w = enveloppeChamp(i);
+      if (!w || !w.dataset.cle) return;
+      const marque = etat.aCompleter.has(w.dataset.cle);
+      const el = zone(i);
+      const vide = el ? !lireChamp(c, el) : true;
+      const actif = marque && (etat.admin || vide);
+      if (actif && !etat.admin) restantes++;
+      w.classList.toggle('mqp-manque', actif);
+      const b = w.querySelector(':scope > .mqp-flag, :scope > .mqp-flag-ligne > .mqp-flag');
+      if (b) { b.textContent = marque ? '⚑ Marquée : à compléter' : '⚑ À compléter'; b.classList.toggle('actif', marque); }
+    });
+    const n = racine && racine.querySelector('#mqp-manque-nb');
+    if (n) n.textContent = restantes ? 'Il reste ' + restantes + ' question' + (restantes > 1 ? 's' : '') + ' à compléter.' : 'Tout est complété, merci !';
+  }
+  function installerMarques(brouillon) {
+    etat.aCompleter = new Set(Array.isArray(brouillon && brouillon.a_completer) ? brouillon.a_completer : []);
+    etat.messageManque = (brouillon && brouillon.message_a_completer) || '';
+    etat.marquesModifiees = false;
+    champs.forEach(function (c, i) {
+      const cle = cleChamp(i), w = enveloppeChamp(i);
+      if (!cle || !w) return;
+      w.dataset.cle = cle;
+      if (etat.admin) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'mqp-flag'; b.dataset.mqpFlag = cle; b.textContent = '⚑ À compléter';
+        w.insertBefore(b, w.firstChild);
+      }
+    });
+    const form = racine.querySelector('.mqp-formulaire');
+    if (etat.admin) {
+      const box = document.createElement('div');
+      box.style.cssText = 'background:#FFF6DC;border:1px solid #E5C770;padding:8px 10px;border-radius:6px;margin-bottom:10px;';
+      box.innerHTML = '<strong>⚑ Questions à compléter</strong><p style="font-size:.85rem;margin:4px 0;">Appuie sur « ⚑ À compléter » à côté d’une question : elle apparaîtra en jaune chez la personne, jusqu’à ce qu’elle réponde. Ton message (facultatif) s’affiche en haut.</p>' +
+        '<textarea id="mqp-msg-manque" rows="2" maxlength="1000" style="width:100%;box-sizing:border-box;" placeholder="Un mot pour la personne (facultatif)"></textarea>';
+      box.querySelector('textarea').value = etat.messageManque;
+      form.insertBefore(box, form.firstChild);
+    } else if (etat.aCompleter.size) {
+      const box = document.createElement('div');
+      box.style.cssText = 'background:#FFF6DC;border:1px solid #E5C770;padding:10px 12px;border-radius:6px;margin-bottom:12px;';
+      box.innerHTML = '<strong>⚑ Jocelyne vous demande de compléter quelques réponses</strong>' +
+        (etat.messageManque ? '<p style="margin:6px 0;white-space:pre-line;"></p>' : '') +
+        '<p id="mqp-manque-nb" style="margin:6px 0 0;font-weight:600;"></p>';
+      const p = box.querySelector('p'); if (etat.messageManque && p) p.textContent = etat.messageManque;
+      form.insertBefore(box, form.firstChild);
+    }
+    majMarques();
+  }
+  function basculerMarque(cle) {
+    if (!etat || !etat.aCompleter) return;
+    if (etat.aCompleter.has(cle)) etat.aCompleter.delete(cle); else etat.aCompleter.add(cle);
+    etat.marquesModifiees = true;
+    majMarques();
+    planifier();
+  }
+  // Après chaque enregistrement par Jocelyne : les questions marquées sont gardées
+  async function enregistrerMarques() {
+    if (!etat || !etat.admin || !etat.qid || !racine) return;
+    const m = racine.querySelector('#mqp-msg-manque');
+    const message = m ? m.value : '';
+    if (!etat.marquesModifiees && message === etat.messageManque) return;
+    const { error } = await albSupabase.rpc('alb_admin_questionnaire_marquer', { p_id: etat.qid, p_cles: Array.from(etat.aCompleter), p_message: message });
+    if (error) { console.log('[ALB DEBUG] questions à compléter : enregistrement impossible', error); return; }
+    etat.marquesModifiees = false; etat.messageManque = message;
+  }
+
   function surSaisie(ev) {
     if (!etat || !racine || !racine.querySelector('.mqp-formulaire')) return;
     if (ev.target.closest && ev.target.closest('.mqp-ajout-panneau')) return; // le choix d'une pièce n'est pas une réponse
@@ -694,6 +773,7 @@
     majConditions();
     majEnvoi();
     majAccord();
+    majMarques();
     planifier();
   }
 
@@ -713,6 +793,8 @@
   }
 
   function clicFenetre(ev) {
+    const fl = ev.target.closest && ev.target.closest('[data-mqp-flag]');
+    if (fl) { basculerMarque(fl.dataset.mqpFlag); return; }
     const b = ev.target.closest('[data-mqp-act]');
     if (!b) return;
     const act = b.dataset.mqpAct;
@@ -788,6 +870,7 @@
     if (!etat.admin && globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
     if (brouillon) remettre(brouillon);
     preremplir(etat.defauts);
+    installerMarques(brouillon);
     racine.querySelectorAll('.mqp-piece').forEach(majResume);
     majVide();
     majConditions();
@@ -998,6 +1081,9 @@
     const s = document.createElement('style');
     s.id = 'mqp-styles';
     s.textContent = [
+      '.mqp-flag{float:right;border:1px solid #E5C770;background:#FFF6DC;color:#7A5B00;border-radius:12px;font-size:.72rem;padding:2px 8px;cursor:pointer;margin:0 0 4px 8px;}',
+      '.mqp-flag.actif{background:#E5A100;color:#fff;border-color:#E5A100;}',
+      '.mqp-manque{background:#FFF6DC !important;outline:2px solid #E5C770;border-radius:6px;padding:6px;}',
       '.mqp-offre{background:#F7F3EA;border:1px solid #E3D6B8;border-radius:8px;padding:12px;margin-top:12px;}',
       '.mqp-offre-titre{font-weight:700;color:#4B1A3E;}',
       '.mqp-offre p{font-size:.9rem;margin:4px 0 10px;}',
