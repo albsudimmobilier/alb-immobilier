@@ -273,7 +273,7 @@
     if (b.k === 'sous2') return '<div class="mqb-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqb-note">' + e(b.texte) + '</p>';
     if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && etat.admin)) ? globalThis.albDiagnostics.html() : '';
-    if (b.k === 'photos') return '<p class="mqb-note" id="mqb-photos-info"></p>';
+    if (b.k === 'photos') return '<p class="mqb-note" id="mqb-photos-info"></p><div id="mqb-photos-vignettes" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px;"></div>';
 
     if (b.k === 'champs') {
       return '<div class="mqb-grille">' + b.items.map(function (it) {
@@ -769,6 +769,12 @@
       racine.querySelector('.mqb-formulaire').insertBefore(ban, racine.querySelector('.mqb-formulaire').firstChild);
     }
     if (!etat.admin && globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
+    const vign = racine.querySelector('#mqb-photos-vignettes');
+    if (vign && etat.photos && etat.photos.length) {
+      vign.innerHTML = etat.photos.map(function (u) {
+        return '<a href="' + e(u) + '" target="_blank" rel="noopener"><img src="' + e(u) + '" alt="Photo de l\u2019annonce" loading="lazy" style="width:110px;height:82px;object-fit:cover;border-radius:6px;border:1px solid #ddd;"></a>';
+      }).join('');
+    }
     const info = racine.querySelector('#mqb-photos-info');
     if (info) {
       info.textContent = etat.nbPhotos > 0
@@ -794,11 +800,12 @@
     const [rAnn, rPrive, rMed, rProfil] = await Promise.all([
       albSupabase.from('annonces').select('id, prix, ville, code_postal, type_bien, surface_m2, nb_pieces, surface_terrain_m2, dpe, ges, honoraires_texte, agence_nom').eq('id', annonceId).maybeSingle(),
       albSupabase.from('annonces_prive').select('adresse, telephone').eq('annonce_id', annonceId).maybeSingle(),
-      albSupabase.from('annonce_medias').select('id').eq('annonce_id', annonceId),
+      albSupabase.from('annonce_medias').select('id, url, ordre, type_media').eq('annonce_id', annonceId).order('ordre', { ascending: true }),
       albSupabase.from('profiles').select('prenom, nom, nom_entreprise, email, telephone').eq('id', monId).maybeSingle(),
     ]);
     const an = rAnn.data || {}, pr = rPrive.data || {}, pf = rProfil.data || {};
     etat.nbPhotos = (rMed.data || []).length;
+    etat.photos = (rMed.data || []).filter(function (m) { return m.url && (!m.type_media || m.type_media === 'photo'); }).map(function (m) { return m.url; });
     const V = 'Vous et le bien';
     etat.defauts[V + '|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
     etat.defauts[V + '|Agence ou réseau'] = an.agence_nom || pf.nom_entreprise || '';
@@ -839,7 +846,7 @@
     const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger', { p_annonce_id: annonceId });
     if (error || !data) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
     const an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
-    etat = { annonce: { id: annonceId }, qid: null, type: null, modifie: false, nbPhotos: Number(data.nb_photos) || 0, defauts: {}, admin: true };
+    etat = { annonce: { id: annonceId }, qid: null, type: null, modifie: false, nbPhotos: Number(data.nb_photos) || 0, photos: Array.isArray(data.photos) ? data.photos : [], defauts: {}, admin: true };
     const V = 'Vous et le bien';
     etat.defauts[V + '|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
     etat.defauts[V + '|Agence ou réseau'] = an.agence_nom || pf.nom_entreprise || '';
