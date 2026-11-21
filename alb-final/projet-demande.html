@@ -925,11 +925,13 @@
     const revenus = nombre('s-revenus'), credits = nombre('s-credits'), apport = nombre('s-apport');
     const zone = el('resultat-budget');
     if (!(revenus > 0 || apport > 0)) { zone.classList.add('cache'); return; }
-    if (module === 'travaux') {
+    if (module === 'travaux' || (module === 'financement' && el('f-objet').value === 'travaux')) {
       // Travaux : ce qu'on pourrait emprunter en plus de l'apport, sans frais de notaire
       const capital = capitalEmpruntable(revenus, credits, Number(el('s-duree').value), nombre('s-taux'));
       const total = Math.max(0, Math.round((capital + apport) / 1000) * 1000);
+      const montantTravaux = module === 'financement' ? nombre('f-prix') : 0;
       zone.innerHTML = 'Ce que vous pourriez financer pour vos travaux<div class="resultat-chiffre">' + e(euros(total)) + '</div>' +
+        (montantTravaux > 0 ? (total >= montantTravaux ? '✅ Le montant de vos travaux entre dans ce budget.' : '⚠️ Le montant de vos travaux dépasse ce budget de <strong>' + e(euros(montantTravaux - total)) + '</strong> : un courtier peut vous aider à y voir plus clair.') : '') +
         '<div class="petit">Estimation indicative : 35 % de vos revenus moins vos crédits en cours, plus votre apport. Si vous avez déjà un crédit immobilier, un courtier peut regarder comment tout regrouper. Elle ne vaut pas accord de prêt.</div>';
       zone.classList.remove('cache');
       return;
@@ -1250,6 +1252,7 @@
     }
     el('f-objet').addEventListener('change', function () {
       majObjetFinancement();
+      majBudget();
       if (this.value === 'travaux') { el('s-duree').value = '10'; el('s-taux').value = tauxParDuree[10]; if (typeof majBudget === 'function') majBudget(); }
     });
     majObjetFinancement();
