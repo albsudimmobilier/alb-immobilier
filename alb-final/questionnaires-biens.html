@@ -132,6 +132,7 @@
     <h1>🏠 Questionnaires des biens</h1>
     <p class="aide">Les questionnaires envoyés par les agents et mandataires (🤝 Pro) et par les vendeurs particuliers (🏠 Particulier) depuis leur espace. Appuie sur « J'ai traité » quand tu as repris contact avec la personne (pour lui proposer la description de l'annonce, par exemple). En haut de la liste « À traiter » : les fins de mandat les plus proches, puis les particuliers qui souhaitent être recontactés.</p>
 
+    <div class="contact-actions" style="margin:10px 0 14px;"><button type="button" class="bouton-petit or" id="nouveau-quest">➕ Nouveau questionnaire pour un membre</button></div>
     <div class="compteurs" id="compteurs"></div>
     <div class="ligne-filtres" id="filtres"></div>
     <div id="liste"></div>
@@ -139,6 +140,15 @@
     <h2 style="margin-top:36px;">📨 Biens déjà en ligne sans questionnaire</h2>
     <p class="aide">Les biens d'agents et de mandataires déjà sur le site, dont le questionnaire n'est pas encore envoyé. « Voir l'e-mail » te montre l'e-mail exact, avec son objet. Il part de contact@albimmobilier.fr et ne part qu'après ton clic sur « Envoyer ».</p>
     <div id="a-inviter"></div>
+  </div>
+  <div id="fenetre-nouveau" class="cache" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;overflow:auto;padding:20px;">
+    <div style="background:#fff;max-width:560px;margin:0 auto;border-radius:10px;padding:18px;">
+      <h3 style="margin-top:0;">➕ Nouveau questionnaire pour un membre</h3>
+      <p class="aide">Choisis le bien. Tu remplis le questionnaire avec la personne : il arrive dans son espace ALB en brouillon, elle vérifie et l'envoie elle-même. Si un questionnaire existe déjà pour ce bien, il s'ouvre à la place.</p>
+      <select id="nouveau-choix" style="width:100%;padding:8px;margin:8px 0;"></select>
+      <p id="nouveau-message" class="aide"></p>
+      <div class="contact-actions"><button type="button" class="bouton-petit or" id="nouveau-ouvrir">Ouvrir le questionnaire</button><button type="button" class="bouton-petit clair" id="nouveau-fermer">Annuler</button></div>
+    </div>
   </div>
   <div id="fenetre-mail" class="cache" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;overflow:auto;padding:20px;">
     <div style="background:#fff;max-width:660px;margin:0 auto;border-radius:10px;padding:18px;">
@@ -158,7 +168,7 @@
   // Questionnaires des biens : réservé à Jocelyne (même accès que Gestion du site)
   // La liste vient d'une fonction Supabase qui vérifie que tu es bien admin.
   // ============================================================
-  const FILTRES_ETAT = [['atraiter', 'À traiter'], ['traites', 'Traités'], ['tous', 'Tous']];
+  const FILTRES_ETAT = [['atraiter', 'À traiter'], ['traites', 'Traités'], ['commences', '✏️ Commencés'], ['tous', 'Tous']];
   const TYPES_BIEN = { appartement: '🏢 Appartement', maison: '🏡 Maison', village: '🏘️ Maison de village' };
   const JOURS_ALERTE = 60; // une fin de mandat à moins de 60 jours est signalée
 
@@ -211,6 +221,9 @@
   // Un questionnaire d'avant les particuliers n'a pas d'origine : c'est un pro
   function estParticulier(q) { return q.origine === 'particulier'; }
 
+  // Un questionnaire commencé mais pas encore envoyé par la personne
+  function estBrouillon(q) { return q.statut === 'brouillon'; }
+
   function telephonePropre(texte) { return String(texte || '').replace(/[^\d+]/g, ''); }
 
   // Retient les notes déjà tapées, pour ne pas les perdre quand la liste se redessine
@@ -226,7 +239,8 @@
   // Applique les filtres, puis trie : fins de mandat les plus proches d'abord (à traiter), sinon les plus récents
   function questionnairesAffiches() {
     const liste = questionnaires.filter(function (q) {
-      const bonEtat = choix.etat === 'tous' || (choix.etat === 'atraiter' ? !q.traite_le : !!q.traite_le);
+      const bonEtat = choix.etat === 'tous' ||
+        (choix.etat === 'commences' ? estBrouillon(q) : (!estBrouillon(q) && (choix.etat === 'atraiter' ? !q.traite_le : !!q.traite_le)));
       const bonMandat = !choix.seulementProches || finProche(q);
       const bonneOrigine = choix.origine === 'tous' || (choix.origine === 'particulier') === estParticulier(q);
       return bonEtat && bonMandat && bonneOrigine;
@@ -241,21 +255,24 @@
         const rb = (estParticulier(b) && b.recontact_ok) ? 1 : 0;
         if (ra !== rb) { return rb - ra; }
       }
-      return new Date(b.envoye_le) - new Date(a.envoye_le);
+      return new Date(b.envoye_le || b.maj_le) - new Date(a.envoye_le || a.maj_le);
     });
     return liste;
   }
 
   function dessinerCompteurs() {
-    const aTraiter = questionnaires.filter(function (q) { return !q.traite_le; });
-    const proches = questionnaires.filter(finProche);
-    const nbParticuliers = questionnaires.filter(estParticulier).length;
+    const commences = questionnaires.filter(estBrouillon);
+    const envoyes = questionnaires.filter(function (q) { return !estBrouillon(q); });
+    const aTraiter = envoyes.filter(function (q) { return !q.traite_le; });
+    const proches = envoyes.filter(finProche);
+    const nbParticuliers = envoyes.filter(estParticulier).length;
     const nbPartATraiter = aTraiter.filter(estParticulier).length;
     el('compteurs').innerHTML =
       '<div class="compteur or"><div class="valeur">' + aTraiter.length + '</div><div class="libelle">À traiter' + (nbPartATraiter ? ' (dont ' + nbPartATraiter + ' de particuliers)' : '') + '</div></div>' +
       '<div class="compteur or"><div class="valeur">' + proches.length + '</div><div class="libelle">Fins de mandat proches (moins de ' + JOURS_ALERTE + ' jours ou dépassées)</div></div>' +
-      '<div class="compteur"><div class="valeur">' + (questionnaires.length - aTraiter.length) + '</div><div class="libelle">Déjà traités</div></div>' +
-      '<div class="compteur"><div class="valeur">' + questionnaires.length + '</div><div class="libelle">Questionnaires au total' + (nbParticuliers ? ' (dont ' + nbParticuliers + ' de particuliers)' : '') + '</div></div>';
+      '<div class="compteur"><div class="valeur">' + commences.length + '</div><div class="libelle">Commencés, pas encore envoyés</div></div>' +
+      '<div class="compteur"><div class="valeur">' + (envoyes.length - aTraiter.length) + '</div><div class="libelle">Déjà traités</div></div>' +
+      '<div class="compteur"><div class="valeur">' + envoyes.length + '</div><div class="libelle">Questionnaires au total' + (nbParticuliers ? ' (dont ' + nbParticuliers + ' de particuliers)' : '') + '</div></div>';
   }
 
   function dessinerFiltres() {
@@ -438,7 +455,8 @@
   }
 
   function dessinerFiche(q) {
-    const traite = !!q.traite_le;
+    const brouillon = estBrouillon(q);
+    const traite = !brouillon && !!q.traite_le;
     const noteTexte = (notesEnCours[q.id] !== undefined) ? notesEnCours[q.id] : (q.note || '');
     const nomPro = [q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || q.pro || (estParticulier(q) ? 'Particulier' : 'Pro');
     const tel = telephonePropre(q.pro_telephone);
@@ -460,23 +478,23 @@
         '<div class="contact-nom">' + e(TYPES_BIEN[q.type_bien] || q.type_bien) + ' · ' + e(q.adresse || 'Adresse non indiquée') + '</div>' +
         '<div class="contact-metier">' + e(nomPro) + (!estParticulier(q) && q.pro_entreprise ? ' · ' + e(q.pro_entreprise) : '') + '</div>' +
       '</div><div>' + (estParticulier(q) ? '<span class="badge badge-part">🏠 Particulier</span>' : '<span class="badge badge-pro">🤝 Pro</span>') +
-        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
+        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (brouillon ? '<span class="badge badge-proche">✏️ Commencé, pas encore envoyé</span>' : '') + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
       '<div class="contact-coordonnees">' + e(q.pro_email || 'E-mail non renseigné') + (q.pro_telephone ? ' · ' + e(q.pro_telephone) : '') + '</div>' +
-      '<div class="contact-date">Envoyé le ' + e(formatDateFr(q.envoye_le)) +
+      '<div class="contact-date">' + (brouillon ? 'Commencé, dernière modification le ' + e(formatDateFr(q.maj_le)) : 'Envoyé le ' + e(formatDateFr(q.envoye_le))) +
         (q.fin_mandat ? ' · fin de mandat le ' + e(formatJourFr(q.fin_mandat)) : ' · pas de date de fin de mandat') +
         (traite ? ' · traité le ' + e(formatDateFr(q.traite_le)) : '') + '</div>' +
-      blocAccords(q) +
+      (brouillon ? '' : blocAccords(q)) +
       blocAnnonce(q) +
       blocProposition(q) +
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
-        '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>' +
-        '<button type="button" class="bouton-petit clair" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ Modifier le questionnaire</button></div>' +
+        (brouillon ? '' : '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>') +
+        '<button type="button" class="bouton-petit ' + (brouillon ? 'or' : 'clair') + '" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ ' + (brouillon ? 'Compléter le questionnaire' : 'Modifier le questionnaire') + '</button></div>' +
       blocDetail(q) +
-      blocAnnonceProposee(q) +
+      (brouillon ? '' : blocAnnonceProposee(q) +
       '<textarea id="note-' + e(q.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, ce qu\'il reste à faire…)">' + e(noteTexte) + '</textarea>' +
       '<div class="contact-actions">' + boutonEtat +
-        '<button type="button" class="bouton-petit clair" data-action="note" data-id="' + e(q.id) + '">💾 Enregistrer la note</button></div>' +
+        '<button type="button" class="bouton-petit clair" data-action="note" data-id="' + e(q.id) + '">💾 Enregistrer la note</button></div>') +
     '</div>';
   }
 
@@ -506,7 +524,9 @@
       el('etat').classList.remove('cache');
       return false;
     }
-    questionnaires = data || [];
+    const rc = await albSupabase.rpc('alb_gestion_questionnaires_commences');
+    if (rc.error) { console.log('[ALB DEBUG] questionnaires commencés : chargement impossible', rc.error); }
+    questionnaires = (data || []).concat(rc.data || []);
     return true;
   }
 
@@ -533,9 +553,47 @@
     setTimeout(function () { bouton.textContent = avant; }, 1500);
   }
 
+  // ----- Nouveau questionnaire préparé par Jocelyne pour un membre -----
+  let biensChoisissables = [];
+
+  async function ouvrirNouveau() {
+    el('nouveau-message').textContent = 'Chargement…';
+    el('fenetre-nouveau').classList.remove('cache');
+    const { data, error } = await albSupabase.rpc('alb_gestion_annonces_pour_questionnaire');
+    if (error) {
+      console.log('[ALB DEBUG] nouveau questionnaire : liste impossible', error);
+      el('nouveau-message').textContent = 'La liste des biens n\'a pas pu être chargée. Réessaie dans un instant.';
+      return;
+    }
+    biensChoisissables = data || [];
+    el('nouveau-message').textContent = biensChoisissables.length ? '' : 'Aucun bien en ligne pour le moment.';
+    el('nouveau-choix').innerHTML = biensChoisissables.map(function (b, i) {
+      const qui = [b.prenom, b.nom].filter(Boolean).join(' ') || b.email || 'Membre';
+      const etat = b.questionnaire_statut === 'brouillon' ? ' — questionnaire commencé' : (b.questionnaire_statut === 'envoye' ? ' — déjà envoyé' : '');
+      return '<option value="' + i + '">' + e(qui + ' · ' + (b.titre || 'Bien') + (b.ville ? ' (' + b.ville + ')' : '') + ' · ' + (b.origine === 'particulier' ? '🏠 Particulier' : '🤝 Pro') + etat) + '</option>';
+    }).join('');
+  }
+
+  function lancerNouveau() {
+    const b = biensChoisissables[Number(el('nouveau-choix').value)];
+    if (!b) { return; }
+    el('fenetre-nouveau').classList.add('cache');
+    const apres = async function () { if (await chargerQuestionnaires()) { dessinerTout(); } chargerAInviter(); };
+    const part = b.origine === 'particulier';
+    const module = part ? window.albQuestionnaireParticulier : window.albQuestionnaireBien;
+    if (!module) { alert('Le questionnaire n\u2019est pas encore prêt, réessaie dans un instant.'); return; }
+    if (b.questionnaire_id) { module.ouvrirPourAdminId(b.questionnaire_id, apres); }
+    else if (part) { module.ouvrirPourAdminAnnonce(b.annonce_id, apres); }
+    else { module.ouvrirPourAdmin(b.annonce_id, apres); }
+  }
+
   document.addEventListener('click', async function (evenement) {
     const bouton = evenement.target.closest('button');
     if (!bouton) { return; }
+
+    if (bouton.id === 'nouveau-quest') { await ouvrirNouveau(); return; }
+    if (bouton.id === 'nouveau-fermer') { el('fenetre-nouveau').classList.add('cache'); return; }
+    if (bouton.id === 'nouveau-ouvrir') { lancerNouveau(); return; }
 
     if (bouton.dataset.etat) { choix.etat = bouton.dataset.etat; dessinerTout(); return; }
     if (bouton.dataset.origine) { choix.origine = bouton.dataset.origine; dessinerTout(); return; }
@@ -746,7 +804,7 @@
     }
     const mq = e.target.closest('[data-modifier-quest]');
     if (mq && window.albQuestionnaireBien) {
-      window.albQuestionnaireBien.ouvrirPourAdmin(mq.dataset.modifierQuest, function () { chargerAInviter(); });
+      window.albQuestionnaireBien.ouvrirPourAdmin(mq.dataset.modifierQuest, async function () { chargerAInviter(); if (await chargerQuestionnaires()) { dessinerTout(); } });
     }
     const vq = e.target.closest('[data-voir-quest]');
     if (vq) {

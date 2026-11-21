@@ -602,9 +602,13 @@
       }
       try {
         const { data, error } = etat.admin
-          ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
-              p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: null,
-            })
+          ? (etat.qid
+            ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
+                p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: null,
+              })
+            : await albSupabase.rpc('alb_admin_questionnaire_creer', {
+                p_annonce_id: etat.annonce.id, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep,
+              }))
           : await albSupabase.rpc('alb_part_questionnaire_enregistrer', {
           p_id: etat.qid || null,
           p_annonce_id: etat.annonce.id,
@@ -828,16 +832,9 @@
     afficherChoixType(an.type_bien === 'appartement' || an.type_bien === 'maison' ? an.type_bien : '');
   }
 
-  // Jocelyne ouvre un questionnaire déjà lancé (brouillon ou envoyé), à partir de son numéro
-  let surFermetureAdmin = null;
-  async function ouvrirPourAdminId(qid, quandFerme) {
-    styles();
-    surFermetureAdmin = quandFerme || null;
-    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_lire_id', { p_id: qid });
-    if (error || !data || !data.questionnaire) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
-    const q = data.questionnaire, an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
-    etat = { annonce: { id: an.id || null }, qid: q.id, type: null, modifie: false, defauts: {}, admin: true, dejaEnvoye: q.statut === 'envoye' };
-    const D = etat.defauts;
+  // Les valeurs déjà connues (annonce, compte du vendeur) pour ne rien retaper
+  function defautsAdmin(an, pr, pf) {
+    const D = {};
     D['Vous|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
     D['Vous|Téléphone'] = pr.telephone || pf.telephone || '';
     D['Vous|E-mail'] = pf.email || '';
@@ -850,6 +847,30 @@
     D['Votre maison|Superficie du terrain (m²)'] = an.surface_terrain_m2 != null ? String(an.surface_terrain_m2) : '';
     D['Chauffage, eau et diagnostics|Diagnostic énergie (DPE) — classe'] = an.dpe || '';
     D['Chauffage, eau et diagnostics|Gaz à effet de serre (GES) — classe'] = an.ges || '';
+    return D;
+  }
+
+  // Jocelyne prépare un questionnaire vierge à partir d'une annonce, ou rouvre celui qui existe déjà
+  async function ouvrirPourAdminAnnonce(annonceId, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_charger_annonce', { p_annonce_id: annonceId });
+    if (error || !data) { console.log('[ALB DEBUG] questionnaire admin : annonce introuvable', error); alert('L\u2019annonce n\u2019a pas pu être ouverte.'); return; }
+    if (data.questionnaire_id) { await ouvrirPourAdminId(data.questionnaire_id, quandFerme); return; }
+    const an = data.annonce || {};
+    etat = { annonce: { id: an.id }, qid: null, type: null, modifie: false, defauts: defautsAdmin(an, data.prive || {}, data.profil || {}), admin: true, dejaEnvoye: false };
+    afficherChoixType(an.type_bien === 'appartement' || an.type_bien === 'maison' ? an.type_bien : '');
+  }
+
+  // Jocelyne ouvre un questionnaire déjà lancé (brouillon ou envoyé), à partir de son numéro
+  let surFermetureAdmin = null;
+  async function ouvrirPourAdminId(qid, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_lire_id', { p_id: qid });
+    if (error || !data || !data.questionnaire) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
+    const q = data.questionnaire, an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
+    etat = { annonce: { id: an.id || null }, qid: q.id, type: null, modifie: false, defauts: defautsAdmin(an, pr, pf), admin: true, dejaEnvoye: q.statut === 'envoye' };
     if (!CFG[q.type_bien]) { alert('Ce questionnaire n\u2019a pas de type de bien reconnu.'); return; }
     await afficherFormulaire(q.type_bien, q);
   }
@@ -1023,6 +1044,6 @@
     tour();
   }
 
-  window.albQuestionnaireParticulier = { ouvrir: ouvrir, ouvrirPourAdminId: ouvrirPourAdminId };
+  window.albQuestionnaireParticulier = { ouvrir: ouvrir, ouvrirPourAdminId: ouvrirPourAdminId, ouvrirPourAdminAnnonce: ouvrirPourAdminAnnonce };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();
