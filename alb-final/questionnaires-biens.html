@@ -489,7 +489,8 @@
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
         (brouillon ? '' : '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>') +
-        '<button type="button" class="bouton-petit ' + (brouillon ? 'or' : 'clair') + '" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ ' + (brouillon ? 'Compléter le questionnaire' : 'Modifier le questionnaire') + '</button></div>' +
+        '<button type="button" class="bouton-petit ' + (brouillon ? 'or' : 'clair') + '" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ ' + (brouillon ? 'Compléter le questionnaire' : 'Modifier le questionnaire') + '</button>' +
+        (brouillon && Array.isArray(q.a_completer) && q.a_completer.length ? '<button type="button" class="bouton-petit clair" data-action="mail-manque" data-id="' + e(q.id) + '">✉️ Mail : ce qui manque (' + q.a_completer.length + ')</button>' : '') + '</div>' +
       blocDetail(q) +
       (brouillon ? '' : blocAnnonceProposee(q) +
       '<textarea id="note-' + e(q.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, ce qu\'il reste à faire…)">' + e(noteTexte) + '</textarea>' +
@@ -679,6 +680,25 @@
       return;
     }
 
+    if (bouton.dataset.action === 'mail-manque') {
+      bouton.disabled = true;
+      const r = await appelerManque({ action: 'apercu', questionnaire_id: id });
+      bouton.disabled = false;
+      if (!r || !r.ok) {
+        const m = { RIEN_A_COMPLETER: 'Toutes les questions marquées ont déjà une réponse : il n\'y a rien à demander.', SANS_EMAIL: 'Cette personne n\'a pas d\'e-mail dans son profil.' };
+        alert(m[r && r.code] || 'L\'aperçu n\'a pas pu être préparé.'); return;
+      }
+      manqueEnCours = id; invitationEnCours = null;
+      el('mail-entete').innerHTML = '<strong>De :</strong> ' + echapper(r.de) + '<br><strong>À :</strong> ' + echapper(r.nom) + ' &lt;' + echapper(r.a) + '&gt;<br><strong>Copie :</strong> ' + echapper(r.de) + '<br><strong>Objet :</strong> <input type="text" id="mail-objet" style="width:100%;padding:6px;" value="' + echapper(r.sujet) + '">'
+        + '<br><span style="font-size:13px;color:#555;">Rien ne part tant que tu n\'as pas cliqué sur « Envoyer ». Tu peux modifier l\'objet et cliquer dans le texte pour le changer.</span>';
+      el('mail-cadre').onload = function () { try { el('mail-cadre').contentDocument.designMode = 'on'; } catch (x) { console.log('[ALB DEBUG] texte non modifiable', x); } };
+      el('mail-cadre').srcdoc = r.html;
+      el('mail-message').textContent = '';
+      el('mail-envoyer').disabled = false; el('mail-envoyer').style.display = '';
+      el('fenetre-mail').classList.remove('cache');
+      return;
+    }
+
     if (bouton.dataset.action === 'modifier-quest') {
       const qm = questionnaires.find(function (x) { return x.id === id; });
       const module = qm && estParticulier(qm) ? window.albQuestionnaireParticulier : window.albQuestionnaireBien;
@@ -749,6 +769,12 @@
   // ---- Biens déjà en ligne : inviter le pro à compléter le questionnaire ----
   let aInviter = [];
   let invitationEnCours = null;
+  let manqueEnCours = null;
+  async function appelerManque(corps) {
+    const r = await albSupabase.functions.invoke('alb-quest-manque', { body: corps });
+    if (r.error) { try { return await r.error.context.json(); } catch (x) { return { ok: false, code: 'ERREUR' }; } }
+    return r.data;
+  }
   function echapper(t) { return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   async function appelerInvitation(corps) {
     const r = await albSupabase.functions.invoke('alb-invitation', { body: corps });
@@ -789,7 +815,7 @@
       const r = await appelerInvitation({ action: 'apercu', annonce_id: voir.dataset.voirMail });
       voir.disabled = false;
       if (!r || !r.ok) { alert('L\'aperçu n\'a pas pu être préparé.'); return; }
-      invitationEnCours = voir.dataset.voirMail;
+      invitationEnCours = voir.dataset.voirMail; manqueEnCours = null;
       el('mail-entete').innerHTML = '<strong>De :</strong> ' + echapper(r.de) + '<br><strong>À :</strong> ' + echapper(r.nom) + ' &lt;' + echapper(r.a) + '&gt;<br><strong>Copie :</strong> ' + echapper(r.de) + '<br><strong>Objet :</strong> <input type="text" id="mail-objet" style="width:100%;padding:6px;" value="' + echapper(r.sujet) + '">'
         + '<br><span style="font-size:13px;color:#555;">Tu peux modifier l\'objet et cliquer dans le texte ci-dessous pour le changer avant l\'envoi.</span>';
       el('mail-cadre').onload = function () { try { el('mail-cadre').contentDocument.designMode = 'on'; } catch (x) { console.log('[ALB DEBUG] texte non modifiable', x); } };
@@ -828,6 +854,16 @@
       } else { zone.classList.add('cache'); vq.textContent = 'Voir le questionnaire prérempli'; }
     }
     if (e.target.id === 'mail-fermer') { el('fenetre-mail').classList.add('cache'); }
+    if (e.target.id === 'mail-envoyer' && manqueEnCours) {
+      if (!confirm('Envoyer cet e-mail maintenant ?')) { return; }
+      e.target.disabled = true;
+      let texteM = null;
+      try { texteM = el('mail-cadre').contentDocument.body.innerHTML; } catch (x) { texteM = null; }
+      const rm2 = await appelerManque({ action: 'envoyer', questionnaire_id: manqueEnCours, sujet: el('mail-objet').value, html: texteM });
+      if (rm2 && rm2.ok) { el('mail-message').textContent = '✅ E-mail envoyé (et noté dans le suivi du membre).'; manqueEnCours = null; }
+      else { el('mail-message').textContent = 'L\'e-mail n\'est pas parti, réessaie.'; e.target.disabled = false; }
+      return;
+    }
     if (e.target.id === 'mail-envoyer' && invitationEnCours) {
       if (!confirm('Envoyer cet e-mail maintenant ?')) { return; }
       e.target.disabled = true;
