@@ -25,6 +25,7 @@ const ROBOTS = [
   [/Bytespider/i, 'Bytespider', 'Autres robots', 'exploration'],
   [/CCBot/i, 'CCBot', 'Autres robots', 'exploration'],
   [/facebookexternalhit|Facebot/i, 'Facebook (aperçu de lien)', 'Aperçus et tests', 'exploration'],
+  [/LinkedInBot/i, 'LinkedIn (aperçu de lien)', 'Aperçus et tests', 'exploration'],
   [/Chrome-Lighthouse|Google Page Speed|PageSpeed/i, 'Lighthouse (test de vitesse)', 'Aperçus et tests', 'exploration'],
 ];
 
