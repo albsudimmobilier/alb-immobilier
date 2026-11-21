@@ -121,7 +121,11 @@
     </div>
     <div class="carte">
       <h3 style="font-size:0.95rem;margin-bottom:4px;">🌐 Fréquentation du site</h3>
-      <div id="t-visites"></div>
+      <div id="t-frequentation"></div>
+    </div>
+    <div class="carte">
+      <h3 style="font-size:0.95rem;margin-bottom:4px;">🤖 Robots qui lisent ton site</h3>
+      <div id="t-robots"></div>
     </div>
     <div class="grille-ensemble">
       <div class="carte"><h3 style="font-size:0.95rem;margin-bottom:4px;">Qui nous rejoint</h3><div id="t-qui"></div></div>
@@ -639,9 +643,9 @@
       '<span class="ent-nb">' + nb(total) + '<small>' + nb(part) + ' + ' + nb(pro) + '</small></span></div>';
   }
 
-  function dessinerVisites() {
+  function dessinerFrequentation() {
     const v = donnees.visiteurs || { par_jour: [], pages: [], sources: [], debut: null };
-    const zone = el('t-visites');
+    const zone = el('t-frequentation');
     if (!v.par_jour.length) {
       zone.innerHTML = '<p class="vide">Le comptage a commencé : les chiffres apparaîtront dès la première visite.</p>';
       return;
@@ -692,6 +696,33 @@
       '<div class="grille-ensemble">' + liste('Pages les plus vues', v.pages, 'page') + liste('Sites qui nous envoient du monde', detailSources, 'source') + '</div>' +
       '<p class="aide">Une personne qui revient un autre jour compte une nouvelle visite. Comptage lancé le ' + (v.debut ? new Date(v.debut + 'T00:00:00').toLocaleDateString('fr-FR') : '—') +
       ', sans cookie. Le département ne s\'applique pas ici. Seules les personnes sont comptées (pas les robots des moteurs ni de l\'IA, ni ton appareil). Beaucoup d\'assistants IA n\'indiquent pas d\'où vient le clic : leur part réelle est donc au moins celle affichée.</p>';
+  }
+
+  function dessinerRobots() {
+    const zone = el('t-robots');
+    const l = donnees.robots || [];
+    if (!l.length) {
+      zone.innerHTML = '<p class="vide">Aucun robot noté pour l\'instant. Les robots de Google, Bing et des assistants IA passent en général dans les jours qui suivent la mise en place.</p>';
+      return;
+    }
+    const periode = l.filter(function (x) { return dansPeriode(x.jour); });
+    const demande = periode.filter(function (x) { return x.genre === 'lecture_demande'; }).reduce(function (t, x) { return t + x.lectures; }, 0);
+    const parRobot = {};
+    l.forEach(function (x) {
+      const r = parRobot[x.robot] || (parRobot[x.robot] = { robot: x.robot, famille: x.famille, genre: x.genre, lectures: 0, dernier: '' });
+      if (dansPeriode(x.jour)) r.lectures += x.lectures;
+      if (x.jour > r.dernier) r.dernier = x.jour;
+    });
+    const lignes = Object.keys(parRobot).map(function (k) { return parRobot[k]; })
+      .sort(function (a, b) { return b.lectures - a.lectures || (a.dernier < b.dernier ? 1 : -1); })
+      .map(function (r) {
+        return [e(r.famille) + ' · ' + e(r.robot), r.genre === 'lecture_demande' ? '🙋 à la demande d\'une personne' : '🔎 lecture régulière', nb(r.lectures),
+          new Date(r.dernier + 'T00:00:00').toLocaleDateString('fr-FR')];
+      });
+    zone.innerHTML = '<p style="font-size:0.9rem;"><strong>' + nb(demande) + ' lecture' + (demande > 1 ? 's' : '') + ' à la demande d\'une personne</strong> sur la période' +
+      (demande ? ' : une IA est allée lire une de tes pages pour répondre à quelqu\'un. 🎉' : ' (c\'est le signe le plus fort qu\'une IA se sert de ton site).') + '</p>' +
+      tableau(['Robot', 'Type', 'Pages lues (période)', 'Dernier passage'], lignes, '') +
+      '<p class="aide">Le nom d\'un robot peut être imité : c\'est un bon indice, pas une preuve. Cela ne dit pas si tu es citée dans les réponses.</p>';
   }
 
   function dessinerVueEnsemble() {
@@ -750,7 +781,8 @@
       (max ? '' : '<p class="vide">Les barres se rempliront avec les premières demandes.</p>') +
       '<p class="aide">Demandes déposées : projets, annonces et questionnaires envoyés. Mises en relation : pour les particuliers, les projets avec au moins un pro ; pour les pros, les demandes acceptées. Ventes et signatures : biens vendus, prêts, chantiers et apports signés.</p>';
 
-    dessinerVisites();
+    dessinerFrequentation();
+    dessinerRobots();
 
     // Qui nous rejoint
     const tous = donnees.membres.filter(bonDep);
@@ -810,7 +842,8 @@
     if (!session?.session) { etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.'; return; }
     const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
-    const [{ data, error }, devisRep, commercialRep, questRep, visitesRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats'), albSupabase.rpc('alb_gestion_visiteurs')]);
+    const [{ data, error }, devisRep, commercialRep, questRep, visitesRep, robotsRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats'), albSupabase.rpc('alb_gestion_visiteurs'), albSupabase.rpc('alb_gestion_robots')]);
+    if (robotsRep.error) console.error('[ALB DEBUG] robots :', robotsRep.error);
     if (visitesRep.error) console.error('[ALB DEBUG] visiteurs :', visitesRep.error);
     try { window.localStorage.setItem('alb-pas-compter', '1'); } catch (err) {}
     if (questRep.error) console.error('[ALB DEBUG] questionnaires :', questRep.error);
@@ -820,6 +853,7 @@
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
       signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
       questionnaires: questRep.data || [],
+      robots: robotsRep.data || [],
       visiteurs: visitesRep.data || { par_jour: [], pages: [], sources: [], debut: null },
       devis: devisRep.data || [], commercial: Object.assign({ carnet: [], membres: [], rdv: [], factures: [] }, commercialRep.data || {}) };
     const t = data.tarifs || {};

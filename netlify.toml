@@ -1,6 +1,7 @@
 [build]
   base = "."
   publish = "alb-final"
+  edge_functions = "netlify/edge-functions"
 
 [functions]
   directory = "api"
