@@ -124,6 +124,10 @@
       <div id="t-frequentation"></div>
     </div>
     <div class="carte">
+      <h3 style="font-size:0.95rem;margin-bottom:4px;">🧭 De la page vue à la demande déposée</h3>
+      <div class="tableau-conteneur" id="t-pages-demandes"></div>
+    </div>
+    <div class="carte">
       <h3 style="font-size:0.95rem;margin-bottom:4px;">🤖 Robots qui lisent ton site</h3>
       <div id="t-robots"></div>
     </div>
@@ -648,8 +652,13 @@
     const zone = el('t-frequentation');
     if (!v.par_jour.length) {
       zone.innerHTML = '<p class="vide">Le comptage a commencé : les chiffres apparaîtront dès la première visite.</p>';
+      el('t-pages-demandes').innerHTML = '<p class="vide">Le tableau se remplira avec les premières visites.</p>';
       return;
     }
+    const isoJour = function (decalage) { const d = new Date(); d.setDate(d.getDate() - decalage); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+    const aVisite = function (j) { return v.par_jour.some(function (x) { return x.jour === j; }); };
+    const alerte = (v.debut && v.debut <= isoJour(3) && !aVisite(isoJour(1)) && !aVisite(isoJour(2)))
+      ? '<div class="message erreur">⚠️ Aucune visite comptée depuis deux jours. Soit le site est très calme, soit le comptage est en panne : ouvre albimmobilier.fr depuis un autre navigateur (pas celui que tu utilises ici) et reviens voir.</div>' : '';
     const jours = v.par_jour.filter(function (j) { return dansPeriode(j.jour); });
     const total = jours.reduce(function (t, j) { return t + j.visites; }, 0);
     const moyenne = jours.length ? Math.round(total / jours.length) : 0;
@@ -698,15 +707,35 @@
       ? '<p style="font-size:0.86rem;margin:6px 0 2px;">👥 <strong>Par réseau</strong> : ' + nomsReseaux.map(function (r) { return e(r) + ' <strong>' + nb(parReseau[r]) + '</strong>'; }).join(' · ') + '</p>' +
         '<p class="aide">Sur téléphone, les applications (Instagram, WhatsApp, TikTok…) cachent souvent d\'où vient le clic : ces visites tombent alors dans « arrivée directe ». Pour les suivre, ajoute à la fin de ton lien <strong>?utm_source=instagram</strong> (ou linkedin, facebook, whatsapp…).</p>'
       : '';
+    const nomPage = function (p) { return String(p || '').replace(/^\//, '').replace(/\.html$/, '') || 'index'; };
+    const parPage = {};
+    (v.pages || []).forEach(function (x) { if (dansPeriode(x.jour)) { const k = nomPage(x.page); parPage[k] = (parPage[k] || 0) + x.visites; } });
+    const detailPages = Object.keys(parPage).map(function (k) { return { page: k === 'index' ? '/ (accueil)' : '/' + k, visites: parPage[k] }; }).sort(function (a, b) { return b.visites - a.visites; });
+    const demandesDe = function (liste) { return liste.length; };
+    const ligneP = function (nom, cle, nbDemandes, libelle) {
+      const vis = parPage[cle] || 0;
+      return [nom, nb(vis), nb(nbDemandes) + ' <span class="petit">' + libelle + '</span>', vis ? Math.round(nbDemandes * 100 / vis) + ' pour 100' : '—'];
+    };
+    const projetsP = donnees.projets.filter(function (x) { return dansPeriode(x.cree_le); });
+    const visitesP = donnees.visites.filter(function (x) { return dansPeriode(x.cree_le); });
+    const prosP = donnees.membres.filter(function (m) { return m.pro && dansPeriode(m.cree_le); });
+    const vendeursP = donnees.annonces.filter(function (a) { return a.type_vente === 'particulier' && dansPeriode(a.depose_le); }).length +
+      (donnees.questionnaires || []).filter(function (q) { return q.origine === 'particulier' && q.statut === 'envoye' && dansPeriode(q.envoye_le); }).length;
+    el('t-pages-demandes').innerHTML = tableau(['Page', 'Visites', 'Demandes', 'Pour 100 visites'], [
+      ligneP('Demande de visite', 'demande-visite', demandesDe(visitesP), 'demandes de visite'),
+      ligneP('Projet (financement, travaux…)', 'projet-demande', demandesDe(projetsP), 'projets déposés'),
+      ligneP('Inscription des pros', 'inscription-pro', demandesDe(prosP), 'pros inscrits'),
+      ligneP('Vendre mon bien', 'vendre-mon-bien', vendeursP, 'annonces ou questionnaires')
+    ], '') + '<p class="aide">Les visites comptent chaque page ouverte, par jour. Le chiffre « pour 100 » est un ordre de grandeur : une personne peut ouvrir la page plusieurs fois.</p>';
     const detailSources = Object.keys(sourcesPeriode).map(function (k) { return { source: k, visites: sourcesPeriode[k] }; }).sort(function (a, b) { return b.visites - a.visites; });
     const liste = function (titre, l, cle) {
       return '<div><p style="font-size:0.86rem;font-weight:700;margin:6px 0 2px;">' + titre + '</p>' +
         (l.length ? l.slice(0, 6).map(function (x) { return '<p style="font-size:0.84rem;margin:2px 0;">' + e(x[cle] || '/') + ' <strong>' + nb(x.visites) + '</strong></p>'; }).join('') : '<p class="aide">Rien pour l\'instant.</p>') + '</div>';
     };
-    zone.innerHTML = '<p style="font-size:0.9rem;"><strong>' + nb(total) + ' visite' + (total > 1 ? 's' : '') + '</strong> sur la période · environ ' + nb(moyenne) + ' par jour</p>' +
+    zone.innerHTML = alerte + '<p style="font-size:0.9rem;"><strong>' + nb(total) + ' visite' + (total > 1 ? 's' : '') + '</strong> sur la période · environ ' + nb(moyenne) + ' par jour</p>' +
       colonnes + '<p class="aide">Visites par semaine (semaine commençant le jour indiqué).</p>' +
       '<p style="font-size:0.86rem;font-weight:700;margin:10px 0 2px;">Comment les gens arrivent</p>' + blocFamilles + blocReseaux +
-      '<div class="grille-ensemble">' + liste('Pages les plus vues', v.pages, 'page') + liste('Sites qui nous envoient du monde', detailSources, 'source') + '</div>' +
+      '<div class="grille-ensemble">' + liste('Pages les plus vues', detailPages, 'page') + liste('Sites qui nous envoient du monde', detailSources, 'source') + '</div>' +
       '<p class="aide">Une personne qui revient un autre jour compte une nouvelle visite. Comptage lancé le ' + (v.debut ? new Date(v.debut + 'T00:00:00').toLocaleDateString('fr-FR') : '—') +
       ', sans cookie. Le département ne s\'applique pas ici. Seules les personnes sont comptées (pas les robots des moteurs ni de l\'IA, ni ton appareil). Beaucoup d\'assistants IA n\'indiquent pas d\'où vient le clic : leur part réelle est donc au moins celle affichée.</p>';
   }
@@ -774,6 +803,8 @@
     const signes = donnees.signatures.filter(function (x) { return bonDep(x) && dansPeriode(x.signe_le) && !x.desaccord; });
     const lignes = [
       ['👥 Inscrits', membres.filter(function (m) { return !pro(m); }).length, membres.filter(pro).length],
+      ['📝 Questionnaires commencés', questionnaires.filter(function (q) { return q.origine === 'particulier' && dansPeriode(q.cree_le); }).length,
+        questionnaires.filter(function (q) { return q.origine === 'pro' && dansPeriode(q.cree_le); }).length],
       ['📥 Demandes déposées', projets.length + annoncesDeposees.filter(function (a) { return a.type_vente === 'particulier'; }).length + parOrigine(qEnvoyes, 'particulier'),
         annoncesDeposees.filter(function (a) { return a.type_vente === 'accompagnee'; }).length + parOrigine(qEnvoyes, 'pro')],
       ['🤝 Mises en relation', projets.filter(function (x) { return x.acceptes > 0; }).length, acceptees.length],
@@ -792,6 +823,11 @@
       '<span class="ent-nb">' + nb(visitesPeriode) + '<small>' + (visitesPeriode ? pct(lignes[0][1] + lignes[0][2], visitesPeriode) + ' % s\'inscrivent' : 'à partir de ce jour') + '</small></span></div>';
     el('t-entonnoir').innerHTML = ligneCarnet + ligneVisites + lignes.map(function (l) { return ligneEntonnoir(l[0], l[1], l[2], max); }).join('') +
       (max ? '' : '<p class="vide">Les barres se rempliront avec les premières demandes.</p>') +
+      (function () {
+        const commences = questionnaires.filter(function (q) { return dansPeriode(q.cree_le); });
+        const abandonnes = commences.filter(function (q) { return q.statut !== 'envoye'; });
+        return commences.length ? '<p class="aide"><strong>' + nb(abandonnes.length) + ' questionnaire' + (abandonnes.length > 1 ? 's' : '') + ' commencé' + (abandonnes.length > 1 ? 's' : '') + ' mais pas envoyé' + (abandonnes.length > 1 ? 's' : '') + '</strong> sur ' + nb(commences.length) + ' (' + pct(abandonnes.length, commences.length) + ' %) : ceux qui ont abandonné en route.</p>' : '';
+      })() +
       '<p class="aide">Demandes déposées : projets, annonces et questionnaires envoyés. Mises en relation : pour les particuliers, les projets avec au moins un pro ; pour les pros, les demandes acceptées. Ventes et signatures : biens vendus, prêts, chantiers et apports signés.</p>';
 
     dessinerFrequentation();
