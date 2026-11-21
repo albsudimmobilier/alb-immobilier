@@ -207,11 +207,20 @@
       <label><input type="checkbox" name="pieces" value="credits"> Crédits en cours</label>
     </div>
 
+    <div class="summary-card" id="carteRecontactAlb" style="margin-top:1rem;">
+      <label style="display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;">
+        <input type="checkbox" id="recontactAlb" style="margin-top:.2rem;">
+        <span>
+          <strong>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de mon projet</strong>
+        </span>
+      </label>
+    </div>
+
     <div class="summary-card" style="margin-top:1rem;">
       <label style="display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;">
-        <input type="checkbox" id="consentementRecontact" required style="margin-top:.2rem;">
+        <input type="checkbox" id="consentementRecontact" style="margin-top:.2rem;">
         <span>
-          <strong>J'accepte d'être recontacté</strong><br>
+          <strong>J'accepte d'être recontacté par les courtiers</strong><br>
           J'autorise les courtiers sélectionnés à me contacter dans le cadre de ma demande de financement.
         </span>
       </label>
@@ -529,12 +538,18 @@ async function validateAndSubmit() {
   const tel = document.getElementById('telephone').value.trim();
   const cp = document.getElementById('codePostal').value.trim();
   const consentement = document.getElementById('consentementRecontact').checked;
+  const recontactAlb = document.getElementById('recontactAlb').checked;
+  // Sans l'accord de recontact par ALB, la case passe en rouge et rien ne part
+  const carteRecontact = document.getElementById('carteRecontactAlb');
+  carteRecontact.style.border = recontactAlb ? '' : '2px solid #C0392B';
+  carteRecontact.style.background = recontactAlb ? '' : '#FDECEA';
 
   if (!nom) errors.push('Nom requis');
   if (!prenom) errors.push('Prénom requis');
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email invalide');
   if (!tel) errors.push('Téléphone requis');
   if (!cp) errors.push('Code postal requis');
+  if (!recontactAlb) errors.push('Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.');
   if (!consentement) errors.push('Consentement requis');
   if (courtiersMode === 'direct' && selectedCourtiers.length === 0) errors.push('Sélectionnez 1 ou 2 courtiers');
   if (!formData.budget_max_declare) errors.push('Cliquez d\'abord sur Calculer mon budget');
