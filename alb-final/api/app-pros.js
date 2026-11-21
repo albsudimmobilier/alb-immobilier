@@ -201,6 +201,11 @@ async function loadPros() {
   allPros = data || [];
   console.log(`[ALB DEBUG] ${allPros.length} pros affichés sur Nos pros ALB`);
   construireFiltres();
+  // Arrivée depuis une page secteur (ex. ?zone=Centre Var) : le secteur est déjà coché
+  const zoneDemandee = new URLSearchParams(location.search).get('zone') || '';
+  if (zoneDemandee) {
+    document.querySelectorAll('.zone-filter').forEach(c => { if (c.value === zoneDemandee) c.checked = true; });
+  }
   applyFilters();
 
   // Retour après connexion depuis « Donner son avis »
