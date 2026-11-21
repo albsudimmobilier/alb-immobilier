@@ -1206,10 +1206,10 @@
     majZones();
     const objet = params.get('objet') || '';
     const moduleChoisi = params.get('module') || '';
+    if (moduleChoisi === 'financement') {
       // « Je veux acheter » : pour y habiter, une résidence secondaire, pour investir, ou financer des travaux
-      // « Je veux acheter » : pour y habiter, une résidence secondaire, ou pour investir
-      Array.from(el('f-objet').options).forEach(function (o) { if (['achat_rp', 'achat_rs', 'investissement'].indexOf(o.value) === -1) o.remove(); });
-      el('f-objet').value = objet === 'investissement' ? 'investissement' : objet === 'secondaire' ? 'achat_rs' : 'achat_rp';
+      Array.from(el('f-objet').options).forEach(function (o) { if (['achat_rp', 'achat_rs', 'investissement', 'travaux'].indexOf(o.value) === -1) o.remove(); });
+      el('f-objet').value = objet === 'investissement' ? 'investissement' : objet === 'secondaire' ? 'achat_rs' : objet === 'travaux' ? 'travaux' : 'achat_rp';
     }
     // Travaux : les corps de métier déjà cochés dans Projets ALB
     dessinerMetiers((params.get('metiers') || '').split(',').filter(function (c) { return NOMS_METIERS[c]; }));
