@@ -13,8 +13,9 @@
 //
 // Utilisation : albAnnonceProposee.creer(questionnaire) renvoie
 //   { texte, blocs, accroche, pourJoce, diffusable, manques }
-// `diffusable` vaut false tant que le DPE et le GES ne sont pas tous les deux connus
-// (et cohérents avec l'annonce du vendeur) : alors rien ne doit être copié, envoyé ni diffusé.
+// `diffusable` vaut false tant que le DPE, le GES et le montant estimé des dépenses
+// d'énergie ne sont pas connus (et cohérents avec l'annonce du vendeur) : alors rien ne
+// doit être copié, envoyé ni diffusé.
 // `manques` dit pourquoi, en français simple.
 // où `texte` est l'annonce prête à relire et à copier, et `pourJoce` ce qui reste
 // visible seulement par Jocelyne (ses mots, à décider, à vérifier, non publié).
@@ -409,6 +410,12 @@
     if (gesQ && gesA && gesQ !== gesA) manques.push('Le GES du questionnaire (' + gesQ + ') n’est pas celui de l’annonce (' + gesA + ') : à clarifier avec le vendeur.');
     if (!dpeFinal) manques.push('La classe énergie (DPE) n’est pas indiquée.');
     if (!gesFinal) manques.push('La classe climat (GES) n’est pas indiquée.');
+    // Montant estimé des dépenses annuelles d'énergie (mini et maxi) : il vient de l'annonce du vendeur
+    const depMin = Number(q.annonce && q.annonce.depenses_energie_min);
+    const depMax = Number(q.annonce && q.annonce.depenses_energie_max);
+    const depensesConnues = isFinite(depMin) && isFinite(depMax) && depMin > 0 && depMax > 0;
+    if (!depensesConnues) manques.push('Le montant estimé des dépenses annuelles d’énergie (mini et maxi) n’est pas indiqué dans l’annonce.');
+    else if (depMin > depMax) manques.push('Dans l’annonce, le montant mini des dépenses d’énergie est plus grand que le maxi : à corriger.');
     const diffusable = manques.length === 0;
 
     // Bon à savoir : les plus, les moins, le pratique, les diagnostics
@@ -441,6 +448,9 @@
     if (dpeFinal) diagLignes.push('Diagnostic énergie (DPE) : classe ' + dpeFinal);
     if (gesFinal) diagLignes.push('Gaz à effet de serre (GES) : classe ' + gesFinal);
     if (k.diag.length) diagLignes.push('Autres diagnostics : ' + k.diag.map(function (d) { return enMinuscule(d.nom) + ' (' + texteDiagnostic(d.statut) + ')'; }).join(', '));
+    if (depensesConnues && depMin <= depMax) {
+      diagLignes.push('Montant estimé des dépenses annuelles d’énergie pour un usage standard : entre ' + milliers(depMin) + ' € et ' + milliers(depMax) + ' € par an');
+    }
     if (diagLignes.length) savoir.sousBlocs.push({ titre: 'Diagnostics', lignes: diagLignes });
     if (savoir.sousBlocs.length) blocs.push(savoir);
 
