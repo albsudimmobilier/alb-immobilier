@@ -607,9 +607,13 @@
       }
       try {
         const { data, error } = etat.admin
-          ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer', {
-              p_id: etat.qid || null, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null, p_annonce_id: etat.annonce.id,
-            })
+          ? (etat.adminParId
+            ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
+                p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null,
+              })
+            : await albSupabase.rpc('alb_admin_questionnaire_enregistrer', {
+                p_id: etat.qid || null, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: d.fin || null, p_annonce_id: etat.annonce.id,
+              }))
           : await albSupabase.rpc('alb_pro_questionnaire_enregistrer', {
           p_id: etat.qid || null,
           p_type: etat.type,
@@ -765,7 +769,9 @@
       const ban = document.createElement('p');
       ban.className = 'mqb-note';
       ban.style.cssText = 'background:#FFF6DC;border:1px solid #E5C770;padding:8px 10px;border-radius:6px;';
-      ban.textContent = 'Tu remplis ce questionnaire à la place du professionnel. Il reste en brouillon dans son espace : c\u2019est lui qui l\u2019enverra.';
+      ban.textContent = etat.dejaEnvoye
+        ? 'Tu modifies un questionnaire déjà envoyé par le professionnel. Tes changements sont enregistrés tout de suite.'
+        : 'Tu remplis ce questionnaire à la place du professionnel. Il reste en brouillon dans son espace : c\u2019est lui qui l\u2019enverra.';
       racine.querySelector('.mqb-formulaire').insertBefore(ban, racine.querySelector('.mqb-formulaire').firstChild);
     }
     if (!etat.admin && globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
@@ -866,6 +872,32 @@
     if (q) { etat.qid = q.id; await afficherFormulaire(q.type_bien, q); return; }
     const type = an.type_bien === 'appartement' ? 'appartement' : 'maison';
     await afficherFormulaire(type);
+  }
+
+  // Jocelyne ouvre un questionnaire déjà lancé (brouillon ou envoyé), à partir de son numéro
+  async function ouvrirPourAdminId(qid, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_lire_id', { p_id: qid });
+    if (error || !data || !data.questionnaire) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
+    const q = data.questionnaire, an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
+    etat = { annonce: { id: an.id || null }, qid: q.id, type: null, modifie: false, nbPhotos: Number(data.nb_photos) || 0, photos: Array.isArray(data.photos) ? data.photos : [], defauts: {}, admin: true, adminParId: true, dejaEnvoye: q.statut === 'envoye' };
+    const V = 'Vous et le bien';
+    etat.defauts[V + '|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
+    etat.defauts[V + '|Agence ou réseau'] = an.agence_nom || pf.nom_entreprise || '';
+    etat.defauts[V + '|Téléphone'] = pr.telephone || pf.telephone || '';
+    etat.defauts[V + '|E-mail'] = pf.email || '';
+    etat.defauts[V + '|N° et rue'] = pr.adresse || '';
+    etat.defauts[V + '|Code postal'] = an.code_postal || '';
+    etat.defauts[V + '|Commune'] = an.ville || '';
+    etat.defauts['Le financier|Prix de vente (€)'] = an.prix != null ? String(an.prix) : '';
+    etat.defauts['Le financier|Honoraires (€ ou %)'] = an.honoraires_texte || '';
+    etat.defauts['Le bien en chiffres|Surface habitable (m²)'] = an.surface_m2 != null ? String(an.surface_m2) : '';
+    etat.defauts['Le bien en chiffres|Nombre de pièces'] = an.nb_pieces != null ? String(an.nb_pieces) : '';
+    etat.defauts['Le bien en chiffres|Terrain (m²)'] = an.surface_terrain_m2 != null ? String(an.surface_terrain_m2) : '';
+    etat.defauts['Accès et équipements|Diagnostic énergie (DPE) — classe'] = an.dpe || '';
+    etat.defauts['Accès et équipements|Gaz à effet de serre (GES) — classe'] = an.ges || '';
+    await afficherFormulaire(q.type_bien, q);
   }
 
   // ---------- Dans « Mes annonces » ----------
@@ -1036,6 +1068,6 @@
     tour();
   }
 
-  window.albQuestionnaireBien = { ouvrir: ouvrir, ouvrirPourAdmin: ouvrirPourAdmin };
+  window.albQuestionnaireBien = { ouvrir: ouvrir, ouvrirPourAdmin: ouvrirPourAdmin, ouvrirPourAdminId: ouvrirPourAdminId };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();

@@ -10,6 +10,7 @@
   <script src="alb-connexion.js"></script>
   <script src="annonce-proposee.js"></script>
   <script src="mes-questionnaires-biens.js"></script>
+  <script src="mes-questionnaires-particulier.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -469,7 +470,8 @@
       blocProposition(q) +
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
-        '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button></div>' +
+        '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>' +
+        '<button type="button" class="bouton-petit clair" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ Modifier le questionnaire</button></div>' +
       blocDetail(q) +
       blocAnnonceProposee(q) +
       '<textarea id="note-' + e(q.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, ce qu\'il reste à faire…)">' + e(noteTexte) + '</textarea>' +
@@ -607,6 +609,14 @@
       return;
     }
 
+    if (bouton.dataset.action === 'modifier-quest') {
+      const qm = questionnaires.find(function (x) { return x.id === id; });
+      const module = qm && estParticulier(qm) ? window.albQuestionnaireParticulier : window.albQuestionnaireBien;
+      if (!module || !module.ouvrirPourAdminId) { alert('Le questionnaire n\u2019est pas encore prêt, réessaie dans un instant.'); return; }
+      memoriserNotes();
+      module.ouvrirPourAdminId(id, async function () { await chargerQuestionnaires(); dessinerTout(); });
+      return;
+    }
     if (bouton.dataset.action === 'detail') { ouverts[id] = !ouverts[id]; dessinerListe(); return; }
     if (bouton.dataset.action === 'annonce') { memoriserNotes(); annoncesOuvertes[id] = !annoncesOuvertes[id]; dessinerListe(); return; }
     if (bouton.dataset.action === 'refaire-annonce') {

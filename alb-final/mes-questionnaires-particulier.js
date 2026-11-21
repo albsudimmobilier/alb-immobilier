@@ -272,7 +272,7 @@
     if (b.k === 'sous') return '<div class="mqp-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqp-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqp-note">' + e(b.texte) + '</p>';
-    if (b.k === 'fichiers') return globalThis.albDiagnostics ? globalThis.albDiagnostics.html() : '';
+    if (b.k === 'fichiers') return (globalThis.albDiagnostics && !(etat && etat.admin)) ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'champs') return htmlChamps(sec, b.items);
 
     if (b.k === 'loyer') {
@@ -601,7 +601,11 @@
         if (!d.rue || !d.commune) { afficherMessage('erreur', ERREURS.ADRESSE_OBLIGATOIRE); return false; }
       }
       try {
-        const { data, error } = await albSupabase.rpc('alb_part_questionnaire_enregistrer', {
+        const { data, error } = etat.admin
+          ? await albSupabase.rpc('alb_admin_questionnaire_enregistrer_id', {
+              p_id: etat.qid, p_type: etat.type, p_adresse: d.adresse, p_reponses: d.rep, p_fin_mandat: null,
+            })
+          : await albSupabase.rpc('alb_part_questionnaire_enregistrer', {
           p_id: etat.qid || null,
           p_annonce_id: etat.annonce.id,
           p_type: etat.type,
@@ -667,8 +671,10 @@
     if (etat && etat.modifie && racine && racine.querySelector('.mqp-formulaire')) await sauvegarder(false, true);
     clearTimeout(minuteur);
     fermerFenetre();
+    const etaitAdmin = !!(etat && etat.admin);
     etat = null;
     champs = [];
+    if (etaitAdmin) { if (typeof surFermetureAdmin === 'function') surFermetureAdmin(); return; }
     await rafraichir();
   }
 
@@ -758,12 +764,20 @@
           s.blocs.map(function (b) { return htmlBloc(s, b); }).join('') + '</section>';
       }).join('') + '</div>';
     creerFenetre('Questionnaire de votre bien — ' + CFG[type].libelle, html,
-      '<div id="mqp-bloque" class="mqp-msg visible erreur">' + e(MSG_MANDAT) + '</div>' +
+      (etat.admin ? '' : '<div id="mqp-bloque" class="mqp-msg visible erreur">' + e(MSG_MANDAT) + '</div>') +
       '<div id="mqp-msg" class="mqp-msg" aria-live="polite"></div>' +
       '<div class="mqp-boutons"><button type="button" class="bouton bouton-discret" data-mqp-act="enregistrer-fermer">Enregistrer et fermer</button>' +
-      '<button type="button" class="bouton" data-mqp-act="envoyer" disabled>Envoyer le questionnaire</button></div>');
+      (etat.admin ? '' : '<button type="button" class="bouton" data-mqp-act="envoyer" disabled>Envoyer le questionnaire</button>') + '</div>');
 
-    if (globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
+    if (etat.admin) {
+      const ban = document.createElement('p');
+      ban.style.cssText = 'background:#FFF6DC;border:1px solid #E5C770;padding:8px 10px;border-radius:6px;';
+      ban.textContent = etat.dejaEnvoye
+        ? 'Tu modifies un questionnaire déjà envoyé par le vendeur. Tes changements sont enregistrés tout de suite.'
+        : 'Tu remplis ce questionnaire à la place du vendeur. Il reste en brouillon dans son espace : c\u2019est lui qui l\u2019enverra.';
+      racine.querySelector('.mqp-formulaire').insertBefore(ban, racine.querySelector('.mqp-formulaire').firstChild);
+    }
+    if (!etat.admin && globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
     if (brouillon) remettre(brouillon);
     preremplir(etat.defauts);
     racine.querySelectorAll('.mqp-piece').forEach(majResume);
@@ -812,6 +826,32 @@
       }
     }
     afficherChoixType(an.type_bien === 'appartement' || an.type_bien === 'maison' ? an.type_bien : '');
+  }
+
+  // Jocelyne ouvre un questionnaire déjà lancé (brouillon ou envoyé), à partir de son numéro
+  let surFermetureAdmin = null;
+  async function ouvrirPourAdminId(qid, quandFerme) {
+    styles();
+    surFermetureAdmin = quandFerme || null;
+    const { data, error } = await albSupabase.rpc('alb_admin_questionnaire_lire_id', { p_id: qid });
+    if (error || !data || !data.questionnaire) { console.log('[ALB DEBUG] questionnaire admin : chargement impossible', error); alert('Le questionnaire n\u2019a pas pu être ouvert.'); return; }
+    const q = data.questionnaire, an = data.annonce || {}, pr = data.prive || {}, pf = data.profil || {};
+    etat = { annonce: { id: an.id || null }, qid: q.id, type: null, modifie: false, defauts: {}, admin: true, dejaEnvoye: q.statut === 'envoye' };
+    const D = etat.defauts;
+    D['Vous|Nom et prénom'] = [pf.prenom, pf.nom].filter(Boolean).join(' ');
+    D['Vous|Téléphone'] = pr.telephone || pf.telephone || '';
+    D['Vous|E-mail'] = pf.email || '';
+    D['Vous|N° et rue'] = pr.adresse || '';
+    D['Vous|Code postal'] = an.code_postal || '';
+    D['Vous|Commune'] = an.ville || '';
+    D['La vente|Prix demandé (€)'] = an.prix != null ? String(an.prix) : '';
+    D['Le bien en chiffres|Surface habitable (m²)'] = an.surface_m2 != null ? String(an.surface_m2) : '';
+    D['Le bien en chiffres|Nombre de pièces'] = an.nb_pieces != null ? String(an.nb_pieces) : '';
+    D['Votre maison|Superficie du terrain (m²)'] = an.surface_terrain_m2 != null ? String(an.surface_terrain_m2) : '';
+    D['Chauffage, eau et diagnostics|Diagnostic énergie (DPE) — classe'] = an.dpe || '';
+    D['Chauffage, eau et diagnostics|Gaz à effet de serre (GES) — classe'] = an.ges || '';
+    if (!CFG[q.type_bien]) { alert('Ce questionnaire n\u2019a pas de type de bien reconnu.'); return; }
+    await afficherFormulaire(q.type_bien, q);
   }
 
   // ---------- Dans « Mes annonces » ----------
@@ -983,6 +1023,6 @@
     tour();
   }
 
-  window.albQuestionnaireParticulier = { ouvrir: ouvrir };
+  window.albQuestionnaireParticulier = { ouvrir: ouvrir, ouvrirPourAdminId: ouvrirPourAdminId };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();
