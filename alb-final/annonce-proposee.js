@@ -12,7 +12,10 @@
 // que le générateur ne reconnaît pas reste dans « À vérifier », jamais dans l'annonce.
 //
 // Utilisation : albAnnonceProposee.creer(questionnaire) renvoie
-//   { texte, blocs, accroche, pourJoce }
+//   { texte, blocs, accroche, pourJoce, diffusable, manques }
+// `diffusable` vaut false tant que le DPE et le GES ne sont pas tous les deux connus
+// (et cohérents avec l'annonce du vendeur) : alors rien ne doit être copié, envoyé ni diffusé.
+// `manques` dit pourquoi, en français simple.
 // où `texte` est l'annonce prête à relire et à copier, et `pourJoce` ce qui reste
 // visible seulement par Jocelyne (ses mots, à décider, à vérifier, non publié).
 // Aucun accès à Supabase : ce fichier ne fait que lire le questionnaire qu'on lui donne.
@@ -392,6 +395,22 @@
     // L'extérieur
     if (k.ext.length) blocs.push({ emoji: '🌿', titre: 'L’extérieur', lignes: k.ext, sousBlocs: [] });
 
+    // DPE et GES : obligatoires pour diffuser. On prend ceux du questionnaire, sinon ceux de l'annonce du vendeur.
+    // S'ils sont différents, on ne diffuse pas : une classe fausse dans une annonce est une faute.
+    function classeValide(v) {
+      const t = texteDe(v).toUpperCase();
+      return /^[A-G]$/.test(t) ? t : '';
+    }
+    const manques = [];
+    const dpeQ = classeValide(k.dpe), gesQ = classeValide(k.ges);
+    const dpeA = classeValide(q.annonce && q.annonce.dpe), gesA = classeValide(q.annonce && q.annonce.ges);
+    const dpeFinal = dpeQ || dpeA, gesFinal = gesQ || gesA;
+    if (dpeQ && dpeA && dpeQ !== dpeA) manques.push('Le DPE du questionnaire (' + dpeQ + ') n’est pas celui de l’annonce (' + dpeA + ') : à clarifier avec le vendeur.');
+    if (gesQ && gesA && gesQ !== gesA) manques.push('Le GES du questionnaire (' + gesQ + ') n’est pas celui de l’annonce (' + gesA + ') : à clarifier avec le vendeur.');
+    if (!dpeFinal) manques.push('La classe énergie (DPE) n’est pas indiquée.');
+    if (!gesFinal) manques.push('La classe climat (GES) n’est pas indiquée.');
+    const diffusable = manques.length === 0;
+
     // Bon à savoir : les plus, les moins, le pratique, les diagnostics
     const savoir = { emoji: '✅', titre: 'Bon à savoir', lignes: [], sousBlocs: [] };
     const lesPlus = k.plus.slice();
@@ -419,8 +438,8 @@
     if (pratique.length) savoir.sousBlocs.push({ titre: 'Pratique', lignes: pratique });
 
     const diagLignes = [];
-    if (k.dpe) diagLignes.push('Diagnostic énergie (DPE) : classe ' + k.dpe);
-    if (k.ges) diagLignes.push('Gaz à effet de serre (GES) : classe ' + k.ges);
+    if (dpeFinal) diagLignes.push('Diagnostic énergie (DPE) : classe ' + dpeFinal);
+    if (gesFinal) diagLignes.push('Gaz à effet de serre (GES) : classe ' + gesFinal);
     if (k.diag.length) diagLignes.push('Autres diagnostics : ' + k.diag.map(function (d) { return enMinuscule(d.nom) + ' (' + texteDiagnostic(d.statut) + ')'; }).join(', '));
     if (diagLignes.length) savoir.sousBlocs.push({ titre: 'Diagnostics', lignes: diagLignes });
     if (savoir.sousBlocs.length) blocs.push(savoir);
@@ -481,8 +500,6 @@
 
     // ----- Ce que Jocelyne est seule à voir -----
     if (!prixTexte) pourJoce.aVerifier.push('Aucun prix dans le questionnaire ni dans l’annonce.');
-    if (!k.dpe && !k.ges) pourJoce.aVerifier.push('DPE et GES non indiqués : la classe énergie et la classe climat doivent figurer dans une annonce.');
-    else if (!k.dpe || !k.ges) pourJoce.aVerifier.push('Une des deux classes (DPE ou GES) manque : les deux doivent figurer dans une annonce.');
     const nbAConfirmer = k.diag.filter(function (d) { return d.statut === 'Ne sait pas'; }).length;
     if (nbAConfirmer) pourJoce.aVerifier.push(nbAConfirmer + ' diagnostic' + (nbAConfirmer > 1 ? 's' : '') + ' à confirmer avec le vendeur (marqué' + (nbAConfirmer > 1 ? 's' : '') + ' « à confirmer » dans l’annonce).');
     if (q.type_bien === 'appartement' && !k.couts.some(function (c) { return /^Charges de copropriété/.test(c); })) {
@@ -501,7 +518,7 @@
     else if ((nbCh !== null && nbCh >= 3) || terrain || ecoleProche) pourJoce.cible = 'Famille : ' + [nbCh !== null && nbCh >= 3 ? nbCh + ' chambres' : '', terrain ? 'du terrain' : '', ecoleProche ? 'école proche' : ''].filter(Boolean).join(', ') + '.';
     else if (nbCh !== null && nbCh <= 2) pourJoce.cible = 'Jeune couple ou premier achat : ' + nbCh + ' chambre' + (nbCh > 1 ? 's' : '') + '.';
 
-    return { titre: titre, accroche: accroche, blocs: blocs, texte: texteFinal, pourJoce: pourJoce };
+    return { titre: titre, accroche: accroche, blocs: blocs, texte: texteFinal, pourJoce: pourJoce, diffusable: diffusable, manques: manques };
   }
 
   global.albAnnonceProposee = { creer: creer };

@@ -93,6 +93,10 @@
     .annonce-proposee { margin-top: 12px; padding: 12px; background: #FBF3E4; border: 1px solid #E3D6B8; border-radius: 10px; }
     .annonce-proposee-titre { font-weight: 700; color: #4B1A3E; }
     .annonce-proposee textarea { min-height: 360px; font-size: 0.86rem; line-height: 1.45; background: #fff; }
+    .annonce-bloquee { margin: 10px 0; padding: 10px 12px; background: #FBECEC; border: 1px solid #F0CACA; border-radius: 10px; color: #8A2D2D; font-size: 0.88rem; }
+    .annonce-bloquee ul { margin: 6px 0 6px 18px; }
+    .annonce-bloquee p { margin-top: 4px; }
+    .annonce-proposee textarea[readonly] { background: #F7F7F4; color: #6a6a66; }
     .pour-joce { margin-top: 12px; padding: 10px 12px; background: #fff; border: 1px dashed #B28E3D; border-radius: 10px; font-size: 0.84rem; }
     .pour-joce-titre { font-weight: 700; color: #4B1A3E; margin-bottom: 2px; }
     .pour-joce h4 { font-size: 0.84rem; color: #5A3A6A; margin: 10px 0 3px; }
@@ -353,11 +357,22 @@
       return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div><p class="aide">Ce questionnaire ne contient pas encore assez de réponses pour composer une annonce.</p></div>';
     }
     const texte = (annoncesTextes[q.id] !== undefined) ? annoncesTextes[q.id] : annonce.texte;
-    return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div>' +
-      '<p class="aide">Toutes les réponses du bien, dans l\'ordre. Relis, corrige directement dans le texte si besoin, puis copie. Aucune information privée du vendeur n\'y figure, et rien n\'est envoyé tant que tu ne l\'as pas décidé.</p>' +
-      '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true">' + e(texte) + '</textarea>' +
+    const bloquee = !annonce.diffusable;
+
+    // Sans DPE et GES, l'annonce ne peut pas être diffusée : on le dit clairement et on bloque la copie
+    const alerte = bloquee
+      ? '<div class="annonce-bloquee"><strong>🚫 Cette annonce ne peut pas être diffusée pour le moment.</strong>' +
+        '<p>Le DPE et le GES sont obligatoires dans une annonce.</p><ul>' +
+        annonce.manques.map(function (m) { return '<li>' + e(m) + '</li>'; }).join('') + '</ul>' +
+        '<p>Demande-les au vendeur, ajoute-les dans son annonce ou son questionnaire, puis appuie sur « Actualiser » en haut de la page.</p></div>'
+      : '';
+
+    return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div>' + alerte +
+      '<p class="aide">' + (bloquee ? 'Tu peux lire le texte, mais pas le copier.' : 'Toutes les réponses du bien, dans l\'ordre. Relis, corrige directement dans le texte si besoin, puis copie.') +
+      ' Aucune information privée du vendeur n\'y figure, et rien n\'est envoyé tant que tu ne l\'as pas décidé.</p>' +
+      '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true"' + (bloquee ? ' readonly' : '') + '>' + e(texte) + '</textarea>' +
       '<div class="contact-actions">' +
-        '<button type="button" class="bouton-petit or" data-action="copier-annonce" data-id="' + e(q.id) + '">📋 Copier l\'annonce</button>' +
+        '<button type="button" class="bouton-petit or" data-action="copier-annonce" data-id="' + e(q.id) + '"' + (bloquee ? ' disabled title="DPE et GES obligatoires"' : '') + '>📋 Copier l\'annonce</button>' +
         '<button type="button" class="bouton-petit clair" data-action="refaire-annonce" data-id="' + e(q.id) + '">↺ Recomposer depuis le questionnaire</button></div>' +
       blocPourJoce(annonce.pourJoce) + '</div>';
   }
@@ -497,7 +512,19 @@
     }
     if (bouton.dataset.action === 'copier-annonce') {
       const zoneAnnonce = document.getElementById('annonce-texte-' + id);
-      if (zoneAnnonce) { await copierEmail(zoneAnnonce.value, bouton); }
+      const questionnaireCopie = questionnaires.find(function (x) { return x.id === id; });
+      const annonceCopie = questionnaireCopie ? annonceCreee(questionnaireCopie) : null;
+      if (!annonceCopie || !annonceCopie.diffusable) { return; } // DPE et GES obligatoires
+      if (!zoneAnnonce) { return; }
+      // Le texte lui-même doit garder les deux classes (même si on l'a corrigé à la main)
+      const texteACopier = zoneAnnonce.value;
+      if (!/\(DPE\)\s*:\s*classe\s+[A-G]/.test(texteACopier) || !/\(GES\)\s*:\s*classe\s+[A-G]/.test(texteACopier)) {
+        const avant = bouton.textContent;
+        bouton.textContent = '🚫 DPE et GES à remettre dans le texte';
+        setTimeout(function () { bouton.textContent = avant; }, 2500);
+        return;
+      }
+      await copierEmail(texteACopier, bouton);
       return;
     }
 
