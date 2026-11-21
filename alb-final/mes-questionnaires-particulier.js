@@ -158,6 +158,7 @@
     }
     blocsChauf.push(
       { k: 'cases', l: 'Problèmes connus', opts: ['Aucun', 'Humidité', 'Fissures', 'Fuite de toiture', 'Termites', 'Autre : ________'] },
+      { k: 'fichiers' },
       { k: 'choix', l: 'Diagnostic énergie (DPE) — classe', opts: CLASSES },
       { k: 'choix', l: 'Gaz à effet de serre (GES) — classe', opts: CLASSES },
       { k: 'sous', l: 'Les autres diagnostics' },
@@ -271,6 +272,7 @@
     if (b.k === 'sous') return '<div class="mqp-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqp-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqp-note">' + e(b.texte) + '</p>';
+    if (b.k === 'fichiers') return globalThis.albDiagnostics ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'champs') return htmlChamps(sec, b.items);
 
     if (b.k === 'loyer') {
@@ -761,6 +763,7 @@
       '<div class="mqp-boutons"><button type="button" class="bouton bouton-discret" data-mqp-act="enregistrer-fermer">Enregistrer et fermer</button>' +
       '<button type="button" class="bouton" data-mqp-act="envoyer" disabled>Envoyer le questionnaire</button></div>');
 
+    if (globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
     if (brouillon) remettre(brouillon);
     preremplir(etat.defauts);
     racine.querySelectorAll('.mqp-piece').forEach(majResume);

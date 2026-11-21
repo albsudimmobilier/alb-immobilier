@@ -317,6 +317,12 @@
         return '<a href="' + e(url) + '" target="_blank" rel="noopener">▶️ Vidéo ' + (i + 1) + '</a>';
       }).join('') + '</div>';
     }
+    const diags = a.diagnostics || [];
+    html += '<div class="annonce-videos"><strong>📎 Diagnostics envoyés (' + diags.length + ')</strong>' +
+      (diags.length ? diags.map(function (d) {
+        const ko = Number(d.taille) >= 1048576 ? (Number(d.taille) / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(Number(d.taille || 0) / 1024)) + ' Ko';
+        return '<button type="button" class="bouton-petit clair" data-action="ouvrir-diag" data-chemin="' + e(d.chemin) + '">📄 ' + e(d.nom_fichier) + ' (' + e(ko) + ')</button>';
+      }).join('') : ' <span>Aucun pour le moment.</span>') + '</div>';
     return html + '</div>';
   }
 
@@ -494,6 +500,20 @@
     if (bouton.dataset.actualiser) { memoriserNotes(); if (await chargerQuestionnaires()) { dessinerTout(); } return; }
 
     if (bouton.dataset.action === 'copier-email') { await copierEmail(bouton.dataset.email, bouton); return; }
+
+    if (bouton.dataset.action === 'ouvrir-diag') {
+      // lien temporaire (5 minutes) : le fichier reste privé
+      const fenetre = window.open('', '_blank');
+      const r = await albSupabase.storage.from('diagnostics-biens').createSignedUrl(bouton.dataset.chemin, 300);
+      if (r.error || !r.data || !r.data.signedUrl) {
+        if (fenetre) { fenetre.close(); }
+        console.log('[ALB DEBUG] ouverture diagnostic', r.error);
+        bouton.textContent = '⚠️ Ouverture impossible : actualise la page';
+        return;
+      }
+      if (fenetre) { fenetre.location = r.data.signedUrl; } else { window.location = r.data.signedUrl; }
+      return;
+    }
 
     const id = bouton.dataset.id;
     if (!id) { return; }

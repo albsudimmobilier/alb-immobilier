@@ -180,6 +180,7 @@
     );
     if (cfg.assainissement) blocsEq.push({ k: 'cases', l: 'Eaux usées', opts: ["Tout-à-l'égout", 'Fosse septique', 'Micro-station', 'Je ne sais pas', 'Contrôle de la commune fait', 'Dernière vidange : ______'] });
     blocsEq.push(
+      { k: 'fichiers' },
       { k: 'choix', l: 'Diagnostic énergie (DPE) — classe', aff: 'Diagnostic énergie (DPE) : classe', opts: CLASSES },
       { k: 'choix', l: 'Gaz à effet de serre (GES) — classe', aff: 'Gaz à effet de serre (GES) : classe', opts: CLASSES },
       { k: 'sous', l: 'Les autres diagnostics' },
@@ -268,6 +269,7 @@
     if (b.k === 'sous') return '<div class="mqb-sous">' + e(b.l) + '</div>';
     if (b.k === 'sous2') return '<div class="mqb-sous2">' + e(b.l) + '</div>';
     if (b.k === 'note') return '<p class="mqb-note">' + e(b.texte) + '</p>';
+    if (b.k === 'fichiers') return globalThis.albDiagnostics ? globalThis.albDiagnostics.html() : '';
     if (b.k === 'photos') return '<p class="mqb-note" id="mqb-photos-info"></p>';
 
     if (b.k === 'champs') {
@@ -750,6 +752,7 @@
       '<div class="mqb-boutons"><button type="button" class="bouton bouton-discret" data-mqb-act="brouillon">Enregistrer le brouillon</button>' +
       '<button type="button" class="bouton" data-mqb-act="envoyer">Envoyer à Jocelyne</button></div>');
 
+    if (globalThis.albDiagnostics && etat.annonce && etat.annonce.id) globalThis.albDiagnostics.brancher(racine, etat.annonce.id);
     const info = racine.querySelector('#mqb-photos-info');
     if (info) {
       info.textContent = etat.nbPhotos > 0
