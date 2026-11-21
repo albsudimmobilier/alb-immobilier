@@ -31,12 +31,14 @@
   const SEC_PIECES = 'Pièce par pièce';
 
   const MSG_MANDAT = 'Un bien sous mandat exclusif ne peut pas être présenté ici. Vos réponses restent enregistrées : vous pourrez envoyer le questionnaire plus tard.';
+  const MSG_RECONTACT = 'Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.';
   const ERREURS = {
     PAS_PARTICULIER: 'Ce questionnaire est réservé aux vendeurs particuliers.',
     TYPE_INVALIDE: 'Choisissez d’abord le type de bien.',
     TROP_LONG: 'Le questionnaire est trop long : raccourcissez les textes libres.',
     ANNONCE_INTROUVABLE: 'Cette annonce ne vous appartient pas.',
     MANDAT_EXCLUSIF: MSG_MANDAT,
+    RECONTACT_NON_ACCEPTE: MSG_RECONTACT,
     ADRESSE_OBLIGATOIRE: "Indiquez l'adresse du bien pour envoyer le questionnaire.",
     DEJA_EXISTANT: 'Un questionnaire existe déjà pour cette annonce. Fermez cette fenêtre et rouvrez-le depuis votre annonce.',
     INTROUVABLE_OU_DEJA_ENVOYE: 'Ce questionnaire a déjà été envoyé : il ne se modifie plus.',
@@ -282,7 +284,7 @@
 
     if (b.k === 'accords') {
       return '<div class="mqp-bloc"><div class="mqp-cases">' +
-        '<label class="mqp-case"><input type="checkbox" id="mqp-recontact"><span>Je souhaite être recontacté(e) par Jocelyne, d\'ALB Sud Immobilier.</span></label>' +
+        '<label class="mqp-case" id="mqp-recontact-case"><input type="checkbox" id="mqp-recontact"><span>Je souhaite être recontacté(e) par Jocelyne, d\'ALB Sud Immobilier.</span></label>' +
         '<label class="mqp-case"><input type="checkbox" id="mqp-reseaux"><span>J\'autorise ALB Sud Immobilier à présenter mon bien sur ses réseaux sociaux.</span></label>' +
         '</div></div>';
     }
@@ -476,6 +478,16 @@
     const loue = !!(bloc && bloc.querySelector('input[data-o="2"]') && bloc.querySelector('input[data-o="2"]').checked);
     racine.querySelectorAll('[data-si="loue"]').forEach(function (n) { n.hidden = !loue; });
   }
+  // Le rouge disparaît dès que la case « recontact » est cochée
+  function majAccord() {
+    const cb = racine && racine.querySelector('#mqp-recontact');
+    const cas = racine && racine.querySelector('#mqp-recontact-case');
+    if (cb && cas && cb.checked) {
+      cas.classList.remove('mqp-erreur');
+      const m = racine.querySelector('#mqp-msg');
+      if (m && m.textContent === MSG_RECONTACT) afficherMessage('', '');
+    }
+  }
   function majEnvoi() {
     const case_ = racine && racine.querySelector('#mqp-mandat');
     if (!case_) return; // le formulaire n'est plus affiché (écran « envoyé »)
@@ -576,6 +588,14 @@
       const d = collecter();
       if (envoyer) {
         if (!d.mandat) { afficherMessage('erreur', MSG_MANDAT); return false; }
+        if (!d.recontact) {
+          // Sans l'accord de recontact, rien ne part : la case passe en rouge
+          const cas = racine.querySelector('#mqp-recontact-case');
+          cas.classList.add('mqp-erreur');
+          cas.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          afficherMessage('erreur', MSG_RECONTACT);
+          return false;
+        }
         if (!d.rue || !d.commune) { afficherMessage('erreur', ERREURS.ADRESSE_OBLIGATOIRE); return false; }
       }
       try {
@@ -657,6 +677,7 @@
     if (d) majResume(d);
     majConditions();
     majEnvoi();
+    majAccord();
     planifier();
   }
 
@@ -880,6 +901,7 @@
       '.mqp-case{display:flex;align-items:flex-start;gap:8px;font-size:.9rem;padding:4px 0;cursor:pointer;}',
       '.mqp-case input[type="checkbox"]{margin-top:3px;flex-shrink:0;}',
       '.mqp-mandat{font-weight:600;}',
+      '.mqp-case.mqp-erreur{color:#B00020;font-weight:700;border:2px solid #B00020;border-radius:6px;padding:6px 8px;background:#FDF0F0;}',
       '.mqp-trou{width:7em;max-width:100%;margin:0 4px;padding:2px 6px;font:inherit;border:1px solid #D8D5CE;border-radius:4px;}',
       '.mqp-ligne{display:grid;grid-template-columns:1fr;gap:4px;padding:6px 0;border-bottom:1px solid #F0EFEC;font-size:.9rem;}',
       '.mqp-ligne small{font-weight:400;color:#6a6a65;}',
