@@ -55,6 +55,14 @@
     .badge-alerte { background: #FBECEC; color: #8A2D2D; border: 1px solid #F0CACA; }
     .badge-proche { background: #FBF3E4; color: #8A6A1F; border: 1px solid #B28E3D; }
     .badge-fait { background: #EEF6EE; color: #2E6B34; }
+    .badge-part { background: #FBF3E4; color: #8A6A1F; border: 1px solid #B28E3D; }
+    .badge-pro { background: #F4EEF6; color: #4B1A3E; border: 1px solid #E2D6E8; }
+    .badge-rappel { background: #EEF6EE; color: #2E6B34; border: 1px solid #CFE4CF; }
+    .accords { margin-top: 10px; padding: 10px 12px; background: #FBF3E4; border: 1px solid #E3D6B8; border-radius: 10px; font-size: 0.86rem; }
+    .accords-titre { font-weight: 700; color: #4B1A3E; margin-bottom: 4px; }
+    .accord-ligne { padding: 2px 0; }
+    .accord-non { color: #8A2D2D; font-weight: 600; }
+    .accord-oui { color: #2E6B34; font-weight: 600; }
     .contact-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .bouton-petit { font-family: inherit; font-size: 0.84rem; font-weight: 600; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A3A6A; background: #5A3A6A; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
     .bouton-petit.clair { background: #fff; color: #5A3A6A; }
@@ -103,7 +111,7 @@
 
   <div id="page" class="cache">
     <h1>🏠 Questionnaires des biens</h1>
-    <p class="aide">Les questionnaires envoyés par les agents et mandataires depuis leur espace. Appuie sur « J'ai traité » quand tu as repris contact avec le pro (pour lui proposer la description de l'annonce, par exemple). Les fins de mandat les plus proches sont en haut de la liste « À traiter ».</p>
+    <p class="aide">Les questionnaires envoyés par les agents et mandataires (🤝 Pro) et par les vendeurs particuliers (🏠 Particulier) depuis leur espace. Appuie sur « J'ai traité » quand tu as repris contact avec la personne (pour lui proposer la description de l'annonce, par exemple). En haut de la liste « À traiter » : les fins de mandat les plus proches, puis les particuliers qui souhaitent être recontactés.</p>
 
     <div class="compteurs" id="compteurs"></div>
     <div class="ligne-filtres" id="filtres"></div>
@@ -120,7 +128,9 @@
   const TYPES_BIEN = { appartement: '🏢 Appartement', maison: '🏡 Maison', village: '🏘️ Maison de village' };
   const JOURS_ALERTE = 60; // une fin de mandat à moins de 60 jours est signalée
 
-  const choix = { etat: 'atraiter', seulementProches: false };
+  const FILTRES_ORIGINE = [['tous', 'Tous'], ['pro', '🤝 Pros'], ['particulier', '🏠 Particuliers']];
+
+  const choix = { etat: 'atraiter', seulementProches: false, origine: 'tous' };
   let questionnaires = [];
 
   const ouverts = {};        // id du questionnaire -> true si le détail est déplié
@@ -162,6 +172,9 @@
     return '';
   }
 
+  // Un questionnaire d'avant les particuliers n'a pas d'origine : c'est un pro
+  function estParticulier(q) { return q.origine === 'particulier'; }
+
   function telephonePropre(texte) { return String(texte || '').replace(/[^\d+]/g, ''); }
 
   // Retient les notes déjà tapées, pour ne pas les perdre quand la liste se redessine
@@ -177,13 +190,18 @@
     const liste = questionnaires.filter(function (q) {
       const bonEtat = choix.etat === 'tous' || (choix.etat === 'atraiter' ? !q.traite_le : !!q.traite_le);
       const bonMandat = !choix.seulementProches || finProche(q);
-      return bonEtat && bonMandat;
+      const bonneOrigine = choix.origine === 'tous' || (choix.origine === 'particulier') === estParticulier(q);
+      return bonEtat && bonMandat && bonneOrigine;
     });
     liste.sort(function (a, b) {
       if (choix.etat === 'atraiter' || choix.seulementProches) {
         if (a.fin_mandat && b.fin_mandat && a.fin_mandat !== b.fin_mandat) { return a.fin_mandat < b.fin_mandat ? -1 : 1; }
         if (a.fin_mandat && !b.fin_mandat) { return -1; }
         if (!a.fin_mandat && b.fin_mandat) { return 1; }
+        // Ensuite, ceux qui souhaitent être recontactés
+        const ra = (estParticulier(a) && a.recontact_ok) ? 1 : 0;
+        const rb = (estParticulier(b) && b.recontact_ok) ? 1 : 0;
+        if (ra !== rb) { return rb - ra; }
       }
       return new Date(b.envoye_le) - new Date(a.envoye_le);
     });
@@ -193,17 +211,22 @@
   function dessinerCompteurs() {
     const aTraiter = questionnaires.filter(function (q) { return !q.traite_le; });
     const proches = questionnaires.filter(finProche);
+    const nbParticuliers = questionnaires.filter(estParticulier).length;
+    const nbPartATraiter = aTraiter.filter(estParticulier).length;
     el('compteurs').innerHTML =
-      '<div class="compteur or"><div class="valeur">' + aTraiter.length + '</div><div class="libelle">À traiter</div></div>' +
+      '<div class="compteur or"><div class="valeur">' + aTraiter.length + '</div><div class="libelle">À traiter' + (nbPartATraiter ? ' (dont ' + nbPartATraiter + ' de particuliers)' : '') + '</div></div>' +
       '<div class="compteur or"><div class="valeur">' + proches.length + '</div><div class="libelle">Fins de mandat proches (moins de ' + JOURS_ALERTE + ' jours ou dépassées)</div></div>' +
       '<div class="compteur"><div class="valeur">' + (questionnaires.length - aTraiter.length) + '</div><div class="libelle">Déjà traités</div></div>' +
-      '<div class="compteur"><div class="valeur">' + questionnaires.length + '</div><div class="libelle">Questionnaires au total</div></div>';
+      '<div class="compteur"><div class="valeur">' + questionnaires.length + '</div><div class="libelle">Questionnaires au total' + (nbParticuliers ? ' (dont ' + nbParticuliers + ' de particuliers)' : '') + '</div></div>';
   }
 
   function dessinerFiltres() {
     el('filtres').innerHTML = FILTRES_ETAT.map(function (f) {
       return '<button type="button" class="filtre' + (choix.etat === f[0] ? ' actif' : '') + '" data-etat="' + f[0] + '">' + e(f[1]) + '</button>';
     }).join('') +
+      FILTRES_ORIGINE.map(function (f) {
+        return '<button type="button" class="filtre' + (choix.origine === f[0] ? ' actif' : '') + '" data-origine="' + f[0] + '">' + e(f[1]) + '</button>';
+      }).join('') +
       '<button type="button" class="filtre' + (choix.seulementProches ? ' actif' : '') + '" data-proches="1">⏰ Fin de mandat proche</button>' +
       '<button type="button" class="filtre" data-actualiser="1">🔄 Actualiser</button>';
   }
@@ -276,10 +299,23 @@
     return html + '</div>';
   }
 
+  // Pour un particulier : ce qu'il a accepté en envoyant son questionnaire
+  function blocAccords(q) {
+    if (!estParticulier(q)) { return ''; }
+    const ligne = function (ok, texteOui, texteNon) {
+      return '<div class="accord-ligne ' + (ok ? 'accord-oui' : 'accord-non') + '">' + (ok ? '✅ ' + texteOui : '❌ ' + texteNon) + '</div>';
+    };
+    return '<div class="accords"><div class="accords-titre">Accords du vendeur</div>' +
+      ligne(q.recontact_ok, 'Souhaite être recontacté(e)', 'Ne souhaite pas être recontacté(e)') +
+      ligne(q.reseaux_ok, 'Autorise la présentation sur les réseaux sociaux', 'N\'autorise pas la présentation sur les réseaux sociaux') +
+      ligne(q.sans_mandat_exclusif, 'Confirme que le bien n\'est pas sous mandat exclusif', 'Mandat exclusif non exclu') +
+    '</div>';
+  }
+
   function dessinerFiche(q) {
     const traite = !!q.traite_le;
     const noteTexte = (notesEnCours[q.id] !== undefined) ? notesEnCours[q.id] : (q.note || '');
-    const nomPro = [q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || q.pro || 'Pro';
+    const nomPro = [q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || q.pro || (estParticulier(q) ? 'Particulier' : 'Pro');
     const tel = telephonePropre(q.pro_telephone);
 
     let actionsContact = '';
@@ -297,12 +333,14 @@
     return '<div class="contact' + (traite ? ' rappele' : '') + '">' +
       '<div class="contact-tete"><div>' +
         '<div class="contact-nom">' + e(TYPES_BIEN[q.type_bien] || q.type_bien) + ' · ' + e(q.adresse || 'Adresse non indiquée') + '</div>' +
-        '<div class="contact-metier">' + e(nomPro) + (q.pro_entreprise ? ' · ' + e(q.pro_entreprise) : '') + '</div>' +
-      '</div><div>' + badgeMandat(q) + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
+        '<div class="contact-metier">' + e(nomPro) + (!estParticulier(q) && q.pro_entreprise ? ' · ' + e(q.pro_entreprise) : '') + '</div>' +
+      '</div><div>' + (estParticulier(q) ? '<span class="badge badge-part">🏠 Particulier</span>' : '<span class="badge badge-pro">🤝 Pro</span>') +
+        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
       '<div class="contact-coordonnees">' + e(q.pro_email || 'E-mail non renseigné') + (q.pro_telephone ? ' · ' + e(q.pro_telephone) : '') + '</div>' +
       '<div class="contact-date">Envoyé le ' + e(formatDateFr(q.envoye_le)) +
         (q.fin_mandat ? ' · fin de mandat le ' + e(formatJourFr(q.fin_mandat)) : ' · pas de date de fin de mandat') +
         (traite ? ' · traité le ' + e(formatDateFr(q.traite_le)) : '') + '</div>' +
+      blocAccords(q) +
       blocAnnonce(q) +
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button></div>' +
@@ -371,6 +409,7 @@
     if (!bouton) { return; }
 
     if (bouton.dataset.etat) { choix.etat = bouton.dataset.etat; dessinerTout(); return; }
+    if (bouton.dataset.origine) { choix.origine = bouton.dataset.origine; dessinerTout(); return; }
     if (bouton.dataset.proches) { choix.seulementProches = !choix.seulementProches; dessinerTout(); return; }
     if (bouton.dataset.actualiser) { memoriserNotes(); if (await chargerQuestionnaires()) { dessinerTout(); } return; }
 
