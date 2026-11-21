@@ -507,12 +507,12 @@
               </select></div>
             <div class="champ"><label for="f-type">Type de bien <span class="leger">— facultatif</span></label>
               <select id="f-type"><option value="">—</option><option value="maison">Maison</option><option value="appartement">Appartement</option></select></div>
-            <div class="champ"><label for="f-prix">Prix du bien visé (€) <span class="leger">— facultatif</span></label><input type="number" id="f-prix" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 250 000"></div>
+            <div class="champ"><label for="f-prix" id="label-f-prix">Prix du bien visé (€) <span class="leger">— facultatif</span></label><input type="number" id="f-prix" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 250 000"></div>
             <div class="champ"><label for="f-delai">Quand ?</label>
               <select id="f-delai"><option value="moins_3_mois">Dans les 3 mois</option><option value="3_6_mois">Dans 3 à 6 mois</option><option value="plus_6_mois">Dans plus de 6 mois</option><option value="ne_sait_pas" selected>Je ne sais pas encore</option></select></div>
             <div class="champ"><label for="f-situation">Votre situation <span class="leger">— facultatif</span></label>
               <select id="f-situation"><option value="">—</option><option value="cdi">Salarié(e) en CDI</option><option value="fonctionnaire">Fonctionnaire</option><option value="cdd">CDD / intérim</option><option value="independant">Indépendant(e) / chef d'entreprise</option><option value="retraite">Retraité(e)</option><option value="autre">Autre</option></select></div>
-            <div class="champ"><label for="f-primo">Premier achat ? <span class="leger">— facultatif</span></label>
+            <div class="champ" id="champ-f-primo"><label for="f-primo">Premier achat ? <span class="leger">— facultatif</span></label>
               <select id="f-primo"><option value="">—</option><option value="oui">Oui, c'est mon premier achat</option><option value="non">Non</option></select></div>
           </div>
         </div>
@@ -577,7 +577,7 @@
             <div class="champ"><label for="s-revenus">Revenus nets mensuels du foyer (€)</label><input type="number" id="s-revenus" min="0" step="50" inputmode="numeric" placeholder="Ex. : 3 500"></div>
             <div class="champ"><label for="s-credits">Crédits en cours par mois (€) <span class="leger">— facultatif</span></label><input type="number" id="s-credits" min="0" step="10" inputmode="numeric" placeholder="Ex. : 250"></div>
             <div class="champ"><label for="s-apport">Apport personnel (€) <span class="leger">— facultatif</span></label><input type="number" id="s-apport" min="0" step="1000" inputmode="numeric" placeholder="Ex. : 30 000"></div>
-            <div class="champ"><label for="s-duree">Durée du prêt</label><select id="s-duree"><option value="15">15 ans</option><option value="20">20 ans</option><option value="25" selected>25 ans</option></select></div>
+            <div class="champ"><label for="s-duree">Durée du prêt</label><select id="s-duree"><option value="7">7 ans</option><option value="10">10 ans</option><option value="15">15 ans</option><option value="20">20 ans</option><option value="25" selected>25 ans</option></select></div>
           </div>
           <div class="champ"><label for="s-taux">Taux d'intérêt (%)</label><input type="number" id="s-taux" min="0" max="15" step="0.05" inputmode="decimal"><div class="aide">Taux moyen du moment, que vous pouvez modifier.</div></div>
           <div class="resultat cache" id="resultat-budget"></div>
@@ -879,7 +879,7 @@
   let prosDispo = [];
   let profil = null;
   let identite = 'nouveau';
-  let tauxParDuree = { 15: 3.45, 20: 3.5, 25: 3.6 };
+  let tauxParDuree = { 7: 3.45, 10: 3.45, 15: 3.45, 20: 3.5, 25: 3.6 };
 
   function e(t) { return albEchapper(t); }
   function el(id) { return document.getElementById(id); }
@@ -1225,8 +1225,8 @@
     }
 
     try {
-      const { data: t } = await albSupabase.from('parametres_taux_credit').select('taux_15_ans, taux_20_ans, taux_25_ans').order('id', { ascending: false }).limit(1).maybeSingle();
-      if (t) tauxParDuree = { 15: Number(t.taux_15_ans), 20: Number(t.taux_20_ans), 25: Number(t.taux_25_ans) };
+      const { data: t } = await albSupabase.from('parametres_taux_credit').select('taux_7_ans, taux_10_ans, taux_15_ans, taux_20_ans, taux_25_ans').order('id', { ascending: false }).limit(1).maybeSingle();
+      if (t) tauxParDuree = { 7: Number(t.taux_7_ans || t.taux_15_ans), 10: Number(t.taux_10_ans || t.taux_15_ans), 15: Number(t.taux_15_ans), 20: Number(t.taux_20_ans), 25: Number(t.taux_25_ans) };
     } catch (ex) { /* valeurs par défaut */ }
     el('s-taux').value = tauxParDuree[el('s-duree').value];
     el('s-duree').addEventListener('change', function () { el('s-taux').value = tauxParDuree[this.value]; majBudget(); });
@@ -1239,7 +1239,20 @@
 
     choisirModule(params.get('module') || '');
     // Un prêt travaux se fait en général sur une durée plus courte
-    if (module === 'travaux') { el('s-duree').value = '15'; el('s-taux').value = tauxParDuree[15]; }
+    if (module === 'travaux') { el('s-duree').value = '10'; el('s-taux').value = tauxParDuree[10]; }
+    // Financement de travaux : montant des travaux à la place du prix du bien, pas de « premier achat »
+    function majObjetFinancement() {
+      const travaux = el('f-objet').value === 'travaux';
+      el('label-f-prix').innerHTML = (travaux ? 'Montant estimé des travaux (€)' : 'Prix du bien visé (€)') + ' <span class="leger">— facultatif</span>';
+      el('f-prix').placeholder = travaux ? 'Ex. : 30 000' : 'Ex. : 250 000';
+      el('champ-f-primo').classList.toggle('cache', travaux);
+      if (travaux) el('f-primo').value = '';
+    }
+    el('f-objet').addEventListener('change', function () {
+      majObjetFinancement();
+      if (this.value === 'travaux') { el('s-duree').value = '10'; el('s-taux').value = tauxParDuree[10]; if (typeof majBudget === 'function') majBudget(); }
+    });
+    majObjetFinancement();
 
     profil = await albProfilConnecte();
     if (profil) afficherConnecte();
