@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="polices/polices.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="alb-connexion.js"></script>
+  <script src="annonce-proposee.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,6 +88,18 @@
     .detail-ligne { display: flex; gap: 8px; font-size: 0.85rem; padding: 3px 0; border-bottom: 1px dashed #E8E6E1; }
     .detail-cle { flex: 0 0 42%; color: #7a7a75; font-weight: 600; }
     .detail-val { flex: 1; word-break: break-word; }
+
+    /* Annonce proposée à partir du questionnaire */
+    .annonce-proposee { margin-top: 12px; padding: 12px; background: #FBF3E4; border: 1px solid #E3D6B8; border-radius: 10px; }
+    .annonce-proposee-titre { font-weight: 700; color: #4B1A3E; }
+    .annonce-proposee textarea { min-height: 360px; font-size: 0.86rem; line-height: 1.45; background: #fff; }
+    .pour-joce { margin-top: 12px; padding: 10px 12px; background: #fff; border: 1px dashed #B28E3D; border-radius: 10px; font-size: 0.84rem; }
+    .pour-joce-titre { font-weight: 700; color: #4B1A3E; margin-bottom: 2px; }
+    .pour-joce h4 { font-size: 0.84rem; color: #5A3A6A; margin: 10px 0 3px; }
+    .pour-joce ul { margin-left: 18px; }
+    .pour-joce li { margin: 2px 0; word-break: break-word; }
+    .pour-joce .mot-question { color: #7a7a75; font-size: 0.78rem; }
+    .pour-joce .mot-texte { white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -135,6 +148,8 @@
 
   const ouverts = {};        // id du questionnaire -> true si le détail est déplié
   const notesEnCours = {};   // notes tapées mais pas encore enregistrées
+  const annoncesOuvertes = {}; // id du questionnaire -> true si l'annonce proposée est dépliée
+  const annoncesTextes = {};   // texte de l'annonce, avec tes corrections (gardé quand la liste se redessine)
 
   function e(texte) { return albEchapper(texte); }
   function el(id) { return document.getElementById(id); }
@@ -182,6 +197,8 @@
     questionnaires.forEach(function (q) {
       const zone = document.getElementById('note-' + q.id);
       if (zone) { notesEnCours[q.id] = zone.value; }
+      const zoneAnnonce = document.getElementById('annonce-texte-' + q.id);
+      if (zoneAnnonce) { annoncesTextes[q.id] = zoneAnnonce.value; }
     });
   }
 
@@ -299,6 +316,52 @@
     return html + '</div>';
   }
 
+  // ----- Annonce proposée : le texte, puis ce que tu es seule à voir -----
+  function annonceCreee(q) {
+    try { return window.albAnnonceProposee ? window.albAnnonceProposee.creer(q) : null; }
+    catch (erreur) { console.log('[ALB DEBUG] annonce proposée : création impossible', erreur); return null; }
+  }
+
+  function blocPourJoce(p) {
+    let html = '<div class="pour-joce"><div class="pour-joce-titre">🔒 Pour toi seule (rien de tout ça n\'est dans l\'annonce)</div>';
+    if (p.cible) { html += '<h4>Pour qui écrire l\'accroche ?</h4><p>' + e(p.cible) + '</p>'; }
+    if (p.mots.length) {
+      html += '<h4>Ses mots, pour écrire l\'accroche « à la bien »</h4><ul>' + p.mots.map(function (m) {
+        return '<li><span class="mot-question">' + e(m.question) + '</span><br><span class="mot-texte">' + e(m.texte) + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    if (p.decider.length) {
+      html += '<h4>À décider avant de publier</h4><ul>' + p.decider.map(function (d) {
+        return '<li>' + e(d.question) + ' : ' + e(d.reponse) + ' <span class="mot-question">(non publié pour l\'instant)</span></li>';
+      }).join('') + '</ul>';
+    }
+    if (p.aVerifier.length) {
+      html += '<h4>À vérifier</h4><ul>' + p.aVerifier.map(function (t) { return '<li>' + e(t) + '</li>'; }).join('') + '</ul>';
+    }
+    if (p.nonPublie.length) {
+      html += '<h4>Gardé privé</h4><ul>' + p.nonPublie.map(function (n) {
+        return '<li>' + e(n.raison) + ' <span class="mot-question">(' + n.questions.length + ' réponse' + (n.questions.length > 1 ? 's' : '') + ')</span></li>';
+      }).join('') + '</ul>';
+    }
+    return html + '</div>';
+  }
+
+  function blocAnnonceProposee(q) {
+    if (!annoncesOuvertes[q.id]) { return ''; }
+    const annonce = annonceCreee(q);
+    if (!annonce || !annonce.texte) {
+      return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div><p class="aide">Ce questionnaire ne contient pas encore assez de réponses pour composer une annonce.</p></div>';
+    }
+    const texte = (annoncesTextes[q.id] !== undefined) ? annoncesTextes[q.id] : annonce.texte;
+    return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div>' +
+      '<p class="aide">Toutes les réponses du bien, dans l\'ordre. Relis, corrige directement dans le texte si besoin, puis copie. Aucune information privée du vendeur n\'y figure, et rien n\'est envoyé tant que tu ne l\'as pas décidé.</p>' +
+      '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true">' + e(texte) + '</textarea>' +
+      '<div class="contact-actions">' +
+        '<button type="button" class="bouton-petit or" data-action="copier-annonce" data-id="' + e(q.id) + '">📋 Copier l\'annonce</button>' +
+        '<button type="button" class="bouton-petit clair" data-action="refaire-annonce" data-id="' + e(q.id) + '">↺ Recomposer depuis le questionnaire</button></div>' +
+      blocPourJoce(annonce.pourJoce) + '</div>';
+  }
+
   // Pour un particulier : ce qu'il a accepté en envoyant son questionnaire
   function blocAccords(q) {
     if (!estParticulier(q)) { return ''; }
@@ -343,8 +406,10 @@
       blocAccords(q) +
       blocAnnonce(q) +
       '<div class="contact-actions">' + actionsContact +
-        '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button></div>' +
+        '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
+        '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button></div>' +
       blocDetail(q) +
+      blocAnnonceProposee(q) +
       '<textarea id="note-' + e(q.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, ce qu\'il reste à faire…)">' + e(noteTexte) + '</textarea>' +
       '<div class="contact-actions">' + boutonEtat +
         '<button type="button" class="bouton-petit clair" data-action="note" data-id="' + e(q.id) + '">💾 Enregistrer la note</button></div>' +
@@ -419,6 +484,22 @@
     if (!id) { return; }
 
     if (bouton.dataset.action === 'detail') { ouverts[id] = !ouverts[id]; dessinerListe(); return; }
+    if (bouton.dataset.action === 'annonce') { memoriserNotes(); annoncesOuvertes[id] = !annoncesOuvertes[id]; dessinerListe(); return; }
+    if (bouton.dataset.action === 'refaire-annonce') {
+      if (window.confirm('Recomposer l\'annonce ? Tes corrections dans le texte seront remplacées.')) {
+        // On retire la zone avant de redessiner, sinon la liste remettrait l'ancien texte
+        const ancienne = document.getElementById('annonce-texte-' + id);
+        if (ancienne) { ancienne.remove(); }
+        delete annoncesTextes[id];
+        dessinerListe();
+      }
+      return;
+    }
+    if (bouton.dataset.action === 'copier-annonce') {
+      const zoneAnnonce = document.getElementById('annonce-texte-' + id);
+      if (zoneAnnonce) { await copierEmail(zoneAnnonce.value, bouton); }
+      return;
+    }
 
     const zoneNote = document.getElementById('note-' + id);
     const note = zoneNote ? zoneNote.value : null;
