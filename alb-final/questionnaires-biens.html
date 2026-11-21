@@ -688,7 +688,9 @@
         + '<strong>' + echapper(b.metier) + ' · ' + echapper(b.titre) + '</strong> — ' + echapper(b.ville || '')
         + '<br><span style="font-size:14px;">' + echapper((b.pro_prenom || '') + ' ' + (b.pro_nom || '')) + ' · ' + echapper(b.pro_email || '') + '</span>'
         + '<br><span style="font-size:14px;">' + (b.brouillon ? '📝 Brouillon déjà prérempli dans son espace · ' : '') + quand + '</span>'
-        + '<br><button type="button" data-voir-mail="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir l\'e-mail</button></div>';
+        + '<br><button type="button" data-voir-quest="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir le questionnaire prérempli</button> '
+        + '<button type="button" data-voir-mail="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir et modifier l\'e-mail</button>'
+        + '<div class="detail cache" id="quest-' + echapper(b.annonce_id) + '" style="margin-top:10px;"></div></div>';
     }).join('');
   }
   document.addEventListener('click', async function (e) {
@@ -699,17 +701,30 @@
       voir.disabled = false;
       if (!r || !r.ok) { alert('L\'aperçu n\'a pas pu être préparé.'); return; }
       invitationEnCours = voir.dataset.voirMail;
-      el('mail-entete').innerHTML = '<strong>De :</strong> ' + echapper(r.de) + '<br><strong>À :</strong> ' + echapper(r.nom) + ' &lt;' + echapper(r.a) + '&gt;<br><strong>Copie :</strong> ' + echapper(r.de) + '<br><strong>Objet :</strong> ' + echapper(r.sujet);
+      el('mail-entete').innerHTML = '<strong>De :</strong> ' + echapper(r.de) + '<br><strong>À :</strong> ' + echapper(r.nom) + ' &lt;' + echapper(r.a) + '&gt;<br><strong>Copie :</strong> ' + echapper(r.de) + '<br><strong>Objet :</strong> <input type="text" id="mail-objet" style="width:100%;padding:6px;" value="' + echapper(r.sujet) + '">'
+        + '<br><span style="font-size:13px;color:#555;">Tu peux modifier l\'objet et cliquer dans le texte ci-dessous pour le changer avant l\'envoi.</span>';
+      el('mail-cadre').onload = function () { try { el('mail-cadre').contentDocument.designMode = 'on'; } catch (x) { console.log('[ALB DEBUG] texte non modifiable', x); } };
       el('mail-cadre').srcdoc = r.html;
       el('mail-message').textContent = '';
       el('mail-envoyer').disabled = false;
       el('fenetre-mail').classList.remove('cache');
     }
+    const vq = e.target.closest('[data-voir-quest]');
+    if (vq) {
+      const zone = el('quest-' + vq.dataset.voirQuest);
+      const bien = aInviter.find(function (x) { return x.annonce_id === vq.dataset.voirQuest; });
+      if (zone.classList.contains('cache')) {
+        zone.innerHTML = detailHtml(bien && bien.questionnaire) || '<p class="aide">Rien de prérempli.</p>';
+        zone.classList.remove('cache'); vq.textContent = 'Masquer le questionnaire';
+      } else { zone.classList.add('cache'); vq.textContent = 'Voir le questionnaire prérempli'; }
+    }
     if (e.target.id === 'mail-fermer') { el('fenetre-mail').classList.add('cache'); }
     if (e.target.id === 'mail-envoyer' && invitationEnCours) {
       if (!confirm('Envoyer cet e-mail maintenant ?')) { return; }
       e.target.disabled = true;
-      const r = await appelerInvitation({ action: 'inviter', annonce_id: invitationEnCours });
+      let texteModifie = null;
+      try { texteModifie = el('mail-cadre').contentDocument.body.innerHTML; } catch (x) { texteModifie = null; }
+      const r = await appelerInvitation({ action: 'inviter', annonce_id: invitationEnCours, sujet: el('mail-objet').value, html: texteModifie });
       if (r && r.ok) { el('mail-message').textContent = '✅ E-mail envoyé.'; invitationEnCours = null; chargerAInviter(); }
       else { el('mail-message').textContent = 'L\'e-mail n\'est pas parti, réessaie.'; e.target.disabled = false; }
     }

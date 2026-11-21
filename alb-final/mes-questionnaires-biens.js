@@ -172,7 +172,7 @@
       { k: 'cases', l: 'État général', opts: ['Très bon état, rien à prévoir', 'Bon état', 'À rafraîchir (peintures, sols)', 'À rénover (travaux importants)'] },
     ]) });
 
-    S.push({ titre: 'Pièce par pièce', blocs: [{ k: 'pieces' }] });
+    S.push({ titre: 'Pièce par pièce', blocs: [{ k: 'note', texte: "Vous avez vos diagnostics (DPE, mesurage…) ? Déposez-les dans « Accès et équipements » : ils nous permettent de reprendre les surfaces pièce par pièce, sans que vous ayez à les saisir." }, { k: 'pieces' }] });
 
     const blocsEq = [];
     cfg.acces.forEach(function (a) { blocsEq.push({ k: 'cases', l: a[0], opts: a[1] }); });
