@@ -684,7 +684,14 @@
   function dessinerAInviter() {
     if (!aInviter.length) { el('a-inviter').innerHTML = '<p class="aide">Aucun bien à inviter pour le moment.</p>'; return; }
     el('a-inviter').innerHTML = aInviter.map(function (b) {
-      const quand = b.invitee_le ? 'Invité(e) le ' + new Date(b.invitee_le).toLocaleDateString('fr-FR') : 'Pas encore invité(e)';
+      const envois = b.invitations || [];
+      const quand = envois.length
+        ? '✅ ' + envois.map(function (v, k) {
+            return 'E-mail envoyé à ' + echapper(v.a || b.pro_email || '') + ' le ' + new Date(v.le).toLocaleDateString('fr-FR') + ' à ' + new Date(v.le).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+              + (v.sujet ? ' — objet : « ' + echapper(v.sujet) + ' »' : '')
+              + (v.html ? ' <button type="button" data-revoir-mail="' + echapper(b.annonce_id) + '|' + k + '" style="margin-left:6px;">Revoir cet e-mail</button>' : '');
+          }).join('<br>')
+        : 'Pas encore invité(e)';
       return '<div class="carte" style="border:1px solid #ddd;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fff;">'
         + '<strong>' + echapper(b.metier) + ' · ' + echapper(b.titre) + '</strong> — ' + echapper(b.ville || '')
         + '<br><span style="font-size:14px;">' + echapper((b.pro_prenom || '') + ' ' + (b.pro_nom || '')) + ' · ' + echapper(b.pro_email || '') + '</span>'
@@ -709,7 +716,23 @@
       el('mail-cadre').srcdoc = r.html;
       el('mail-message').textContent = '';
       el('mail-envoyer').disabled = false;
+      el('mail-envoyer').style.display = '';
       el('fenetre-mail').classList.remove('cache');
+    }
+    const rm = e.target.closest('[data-revoir-mail]');
+    if (rm) {
+      const parts = rm.dataset.revoirMail.split('|');
+      const bien = aInviter.find(function (x) { return x.annonce_id === parts[0]; });
+      const v = bien && bien.invitations && bien.invitations[Number(parts[1])];
+      if (v) {
+        invitationEnCours = null;
+        el('mail-entete').innerHTML = '<strong>E-mail déjà envoyé</strong> le ' + new Date(v.le).toLocaleString('fr-FR') + '<br><strong>À :</strong> ' + echapper(v.a || '') + '<br><strong>Objet :</strong> ' + echapper(v.sujet || '');
+        el('mail-cadre').onload = null;
+        el('mail-cadre').srcdoc = v.html || '';
+        el('mail-message').textContent = '';
+        el('mail-envoyer').style.display = 'none';
+        el('fenetre-mail').classList.remove('cache');
+      }
     }
     const mq = e.target.closest('[data-modifier-quest]');
     if (mq && window.albQuestionnaireBien) {
