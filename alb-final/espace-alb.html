@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon espace ALB — ALB Immobilier</title>
+  <title>Se connecter ou nous rejoindre · ALB Immobilier</title>
   <link rel="stylesheet" href="polices/polices.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="alb-connexion.js"></script>
@@ -245,7 +245,7 @@
 
     /* Espace connecté */
     .bandeau-bienvenue { display: flex; flex-direction: column; gap: 14px; }
-    .bandeau-bienvenue h1 { font-size: 1.6rem; }
+    .bandeau-bienvenue h1, .bandeau-bienvenue h2 { font-size: 1.6rem; }
     .etiquettes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .etiquette { background: #F4EEF6; color: #5A3A6A; font-size: 0.82rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
     .rubrique h2 { font-size: 1.25rem; margin-bottom: 8px; }
@@ -501,6 +501,7 @@
       }
     }
   </style>
+  <meta name="description" content="Connectez-vous à votre espace ALB ou rejoignez-nous : particuliers et professionnels de l'immobilier ancien dans le 83 &amp; 13.">
 </head>
 <body>
 
@@ -733,7 +734,7 @@
     <div class="carte">
       <div class="bandeau-bienvenue">
         <div>
-          <h1 id="titre-bienvenue">Bonjour !</h1>
+          <h2 id="titre-bienvenue">Bonjour !</h2>
           <div class="etiquettes" id="etiquettes-casquettes"></div>
         </div>
         <button type="button" class="bouton bouton-discret" onclick="gererDeconnexion()">Me déconnecter</button>
