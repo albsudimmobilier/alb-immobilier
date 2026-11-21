@@ -263,6 +263,9 @@
       background: #f5f3ee;
     }
 
+    /* Case de recontact non cochée : en rouge */
+    .consent-group.erreur { border-color: #C0392B; background: #FDECEA; }
+
     /* Consentement */
     .consent-group {
       display: flex;
@@ -653,6 +656,13 @@
 
       <div id="alert-error" class="alert alert-error"></div>
 
+      <div class="consent-group" id="recontact-group">
+        <input type="checkbox" id="recontact-check" />
+        <div class="consent-text">
+          J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de mon projet <span class="required">*</span>
+        </div>
+      </div>
+
       <div class="consent-group">
         <input type="checkbox" id="consent-check" />
         <div class="consent-text">
@@ -912,12 +922,29 @@
       document.getElementById('summary-delai').textContent = formState.delai || '(non renseigné)';
     }
 
+    // Le rouge disparaît dès que la case est cochée
+    document.addEventListener('change', function (ev) {
+      if (ev.target && ev.target.id === 'recontact-check' && ev.target.checked) {
+        document.getElementById('recontact-group').classList.remove('erreur');
+      }
+    });
+
     // Soumission du formulaire
     async function submitForm() {
       // Récupérer les valeurs finales
       formState.description = document.getElementById('description').value.trim();
       formState.budget = document.getElementById('budget').value.trim();
       formState.delai = document.getElementById('delai').value.trim();
+
+      // Accord de recontact obligatoire : sinon la case passe en rouge et rien ne part
+      const recontactCheck = document.getElementById('recontact-check');
+      const recontactGroupe = document.getElementById('recontact-group');
+      recontactGroupe.classList.toggle('erreur', !recontactCheck.checked);
+      if (!recontactCheck.checked) {
+        recontactGroupe.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        alert('Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.');
+        return;
+      }
 
       // Vérification consentement obligatoire
       const consentCheck = document.getElementById('consent-check').checked;

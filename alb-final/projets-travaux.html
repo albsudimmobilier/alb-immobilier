@@ -62,6 +62,7 @@
     .field.full { grid-column: 1 / -1; }
     .checkbox-row { display: flex; align-items: flex-start; gap: 0.75rem; margin: 1.5rem 0; padding: 1rem; background: #faf8f6; border-radius: 6px; border: 1px solid #e8d9e5; }
     .checkbox-row input[type="checkbox"] { flex-shrink: 0; margin-top: 0.35rem; width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-row.erreur { border-color: #C0392B; background: #FDECEA; }
     .checkbox-row label { margin: 0; font-weight: 500; color: #1f2937; font-size: 0.95rem; }
     .footer { background-color: #262626; color: white; padding: 60px 0 0 0; width: 100%; }
     .footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 100%; padding: 60px 40px; }
@@ -190,6 +191,10 @@
           <p>Envoi en cours...</p>
         </div>
         <div id="submitContent">
+          <div class="checkbox-row" id="recontactRow">
+            <input type="checkbox" id="recontactCheck">
+            <label for="recontactCheck">J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de mon projet *</label>
+          </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consentCheck">
             <label for="consentCheck">J'accepte qu'ALB transmette les informations de mon projet aux professionnels sélectionnés afin qu'ils puissent me recontacter *</label>
@@ -360,6 +365,13 @@
       document.getElementById('summaryFileCount').textContent = selectedFiles.length;
     }
 
+    // Le rouge disparaît dès que la case de recontact est cochée
+    document.addEventListener('change', function (ev) {
+      if (ev.target && ev.target.id === 'recontactCheck' && ev.target.checked) {
+        document.getElementById('recontactRow').classList.remove('erreur');
+      }
+    });
+
     async function validateAndSubmit() {
       const errors = [];
       const nom = document.getElementById('nom').value.trim();
@@ -372,6 +384,8 @@
       const budget = parseFloat(document.getElementById('budget').value) || 0;
       const delai = document.getElementById('delai').value;
       const consentCheck = document.getElementById('consentCheck').checked;
+      const recontactCoche = document.getElementById('recontactCheck').checked;
+      document.getElementById('recontactRow').classList.toggle('erreur', !recontactCoche);
 
       if (!nom) errors.push('Nom requis');
       if (!prenom) errors.push('Prénom requis');
@@ -382,6 +396,7 @@
       if (!description) errors.push('Description requise');
       if (budget <= 0) errors.push('Budget requis');
       if (!selectedCorpsMetier) errors.push('Sélectionnez un corps de métier');
+      if (!recontactCoche) errors.push('Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.');
       if (!consentCheck) errors.push('Acceptez l\'autorisation de recontact');
 
       const alert = document.getElementById('errorAlert');
