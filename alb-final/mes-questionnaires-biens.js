@@ -22,7 +22,7 @@
   const ETATS_TRAVAUX = ['Déjà refait', 'Rien à prévoir', 'À rafraîchir', 'À refaire'];
   const TROIS = ['Fait', 'À faire', 'Ne sait pas'];
   const NIV_MAISON = ['Sous-sol', 'RDC', '1er étage', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
-  const NIV_APPART = ['Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
+  const NIV_APPART = ['RDC', 'Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
   const NIV4 = NIV_MAISON;
   const CUISINE_TYPE = ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'];
   const CUISINE_EQ = ['Entièrement équipée', 'Aménagée (meubles, sans électroménager)', 'Non équipée'];
@@ -86,9 +86,9 @@
         ['Portail et entrée', ['Portail électrique', 'Portail manuel', 'Pas de portail', 'Interphone, visiophone', 'Clos entièrement', 'Non clos']],
         ['Niveaux', ['De plain-pied', 'Un étage', 'Deux étages ou plus', 'Combles aménagés', 'Sous-sol, cave']],
         ['Terrain', ['Plat', 'En pente', 'Arboré', 'Arrosage automatique', 'Puits, forage', "Récupérateur d'eau de pluie"]],
-        ['Piscine', ['Pas de piscine', 'Piscine existante', 'Terrain piscinable', 'Pas piscinable', 'Je ne sais pas']],
+        ['Piscine', ['Pas de piscine', 'Piscine existante', 'Piscine chauffée', 'Terrain piscinable', 'Pas piscinable', 'Je ne sais pas']],
         ['Où se garer ?', ['Garage fermé (voitures : ___)', 'Carport', 'Dans la cour, sur le terrain', 'Dans la rue', 'Pas de stationnement']],
-        ['Dépendances', ['Abri de jardin', 'Dépendance (atelier, gîte…)', "Cuisine d'été, barbecue", 'Pool house', 'Terrasse couverte', 'Autre (à préciser) : ______']],
+        ['Dépendances', ['Abri de jardin', 'Dépendance (atelier, gîte…)', "Cuisine d'été, barbecue", 'Pool house', 'Terrasse couverte', 'Terrain de pétanque', 'Autre (à préciser) : ______']],
         ['Voisinage', ['Maison isolée', "Mitoyenne d'un côté", 'Mitoyenne des deux côtés', 'Vis-à-vis']],
       ],
       postes: ['Toiture', 'Façade', 'Isolation', 'Fenêtres, volets', 'Chauffage, eau chaude', 'Électricité', 'Plomberie', 'Assainissement', 'Cuisine', 'Salle(s) de bains', 'Sols', 'Peintures', 'Humidité, fissures', 'Autre poste (à préciser dans les remarques)'],
