@@ -9,6 +9,13 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const ROBOTS = /bot|crawl|spider|slurp|preview|headless|lighthouse|pingdom|uptime|monitor|facebookexternalhit|whatsapp|curl|wget|python|node-fetch|axios|go-http/i;
 
+// Seule la catégorie de l'appareil est gardée, jamais le nom exact du navigateur.
+function categorieAppareil(ua) {
+  if (/iPad|Tablet|Tab |Android(?!.*Mobile)/i.test(ua)) return 'tablette';
+  if (/Mobi|iPhone|Android/i.test(ua)) return 'telephone';
+  return 'ordinateur';
+}
+
 const reponse = () => new Response(null, { status: 204 });
 
 function pageValide(valeur) {
@@ -57,7 +64,7 @@ export default async (req, context) => {
     const code = createHmac('sha256', cleDuJour).update(ip + '|' + ua).digest('hex').slice(0, 20);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-    await supabase.from('alb_visites_site').insert({ jour, code, page, source });
+    await supabase.from('alb_visites_site').insert({ jour, code, page, source, appareil: categorieAppareil(ua) });
 
     // De temps en temps, on supprime ce qui a plus de 25 mois.
     if (Math.random() < 0.02) await supabase.rpc('alb_purger_visites');

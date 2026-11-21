@@ -727,13 +727,19 @@
       ligneP('Inscription des pros', 'inscription-pro', demandesDe(prosP), 'pros inscrits'),
       ligneP('Vendre mon bien', 'vendre-mon-bien', vendeursP, 'annonces ou questionnaires')
     ], '') + '<p class="aide">Les visites comptent chaque page ouverte, par jour. Le chiffre « pour 100 » est un ordre de grandeur : une personne peut ouvrir la page plusieurs fois.</p>';
+    const parAppareil = { telephone: 0, ordinateur: 0, tablette: 0 };
+    (v.appareils || []).forEach(function (x) { if (dansPeriode(x.jour) && parAppareil[x.appareil] != null) parAppareil[x.appareil] += x.visites; });
+    const totalAppareils = parAppareil.telephone + parAppareil.ordinateur + parAppareil.tablette;
+    const blocAppareils = totalAppareils
+      ? '<p style="font-size:0.86rem;margin:8px 0 2px;">📱 <strong>Téléphone</strong> ' + pct(parAppareil.telephone, totalAppareils) + ' % · 💻 <strong>Ordinateur</strong> ' + pct(parAppareil.ordinateur, totalAppareils) + ' % · <strong>Tablette</strong> ' + pct(parAppareil.tablette, totalAppareils) + ' % <span class="aide">(sur ' + nb(totalAppareils) + ' visites)</span></p>'
+      : '';
     const detailSources = Object.keys(sourcesPeriode).map(function (k) { return { source: k, visites: sourcesPeriode[k] }; }).sort(function (a, b) { return b.visites - a.visites; });
     const liste = function (titre, l, cle) {
       return '<div><p style="font-size:0.86rem;font-weight:700;margin:6px 0 2px;">' + titre + '</p>' +
         (l.length ? l.slice(0, 6).map(function (x) { return '<p style="font-size:0.84rem;margin:2px 0;">' + e(x[cle] || '/') + ' <strong>' + nb(x.visites) + '</strong></p>'; }).join('') : '<p class="aide">Rien pour l\'instant.</p>') + '</div>';
     };
     zone.innerHTML = alerte + '<p style="font-size:0.9rem;"><strong>' + nb(total) + ' visite' + (total > 1 ? 's' : '') + '</strong> sur la période · environ ' + nb(moyenne) + ' par jour</p>' +
-      colonnes + '<p class="aide">Visites par semaine (semaine commençant le jour indiqué).</p>' +
+      colonnes + '<p class="aide">Visites par semaine (semaine commençant le jour indiqué).</p>' + blocAppareils +
       '<p style="font-size:0.86rem;font-weight:700;margin:10px 0 2px;">Comment les gens arrivent</p>' + blocFamilles + blocReseaux +
       '<div class="grille-ensemble">' + liste('Pages les plus vues', detailPages, 'page') + liste('Sites qui nous envoient du monde', detailSources, 'source') + '</div>' +
       '<p class="aide">Une personne qui revient un autre jour compte une nouvelle visite. Comptage lancé le ' + (v.debut ? new Date(v.debut + 'T00:00:00').toLocaleDateString('fr-FR') : '—') +
