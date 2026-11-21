@@ -133,6 +133,21 @@
     <div class="compteurs" id="compteurs"></div>
     <div class="ligne-filtres" id="filtres"></div>
     <div id="liste"></div>
+
+    <h2 style="margin-top:36px;">📨 Biens déjà en ligne sans questionnaire</h2>
+    <p class="aide">Les biens d'agents et de mandataires déjà sur le site, dont le questionnaire n'est pas encore envoyé. « Voir l'e-mail » te montre l'e-mail exact, avec son objet. Il part de contact@albimmobilier.fr et ne part qu'après ton clic sur « Envoyer ».</p>
+    <div id="a-inviter"></div>
+  </div>
+  <div id="fenetre-mail" class="cache" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;overflow:auto;padding:20px;">
+    <div style="background:#fff;max-width:660px;margin:0 auto;border-radius:10px;padding:18px;">
+      <p id="mail-entete" style="font-size:14px;line-height:1.6;"></p>
+      <iframe id="mail-cadre" style="width:100%;height:480px;border:1px solid #ddd;border-radius:6px;"></iframe>
+      <p style="text-align:right;margin-top:12px;">
+        <button type="button" id="mail-fermer">Fermer</button>
+        <button type="button" id="mail-envoyer" style="background:#5A3A6A;color:#fff;border:0;padding:8px 16px;border-radius:6px;font-weight:bold;">Envoyer cet e-mail</button>
+      </p>
+      <p id="mail-message" style="font-size:14px;"></p>
+    </div>
   </div>
 </main>
 
@@ -650,6 +665,56 @@
     return codes[r && r.code] || 'Cela n’a pas marché, réessaie';
   }
 
+  // ---- Biens déjà en ligne : inviter le pro à compléter le questionnaire ----
+  let aInviter = [];
+  let invitationEnCours = null;
+  function echapper(t) { return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  async function appelerInvitation(corps) {
+    const r = await albSupabase.functions.invoke('alb-invitation', { body: corps });
+    if (r.error) { try { return await r.error.context.json(); } catch (x) { return { ok: false, code: 'ERREUR' }; } }
+    return r.data;
+  }
+  async function chargerAInviter() {
+    const { data, error } = await albSupabase.rpc('alb_gestion_biens_a_inviter');
+    if (error) { console.log('[ALB DEBUG] biens à inviter : chargement impossible', error); el('a-inviter').textContent = 'La liste n\'a pas pu être chargée.'; return; }
+    aInviter = data || [];
+    dessinerAInviter();
+  }
+  function dessinerAInviter() {
+    if (!aInviter.length) { el('a-inviter').innerHTML = '<p class="aide">Aucun bien à inviter pour le moment.</p>'; return; }
+    el('a-inviter').innerHTML = aInviter.map(function (b) {
+      const quand = b.invitee_le ? 'Invité(e) le ' + new Date(b.invitee_le).toLocaleDateString('fr-FR') : 'Pas encore invité(e)';
+      return '<div class="carte" style="border:1px solid #ddd;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fff;">'
+        + '<strong>' + echapper(b.metier) + ' · ' + echapper(b.titre) + '</strong> — ' + echapper(b.ville || '')
+        + '<br><span style="font-size:14px;">' + echapper((b.pro_prenom || '') + ' ' + (b.pro_nom || '')) + ' · ' + echapper(b.pro_email || '') + '</span>'
+        + '<br><span style="font-size:14px;">' + (b.brouillon ? '📝 Brouillon déjà prérempli dans son espace · ' : '') + quand + '</span>'
+        + '<br><button type="button" data-voir-mail="' + echapper(b.annonce_id) + '" style="margin-top:8px;">Voir l\'e-mail</button></div>';
+    }).join('');
+  }
+  document.addEventListener('click', async function (e) {
+    const voir = e.target.closest('[data-voir-mail]');
+    if (voir) {
+      voir.disabled = true;
+      const r = await appelerInvitation({ action: 'apercu', annonce_id: voir.dataset.voirMail });
+      voir.disabled = false;
+      if (!r || !r.ok) { alert('L\'aperçu n\'a pas pu être préparé.'); return; }
+      invitationEnCours = voir.dataset.voirMail;
+      el('mail-entete').innerHTML = '<strong>De :</strong> ' + echapper(r.de) + '<br><strong>À :</strong> ' + echapper(r.nom) + ' &lt;' + echapper(r.a) + '&gt;<br><strong>Copie :</strong> ' + echapper(r.de) + '<br><strong>Objet :</strong> ' + echapper(r.sujet);
+      el('mail-cadre').srcdoc = r.html;
+      el('mail-message').textContent = '';
+      el('mail-envoyer').disabled = false;
+      el('fenetre-mail').classList.remove('cache');
+    }
+    if (e.target.id === 'mail-fermer') { el('fenetre-mail').classList.add('cache'); }
+    if (e.target.id === 'mail-envoyer' && invitationEnCours) {
+      if (!confirm('Envoyer cet e-mail maintenant ?')) { return; }
+      e.target.disabled = true;
+      const r = await appelerInvitation({ action: 'inviter', annonce_id: invitationEnCours });
+      if (r && r.ok) { el('mail-message').textContent = '✅ E-mail envoyé.'; invitationEnCours = null; chargerAInviter(); }
+      else { el('mail-message').textContent = 'L\'e-mail n\'est pas parti, réessaie.'; e.target.disabled = false; }
+    }
+  });
+
   async function demarrer() {
     const etat = el('etat');
     const { data: session } = await albSupabase.auth.getSession();
@@ -667,6 +732,7 @@
     etat.classList.add('cache');
     el('page').classList.remove('cache');
     dessinerTout();
+    chargerAInviter();
   }
 
   document.addEventListener('DOMContentLoaded', demarrer);
