@@ -17,6 +17,7 @@
     'Ils restent privés : seuls vous et Jocelyne les voyez, et nous ne les montrons à personne sans votre accord. ' +
     'Pas encore prêts ? Aucun souci, vous pourrez les ajouter plus tard.';
   const MSG_LOURD = 'Ce fichier est trop lourd. Envoyez-le-nous par e-mail ou prenez-le en photo.';
+  const ADRESSE_MAIL = 'contact@albimmobilier.fr';
   const MSG_TYPE = 'Ce type de fichier n’est pas pris en compte. Envoyez un PDF ou une photo.';
   const MSG_ECHEC = 'Oups, cela n’a pas marché. Réessayez dans un instant ou appelez Jocelyne au 07 45 60 28 05.';
   const MSG_TROP = 'Vous avez déjà envoyé beaucoup de fichiers. Appelez Jocelyne au 07 45 60 28 05 pour en ajouter d’autres.';
@@ -88,9 +89,25 @@
     const champ = zone.querySelector('[data-diag-fichier]');
     let monId = null;
 
-    function dire(texte, erreur) {
-      msg.textContent = texte || '';
+    // Pour savoir d'où vient un e-mail : bien, nom du vendeur et référence dans l'objet
+    const origine = { titre: '', nom: '' };
+    function lienMail(nomFichier) {
+      const ref = String(annonceId).slice(0, 8);
+      const objet = 'Diagnostic — ' + (origine.titre || 'mon bien') + (origine.nom ? ' — ' + origine.nom : '') + ' — réf. ' + ref;
+      const corps = 'Bonjour Jocelyne,\n\nJe vous envoie un diagnostic de mon bien' + (nomFichier ? ' (' + nomFichier + ')' : '') +
+        '.\n\n(Pensez à joindre le fichier à ce message.)\n\nMerci de votre confiance.';
+      return 'mailto:' + ADRESSE_MAIL + '?subject=' + encodeURIComponent(objet) + '&body=' + encodeURIComponent(corps);
+    }
+
+    function dire(texte, erreur, nomFichier) {
       msg.className = 'alb-diag-msg' + (erreur ? ' erreur' : '');
+      if (texte === MSG_LOURD) {
+        msg.innerHTML = e('Ce fichier est trop lourd pour être envoyé ici. ') +
+          '<a href="' + e(lienMail(nomFichier)) + '">Envoyez-le-nous par e-mail</a>' +
+          e(' : l’objet est déjà rempli, il ne reste qu’à joindre le fichier. Vous pouvez aussi le prendre en photo.');
+        return;
+      }
+      msg.textContent = texte || '';
     }
 
     function dessiner(fichiers) {
@@ -115,7 +132,7 @@
     }
 
     async function envoyer(fichier) {
-      if (fichier.size > TAILLE_MAX) { dire(MSG_LOURD, true); return false; }
+      if (fichier.size > TAILLE_MAX) { dire(MSG_LOURD, true, fichier.name); return false; }
       const typeOk = TYPES.indexOf(fichier.type) !== -1 || (!fichier.type && EXT.test(fichier.name));
       if (!typeOk && !EXT.test(fichier.name)) { dire(MSG_TYPE, true); return false; }
       const uid = await identifiant();
@@ -175,6 +192,17 @@
     });
 
     actualiser().catch(function (err) { console.warn('[ALB DEBUG] liste diagnostics', err); });
+    // Informations pour l'objet de l'e-mail (si elles ne peuvent pas être lues, l'objet reste utilisable)
+    identifiant().then(function (uid) {
+      return Promise.all([
+        albSupabase.from('annonces').select('titre, ville').eq('id', annonceId).maybeSingle(),
+        albSupabase.from('profiles').select('prenom, nom').eq('id', uid).maybeSingle()
+      ]);
+    }).then(function (r) {
+      const a = r[0] && r[0].data, p = r[1] && r[1].data;
+      if (a) origine.titre = [a.titre, a.ville].filter(Boolean).join(' ');
+      if (p) origine.nom = [p.prenom, p.nom].filter(Boolean).join(' ');
+    }).catch(function () { /* rien */ });
   }
 
   globalThis.albDiagnostics = { html: html, brancher: brancher, nomSur: nomSur, poids: poids };

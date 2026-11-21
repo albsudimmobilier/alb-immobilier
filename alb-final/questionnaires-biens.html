@@ -321,7 +321,8 @@
     html += '<div class="annonce-videos"><strong>📎 Diagnostics envoyés (' + diags.length + ')</strong>' +
       (diags.length ? diags.map(function (d) {
         const ko = Number(d.taille) >= 1048576 ? (Number(d.taille) / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(Number(d.taille || 0) / 1024)) + ' Ko';
-        return '<button type="button" class="bouton-petit clair" data-action="ouvrir-diag" data-chemin="' + e(d.chemin) + '">📄 ' + e(d.nom_fichier) + ' (' + e(ko) + ')</button>';
+        return '<button type="button" class="bouton-petit clair" data-action="ouvrir-diag" data-chemin="' + e(d.chemin) + '">📄 ' + e(d.nom_fichier) + ' (' + e(ko) + ')</button>' +
+          '<button type="button" class="bouton-petit or" data-action="telecharger-diag" data-chemin="' + e(d.chemin) + '" data-nom="' + e(d.nom_fichier) + '">⬇️ Télécharger</button>';
       }).join('') : ' <span>Aucun pour le moment.</span>') + '</div>';
     return html + '</div>';
   }
@@ -512,6 +513,20 @@
         return;
       }
       if (fenetre) { fenetre.location = r.data.signedUrl; } else { window.location = r.data.signedUrl; }
+      return;
+    }
+
+    if (bouton.dataset.action === 'telecharger-diag') {
+      // le fichier est enregistré sur ton ordinateur ; la copie reste aussi dans l'espace privé
+      const r = await albSupabase.storage.from('diagnostics-biens').createSignedUrl(bouton.dataset.chemin, 300, { download: bouton.dataset.nom || true });
+      if (r.error || !r.data || !r.data.signedUrl) {
+        console.log('[ALB DEBUG] téléchargement diagnostic', r.error);
+        bouton.textContent = '⚠️ Téléchargement impossible : actualise la page';
+        return;
+      }
+      const lien = document.createElement('a');
+      lien.href = r.data.signedUrl; lien.download = bouton.dataset.nom || '';
+      document.body.appendChild(lien); lien.click(); lien.remove();
       return;
     }
 
