@@ -135,6 +135,10 @@
       <div class="carte"><h3 style="font-size:0.95rem;margin-bottom:4px;">Qui nous rejoint</h3><div id="t-qui"></div></div>
       <div class="carte"><h3 style="font-size:0.95rem;margin-bottom:4px;">Les mandats qui se terminent</h3><div id="t-mandats"></div></div>
     </div>
+    <div class="carte">
+      <h3 style="font-size:0.95rem;margin-bottom:4px;">🚪 Ceux qui ont quitté ALB</h3>
+      <div id="t-departs"></div>
+    </div>
 
     <h2 class="titre-section">🎯 Suivi commercial d'ALB Sud Immobilier</h2>
     <p class="aide">Ta prospection des pros, de la rencontre jusqu'à l'argent encaissé, sur la période choisie (le département ne compte pas ici). Les contacts viennent du « 📇 Carnet » ; les propositions et contrats, du Carnet et de « 👥 Suivi des membres » (pros déjà inscrits) ; les rendez-vous de l'« 📅 Agenda » (ceux marqués faits), l'encaissé des factures marquées « 💶 Payée » dans « Factures ».</p>
@@ -773,6 +777,33 @@
       '<p class="aide">Le nom d\'un robot peut être imité : c\'est un bon indice, pas une preuve. Cela ne dit pas si tu es citée dans les réponses.</p>';
   }
 
+  function dessinerDeparts() {
+    const tous = (donnees.departs || []).filter(function (x) { return dansPeriode(x.le); });
+    const estPro = function (x) { return x.role && x.role !== 'particulier'; };
+    const partis = tous.filter(function (x) { return x.type === 'depart' && x.statut === 'ferme'; });
+    const enAttente = tous.filter(function (x) { return x.type === 'depart' && x.statut === 'en_attente'; });
+    const annules = tous.filter(function (x) { return x.type === 'depart' && x.statut === 'annule'; });
+    const suspendus = tous.filter(function (x) { return x.type === 'suspension'; });
+    const zone = el('t-departs');
+    if (!tous.length) { zone.innerHTML = '<p class="vide">Personne n\'a quitté ALB sur cette période. 🌿</p>'; return; }
+    const inscritsDepuisToujours = donnees.membres.length; // les comptes fermés y sont toujours comptés
+    const partisDepuisToujours = (donnees.departs || []).filter(function (x) { return x.type === 'depart' && x.statut === 'ferme'; }).length;
+    const lignes = tous.filter(function (x) { return x.type === 'suspension' || x.statut !== 'annule'; }).slice(0, 12).map(function (x) {
+      const etat = x.type === 'suspension' ? '⏸️ Suspendu' : (x.statut === 'ferme' ? '🚪 Parti' : '⏳ Départ demandé');
+      const qui = (x.type === 'depart' && x.par === 'membre') ? 'a demandé lui-même' : 'noté par toi';
+      const texte = String(x.motif || '').replace(/\s+/g, ' ').trim();
+      return [new Date(x.le).toLocaleDateString('fr-FR'), x.role === 'particulier' ? 'Particulier' : 'Pro (' + e(x.role || '?') + ')', etat + ' · ' + qui,
+        texte ? e(texte.length > 160 ? texte.slice(0, 160) + '…' : texte) : '<em>aucune raison indiquée</em>'];
+    });
+    zone.innerHTML = '<p style="font-size:0.9rem;"><strong>' + plur(partis.length, 'parti') + '</strong> (' + plur(partis.filter(function (x) { return !estPro(x); }).length, 'particulier') + ', ' + plur(partis.filter(estPro).length, 'pro') + ')' +
+      (enAttente.length ? ' · ' + nb(enAttente.length) + ' départ' + (enAttente.length > 1 ? 's' : '') + ' en attente' : '') +
+      (suspendus.length ? ' · ' + nb(suspendus.length) + ' suspendu' + (suspendus.length > 1 ? 's' : '') : '') +
+      (annules.length ? ' · ' + nb(annules.length) + ' départ' + (annules.length > 1 ? 's' : '') + ' annulé' + (annules.length > 1 ? 's' : '') + ' (ils restent)' : '') + '</p>' +
+      (inscritsDepuisToujours ? '<p class="aide">Depuis le début : ' + nb(partisDepuisToujours) + ' parti' + (partisDepuisToujours > 1 ? 's' : '') + ' sur ' + nb(inscritsDepuisToujours) + ' inscrits (' + pct(partisDepuisToujours, inscritsDepuisToujours) + ' %).</p>' : '') +
+      tableau(['Date', 'Qui', 'Ce qui s\'est passé', 'Pourquoi (leurs mots)'], lignes, '') +
+      '<p class="aide">Sans nom ni coordonnées. Les noms restent dans Gestion du site, onglet Départs.</p>';
+  }
+
   function dessinerVueEnsemble() {
     const questionnaires = donnees.questionnaires || [];
     const envoyes = questionnaires.filter(function (q) { return q.statut === 'envoye'; });
@@ -838,6 +869,7 @@
 
     dessinerFrequentation();
     dessinerRobots();
+    dessinerDeparts();
 
     // Qui nous rejoint
     const tous = donnees.membres.filter(bonDep);
@@ -897,7 +929,8 @@
     if (!session?.session) { etat.innerHTML = 'Connecte-toi d\'abord dans <a href="gestion-site.html">Gestion du site</a>, puis reviens ici.'; return; }
     const { data: estAdmin } = await albSupabase.rpc('alb_est_admin');
     if (estAdmin !== true) { etat.className = 'message erreur'; etat.textContent = 'Cette page est réservée à l\'équipe ALB Sud Immobilier.'; return; }
-    const [{ data, error }, devisRep, commercialRep, questRep, visitesRep, robotsRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats'), albSupabase.rpc('alb_gestion_visiteurs'), albSupabase.rpc('alb_gestion_robots')]);
+    const [{ data, error }, devisRep, commercialRep, questRep, visitesRep, robotsRep, departsRep] = await Promise.all([albSupabase.rpc('alb_gestion_statistiques'), albSupabase.rpc('alb_gestion_devis'), albSupabase.rpc('alb_gestion_suivi_commercial'), albSupabase.rpc('alb_gestion_questionnaires_stats'), albSupabase.rpc('alb_gestion_visiteurs'), albSupabase.rpc('alb_gestion_robots'), albSupabase.rpc('alb_gestion_departs_stats')]);
+    if (departsRep.error) console.error('[ALB DEBUG] départs :', departsRep.error);
     if (robotsRep.error) console.error('[ALB DEBUG] robots :', robotsRep.error);
     if (visitesRep.error) console.error('[ALB DEBUG] visiteurs :', visitesRep.error);
     try { window.localStorage.setItem('alb-pas-compter', '1'); } catch (err) {}
@@ -908,6 +941,7 @@
     donnees = { annonces: data.annonces || [], projets: data.projets || [], envois: data.envois || [], membres: data.membres || [],
       signatures: data.signatures || [], factures: data.factures || [], points: data.points || [], desaccords: data.desaccords || [], visites: data.visites || [],
       questionnaires: questRep.data || [],
+      departs: departsRep.data || [],
       robots: robotsRep.data || [],
       visiteurs: visitesRep.data || { par_jour: [], pages: [], sources: [], debut: null },
       devis: devisRep.data || [], commercial: Object.assign({ carnet: [], membres: [], rdv: [], factures: [] }, commercialRep.data || {}) };
