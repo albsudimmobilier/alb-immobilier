@@ -22,7 +22,7 @@
   const ETATS_TRAVAUX = ['Déjà refait', 'Rien à prévoir', 'À rafraîchir', 'À refaire'];
   const TROIS = ['Fait', 'À faire', 'Ne sait pas'];
   const NIV_MAISON = ['Sous-sol', 'RDC', '1er étage', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
-  const NIV_APPART = ['RDC', 'Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
+  const NIV_APPART = ['Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
   const NIV4 = NIV_MAISON;
   const CUISINE_TYPE = ['Ouverte sur le séjour', 'Fermée', 'Américaine (avec bar)', 'Îlot central'];
   const CUISINE_EQ = ['Entièrement équipée', 'Aménagée (meubles, sans électroménager)', 'Non équipée'];
@@ -62,7 +62,7 @@
     appartement: {
       libelle: 'Appartement', copro: true, assainissement: false,
       diags: DIAGS_COMMUNS.concat([['Mesurage loi Carrez', 'Appartement en copropriété']]),
-      chiffres: ['Surface habitable (m²)', 'Surface Carrez (m²)', 'Nombre de pièces', 'Chambres', 'Autre (à préciser)', 'Année de construction', 'Étage du logement', "Étages de l'immeuble", "Appartements dans l'immeuble", 'Extérieur : balcon, terrasse (m²)', 'Extérieur : jardin privatif (m²)'],
+      chiffres: ['Surface habitable (m²)', 'Surface Carrez (m²)', 'Nombre de pièces', 'Chambres', 'Autre (à préciser)', 'Année de construction', "Étages de l'immeuble", "Appartements dans l'immeuble", 'Extérieur : balcon, terrasse (m²)', 'Extérieur : jardin privatif (m²)'],
       niveaux: NIV_APPART, atelier: false,
       pieces: ['Entrée', 'Séjour, salle à manger', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Chambre 3', 'Bureau', 'Salle de bains 1', 'Salle de bains 2', "Salle d'eau 1", "Salle d'eau 2", 'WC 1', 'WC 2', 'Dressing', 'Buanderie, cellier', 'Couloir', 'Balcon, terrasse'],
       acces: [
@@ -166,8 +166,11 @@
 
     S.push({ titre: 'Le bien en chiffres', blocs: [
       { k: 'champs', items: cfg.chiffres.map(function (l) { return { l: l }; }) },
+    ].concat(type === 'appartement' ? [
+      { k: 'choix', l: 'Étage du logement', opts: ['Rez-de-chaussée (RDC)', '1er étage', '2e étage', '3e étage', '4e étage', '5e étage', '6e étage ou plus', 'Dernier étage'] },
+    ] : []).concat([
       { k: 'cases', l: 'État général', opts: ['Très bon état, rien à prévoir', 'Bon état', 'À rafraîchir (peintures, sols)', 'À rénover (travaux importants)'] },
-    ] });
+    ]) });
 
     S.push({ titre: 'Pièce par pièce', blocs: [{ k: 'pieces' }] });
 
