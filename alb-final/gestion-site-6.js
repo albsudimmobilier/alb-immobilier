@@ -10,11 +10,11 @@ let previsionnel = null;
 let prevModifie = false; // des changements pas encore enregistrés : on ne les écrase pas en rechargeant
 
 const SOURCES_PREV = [
-  ['agents', '🏠 Agents et mandataires abonnés', 'abonnés', 'Nombre d\'agents ou mandataires qui paient l\'abonnement'],
+  ['visites', '👀 Visites validées (agents)', 'visites', 'Nombre de visites validées chez les agents et mandataires, par mois'],
+  ['apports', '🤝 Apports d\'affaires (agents)', 'apports', 'Nombre de ventes où l\'agent a touché sa commission grâce à ALB, par mois'],
   ['annonces', '🏡 Annonces de particuliers', 'annonces', 'Nombre d\'annonces de particuliers diffusées'],
   ['prets', '🏦 Prêts signés', 'prêts', 'Nombre de prêts signés par les courtiers, par mois'],
-  ['chantiers', '🔨 Chantiers signés', 'chantiers', 'Nombre de chantiers signés par les artisans, par mois'],
-  ['contacts', '🤝 Mises en relation agents', 'mises en relation', 'Vendeurs ou acheteurs envoyés aux agents et acceptés, par mois']
+  ['chantiers', '🔨 Chantiers signés', 'chantiers', 'Nombre de chantiers signés par les artisans, par mois']
 ];
 
 async function chargerPrevisionnel(forcer) {
@@ -51,11 +51,14 @@ function dessinerFormulairePrevisionnel() {
       '<div class="grille" style="grid-template-columns:1fr 1fr;margin-top:8px;">' +
       champPrev('prev-' + s[0] + '-depart', 'Le premier mois', v.depart || 0, '') +
       champPrev('prev-' + s[0] + '-hausse', 'En plus chaque mois', v.hausse || 0, '') +
-      '</div>' + (s[0] === 'chantiers' ? '<div style="margin-top:8px;">' + champPrev('prev-montant-chantier', 'Montant moyen d\'un chantier (€ HT)', h.montant_chantier || 0, '') + '</div>' : '') +
+      '</div>' + (s[0] === 'chantiers' ? '<div style="margin-top:8px;">' + champPrev('prev-montant-chantier', 'Montant moyen d\'un chantier (€ HT)', h.montant_chantier || 0, '') +
+        '<div class="petit-champ"><span>Taux utilisé</span><select id="prev-taux-chantier" onchange="prevChange()">' +
+        '<option value="lancement"' + (h.taux_chantier !== 'normal' ? ' selected' : '') + '>' + tarifPrev('taux_artisan_lancement', 5) + ' % (taux de lancement des premiers artisans)</option>' +
+        '<option value="normal"' + (h.taux_chantier === 'normal' ? ' selected' : '') + '>' + tarifPrev('taux_artisan', 10) + ' % (taux normal)</option></select></div></div>' : '') +
       '</div>';
   }).join('');
-  document.getElementById('prev-tarifs').innerHTML = 'Tarifs utilisés (réglage « ⚙️ Tarifs » de l\'onglet Factures) : agents ' + tarifPrev('abonnement_immo', 60) + ' € HT/mois · annonce de particulier ' +
-    String(tarifPrev('abonnement_vendeur', 9.9)).replace('.', ',') + ' € TTC/mois · prêt ' + tarifPrev('pret_courtier', 150) + ' € HT · chantier ' + tarifPrev('taux_artisan', 10) + ' % HT · mise en relation agent ' + tarifPrev('immo_par_contact', 0) + ' € HT · visite validée (agents) ' + tarifPrev('immo_par_visite', 2) + ' € HT (pas encore comptée dans les courbes).';
+  document.getElementById('prev-tarifs').innerHTML = 'Tarifs utilisés (réglage « ⚙️ Tarifs » de l\'onglet Factures) : visite validée ' + tarifPrev('immo_par_visite', 2) + ' € HT · apport d\'affaires agent ' + tarifPrev('immo_apport_affaires', 200) + ' € HT · annonce de particulier ' +
+    String(tarifPrev('abonnement_vendeur', 9.9)).replace('.', ',') + ' € TTC/mois · prêt ' + tarifPrev('pret_courtier', 150) + ' € HT · chantier ' + tarifPrev('taux_artisan_lancement', 5) + ' % (lancement) ou ' + tarifPrev('taux_artisan', 10) + ' % HT.';
   dessinerCharges(f.charges || []);
 }
 
@@ -82,6 +85,7 @@ function lireHypotheses() {
     h[s[0]] = { depart: nombre(document.getElementById('prev-' + s[0] + '-depart').value), hausse: nombre(document.getElementById('prev-' + s[0] + '-hausse').value) };
   });
   h.montant_chantier = nombre(document.getElementById('prev-montant-chantier').value);
+  h.taux_chantier = document.getElementById('prev-taux-chantier').value;
   return h;
 }
 
@@ -98,11 +102,11 @@ function calculerPrevisionnel() {
   const objHaut = nombre(document.getElementById('prev-objectif-haut').value);
   const tva = tarifPrev('taux_tva', 20);
   const prix = {
-    agents: tarifPrev('abonnement_immo', 60),
+    visites: tarifPrev('immo_par_visite', 2),
+    apports: tarifPrev('immo_apport_affaires', 200),
     annonces: tarifPrev('abonnement_vendeur', 9.9) / (1 + tva / 100),
     prets: tarifPrev('pret_courtier', 150),
-    chantiers: h.montant_chantier * tarifPrev('taux_artisan', 10) / 100,
-    contacts: tarifPrev('immo_par_contact', 0)
+    chantiers: h.montant_chantier * (h.taux_chantier === 'normal' ? tarifPrev('taux_artisan', 10) : tarifPrev('taux_artisan_lancement', 5)) / 100
   };
   const offertJusquAu = previsionnel.offert_jusqu_au ? new Date(previsionnel.offert_jusqu_au + 'T12:00:00') : null;
   const reel = {};
@@ -116,7 +120,8 @@ function calculerPrevisionnel() {
     const parSource = {};
     let ca = 0;
     SOURCES_PREV.forEach(function (s) {
-      const n = Math.max(0, h[s[0]].depart + h[s[0]].hausse * i);
+      const v = h[s[0]] || { depart: 0, hausse: 0 };
+      const n = Math.max(0, v.depart + v.hausse * i);
       const montant = offert ? 0 : n * prix[s[0]];
       parSource[s[0]] = { n: n, montant: montant };
       ca += montant;
