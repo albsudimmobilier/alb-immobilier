@@ -380,8 +380,31 @@
       '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true"' + (bloquee ? ' readonly' : '') + '>' + e(texte) + '</textarea>' +
       '<div class="contact-actions">' +
         '<button type="button" class="bouton-petit or" data-action="copier-annonce" data-id="' + e(q.id) + '"' + (bloquee ? ' disabled title="DPE, GES et dépenses d’énergie obligatoires"' : '') + '>📋 Copier l\'annonce</button>' +
+        (q.annonce && q.annonce.id ? '<button type="button" class="bouton-petit or" data-action="envoyer-vendeur" data-id="' + e(q.id) + '"' + (bloquee ? ' disabled title="DPE, GES et dépenses d’énergie obligatoires"' : '') + '>✉️ Envoyer au vendeur</button>' : '') +
         '<button type="button" class="bouton-petit clair" data-action="refaire-annonce" data-id="' + e(q.id) + '">↺ Recomposer depuis le questionnaire</button></div>' +
       blocPourJoce(annonce.pourJoce) + '</div>';
+  }
+
+  // Où en est l'annonce envoyée au vendeur (envoyée, validée, changements demandés)
+  function blocProposition(q) {
+    const p = q.annonce && q.annonce.proposition;
+    if (!p) { return ''; }
+    let html = '<div class="annonce-liee"><div class="annonce-titre">✉️ Annonce envoyée au vendeur</div>';
+    if (p.statut === 'validee') {
+      html += '<div class="annonce-infos">✅ Validée par le vendeur le ' + e(formatDateFr(p.repondu_le)) + '. Rien n\'est publié : tu publies quand tu veux.</div>' +
+        '<details><summary>Voir le texte validé</summary><textarea readonly rows="10">' + e(p.texte) + '</textarea></details>';
+    } else if (p.statut === 'changements') {
+      html += '<div class="annonce-infos">✏️ Le vendeur demande des changements (' + e(formatDateFr(p.repondu_le)) + ') :</div>' +
+        '<div class="annonce-videos" style="white-space:pre-line;">' + e(p.remarques || '') + '</div>' +
+        '<div class="annonce-infos">Reprends l\'annonce ci-dessous, puis renvoie-la-lui.</div>';
+    } else {
+      const expiree = new Date(p.expire_le) < new Date();
+      html += '<div class="annonce-infos">' + (p.mail_envoye_le
+        ? 'Envoyée le ' + e(formatDateFr(p.mail_envoye_le)) + ' · ' + (expiree ? 'le lien a expiré' : 'lien valable jusqu\'au ' + e(formatJourFr(p.expire_le))) + ' · en attente de sa réponse.'
+        : '⚠️ L\'annonce est prête mais l\'e-mail n\'est pas parti.') + '</div>' +
+        (!expiree ? '<div class="contact-actions"><button type="button" class="bouton-petit clair" data-action="renvoyer-mail" data-prop="' + e(p.id) + '">✉️ Renvoyer l\'e-mail</button></div>' : '');
+    }
+    return html + '</div>';
   }
 
   // Pour un particulier : ce qu'il a accepté en envoyant son questionnaire
@@ -427,6 +450,7 @@
         (traite ? ' · traité le ' + e(formatDateFr(q.traite_le)) : '') + '</div>' +
       blocAccords(q) +
       blocAnnonce(q) +
+      blocProposition(q) +
       '<div class="contact-actions">' + actionsContact +
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
         '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button></div>' +
@@ -530,8 +554,42 @@
       return;
     }
 
+    if (bouton.dataset.action === 'renvoyer-mail') {
+      bouton.disabled = true;
+      const rr = await appelerProposition({ action: 'renvoyer', id: bouton.dataset.prop });
+      bouton.disabled = false;
+      bouton.textContent = rr && rr.ok ? '✅ E-mail renvoyé' : '⚠️ ' + messageProposition(rr);
+      return;
+    }
+
     const id = bouton.dataset.id;
     if (!id) { return; }
+
+    if (bouton.dataset.action === 'envoyer-vendeur') {
+      const qv = questionnaires.find(function (x) { return x.id === id; });
+      const zoneV = document.getElementById('annonce-texte-' + id);
+      const annonceV = qv ? annonceCreee(qv) : null;
+      if (!qv || !zoneV || !annonceV || !annonceV.diffusable) { return; } // DPE, GES et dépenses d'énergie obligatoires
+      const texteV = zoneV.value;
+      if (!/\(DPE\)\s*:\s*classe\s+[A-G]/.test(texteV) || !/\(GES\)\s*:\s*classe\s+[A-G]/.test(texteV) || !/dépenses annuelles d.énergie/.test(texteV)) {
+        bouton.textContent = '🚫 DPE, GES et dépenses d’énergie à remettre dans le texte';
+        return;
+      }
+      if (!window.confirm('Envoyer cette annonce au vendeur (' + (qv.pro_email || 'e-mail du vendeur') + ') ? Il pourra la valider ou demander des changements. Rien n\'est publié.')) { return; }
+      bouton.disabled = true;
+      bouton.textContent = 'Envoi…';
+      memoriserNotes();
+      const rv = await appelerProposition({ action: 'envoyer', questionnaire_id: id, texte: texteV });
+      if (rv && (rv.ok || rv.code === 'MAIL_NON_ENVOYE')) {
+        delete annoncesTextes[id];
+        annoncesOuvertes[id] = false;
+        if (await chargerQuestionnaires()) { dessinerTout(); }
+        return;
+      }
+      bouton.disabled = false;
+      bouton.textContent = '⚠️ ' + messageProposition(rv);
+      return;
+    }
 
     if (bouton.dataset.action === 'detail') { ouverts[id] = !ouverts[id]; dessinerListe(); return; }
     if (bouton.dataset.action === 'annonce') { memoriserNotes(); annoncesOuvertes[id] = !annoncesOuvertes[id]; dessinerListe(); return; }
@@ -571,6 +629,26 @@
     if (bouton.dataset.action === 'remettre') { await marquerQuestionnaire(id, false, note); }
     if (bouton.dataset.action === 'note') { await marquerQuestionnaire(id, !!(questionnaire && questionnaire.traite_le), note); }
   });
+
+  // Envoi de l'annonce au vendeur : l'e-mail part seulement après ton clic
+  async function appelerProposition(corps) {
+    const r = await albSupabase.functions.invoke('alb-proposition', { body: corps });
+    if (r.error) {
+      try { return await r.error.context.json(); } catch (x) { return { ok: false, code: 'ERREUR' }; }
+    }
+    return r.data;
+  }
+  function messageProposition(r) {
+    const codes = {
+      DPE_GES_ENERGIE_OBLIGATOIRES: 'Le DPE, le GES et les dépenses d’énergie ne sont pas tous dans l’annonce du vendeur',
+      DPE_GES_ENERGIE_ABSENTS_DU_TEXTE: 'Le texte doit contenir le DPE, le GES et les dépenses d’énergie',
+      VENDEUR_SANS_EMAIL: 'Le vendeur n’a pas d’adresse e-mail',
+      MAIL_NON_ENVOYE: 'L’annonce est prête mais l’e-mail n’est pas parti',
+      TEXTE_INVALIDE: 'Le texte est trop court',
+      ACCES_REFUSE: 'Accès réservé à Jocelyne'
+    };
+    return codes[r && r.code] || 'Cela n’a pas marché, réessaie';
+  }
 
   async function demarrer() {
     const etat = el('etat');
