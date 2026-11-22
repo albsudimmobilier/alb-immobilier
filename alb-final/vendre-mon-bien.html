@@ -797,11 +797,11 @@
           <input type="checkbox" id="c-cgu">
           <span>J'ai lu et j'accepte les <a href="cgu.html" class="lien-pourpre" onclick="ouvrirDocument('cgu.html', 'Conditions générales'); return false;">conditions générales</a> et la <a href="confidentialite.html" class="lien-pourpre" onclick="ouvrirDocument('confidentialite.html', 'Politique de confidentialité'); return false;">politique de confidentialité</a>.</span>
         </label>
-        <label class="case case-cgu">
-          <input type="checkbox" id="c-recontact">
-          <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de la vente de mon bien.</span>
-        </label>
       </div>
+      <label class="case case-cgu">
+        <input type="checkbox" id="c-recontact">
+        <span>J'accepte d'être recontacté(e) par ALB Sud Immobilier au sujet de la vente de mon bien.</span>
+      </label>
 
       <button type="submit" class="bouton" id="bouton-deposer">Je confie mon bien à ALB</button>
       <div class="progression cache" id="progression"></div>
@@ -1182,8 +1182,8 @@
     if (!pro && !document.getElementById('c-exclusif').checked) return afficherMessage('message-annonce', 'erreur', texteErreur('EXCLUSIF_NON_CERTIFIE'));
     if (!profil) {
       if (!document.getElementById('c-cgu').checked) return afficherMessage('message-annonce', 'erreur', albMessageErreur('CGU_NON_ACCEPTEES'));
-      if (!document.getElementById('c-recontact').checked) return afficherMessage('message-annonce', 'erreur', albMessageErreur('RECONTACT_NON_ACCEPTE'));
     }
+    if (!document.getElementById('c-recontact').checked) return afficherMessage('message-annonce', 'erreur', albMessageErreur('RECONTACT_NON_ACCEPTE'));
 
     const bouton = document.getElementById('bouton-deposer');
     const progression = document.getElementById('progression');
