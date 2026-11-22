@@ -478,7 +478,7 @@
         '<div class="contact-nom">' + e(TYPES_BIEN[q.type_bien] || q.type_bien) + ' · ' + e(q.adresse || 'Adresse non indiquée') + '</div>' +
         '<div class="contact-metier">' + e(nomPro) + (!estParticulier(q) && q.pro_entreprise ? ' · ' + e(q.pro_entreprise) : '') + '</div>' +
       '</div><div>' + (estParticulier(q) ? '<span class="badge badge-part">🏠 Particulier</span>' : '<span class="badge badge-pro">🤝 Pro</span>') +
-        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (brouillon ? '<span class="badge badge-proche">✏️ Commencé, pas encore envoyé</span>' : '') + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
+        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (q.en_pause ? '<span class="badge" style="background:#ECEAF2;color:#5A3A6A;">⏸️ En pause</span>' : '') + (brouillon ? '<span class="badge badge-proche">✏️ Commencé, pas encore envoyé</span>' : '') + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
       '<div class="contact-coordonnees">' + e(q.pro_email || 'E-mail non renseigné') + (q.pro_telephone ? ' · ' + e(q.pro_telephone) : '') + '</div>' +
       '<div class="contact-date">' + (brouillon ? 'Commencé, dernière modification le ' + e(formatDateFr(q.maj_le)) : 'Envoyé le ' + e(formatDateFr(q.envoye_le))) +
         (q.fin_mandat ? ' · fin de mandat le ' + e(formatJourFr(q.fin_mandat)) : ' · pas de date de fin de mandat') +
@@ -491,6 +491,7 @@
         (brouillon ? '' : '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>') +
         '<button type="button" class="bouton-petit ' + (brouillon ? 'or' : 'clair') + '" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ ' + (brouillon ? 'Compléter le questionnaire' : 'Modifier le questionnaire') + '</button>' +
         (brouillon && Array.isArray(q.a_completer) && q.a_completer.length ? '<button type="button" class="bouton-petit clair" data-action="mail-manque" data-id="' + e(q.id) + '">✉️ Mail : ce qui manque (' + q.a_completer.length + ')</button>' : '') +
+        '<button type="button" class="bouton-petit clair" data-action="pause-quest" data-pause="' + (q.en_pause ? '0' : '1') + '" data-id="' + e(q.id) + '">' + (q.en_pause ? '▶️ Reprendre' : '⏸️ Mettre en pause') + '</button>' +
         '<button type="button" class="bouton-petit clair" style="color:#8A2D2D;border-color:#E6C3C3;" data-action="supprimer-quest" data-id="' + e(q.id) + '">🗑️ Supprimer</button></div>' +
       blocDetail(q) +
       (brouillon ? '' : blocAnnonceProposee(q) +
@@ -742,6 +743,14 @@
     const note = zoneNote ? zoneNote.value : null;
     const questionnaire = questionnaires.find(function (q) { return q.id === id; });
 
+    if (bouton.dataset.action === 'pause-quest') {
+      bouton.disabled = true;
+      const { error } = await albSupabase.rpc('alb_admin_questionnaire_pause', { p_id: id, p_pause: bouton.dataset.pause === '1' });
+      bouton.disabled = false;
+      if (error) { console.error('[ALB DEBUG] pause du questionnaire :', error); alert('Le changement n\u2019a pas pu être enregistré. Réessaie dans un instant.'); return; }
+      if (await chargerQuestionnaires()) { dessinerTout(); }
+      return;
+    }
     if (bouton.dataset.action === 'supprimer-quest') {
       const qui = questionnaire ? (estParticulier(questionnaire) ? 'du particulier' : 'du professionnel') : '';
       if (!window.confirm('Supprimer définitivement ce questionnaire ' + qui + ' ?\n\nSes réponses et l\'annonce proposée seront effacées. L\'annonce elle-même et le compte de la personne ne sont pas touchés.')) return;
