@@ -70,7 +70,7 @@
     }
     if (!tableaux.length) return;
     zone.innerHTML = '<h5>ALB en chiffres</h5>' + tableaux.join('') +
-      '<p class="note">« – » : moins de 3 pour l\'instant. « Abouties » : un pro a signé (prêt, chantier ou vente). Chiffres mis à jour automatiquement.</p>';
+      '<p class="note">Depuis le lancement d\'ALB Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. « Abouties » : un pro a signé (prêt, chantier ou vente). Chiffres mis à jour automatiquement.</p>';
     zone.hidden = false;
   }
 
