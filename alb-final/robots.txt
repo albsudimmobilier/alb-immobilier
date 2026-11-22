@@ -18,3 +18,4 @@ Disallow: /inscription-
 Disallow: /api/
 
 Sitemap: https://albimmobilier.fr/sitemap.xml
+Disallow: /mes-chiffres
