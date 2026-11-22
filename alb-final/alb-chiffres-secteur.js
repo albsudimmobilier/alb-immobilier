@@ -70,7 +70,7 @@
     }
     if (!tableaux.length) return;
     zone.innerHTML = '<h5>ALB en chiffres</h5>' + tableaux.join('') +
-      '<p class="note">Depuis le lancement d\'ALB Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. ' + (sec.some(s => PROJETS.some(p => a(s)['abouties_' + p[0]] != null)) ? '« Abouties » : un pro a signé (prêt, chantier ou vente). ' : '') + 'Chiffres mis à jour automatiquement.</p>';
+      '<p class="note">Depuis le lancement d\'ALB Sud Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. ' + (sec.some(s => PROJETS.some(p => a(s)['abouties_' + p[0]] != null)) ? '« Abouties » : un pro a signé (prêt, chantier ou vente). ' : '') + 'Chiffres mis à jour automatiquement.</p>';
     zone.hidden = false;
   }
 
