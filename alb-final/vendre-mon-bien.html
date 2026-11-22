@@ -528,6 +528,9 @@
     .badge-type { display: inline-block; font-size: 0.82rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; margin-bottom: 14px; }
     .badge-particulier { background: #F4EEF6; color: #5A3A6A; }
     .badge-accompagnee { background: #FBF3E4; color: #8A6A22; }
+    .choix-desc { display:flex; gap:10px; align-items:flex-start; border:1px solid #E8E6E1; border-radius:10px; padding:10px 12px; margin:8px 0; cursor:pointer; font-weight:400; }
+    .choix-desc input { margin-top:4px; }
+    .choix-desc small { color:#6a6a66; }
     .merci { text-align: center; }
     .merci .emoji { font-size: 2.6rem; }
     .merci h2 { font-size: 1.6rem; margin: 8px 0 12px; }
@@ -738,9 +741,13 @@
       </div>
       <div class="aide-bloc" style="margin:-6px 0 12px;">Cette estimation figure aussi sur votre DPE (« estimation des coûts annuels d'énergie »).</div>
       <div class="champ">
-        <label for="b-description">Racontez-nous votre bien</label>
-        <textarea id="b-description" maxlength="4000" rows="6" placeholder="Ce qui vous a plu en l'achetant, les pièces, l'extérieur, le quartier, les travaux déjà faits…"></textarea>
-        <div class="aide">Au moins quelques lignes (30 caractères minimum).</div>
+        <label>La description de votre annonce</label>
+        <label class="choix-desc"><input type="radio" name="mode-desc" value="aide" checked onchange="majModeDescription()"> <span><strong>📝 ALB m'aide à la rédiger</strong><br><small>Après l'envoi, vous remplirez un questionnaire rapide, surtout des cases à cocher. Jocelyne s'en sert pour vous proposer une annonce claire et complète, que vous validerez.</small></span></label>
+        <label class="choix-desc"><input type="radio" name="mode-desc" value="moi" onchange="majModeDescription()"> <span><strong>✍️ J'écris ma description moi-même</strong></span></label>
+        <div id="zone-description" class="cache">
+          <textarea id="b-description" maxlength="4000" rows="6" placeholder="Ce qui vous a plu en l'achetant, les pièces, l'extérieur, le quartier, les travaux déjà faits…"></textarea>
+          <div class="aide">Au moins quelques lignes (30 caractères minimum).</div>
+        </div>
       </div>
 
       <!-- Pro : agence et honoraires -->
@@ -806,7 +813,16 @@
     <div class="emoji">💜</div>
     <h2>Votre bien est entre de bonnes mains</h2>
     <p>Merci de votre confiance ! Votre annonce est bien arrivée.</p>
-    <p>Jocelyne va prendre le temps de la lire, puis elle vous appellera pour en parler avec vous <strong>avant toute mise en ligne</strong>.</p>
+    <div id="merci-aide" class="cache">
+      <p><strong>Dernière étape : le questionnaire de votre bien.</strong> Quelques minutes, surtout des cases à cocher. Vos réponses s'enregistrent toutes seules : vous pouvez vous arrêter et reprendre quand vous voulez.</p>
+      <div class="actions-merci"><a href="espace-alb.html" class="bouton" id="lien-questionnaire" style="background:#B28E3D;">📝 Remplir le questionnaire maintenant</a></div>
+      <p style="margin-top:16px;"><strong>Pas le temps, ou vous préférez le faire à deux ?</strong> Réservez un entretien de 30 minutes avec Jocelyne : vous remplirez le questionnaire ensemble, par téléphone.</p>
+      <div class="actions-merci"><a href="https://calendar.app.google/Gto8gCNmLCEhD8hk6" class="bouton" target="_blank" rel="noopener">📅 Prendre rendez-vous avec Jocelyne</a></div>
+    </div>
+    <div id="merci-moi">
+      <p>Jocelyne va prendre le temps de la lire, puis elle vous appellera pour en parler avec vous <strong>avant toute mise en ligne</strong>.</p>
+      <p>Vous voulez un coup de main pour enrichir votre annonce ? Le questionnaire du bien reste disponible dans votre espace ALB.</p>
+    </div>
     <p class="cache" id="merci-photos"></p>
     <p>Un e-mail de confirmation vient de vous être envoyé.</p>
     <div class="actions-merci">
@@ -978,6 +994,11 @@
   }
 
   // ---------- Messages ----------
+  // Description : ALB aide (questionnaire après l'envoi) ou le vendeur l'écrit lui-même
+  const DESCRIPTION_EN_ATTENTE = 'Description en cours de rédaction avec ALB Sud Immobilier.';
+  function modeDescription() { const c = document.querySelector('input[name="mode-desc"]:checked'); return c ? c.value : 'aide'; }
+  function majModeDescription() { document.getElementById('zone-description').classList.toggle('cache', modeDescription() !== 'moi'); }
+
   const MESSAGES_ANNONCE = {
     TYPE_BIEN_INVALIDE: "Dites-nous s'il s'agit d'une maison ou d'un appartement.",
     PRIX_INVALIDE: "Le prix de vente ne semble pas complet. Pouvez-vous le vérifier ?",
@@ -1149,7 +1170,7 @@
     if (!chiffres('b-prix')) return afficherMessage('message-annonce', 'erreur', texteErreur('PRIX_INVALIDE'));
     if (!chiffres('b-surface')) return afficherMessage('message-annonce', 'erreur', texteErreur('SURFACE_INVALIDE'));
     if (!valeur('b-dpe') || !valeur('b-ges')) return afficherMessage('message-annonce', 'erreur', texteErreur('DPE_INVALIDE'));
-    if (valeur('b-description').length < 30) return afficherMessage('message-annonce', 'erreur', texteErreur('DESCRIPTION_COURTE'));
+    if (modeDescription() === 'moi' && valeur('b-description').length < 30) return afficherMessage('message-annonce', 'erreur', texteErreur('DESCRIPTION_COURTE'));
     if (pro && !profil) {
       if (!document.querySelector('input[name="metier"]:checked')) return afficherMessage('message-annonce', 'erreur', 'Dites-nous si vous êtes agent ou mandataire immobilier.');
       if (!valeur('v-agence')) return afficherMessage('message-annonce', 'erreur', albMessageErreur('ENTREPRISE_MANQUANTE'));
@@ -1200,7 +1221,7 @@
         surface_terrain_m2: typeBien === 'maison' ? (chiffres('b-terrain') || null) : null,
         dpe: valeur('b-dpe'), ges: valeur('b-ges'),
         depenses_energie_min: chiffres('b-dep-min') || null, depenses_energie_max: chiffres('b-dep-max') || null,
-        description: valeur('b-description'),
+        description: modeDescription() === 'moi' ? valeur('b-description') : DESCRIPTION_EN_ATTENTE,
         videos: [valeur('b-video1'), valeur('b-video2')].filter(Boolean),
         message: valeur('b-message'),
         agence_nom: pro ? (valeur('p-agence') || valeur('v-agence')) : null, honoraires_texte: pro ? valeur('p-honoraires') : null,
@@ -1232,6 +1253,20 @@
         const note = document.getElementById('merci-photos');
         note.textContent = '📷 ' + photosRatees + ' photo' + (photosRatees > 1 ? 's n\'ont' : ' n\'a') + ' pas pu être envoyée' + (photosRatees > 1 ? 's' : '') + '. Pas d\'inquiétude : Jocelyne vous aidera à les ajouter lors de son appel.';
         note.classList.remove('cache');
+      }
+      if (modeDescription() === 'aide') {
+        // Questionnaire vide en brouillon : Jocelyne le retrouve dans « Questionnaires de biens », même si rien n'est rempli
+        try {
+          const typeQ = typeBien === 'appartement' ? 'appartement' : 'maison';
+          const adresseQ = [valeur('b-adresse'), valeur('b-cp'), valeur('b-ville')].filter(Boolean).join(' ');
+          const r = pro
+            ? await albSupabase.rpc('alb_pro_questionnaire_enregistrer', { p_id: null, p_type: typeQ, p_adresse: adresseQ, p_reponses: {}, p_fin_mandat: null, p_envoyer: false, p_annonce_id: resultat.annonce_id })
+            : await albSupabase.rpc('alb_part_questionnaire_enregistrer', { p_id: null, p_annonce_id: resultat.annonce_id, p_type: typeQ, p_adresse: adresseQ, p_reponses: {}, p_sans_mandat_exclusif: false, p_recontact_ok: false, p_reseaux_ok: false, p_envoyer: false });
+          if (r.error) console.error('[ALB DEBUG] brouillon du questionnaire :', r.error);
+        } catch (e) { console.error('[ALB DEBUG] brouillon du questionnaire :', e); }
+        document.getElementById('lien-questionnaire').href = 'espace-alb.html?questionnaire=' + encodeURIComponent(resultat.annonce_id);
+        document.getElementById('merci-aide').classList.remove('cache');
+        document.getElementById('merci-moi').classList.add('cache');
       }
       afficherEtape('etape-merci');
     } catch (erreur) {

@@ -1536,6 +1536,16 @@
     const vue = location.hash.slice(1);
     if (['inscription', 'oubli', 'demande'].indexOf(vue) !== -1) afficherOnglet(vue);
     afficherEspace(false);
+    // Arrivée depuis « Vendre mon bien » : on ouvre directement le questionnaire de ce bien
+    const qAnnonce = new URLSearchParams(location.search).get('questionnaire');
+    if (qAnnonce) {
+      let essais = 0;
+      const attendre = setInterval(function () {
+        const bouton = document.querySelector('[data-mqp-ouvrir="' + CSS.escape(qAnnonce) + '"], [data-mqb-ouvrir="' + CSS.escape(qAnnonce) + '"]');
+        if (bouton) { clearInterval(attendre); bouton.click(); history.replaceState(null, '', location.pathname); }
+        else if (++essais > 40) clearInterval(attendre);
+      }, 250);
+    }
   });
 </script>
 <script src="alb-mesure.js" defer></script>
