@@ -522,7 +522,8 @@
 <!-- ========== FOOTER OFFICIEL ========== -->
   <div class="footer-reseaux">
         <style>
-          .footer-reseaux { max-width:1160px; margin:40px auto; box-sizing:border-box; width:calc(100% - 32px); padding:22px 24px; border:1px solid rgba(178,142,61,.55); border-radius:16px; background:linear-gradient(135deg, #4B1A3E 0%, #2a0f23 100%); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; text-align:left; }
+          .footer-reseaux { margin:40px 0 0; box-sizing:border-box; width:100%; padding:26px max(20px, calc((100% - 1120px) / 2)); border-top:1px solid rgba(178,142,61,.55); background:linear-gradient(135deg, #4B1A3E 0%, #2a0f23 100%); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; text-align:left; }
+          .footer-reseaux + footer, .footer-reseaux + .footer { margin-top:0 !important; }
           .footer-reseaux .fr-titre { font-family:'Playfair Display', serif; font-size:1.35rem; color:#B28E3D; margin:0; }
           .footer-reseaux .fr-texte { margin:4px 0 0; font-size:.85rem; color:rgba(255,255,255,.85); }
           .footer-reseaux .fr-liens { display:flex; flex-wrap:wrap; gap:14px; }
@@ -533,7 +534,7 @@
           .footer-reseaux .fr-lien:hover svg, .footer-reseaux .fr-lien:focus-visible svg { fill:#4B1A3E; }
         </style>
         <div>
-          <p class="fr-titre">Suivez ALB</p>
+          <p class="fr-titre">Retrouvez-nous sur les réseaux</p>
           <p class="fr-texte">Conseils, coulisses et nouveaux pros chaque semaine.</p>
         </div>
         <div class="fr-liens">
