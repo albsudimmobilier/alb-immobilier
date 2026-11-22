@@ -490,7 +490,8 @@
         '<button type="button" class="bouton-petit clair" data-action="detail" data-id="' + e(q.id) + '">' + (ouverts[q.id] ? '▲ Masquer le détail' : '▼ Voir le détail') + '</button>' +
         (brouillon ? '' : '<button type="button" class="bouton-petit or" data-action="annonce" data-id="' + e(q.id) + '">' + (annoncesOuvertes[q.id] ? '▲ Masquer l\'annonce proposée' : '📝 Annonce proposée') + '</button>') +
         '<button type="button" class="bouton-petit ' + (brouillon ? 'or' : 'clair') + '" data-action="modifier-quest" data-id="' + e(q.id) + '">✏️ ' + (brouillon ? 'Compléter le questionnaire' : 'Modifier le questionnaire') + '</button>' +
-        (brouillon && Array.isArray(q.a_completer) && q.a_completer.length ? '<button type="button" class="bouton-petit clair" data-action="mail-manque" data-id="' + e(q.id) + '">✉️ Mail : ce qui manque (' + q.a_completer.length + ')</button>' : '') + '</div>' +
+        (brouillon && Array.isArray(q.a_completer) && q.a_completer.length ? '<button type="button" class="bouton-petit clair" data-action="mail-manque" data-id="' + e(q.id) + '">✉️ Mail : ce qui manque (' + q.a_completer.length + ')</button>' : '') +
+        '<button type="button" class="bouton-petit clair" style="color:#8A2D2D;border-color:#E6C3C3;" data-action="supprimer-quest" data-id="' + e(q.id) + '">🗑️ Supprimer</button></div>' +
       blocDetail(q) +
       (brouillon ? '' : blocAnnonceProposee(q) +
       '<textarea id="note-' + e(q.id) + '" placeholder="Une note pour toi (ce qu\'on s\'est dit, ce qu\'il reste à faire…)">' + e(noteTexte) + '</textarea>' +
@@ -741,6 +742,16 @@
     const note = zoneNote ? zoneNote.value : null;
     const questionnaire = questionnaires.find(function (q) { return q.id === id; });
 
+    if (bouton.dataset.action === 'supprimer-quest') {
+      const qui = questionnaire ? (estParticulier(questionnaire) ? 'du particulier' : 'du professionnel') : '';
+      if (!window.confirm('Supprimer définitivement ce questionnaire ' + qui + ' ?\n\nSes réponses et l\'annonce proposée seront effacées. L\'annonce elle-même et le compte de la personne ne sont pas touchés.')) return;
+      bouton.disabled = true;
+      const { error } = await albSupabase.rpc('alb_admin_questionnaire_supprimer', { p_id: id });
+      bouton.disabled = false;
+      if (error) { console.error('[ALB DEBUG] suppression du questionnaire :', error); alert('Le questionnaire n\u2019a pas pu être supprimé. Réessaie dans un instant.'); return; }
+      if (await chargerQuestionnaires()) { dessinerTout(); }
+      return;
+    }
     if (bouton.dataset.action === 'traite') { await marquerQuestionnaire(id, true, note); }
     if (bouton.dataset.action === 'remettre') { await marquerQuestionnaire(id, false, note); }
     if (bouton.dataset.action === 'note') { await marquerQuestionnaire(id, !!(questionnaire && questionnaire.traite_le), note); }
