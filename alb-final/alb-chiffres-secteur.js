@@ -32,6 +32,25 @@
     .footer-chiffres a { color: #fff; }
     .footer-chiffres .note { font-size: .74rem; opacity: .75; font-style: italic; margin: 6px 0 0; }`;
 
+  async function rpc(nom) {
+    const r = await fetch(URL_SB + '/rest/v1/rpc/' + nom, {
+      method: 'POST', headers: { apikey: CLE, Authorization: 'Bearer ' + CLE, 'Content-Type': 'application/json' }, body: '{}'
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  // D'où viennent nos visiteurs : seulement quand réseaux, moteurs ET IA ont chacun 100 visites ou plus sur 30 jours
+  function blocSources(src) {
+    if (!src) return '';
+    const L = [['reseaux', '📱 Réseaux sociaux'], ['moteurs', '🔍 Moteurs de recherche'], ['ia', '🤖 Intelligences artificielles']];
+    const fleche = x => !x.avant ? '' : x.n > x.avant ? ' <span style="color:#9BE39B;">▲ +' + Math.round((x.n - x.avant) * 100 / x.avant) + ' %</span>'
+      : x.n < x.avant ? ' <span style="color:#F2A7A7;">▼ ' + Math.round((x.n - x.avant) * 100 / x.avant) + ' %</span>' : '';
+    return '<details><summary>🌐 D\'où viennent nos visiteurs</summary><div class="defile"><table><thead><tr><th>Source</th><th class="n">Visites sur les 30 derniers jours</th></tr></thead><tbody>' +
+      L.filter(l => src[l[0]]).map(l => '<tr><td>' + l[1] + '</td><td class="n">' + src[l[0]].n + fleche(src[l[0]]) + '</td></tr>').join('') +
+      '</tbody></table></div></details>';
+  }
+
   async function donnees() {
     const r = await fetch(URL_SB + '/rest/v1/rpc/alb_chiffres_publics', {
       method: 'POST', headers: { apikey: CLE, Authorization: 'Bearer ' + CLE, 'Content-Type': 'application/json' }, body: '{}'
@@ -51,7 +70,7 @@
       '</tr></thead><tbody>' + liste.map(lignes).join('') + '</tbody></table></div></details>').join('') + '</details>';
   }
 
-  function dessiner(zone, d) {
+  function dessiner(zone, d, src) {
     const sec = d.secteurs || [];
     const a = s => s.activite || {};
     const tableaux = [];
@@ -68,6 +87,8 @@
       tableaux.push(bloc('📋 Projets accompagnés', sec, [['Secteur'], ['Type de projet'], ['Demandes', 1], ['Abouties', 1]],
         s => PROJETS.map((p, i) => '<tr><td>' + (i === 0 ? nomSecteur(s) : '') + '</td><td>' + p[1] + '</td><td class="n">' + nb(a(s)['projets_' + p[0]]) + '</td><td class="n">' + nb(a(s)['abouties_' + p[0]]) + '</td></tr>').join('')));
     }
+    const sources = blocSources(src);
+    if (sources) tableaux.push(sources);
     if (!tableaux.length) return;
     zone.innerHTML = '<h5>ALB en chiffres</h5>' + tableaux.join('') +
       '<p class="note">Depuis le lancement d\'ALB Sud Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. ' + (sec.some(s => PROJETS.some(p => a(s)['abouties_' + p[0]] != null)) ? '« Abouties » : un pro a signé (prêt, chantier ou vente). ' : '') + 'Chiffres mis à jour automatiquement.</p>';
@@ -78,7 +99,10 @@
     const zone = document.getElementById('alb-chiffres-tableau');
     if (!zone) return;
     const st = document.createElement('style'); st.textContent = STYLE; document.head.appendChild(st);
-    try { dessiner(zone, await donnees()); } catch (e) { console.error('[ALB DEBUG] ALB en chiffres :', e); }
+    try {
+      const [d, src] = await Promise.all([donnees(), rpc('alb_sources_publiques').catch(() => null)]);
+      dessiner(zone, d, src);
+    } catch (e) { console.error('[ALB DEBUG] ALB en chiffres :', e); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();
