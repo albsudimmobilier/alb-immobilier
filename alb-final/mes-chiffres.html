@@ -228,7 +228,7 @@
   }
 
   // ----- 📣 Sources de visites -----
-  const SOURCES = [['facebook', '📘 Facebook', '#1877F2'], ['instagram', '📸 Instagram', '#D6249F'], ['tiktok', '🎵 TikTok', '#111111'], ['linkedin', '💼 LinkedIn', '#0A66C2'],
+  const SOURCES = [['facebook', '📘 Facebook', '#1877F2'], ['instagram', '📸 Instagram', '#D6249F'], ['tiktok', '🎵 TikTok', '#111111'], ['youtube', '▶️ YouTube', '#FF0000'], ['linkedin', '💼 LinkedIn', '#0A66C2'],
     ['ia', '🤖 IA (ChatGPT, Perplexity…)', '#10A37F'], ['moteurs', '🔍 Moteurs de recherche', '#B28E3D'], ['whatsapp', '💬 WhatsApp', '#25D366'], ['direct', '🔗 Accès direct', '#9a9a95'], ['autre', '🌐 Autres sites', '#5A3A6A']];
   async function chargerSources() {
     const { data, error } = await albSupabase.rpc('alb_gestion_sources');
