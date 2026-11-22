@@ -400,6 +400,21 @@
       </div>
       <div class="filtres" id="filtres-factures"></div>
       <div class="liste-fiches" id="liste-factures"></div>
+      <details class="carte" id="bloc-charges" style="margin-top:16px;" open>
+        <summary style="cursor:pointer;font-weight:700;color:#5A3A6A;">🧾 Mes charges (factures fournisseurs) <span class="nb" id="nb-charges"></span></summary>
+        <p class="aide">Ajoute ici les factures que tu dois payer (expert-comptable, assurance, Netlify…). Elles comptent automatiquement dans « 💶 Mes chiffres », au mois de leur date. Clique sur « Payée » quand c'est réglé.</p>
+        <div class="grille" style="margin-top:10px;">
+          <label class="petit-champ"><span>Fournisseur</span><input type="text" id="ch-fournisseur" maxlength="80" placeholder="Ex. : Advyse"></label>
+          <label class="petit-champ"><span>Pour quoi (facultatif)</span><input type="text" id="ch-libelle" maxlength="120" placeholder="Ex. : honoraires de janvier"></label>
+          <label class="petit-champ"><span>Montant HT (€)</span><input type="number" id="ch-ht" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="petit-champ"><span>Montant TTC (€, facultatif)</span><input type="number" id="ch-ttc" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="petit-champ"><span>Date de la facture</span><input type="date" id="ch-date"></label>
+          <label class="petit-champ"><span>À payer avant le (facultatif)</span><input type="date" id="ch-echeance"></label>
+          <label class="petit-champ"><span>Déjà payée le (facultatif)</span><input type="date" id="ch-payee"></label>
+        </div>
+        <div class="actions" style="margin-top:10px;"><button type="button" class="bouton vert" onclick="ajouterCharge(this)">➕ Ajouter la facture</button></div>
+        <div id="liste-charges" style="margin-top:14px;"></div>
+      </details>
       <details class="carte" style="margin-top:16px;">
         <summary style="cursor:pointer;font-weight:700;color:#5A3A6A;">⚙️ Tarifs</summary>
         <p class="aide">Un tarif modifié s'applique aux prochains brouillons. Les factures déjà validées ne changent jamais.</p>

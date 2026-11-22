@@ -116,7 +116,7 @@
     <div class="compteurs" id="c-annee"></div>
 
     <h2 class="titre-section">📅 Mois par mois</h2>
-    <p class="aide">Tape le total de tes charges du mois (le chiffre de Pennylane) : le « reste » se calcule tout seul. Sans saisie, ce sont tes charges prévues qui comptent (en gris).</p>
+    <p class="aide">Les charges viennent de tes factures fournisseurs, ajoutées dans Gestion du site → 💶 Factures → « 🧾 Mes charges » (selon leur date). Un mois sans facture fournisseur compte tes charges prévues (en gris).</p>
     <div class="carte tableau-conteneur" id="t-mois"></div>
 
     <h2 class="titre-section">🧑‍💼 Par type de revenu</h2>
@@ -178,12 +178,13 @@
       '<div class="compteur"><div class="valeur">' + euros(totalE) + '</div><div class="libelle">🏦 Encaissé (HT)</div></div>' +
       '<div class="compteur' + (enRetard.length ? ' or' : '') + '"><div class="valeur' + (enRetard.length ? ' rouge' : '') + '">' + euros(totalF - totalE) + '</div><div class="libelle">⏳ Reste à encaisser</div>' +
         (enRetard.length ? '<div class="detail rouge">' + enRetard.length + ' facture' + (enRetard.length > 1 ? 's' : '') + ' en retard (plus de 30 jours)</div>' : '') + '</div>' +
+      (d.charges_a_regler ? '<div class="compteur or"><div class="valeur rouge">' + d.charges_a_regler + '</div><div class="libelle">🧾 Facture' + (d.charges_a_regler > 1 ? 's' : '') + ' fournisseur à régler</div><div class="detail"><a href="gestion-site.html">Voir dans Factures</a></div></div>' : '') +
       '<div class="compteur"><div class="valeur' + (moyenne >= objectif && moisPasses ? ' vert' : '') + '">' + (moisPasses ? euros(moyenne) : '—') + '</div><div class="libelle">🎯 Reste moyen par mois, après charges</div><div class="detail">Objectif : ' + euros(objectif) + ' par mois</div></div>';
 
     el('t-mois').innerHTML = '<table><thead><tr><th>Mois</th><th class="nb">Facturé</th><th class="nb">Encaissé</th><th class="nb">Charges</th><th class="nb">Reste</th></tr></thead><tbody>' +
       parMois.map((m, i) => { const c = charges(i); const r = m.facture - c.v;
         return '<tr><td>' + MOIS[i] + ' ' + annee + '</td><td class="nb">' + euros(m.facture) + '</td><td class="nb">' + euros(m.encaisse) + '</td>' +
-          '<td class="nb"><input class="charge" type="number" min="0" step="1" inputmode="decimal" value="' + (c.saisi ? c.v : '') + '" placeholder="' + Math.round(chargesPrev) + '" onchange="enregistrerCharges(' + i + ', this)"></td>' +
+          '<td class="nb"' + (c.saisi ? '' : ' style="color:#9a9a95;"') + '>' + euros(c.v) + '</td>' +
           '<td class="nb ' + (r < 0 ? 'rouge' : (objectif && r >= objectif ? 'vert' : '')) + '">' + euros(r) + (objectif && r >= objectif ? ' 🎯' : '') + '</td></tr>'; }).join('') +
       '<tr><td><strong>Total</strong></td><td class="nb"><strong>' + euros(totalF) + '</strong></td><td class="nb"><strong>' + euros(totalE) + '</strong></td><td></td><td></td></tr></tbody></table>';
 
@@ -199,26 +200,26 @@
 
     // Par secteur
     const sec = {};
-    const s = nom => (sec[nom] = sec[nom] || { argent: 0, artisan: 0, courtier: 0, agent: 0, mandataire: 0, projets: 0, vendeurs_particuliers: 0, visites_particuliers: 0, visites_accompagnees: 0, ventes_particuliers: 0, ventes_accompagnees: 0 });
+    const s = nom => (sec[nom] = sec[nom] || { argent: 0, artisan: 0, courtier: 0, agent: 0, mandataire: 0, vendeurs_particuliers: 0, visites_particuliers: 0, visites_accompagnees: 0, ventes_particuliers: 0, ventes_accompagnees: 0,
+      projets_financement: 0, abouties_financement: 0, projets_travaux: 0, abouties_travaux: 0, projets_accompagnement: 0, abouties_accompagnement: 0 });
     lignes.forEach(l => { s(l.secteur).argent += Number(l.montant_ht); });
     (d.activite || []).forEach(a => { if (s(a.secteur)[a.type] != null) s(a.secteur)[a.type] += Number(a.n); });
     (d.pros || []).forEach(p => { if (s(p.secteur)[p.metier] != null) s(p.secteur)[p.metier] += Number(p.n); });
-    const ligne = nom => { const x = sec[nom] || s(nom);
-      return '<tr><td>' + ech(nom) + '</td><td class="nb">' + euros(x.argent) + '</td><td class="nb">' + x.artisan + '</td><td class="nb">' + x.courtier + '</td><td class="nb">' + x.agent + '</td><td class="nb">' + x.mandataire +
-        '</td><td class="nb">' + x.projets + '</td><td class="nb">' + x.vendeurs_particuliers + '</td><td class="nb">' + x.visites_particuliers + '</td><td class="nb">' + x.visites_accompagnees + '</td><td class="nb">' + x.ventes_particuliers + '</td><td class="nb">' + x.ventes_accompagnees + '</td></tr>'; };
-    const entete = '<table><thead><tr><th>Secteur</th><th class="nb">Facturé</th><th class="nb">Artisans</th><th class="nb">Courtiers</th><th class="nb">Agents</th><th class="nb">Mandataires</th><th class="nb">Projets</th><th class="nb">Vendeurs particuliers</th><th class="nb">Visites entre particuliers</th><th class="nb">Visites accompagnées</th><th class="nb">Ventes entre particuliers</th><th class="nb">Ventes accompagnées</th></tr></thead><tbody>';
+    const td = v => '<td class="nb">' + v + '</td>';
+    const TABLEAUX = [
+      ['💶 Facturé et pros', ['Facturé', 'Artisans', 'Courtiers', 'Agents / mandataires'], x => [euros(x.argent), x.artisan, x.courtier, x.agent + x.mandataire]],
+      ['🏡 Visites et ventes', ['Agents / mandataires', 'Vendeurs particuliers', 'Visites entre particuliers', 'Visites accompagnées', 'Ventes entre particuliers', 'Ventes accompagnées'],
+        x => [x.agent + x.mandataire, x.vendeurs_particuliers, x.visites_particuliers, x.visites_accompagnees, x.ventes_particuliers, x.ventes_accompagnees]],
+      ['📋 Projets (demandes / abouties)', ['🏦 Financement', '🔨 Travaux', '🤝 Vente ou achat'],
+        x => [x.projets_financement + ' / ' + x.abouties_financement, x.projets_travaux + ' / ' + x.abouties_travaux, x.projets_accompagnement + ' / ' + x.abouties_accompagnement]]
+    ];
+    const tableSecteurs = liste => TABLEAUX.map(t => '<h3 style="font-size:.9rem;margin:10px 8px 4px;">' + t[0] + '</h3><table><thead><tr><th>Secteur</th>' + t[1].map(h => '<th class="nb">' + h + '</th>').join('') + '</tr></thead><tbody>' +
+      liste.map(nom => '<tr><td>' + ech(nom) + '</td>' + t[2](sec[nom] || s(nom)).map(td).join('') + '</tr>').join('') + '</tbody></table>').join('');
     const autres = Object.keys(sec).filter(n => !SECTEURS['Var'].includes(n) && !SECTEURS['Bouches-du-Rhône'].includes(n));
     el('t-secteurs').innerHTML = Object.entries(SECTEURS).map(([dep, liste]) => {
       const tot = liste.reduce((t, n) => t + (sec[n] ? sec[n].argent : 0), 0);
-      return '<details class="dep" open><summary>' + ech(dep) + ' · ' + euros(tot) + ' facturés</summary><div class="tableau-conteneur">' + entete + liste.map(ligne).join('') + '</tbody></table></div></details>';
-    }).join('') + (autres.length ? '<details class="dep"><summary>Autres (hors secteurs connus)</summary><div class="tableau-conteneur">' + entete + autres.map(ligne).join('') + '</tbody></table></div></details>' : '');
-  }
-
-  async function enregistrerCharges(m, champ) {
-    const v = champ.value.trim() === '' ? null : Number(champ.value.replace(',', '.'));
-    const { error } = await albSupabase.rpc('alb_gestion_charges_mois', { p_mois: annee + '-' + String(m + 1).padStart(2, '0') + '-01', p_montant: v });
-    if (error) { alert('Les charges n\'ont pas pu être enregistrées. Réessaie dans un instant.'); return; }
-    await charger();
+      return '<details class="dep" open><summary>' + ech(dep) + ' · ' + euros(tot) + ' facturés</summary><div class="tableau-conteneur">' + tableSecteurs(liste) + '</div></details>';
+    }).join('') + (autres.length ? '<details class="dep"><summary>Autres (hors secteurs connus)</summary><div class="tableau-conteneur">' + tableSecteurs(autres) + '</div></details>' : '');
   }
 
   async function charger() {

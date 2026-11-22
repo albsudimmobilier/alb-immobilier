@@ -420,3 +420,70 @@ async function corrigerDatePapier(id, bouton) {
       un: 'papier de pro qui expire dans moins de 30 jours (pour info)',
       plusieurs: 'papiers de pros qui expirent dans moins de 30 jours (pour info)' });
 })();
+
+
+// ---------- 🧾 Mes charges : factures fournisseurs à régler ----------
+let charges = [];
+function chargeEnRetard(c) { return !c.payee_le && c.echeance && c.echeance < new Date().toISOString().slice(0, 10); }
+async function chargerCharges() {
+  const { data, error } = await albSupabase.rpc('alb_gestion_charges');
+  if (error) { console.error('[ALB DEBUG] charges :', error); return; }
+  charges = data || [];
+  afficherCharges();
+}
+function afficherCharges() {
+  const aRegler = charges.filter(function (c) { return !c.payee_le; });
+  document.getElementById('nb-charges').textContent = aRegler.length ? '(' + aRegler.length + ' à régler)' : '';
+  if (!document.getElementById('ch-date').value) document.getElementById('ch-date').value = new Date().toISOString().slice(0, 10);
+  const zone = document.getElementById('liste-charges');
+  if (!charges.length) { zone.innerHTML = '<p class="aide">Aucune facture fournisseur pour l\'instant.</p>'; return; }
+  zone.innerHTML = charges.map(function (c) {
+    const etat = c.payee_le ? '<span class="etiquette vert">✅ Payée le ' + albEchapper(dateLisible(c.payee_le)) + '</span>'
+      : chargeEnRetard(c) ? '<span class="etiquette rouge">⚠️ À payer depuis le ' + albEchapper(dateLisible(c.echeance)) + '</span>'
+      : '<span class="etiquette or">⏳ À régler' + (c.echeance ? ' avant le ' + albEchapper(dateLisible(c.echeance)) : '') + '</span>';
+    return '<div class="visite" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">' +
+      '<span><strong>' + albEchapper(c.fournisseur) + '</strong>' + (c.libelle ? ' · ' + albEchapper(c.libelle) : '') +
+      '<span class="aide" style="display:block;margin:2px 0 0;">Facture du ' + albEchapper(dateLisible(c.date_facture)) + ' · ' + albEchapper(euros(c.montant_ht)) + ' HT' + (c.montant_ttc != null ? ' · ' + albEchapper(euros(c.montant_ttc)) + ' TTC' : '') + '</span></span>' +
+      '<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' + etat +
+      (c.payee_le ? '<button type="button" class="bouton discret" onclick="chargePayee(\'' + albEchapper(c.id) + '\', null, this)">↩️ Pas payée</button>'
+        : '<button type="button" class="bouton vert" onclick="chargePayee(\'' + albEchapper(c.id) + '\', new Date().toISOString().slice(0, 10), this)">✓ Payée aujourd\'hui</button>') +
+      '<button type="button" class="bouton rouge" title="Supprimer" onclick="supprimerCharge(\'' + albEchapper(c.id) + '\', this)">✕</button></span></div>';
+  }).join('');
+}
+async function ajouterCharge(bouton) {
+  const v = function (id) { return document.getElementById(id).value.trim(); };
+  const nombreOuNull = function (t) { return t === '' ? null : Number(t.replace(',', '.')); };
+  if (!v('ch-fournisseur') || v('ch-ht') === '') { afficherMessage('message-general', 'erreur', 'Indique au moins le fournisseur et le montant HT.'); return; }
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_charge_enregistrer', {
+    p_id: null, p_fournisseur: v('ch-fournisseur'), p_libelle: v('ch-libelle') || null, p_montant_ht: nombreOuNull(v('ch-ht')), p_montant_ttc: nombreOuNull(v('ch-ttc')),
+    p_date: v('ch-date') || null, p_echeance: v('ch-echeance') || null, p_payee_le: v('ch-payee') || null });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  ['ch-fournisseur', 'ch-libelle', 'ch-ht', 'ch-ttc', 'ch-echeance', 'ch-payee'].forEach(function (id) { document.getElementById(id).value = ''; });
+  await chargerCharges(); afficherAFaire();
+  afficherMessage('message-general', 'succes', 'Facture fournisseur ajoutée ✓ Elle compte dans « Mes chiffres ».');
+}
+async function chargePayee(id, date, bouton) {
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_charge_payee', { p_id: id, p_date: date });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerCharges(); afficherAFaire();
+}
+async function supprimerCharge(id, bouton) {
+  if (!confirm('Supprimer cette facture fournisseur ?')) return;
+  bouton.disabled = true;
+  const { error } = await albSupabase.rpc('alb_gestion_charge_supprimer', { p_id: id });
+  bouton.disabled = false;
+  if (error) { afficherMessage('message-general', 'erreur', messageErreur(error)); return; }
+  await chargerCharges(); afficherAFaire();
+}
+LIGNES_A_FAIRE.push({ calcul: function () { return charges.filter(chargeEnRetard).length; }, un: 'facture fournisseur à payer (date dépassée)', plusieurs: 'factures fournisseurs à payer (date dépassée)', emoji: '🧾', onglet: 'factures', filtre: function () { document.getElementById('bloc-charges').open = true; } });
+(function () {
+  const toutRechargerAvantCharges = toutRecharger;
+  toutRecharger = async function () {
+    await Promise.all([toutRechargerAvantCharges(), chargerCharges()]);
+    afficherAFaire();
+  };
+})();
