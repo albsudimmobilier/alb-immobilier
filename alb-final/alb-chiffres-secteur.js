@@ -15,7 +15,7 @@
   const NOMS = { 'Aubagne/La Ciotat': 'Aubagne / La Ciotat', 'Étang de Berre/Martigues': 'Étang de Berre / Martigues', "Salon/Pays d'Arles": "Salon / Pays d'Arles", 'Est Var/Golfe': 'Est Var / Golfe', 'Haut Var/Verdon': 'Haut Var / Verdon' };
   const PROJETS = [['financement', '🏦 Financement'], ['travaux', '🔨 Travaux'], ['accompagnement', '🤝 Vente ou achat accompagné']];
   const ech = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const nb = v => (v == null ? '–' : v);
+  const nb = v => (v == null || v === 0 ? '–' : v);
 
   const STYLE = `
     .footer-chiffres { max-width: 1200px; margin: 10px auto 0; padding: 0 0 10px; text-align: left; }
@@ -57,12 +57,12 @@
     const tableaux = [];
     if (sec.some(s => s.artisans || s.courtiers || s.agents_mandataires)) {
       tableaux.push(bloc('🤝 Nos pros ALB', sec, [['Secteur'], ['Artisans', 1], ['Courtiers', 1], ['Agents / mandataires', 1]],
-        s => '<tr><td>' + nomSecteur(s) + '</td><td class="n">' + s.artisans + '</td><td class="n">' + s.courtiers + '</td><td class="n">' + s.agents_mandataires + '</td></tr>'));
+        s => '<tr><td>' + nomSecteur(s) + '</td><td class="n">' + nb(s.artisans) + '</td><td class="n">' + nb(s.courtiers) + '</td><td class="n">' + nb(s.agents_mandataires) + '</td></tr>'));
     }
     const VV = ['vendeurs_particuliers', 'visites_particuliers', 'visites_accompagnees', 'ventes_particuliers', 'ventes_accompagnees'];
     if (sec.some(s => VV.some(k => a(s)[k] != null))) {
       tableaux.push(bloc('🏡 Visites et ventes', sec, [['Secteur'], ['Agents / mandataires', 1], ['Vendeurs particuliers', 1], ['Visites entre particuliers', 1], ['Visites accompagnées', 1], ['Ventes entre particuliers', 1], ['Ventes accompagnées', 1]],
-        s => '<tr><td>' + nomSecteur(s) + '</td><td class="n">' + s.agents_mandataires + '</td>' + VV.map(k => '<td class="n">' + nb(a(s)[k]) + '</td>').join('') + '</tr>'));
+        s => '<tr><td>' + nomSecteur(s) + '</td><td class="n">' + nb(s.agents_mandataires) + '</td>' + VV.map(k => '<td class="n">' + nb(a(s)[k]) + '</td>').join('') + '</tr>'));
     }
     if (sec.some(s => PROJETS.some(p => a(s)['projets_' + p[0]] != null))) {
       tableaux.push(bloc('📋 Projets accompagnés', sec, [['Secteur'], ['Type de projet'], ['Demandes', 1], ['Abouties', 1]],
@@ -70,7 +70,7 @@
     }
     if (!tableaux.length) return;
     zone.innerHTML = '<h5>ALB en chiffres</h5>' + tableaux.join('') +
-      '<p class="note">Depuis le lancement d\'ALB Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. « Abouties » : un pro a signé (prêt, chantier ou vente). Chiffres mis à jour automatiquement.</p>';
+      '<p class="note">Depuis le lancement d\'ALB Immobilier en septembre 2026. « – » : moins de 3 pour l\'instant. ' + (sec.some(s => PROJETS.some(p => a(s)['abouties_' + p[0]] != null)) ? '« Abouties » : un pro a signé (prêt, chantier ou vente). ' : '') + 'Chiffres mis à jour automatiquement.</p>';
     zone.hidden = false;
   }
 
