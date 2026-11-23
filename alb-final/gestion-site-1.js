@@ -30,6 +30,7 @@ function corpsDeMetierLisibles(m) {
   });
 }
 const ERREURS = {
+  PAS_DE_MANDAT: 'Pas encore de mandat : cette annonce ne peut pas être mise en ligne.',
   AVIS_INTROUVABLE: 'Cet avis est introuvable.',
   METIER_ARTISAN_MANQUANT: 'Coche au moins un corps de métier pour cet artisan.',
   ARTISAN_AUTRE_MANQUANT: 'Tu as coché « Autre » : écris le corps de métier.',

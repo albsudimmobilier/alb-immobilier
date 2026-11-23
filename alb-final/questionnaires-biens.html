@@ -415,7 +415,10 @@
         '<p>Demande-les au vendeur, complète-les dans son annonce, puis appuie sur « Actualiser » en haut de la page.</p></div>'
       : '';
 
-    return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div>' + alerte +
+    const apercu = q.sans_mandat
+      ? '<div class="annonce-bloquee"><strong>📄 APERÇU – NON PUBLIABLE tant que le mandat n\'est pas signé.</strong><p>Le pro peut montrer ce texte à son client. La mise en ligne est bloquée jusqu\'à ce qu\'il indique le type de mandat dans son questionnaire.</p></div>'
+      : '';
+    return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée' + (q.sans_mandat ? ' (aperçu)' : '') + '</div>' + apercu + alerte +
       '<p class="aide">' + (bloquee ? 'Tu peux lire le texte, mais pas le copier.' : 'Toutes les réponses du bien, dans l\'ordre. Relis, corrige directement dans le texte si besoin, puis copie.') +
       ' Aucune information privée du vendeur n\'y figure, et rien n\'est envoyé tant que tu ne l\'as pas décidé.</p>' +
       '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true"' + (bloquee ? ' readonly' : '') + '>' + e(texte) + '</textarea>' +
@@ -480,12 +483,12 @@
       ? '<button type="button" class="bouton-petit clair" data-action="remettre" data-id="' + e(q.id) + '">↩️ Remettre à traiter</button>'
       : '<button type="button" class="bouton-petit or" data-action="traite" data-id="' + e(q.id) + '">✅ J\'ai traité</button>';
 
-    return '<div class="contact' + (traite ? ' rappele' : '') + '">' +
+    return '<div class="contact' + (traite ? ' rappele' : '') + '" id="fiche-' + e(q.id) + '">' +
       '<div class="contact-tete"><div>' +
         '<div class="contact-nom">' + e(TYPES_BIEN[q.type_bien] || q.type_bien) + ' · ' + e(q.adresse || 'Adresse non indiquée') + '</div>' +
         '<div class="contact-metier">' + e(nomPro) + (!estParticulier(q) && q.pro_entreprise ? ' · ' + e(q.pro_entreprise) : '') + '</div>' +
       '</div><div>' + (estParticulier(q) ? '<span class="badge badge-part">🏠 Particulier</span>' : '<span class="badge badge-pro">🤝 Pro</span>') +
-        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (q.en_pause ? '<span class="badge" style="background:#ECEAF2;color:#5A3A6A;">⏸️ En pause</span>' : '') + (brouillon ? '<span class="badge badge-proche">✏️ Commencé, pas encore envoyé</span>' : '') + (!brouillon && !traite && q.modifie_apres_envoi_le ? '<span class="badge" style="background:#FBECEC;color:#8A2D2D;border:1px solid #F0CACA;">🔴 À revoir : modifié après l\'envoi le ' + e(formatDateFr(q.modifie_apres_envoi_le)) + '</span>' : '') + (brouillon && q.rouvert_le ? '<span class="badge badge-proche">✏️ Rouvert par la personne, pas encore renvoyé</span>' : '') + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
+        (estParticulier(q) && q.recontact_ok ? '<span class="badge badge-rappel">📞 À recontacter</span>' : '') + badgeMandat(q) + (q.en_pause ? '<span class="badge" style="background:#ECEAF2;color:#5A3A6A;">⏸️ En pause</span>' : '') + (brouillon ? '<span class="badge badge-proche">✏️ Commencé, pas encore envoyé</span>' : '') + (!brouillon && !traite && q.modifie_apres_envoi_le ? '<span class="badge" style="background:#FBECEC;color:#8A2D2D;border:1px solid #F0CACA;">🔴 À revoir : modifié après l\'envoi le ' + e(formatDateFr(q.modifie_apres_envoi_le)) + '</span>' : '') + (brouillon && q.rouvert_le ? '<span class="badge badge-proche">✏️ Rouvert par la personne, pas encore renvoyé</span>' : '') + (q.sans_mandat ? '<span class="badge badge-proche">📄 Sans mandat – aperçu seulement</span>' : '') + (!traite && q.mandat_remporte_le && !q.sans_mandat ? '<span class="badge" style="background:#FBECEC;color:#8A2D2D;border:1px solid #F0CACA;">🏆 Mandat remporté le ' + e(formatDateFr(q.mandat_remporte_le)) + ' : annonce à valider</span>' : '') + (traite ? '<span class="badge badge-fait">Traité</span>' : '') + '</div></div>' +
       '<div class="contact-coordonnees">' + e(q.pro_email || 'E-mail non renseigné') + (q.pro_telephone ? ' · ' + e(q.pro_telephone) : '') + '</div>' +
       '<div class="contact-date">' + (brouillon ? 'Commencé, dernière modification le ' + e(formatDateFr(q.maj_le)) : 'Envoyé le ' + e(formatDateFr(q.envoye_le))) +
         (q.fin_mandat ? ' · fin de mandat le ' + e(formatJourFr(q.fin_mandat)) : ' · pas de date de fin de mandat') +
@@ -921,6 +924,21 @@
     dessinerTout();
     chargerAInviter();
     ouvrirDepuisLien();
+    ouvrirAnnonceDepuisBandeau();
+  }
+
+  // Lien du bandeau rouge : ?q=<id> ouvre directement l'annonce proposée de ce questionnaire
+  function ouvrirAnnonceDepuisBandeau() {
+    const id = new URLSearchParams(window.location.search).get('q');
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) { return; }
+    const q = questionnaires.find(function (x) { return x.id === id; });
+    if (!q) { return; }
+    choix.etat = estBrouillon(q) ? 'commences' : (q.traite_le ? 'traites' : 'atraiter');
+    choix.seulementProches = false; choix.origine = 'tous';
+    if (!estBrouillon(q)) { annoncesOuvertes[id] = true; }
+    dessinerTout();
+    const fiche = el('fiche-' + id);
+    if (fiche) { fiche.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
   }
 
   // Lien venant d'une fiche d'entrée : #membre=<id> ouvre le questionnaire du bien de cette personne (son nom est repris)

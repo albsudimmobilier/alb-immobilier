@@ -137,6 +137,7 @@
 
     S.push({ titre: 'Mandat, vente et prix', blocs: [
       { k: 'cases', l: 'Type de mandat', opts: ['Simple', 'Exclusif', 'Semi-exclusif', 'Partagé (avec : ______)', 'Pas encore de mandat'] },
+      { k: 'note', texte: "Pas encore de mandat ? Pas de souci : remplissez le questionnaire, Jocelyne vous prépare un aperçu de l'annonce à montrer à votre client. L'annonce ne sera mise en ligne qu'une fois le mandat signé : revenez alors indiquer le type de mandat." },
       { k: 'champs', items: [{ l: 'Date de signature du mandat', t: 'date' }, { l: 'Date de fin du mandat (facultatif)', t: 'date', special: 'fin' }] },
       { k: 'note', texte: "Jocelyne vous fait un point à l'approche de la date de fin du mandat." },
       { k: 'cases', l: 'Durée du mandat', opts: ['3 mois', '6 mois', '12 mois', 'Autre : ________', 'Je ne sais pas'] },

@@ -68,8 +68,11 @@
     const nPhotos = liste(r[4]).length;
     const nRappels = liste(r[5]).filter(function (d) { return !d.traitee_le; }).length;
     // Questionnaires modifiés après l'envoi : ils vont dans le bandeau rouge, pas dans le doré
-    const modifies = liste(r[6]).filter(function (q) { return q.statut !== 'brouillon' && !q.traite_le && q.modifie_apres_envoi_le; });
-    const nQuest = liste(r[6]).filter(function (q) { return q.statut !== 'brouillon' && !q.traite_le && !q.modifie_apres_envoi_le; }).length;
+    // Questionnaires « sans mandat » et « mandat remporté » : bandeau rouge aussi
+    const aTraiterQ = liste(r[6]).filter(function (q) { return q.statut !== 'brouillon' && !q.traite_le; });
+    const enRouge = function (q) { return q.modifie_apres_envoi_le || q.sans_mandat || q.mandat_remporte_le; };
+    const modifies = aTraiterQ.filter(enRouge);
+    const nQuest = aTraiterQ.filter(function (q) { return !enRouge(q); }).length;
     const nAcces = liste(r[7]).length;
 
     const items = [];
@@ -118,7 +121,13 @@
           '<a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="demande" data-id="' + echapper(d.id) + '">✓ Fait</button></li>';
       }).join('');
       const lignesModif = modifies.map(function (q) {
-        return '<li>' + echapper(q.pro || [q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || 'Membre') + ' a modifié son questionnaire après l\u2019envoi' + (q.adresse ? ' (' + echapper(q.adresse) + ')' : '') + '</li>';
+        const nom = echapper([q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || q.pro || 'Membre');
+        const ou = q.adresse ? ' (' + echapper(q.adresse) + ')' : '';
+        let quoi;
+        if (q.mandat_remporte_le && !q.sans_mandat) quoi = '🏆 ' + nom + ' a remporté le mandat' + ou + ' : annonce à valider';
+        else if (q.sans_mandat) quoi = '📄 ' + nom + ' : questionnaire sans mandat' + ou + ', aperçu de l\u2019annonce à préparer';
+        else quoi = nom + ' a modifié son questionnaire après l\u2019envoi' + ou;
+        return '<li>' + quoi + ' <a href="questionnaires-biens.html?q=' + echapper(q.id) + '">Voir l\u2019annonce proposée</a></li>';
       }).join('');
       const lignes = lignesDemandes + lignesModif + relances.map(function (a) {
         const quoi = a.quoi === 'mail' ? 'mail à envoyer' : 'SMS à envoyer';
@@ -128,7 +137,7 @@
       }).join('');
       const n = relances.length + modifies.length + demandes.length;
       zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + pluriel(n, 'point', 'points') + ' à voir</strong>' +
-        '<ul>' + lignes + '</ul>' + (modifies.length ? '<a href="questionnaires-biens.html">Voir les questionnaires</a> ' : '') + (relances.length ? '<a href="calendrier.html">Voir dans le Calendrier</a>' : '')));
+        '<ul>' + lignes + '</ul>' + (relances.length ? '<a href="calendrier.html">Voir dans le Calendrier</a>' : '')));
     }
 
     // Doré : ce qui attend ta validation, et les changements faits par les vendeurs
