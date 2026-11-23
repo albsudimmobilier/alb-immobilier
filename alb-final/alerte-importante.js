@@ -29,6 +29,11 @@
       '.alerte-importante.alerte-doree li { margin:4px 0; }' +
       '.alerte-importante.alerte-doree a { background:#2B2100; color:#F5E3A3; padding:3px 10px; margin-left:6px; font-size:0.85rem; }' +
       '.alerte-importante .alerte-bouton { border:0; border-radius:6px; padding:3px 10px; margin-left:6px; font-weight:700; cursor:pointer; background:#fff; color:#2B2100; font-size:0.85rem; }' +
+      '.alerte-importante.alerte-doree ul { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:2px 16px; }' +
+      '.alerte-importante .alerte-nb { display:inline-block; min-width:1.6em; text-align:center; background:#2B2100; color:#F5E3A3; border-radius:10px; padding:0 6px; }' +
+      '.alerte-importante .alerte-zero { opacity:0.55; }' +
+      '.alerte-importante .alerte-zero .alerte-nb { background:transparent; color:#2B2100; border:1px solid #2B2100; }' +
+      '.alerte-importante .alerte-plein { font-weight:700; }' +
       '.alerte-importante.alerte-ok { background:#2E6B34; }' +
       '.alerte-importante.alerte-ok strong { margin-bottom:0; }';
     document.head.appendChild(st);
@@ -98,18 +103,20 @@
     const nPapiersAVerifier = papiers.filter(function (x) { return x.statut === 'a_verifier'; }).length;
     const nPapiersRelance = papiers.filter(function (x) { return papierMailAFaire(x) || papierSmsAFaire(x) || papierRetraitAFaire(x); }).length;
 
-    const items = [];
-    if (nProjets) items.push(['🤝 ' + pluriel(nProjets, 'demande de projet', 'demandes de projet') + ' à traiter', GS + '#projets']);
-    if (nAnnonces) items.push(['🏡 ' + pluriel(nAnnonces, 'annonce', 'annonces') + ' à étudier', GS + '#annonces']);
-    if (nAvis) items.push(['⭐ ' + pluriel(nAvis, 'avis', 'avis') + ' à relire', GS + '#avis']);
-    if (nPros) items.push(['📞 ' + pluriel(nPros, 'pro', 'pros') + ' à valider', GS + '#a-valider']);
-    if (nPhotos) items.push(['🖼️ ' + pluriel(nPhotos, 'photo', 'photos') + ' à valider', GS]);
-    if (nRappels) items.push(['☎️ ' + pluriel(nRappels, 'demande de rappel', 'demandes de rappel') + ' en attente', 'calendrier.html']);
-    if (nQuest) items.push(['📝 ' + pluriel(nQuest, 'questionnaire de bien reçu', 'questionnaires de biens reçus') + ' à traiter', 'questionnaires-biens.html']);
-    if (nDevis) items.push(['📄 ' + pluriel(nDevis, 'relance de devis', 'relances de devis') + ' à faire (artisans)', GS + '#projets']);
-    if (nPapiersAVerifier) items.push(['🗂️ ' + pluriel(nPapiersAVerifier, 'papier de pro', 'papiers de pros') + ' à vérifier', GS + '#valides']);
-    if (nPapiersRelance) items.push(['⏰ ' + pluriel(nPapiersRelance, 'relance de papier', 'relances de papiers') + ' à faire (papier qui expire bientôt)', GS + '#valides']);
-    if (nAcces) items.push(['🔑 ' + pluriel(nAcces, 'demande d’accès', 'demandes d’accès') + ' en attente', GS + '#acces']);
+    // Toutes les lignes sont affichées, même à 0 : le chiffre monte dès qu'il y a quelque chose
+    const items = [
+      ['🤝', nProjets, 'demande de projet', 'demandes de projet', 'à traiter', GS + '#projets'],
+      ['🏡', nAnnonces, 'annonce', 'annonces', 'à étudier', GS + '#annonces'],
+      ['⭐', nAvis, 'avis', 'avis', 'à relire', GS + '#avis'],
+      ['📞', nPros, 'pro', 'pros', 'à valider', GS + '#a-valider'],
+      ['🖼️', nPhotos, 'photo', 'photos', 'à valider', GS],
+      ['☎️', nRappels, 'demande de rappel', 'demandes de rappel', 'en attente', 'calendrier.html'],
+      ['📝', nQuest, 'questionnaire de bien reçu', 'questionnaires de biens reçus', 'à traiter', 'questionnaires-biens.html'],
+      ['📄', nDevis, 'relance de devis', 'relances de devis', 'à faire (artisans)', GS + '#projets'],
+      ['🗂️', nPapiersAVerifier, 'papier de pro', 'papiers de pros', 'à vérifier', GS + '#valides'],
+      ['⏰', nPapiersRelance, 'relance de papier', 'relances de papiers', 'à faire (papier qui expire bientôt)', GS + '#valides'],
+      ['🔑', nAcces, 'demande d\u2019accès', 'demandes d\u2019accès', 'en attente', GS + '#acces']
+    ].map(function (x) { return { emoji: x[0], n: x[1], texte: (x[1] > 1 ? x[3] : x[2]) + ' ' + x[4], lien: x[5] }; });
     return { items: items, modifies: modifies };
   }
 
@@ -168,21 +175,23 @@
 
     // Doré : ce qui attend ta validation, et les changements faits par les vendeurs
     const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
-    if (aValider.length || modifsAnn.length) {
+    const nbAValider = aValider.reduce(function (t, it) { return t + it.n; }, 0);
+    {
       const lignes = modifsAnn.map(function (m) {
         const quoi = (m.quoi || []).map(function (q) { return NOMS_MODIF[q] || q; });
         const texte = quoi.length > 1 ? quoi.slice(0, -1).join(', ') + ' et ' + quoi[quoi.length - 1] : (quoi[0] || 'son annonce');
         return '<li>✏️ ' + echapper(m.nom || 'Membre') + ' a modifié ' + echapper(texte) + (m.ville ? ' (' + echapper(m.ville) + ')' : '') +
           ' <a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="modif" data-id="' + echapper(m.id) + '">👁 Vu</button></li>';
       }).join('') + aValider.map(function (it) {
-        return '<li>' + echapper(it[0]) + ' <a href="' + echapper(it[1]) + '">Voir</a></li>';
+        return '<li class="' + (it.n ? 'alerte-plein' : 'alerte-zero') + '">' + it.emoji + ' <b class="alerte-nb">' + it.n + '</b> ' + echapper(it.texte) +
+          (it.n ? ' <a href="' + echapper(it.lien) + '">Voir</a>' : '') + '</li>';
       }).join('');
-      zone.appendChild(creer('alerte-doree', '<strong>✨ À valider</strong><ul>' + lignes + '</ul>'));
+      zone.appendChild(creer('alerte-doree', '<strong>✨ À valider' + (nbAValider + modifsAnn.length ? ' – ' + (nbAValider + modifsAnn.length) : '') + '</strong><ul>' + lignes + '</ul>'));
     }
 
     // Vert : rien du tout
-    if (!relances.length && !modifies.length && !demandes.length && !aValider.length && !modifsAnn.length) {
-      zone.appendChild(creer('alerte-ok', '<strong>✅ Tout est ok – rien à valider ni à relancer</strong>'));
+    if (!relances.length && !modifies.length && !demandes.length && !nbAValider && !modifsAnn.length) {
+      zone.insertBefore(creer('alerte-ok', '<strong>✅ Tout est ok – rien à valider ni à relancer</strong>'), zone.firstChild);
     }
     placer(zone);
   }
