@@ -171,6 +171,8 @@
       { k: 'champs', items: (cfg.copro
         ? ['Taxe foncière (€ par an)', 'Charges de copropriété (€ par mois)', 'Eau, électricité, chauffage (€ par an)', 'Autres charges (€ par an, à préciser)']
         : ['Taxe foncière (€ par an)', 'Eau, électricité, chauffage (€ par an)', 'Autres charges (€ par an, à préciser)']).map(function (l) { return { l: l }; }) },
+      // Année de l'avis de taxe foncière (l'année en cours ou la précédente) : l'annonce affiche « Taxe foncière 2026 »
+      { k: 'choix', l: 'Année de l’avis de taxe foncière', opts: [String(new Date().getFullYear()), String(new Date().getFullYear() - 1)] },
       { k: 'cases', l: 'Prêt en cours sur le bien', opts: ['Oui', 'Non'] },
       { k: 'loyer' },
     ] });

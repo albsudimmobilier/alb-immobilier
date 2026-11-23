@@ -154,11 +154,18 @@
       { k: 'note', texte: 'Les vidéos ne sont pas affichées sur le site : elles sont envoyées aux acheteurs une fois leur visite confirmée.' },
     ] });
 
+    // L'année en cours et la précédente (l'avis de taxe foncière arrive en septembre)
+    function anneesTaxeFonciere() {
+      const annee = new Date().getFullYear();
+      return [String(annee), String(annee - 1)];
+    }
     const labelsFin = ['Prix de vente (€)', 'Honoraires (€ ou %)', 'Taxe foncière (€ par an)', 'Eau, électricité, chauffage (€ par an)'];
     if (cfg.copro) labelsFin.push('Charges de copropriété (€ par mois)', 'Autres charges à préciser (€ par an)', 'Loyer mensuel si loué (€)');
     else labelsFin.push('Loyer mensuel si loué (€)', 'Autres charges à préciser (€ par an)');
     const blocsFin = [
       { k: 'champs', items: labelsFin.map(function (l) { return { l: l }; }) },
+      // Année de l'avis de taxe foncière : l'annonce affiche « Taxe foncière 2026 » avec la bonne année
+      { k: 'choix', l: 'Année de l’avis de taxe foncière', opts: anneesTaxeFonciere() },
       { k: 'cases', l: 'Prix', opts: ['Négociable', 'Déjà baissé (ancien prix : ______ €)', 'Prix non modifié'] },
       { k: 'cases', l: 'Honoraires à la charge', opts: ['Du vendeur', "De l'acquéreur"] },
     ];

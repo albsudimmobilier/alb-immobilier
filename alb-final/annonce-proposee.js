@@ -188,6 +188,8 @@
     if (l === 'Prêt en cours sur le bien') return 'pret';
     if (l === 'Diffusion par ALB') return 'prive';
     if (/^Loyer mensuel/.test(l)) return 'loyer';
+    if (/^Année de l'avis de taxe foncière/.test(l)) return 'taxe_annee';
+    if (/^Taxe foncière/.test(l)) return 'taxe';
     if (/^(Taxe foncière|Eau, électricité|Charges de copropriété|Autres charges)/.test(l)) return 'cout';
 
     if (l === 'État général') return 'etat';
@@ -269,7 +271,7 @@
       plus: [], moins: [], pointFort: '', pointAttention: '',
       pratique: [], copro: '', equip: {}, assainExtra: [], problemes: '', nuisances: '',
       dpe: '', ges: '', diag: [], situation: [],
-      prix: '', honoraires: '', honorairesCharge: '', couts: [], loyer: '',
+      prix: '', honoraires: '', taxe: '', taxeAnnee: '', honorairesCharge: '', couts: [], loyer: '',
       faits: [], aPrevoir: [], postesFaits: [], postesAPrevoir: [], factures: '',
       dist: {},
     };
@@ -304,6 +306,8 @@
         else if (ou === 'honoraires_charge') { if (estPro) k.honorairesCharge = texte; }
         else if (ou === 'loyer') k.loyer = texte;
         else if (ou === 'cout') k.couts.push(ligneCout(label, valeur));
+        else if (ou === 'taxe') k.taxe = texte;
+        else if (ou === 'taxe_annee') k.taxeAnnee = /^\d{4}$/.test(texte) ? texte : '';
         else if (ou === 'etat') k.etat = morceaux(valeur).join(', ');
         else if (ou === 'bref_champs') k.bref.push(ligneChampChiffre(label, valeur));
         else if (ou === 'ext_champs') k.ext.push(ligneChampChiffre(label, valeur));
@@ -448,9 +452,6 @@
     if (dpeFinal) diagLignes.push('Diagnostic énergie (DPE) : classe ' + dpeFinal);
     if (gesFinal) diagLignes.push('Gaz à effet de serre (GES) : classe ' + gesFinal);
     if (k.diag.length) diagLignes.push('Autres diagnostics : ' + k.diag.map(function (d) { return enMinuscule(d.nom) + ' (' + texteDiagnostic(d.statut) + ')'; }).join(', '));
-    if (depensesConnues && depMin <= depMax) {
-      diagLignes.push('Montant estimé des dépenses annuelles d’énergie pour un usage standard : entre ' + milliers(depMin) + ' € et ' + milliers(depMax) + ' € par an');
-    }
     if (diagLignes.length) savoir.sousBlocs.push({ titre: 'Diagnostics', lignes: diagLignes });
     if (savoir.sousBlocs.length) blocs.push(savoir);
 
@@ -468,7 +469,16 @@
       }
       chiffres.push('Honoraires : ' + h + (k.honorairesCharge ? ' (à la charge ' + enMinuscule(k.honorairesCharge) + ')' : ''));
     }
+    // Taxe foncière avec l'année de son avis (« Taxe foncière 2026 »), placée juste après le prix et les honoraires
+    if (k.taxe) {
+      chiffres.push('Taxe foncière' + (k.taxeAnnee ? ' ' + k.taxeAnnee : '') + ' : ' + montant(k.taxe, '€ par an'));
+      if (!k.taxeAnnee) pourJoce.aVerifier.push('Taxe foncière : l’année de l’avis n’est pas indiquée, demande-la au vendeur.');
+    }
     k.couts.forEach(function (c) { chiffres.push(c); });
+    // Dépenses d'énergie : mention obligatoire, avec la formulation de la loi
+    if (depensesConnues && depMin <= depMax) {
+      chiffres.push('Montant estimé des dépenses annuelles d’énergie pour un usage standard : entre ' + milliers(depMin) + ' € et ' + milliers(depMax) + ' € par an');
+    }
     if (k.loyer) chiffres.push('Bien actuellement loué, loyer : ' + montant(k.loyer, '€ par mois'));
     if (chiffres.length) blocs.push({ emoji: '💶', titre: 'Les chiffres', lignes: chiffres, sousBlocs: [] });
 
