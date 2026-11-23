@@ -120,7 +120,7 @@
       ['🗂️', nPapiersAVerifier, 'papier de pro', 'papiers de pros', 'à vérifier', GS + '#valides'],
       ['⏰', nPapiersRelance, 'relance de papier', 'relances de papiers', 'à faire (papier qui expire bientôt)', GS + '#valides'],
       ['🔑', nAcces, 'demande d\u2019accès', 'demandes d\u2019accès', 'en attente', GS + '#acces']
-    ].map(function (x) { return { emoji: x[0], n: x[1], texte: (x[1] > 1 ? x[3] : x[2]) + ' ' + x[4], lien: x[5] }; });
+    ].map(function (x) { return { emoji: x[0], n: x[1], texte: (x[1] > 1 ? x[3] : x[2]) + ' ' + x[4], lien: x[5], rouge: x[0] === '☎️' }; });
     return { items: items, modifies: modifies };
   }
 
@@ -131,6 +131,51 @@
     return z;
   }
 
+  // Dernières données, pour redessiner le doré sans tout recharger
+  const dernier = { pret: false, modifsAnn: [], aValider: [], relances: [], demandes: [], modifies: [] };
+  const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
+
+  // Dans Gestion du site : la liste complète « À faire aujourd'hui » (même calcul, même ordre)
+  function surGestionDuSite() { return typeof LIGNES_A_FAIRE !== 'undefined' && typeof nombreAFaire === 'function'; }
+  function lignesDorees() {
+    if (!surGestionDuSite()) return dernier.aValider;
+    return LIGNES_A_FAIRE.map(function (l, i) {
+      let n = 0;
+      try { n = nombreAFaire(l) || 0; } catch (ex) { n = 0; }
+      return { emoji: l.emoji, n: n, texte: n > 1 ? l.plusieurs : l.un, aFaire: i, rouge: estRouge(l.un) };
+    });
+  }
+  function blocDore(items) {
+    const nb = items.reduce(function (t, it) { return t + it.n; }, 0) + dernier.modifsAnn.length;
+    const lignes = dernier.modifsAnn.map(function (m) {
+      const quoi = (m.quoi || []).map(function (q) { return NOMS_MODIF[q] || q; });
+      const texte = quoi.length > 1 ? quoi.slice(0, -1).join(', ') + ' et ' + quoi[quoi.length - 1] : (quoi[0] || 'son annonce');
+      return '<li>✏️ ' + echapper(m.nom || 'Membre') + ' a modifié ' + echapper(texte) + (m.ville ? ' (' + echapper(m.ville) + ')' : '') +
+        ' <a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="modif" data-id="' + echapper(m.id) + '">👁 Vu</button></li>';
+    }).join('') + items.map(function (it) {
+      const voir = !it.n ? '' : (it.aFaire !== undefined
+        ? ' <button type="button" class="alerte-bouton" data-alerte-ouvrir="' + it.aFaire + '">Voir</button>'
+        : ' <a href="' + echapper(it.lien) + '">Voir</a>');
+      return '<li class="' + (it.n ? 'alerte-plein' : 'alerte-zero') + '">' + it.emoji + ' <b class="alerte-nb">' + it.n + '</b> ' + echapper(it.texte) + voir + '</li>';
+    }).join('');
+    return creer('alerte-doree', '<strong>✨ À faire dans la journée' + (nb ? ' – ' + nb : '') + '</strong><ul>' + lignes + '</ul>');
+  }
+  if (typeof window.afficherAFaire === 'function') {
+    const origine = window.afficherAFaire;
+    window.afficherAFaire = function () { const r = origine.apply(this, arguments); try { dessiner(); } catch (ex) { console.log('[ALB DEBUG] bandeau doré :', ex); } return r; };
+  }
+  // « Voir » d'une ligne de « À faire aujourd'hui » : ouvre le bon onglet, comme sur l'accueil
+  document.addEventListener('click', function (ev) {
+    const b = ev.target.closest && ev.target.closest('[data-alerte-ouvrir]');
+    if (!b || typeof ouvrirAFaire !== 'function') return;
+    ouvrirAFaire(Number(b.dataset.alerteOuvrir));
+  });
+
+  // Lignes de « À faire aujourd'hui » qui passent en ROUGE (hyper important). Repérées par leur texte.
+  const LIGNES_ROUGES = [/^personne à rappeler/, /^SMS de rappel à envoyer pour les visites/, /^demande de visite sans réponse/,
+    /^visite contestée/, /^désaccord entre/, /^pro dont le papier a expiré/, /^membre qui demande à quitter/];
+  function estRouge(texteUn) { return LIGNES_ROUGES.some(function (r) { return r.test(texteUn || ''); }); }
+
   async function afficherAlertes() {
     if (typeof albSupabase === 'undefined') return;
     const [rel, charge, ann] = await Promise.all([
@@ -138,21 +183,39 @@
       chargerAValider(),
       albSupabase.rpc('alb_gestion_alertes_annonces')
     ]);
-    if (ann.error) console.log('[ALB DEBUG] alertes annonces :', ann.error);
-    const demandes = (ann.data && Array.isArray(ann.data.demandes)) ? ann.data.demandes : [];
-    const modifsAnn = (ann.data && Array.isArray(ann.data.modifs)) ? ann.data.modifs : [];
     if (rel.error) { console.log('[ALB DEBUG] alertes questionnaires :', rel.error); return; }  // pas Jocelyne : rien
-    const relances = Array.isArray(rel.data) ? rel.data : [];
-    const aValider = charge.items, modifies = charge.modifies;
+    if (ann.error) console.log('[ALB DEBUG] alertes annonces :', ann.error);
+    dernier.pret = true;
+    dernier.relances = Array.isArray(rel.data) ? rel.data : [];
+    dernier.demandes = (ann.data && Array.isArray(ann.data.demandes)) ? ann.data.demandes : [];
+    dernier.modifsAnn = (ann.data && Array.isArray(ann.data.modifs)) ? ann.data.modifs : [];
+    dernier.modifies = charge.modifies;
+    dernier.aValider = charge.items;
+    dessiner();
+  }
+
+  // Dessine les bandeaux à partir des dernières données. Les chiffres de « À faire aujourd'hui »
+  // sont relus à chaque fois : ce que tu as fait ailleurs disparaît tout seul.
+  function dessiner() {
+    if (!dernier.pret) return;
+    const relances = dernier.relances, demandes = dernier.demandes, modifies = dernier.modifies;
+    const toutes = lignesDorees();
+    const rouges = toutes.filter(function (it) { return it.rouge && it.n > 0; });
+    const dorees = toutes.filter(function (it) { return !it.rouge; });
 
     const ancien = document.getElementById('alerte-importante');
-    if (ancien) ancien.remove();
     ajouterStyle();
     const zone = document.createElement('div');
     zone.id = 'alerte-importante';
 
-    // Rouge : relances de questionnaires
-    if (relances.length || modifies.length || demandes.length) {
+    // Rouge : hyper important
+    if (relances.length || modifies.length || demandes.length || rouges.length) {
+      const lignesRouges = rouges.map(function (it) {
+        const voir = it.aFaire !== undefined
+          ? ' <button type="button" class="alerte-bouton" data-alerte-ouvrir="' + it.aFaire + '">Voir</button>'
+          : ' <a href="' + echapper(it.lien) + '">Voir</a>';
+        return '<li>' + it.emoji + ' <b>' + it.n + '</b> ' + echapper(it.texte) + voir + '</li>';
+      }).join('');
       const lignesDemandes = demandes.map(function (d) {
         return '<li>' + echapper(d.nom || 'Membre') + ' demande une modification' + (d.ville ? ' (' + echapper(d.ville) + ')' : '') + ' : « ' + echapper(d.message) + ' » ' +
           '<a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="demande" data-id="' + echapper(d.id) + '">✓ Fait</button></li>';
@@ -166,38 +229,26 @@
         else quoi = nom + ' a modifié son questionnaire après l\u2019envoi' + ou;
         return '<li>' + quoi + ' <a href="questionnaires-biens.html?q=' + echapper(q.id) + '">Voir l\u2019annonce proposée</a></li>';
       }).join('');
-      const lignes = lignesDemandes + lignesModif + relances.map(function (a) {
+      const lignesRelances = relances.map(function (a) {
         const quoi = a.quoi === 'mail' ? 'mail à envoyer' : 'SMS à envoyer';
         const j = joursDepuis(a.depuis);
         return '<li>' + echapper(a.nom || 'Membre') + ' – questionnaire en brouillon – <em>' + quoi + '</em>' +
-          (j >= 2 ? ' (en attente depuis ' + j + ' jours)' : '') + '</li>';
+          (j >= 2 ? ' (en attente depuis ' + j + ' jours)' : '') + ' <a href="calendrier.html">Voir</a></li>';
       }).join('');
-      const n = relances.length + modifies.length + demandes.length;
-      zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + pluriel(n, 'point', 'points') + ' à voir</strong>' +
-        '<ul>' + lignes + '</ul>' + (relances.length ? '<a href="calendrier.html">Voir dans le Calendrier</a>' : '')));
+      const n = relances.length + modifies.length + demandes.length + rouges.reduce(function (t, it) { return t + it.n; }, 0);
+      zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + n + ' à faire tout de suite</strong>' +
+        '<ul>' + lignesRouges + lignesDemandes + lignesModif + lignesRelances + '</ul>'));
     }
 
-    // Doré : ce qui attend ta validation, et les changements faits par les vendeurs
-    const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
-    const nbAValider = aValider.reduce(function (t, it) { return t + it.n; }, 0);
-    {
-      const lignes = modifsAnn.map(function (m) {
-        const quoi = (m.quoi || []).map(function (q) { return NOMS_MODIF[q] || q; });
-        const texte = quoi.length > 1 ? quoi.slice(0, -1).join(', ') + ' et ' + quoi[quoi.length - 1] : (quoi[0] || 'son annonce');
-        return '<li>✏️ ' + echapper(m.nom || 'Membre') + ' a modifié ' + echapper(texte) + (m.ville ? ' (' + echapper(m.ville) + ')' : '') +
-          ' <a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="modif" data-id="' + echapper(m.id) + '">👁 Vu</button></li>';
-      }).join('') + aValider.map(function (it) {
-        return '<li class="' + (it.n ? 'alerte-plein' : 'alerte-zero') + '">' + it.emoji + ' <b class="alerte-nb">' + it.n + '</b> ' + echapper(it.texte) +
-          (it.n ? ' <a href="' + echapper(it.lien) + '">Voir</a>' : '') + '</li>';
-      }).join('');
-      zone.appendChild(creer('alerte-doree', '<strong>✨ À valider' + (nbAValider + modifsAnn.length ? ' – ' + (nbAValider + modifsAnn.length) : '') + '</strong><ul>' + lignes + '</ul>'));
-    }
+    // Doré : à faire dans la journée (toutes les lignes, même à 0)
+    const nbDore = dorees.reduce(function (t, it) { return t + it.n; }, 0);
+    zone.appendChild(blocDore(dorees));
 
     // Vert : rien du tout
-    if (!relances.length && !modifies.length && !demandes.length && !nbAValider && !modifsAnn.length) {
+    if (!zone.querySelector('.alerte-importante:not(.alerte-doree)') && !nbDore && !dernier.modifsAnn.length) {
       zone.insertBefore(creer('alerte-ok', '<strong>✅ Tout est ok – rien à valider ni à relancer</strong>'), zone.firstChild);
     }
-    placer(zone);
+    if (ancien) ancien.replaceWith(zone); else placer(zone);
   }
 
   // Boutons « Fait » (demande de modification traitée) et « Vu » (changement du vendeur)
@@ -223,6 +274,9 @@
     const { data } = await albSupabase.auth.getSession();
     if (data && data.session) afficherAlertes();
   }
+  // Se met à jour tout seul : toutes les 2 minutes et quand tu reviens sur l'onglet
+  setInterval(function () { if (!document.hidden) afficherAlertes(); }, 120000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && dernier.pret) afficherAlertes(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);
   else demarrer();
 })();
