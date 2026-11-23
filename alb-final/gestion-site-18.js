@@ -18,13 +18,12 @@ function depotTextes(d) {
   const prenom = (d.particulier && d.particulier.prenom) || '';
   const pro = depotNomPro(d);
   const docs = depotListe(d);
-  const lien = d.lien || 'https://albimmobilier.fr/espace-alb.html';
-  const sms = 'Bonjour ' + prenom + ', c\'est Jocelyne d\'ALB Immobilier. Pour avancer avec ' + pro + ', voici le lien pour déposer vos documents : ' + lien +
-    (docs.length ? ' (' + docs.join(', ') + ').' : '.') + (d.explication ? ' ' + d.explication : '') + ' Je reste disponible au 07 45 60 28 05. À la bien, toujours ✨';
+  const sms = 'Bonjour ' + prenom + ', c\'est Jocelyne d\'ALB Immobilier. Pour avancer avec ' + pro + ', pensez à préparer vos documents' +
+    (docs.length ? ' : ' + docs.join(', ') + '.' : '.') + ' ' + pro + ' vous créera un accès pour les déposer. Je reste disponible au 07 45 60 28 05. À la bien, toujours ✨';
   const sujet = 'PARTICULIER ACQUÉREUR – Vos documents pour votre courtier';
-  const corps = 'Bonjour ' + prenom + ',\n\nMerci pour notre échange. Pour que ' + pro + ' puisse étudier votre financement, il vous reste à déposer vos documents dans son espace sécurisé :\n👉 ' + lien + '\n\n' +
+  const corps = 'Bonjour ' + prenom + ',\n\nMerci pour notre échange. Pour que ' + pro + ' puisse étudier votre financement, voici les documents à préparer. ' + pro + ' vous créera un accès à son espace sécurisé pour les déposer.\n\n' +
     (docs.length ? 'Les documents demandés :\n' + docs.map(function (x) { return '- ' + x; }).join('\n') + '\n\n' : '') +
-    (d.explication ? 'Comment faire, expliqué par ' + pro + ' :\n' + d.explication + '\n\n' : '') +
+    (d.explication ? 'Le mot de ' + pro + ' :\n' + d.explication + '\n\n' : '') +
     'Si vous avez la moindre question, je suis disponible au 07 45 60 28 05, du lundi au samedi de 9h à 18h.\n\nÀ la bien, toujours ✨\nJocelyne – ALB Sud Immobilier';
   return { sms: sms, sujet: sujet, corps: corps };
 }
@@ -45,7 +44,7 @@ function carteDepotCourtier(d) {
     '<h3 style="font-family:Montserrat,sans-serif;font-size:1.05rem;">' + albEchapper(nom) + ' ' + etat + '</h3>' +
     ligne('🏦 Courtier : <strong>' + albEchapper(depotNomPro(d)) + '</strong> · a accepté le ' + albEchapper(dateLisible(d.accepte_le))) +
     ligne('📱 ' + (num ? '<a href="tel:' + albEchapper(num) + '"><strong>' + albEchapper(p.telephone) + '</strong></a>' : '—') + ' · 📧 ' + albEchapper(p.email || '')) +
-    (d.lien ? '' : ligne('<span class="etiquette or">⚠️ Ce courtier n\'a pas encore indiqué son lien de dépôt dans son espace</span>')) +
+    (depotListe(d).length ? '' : ligne('<span class="etiquette or">⚠️ Ce courtier n\'a pas encore indiqué sa liste de documents dans son espace</span>')) +
     (d.sms_le ? ligne('<span class="etiquette vert">📱 SMS envoyé le ' + albEchapper(dateLisible(d.sms_le)) + '</span>') : '') +
     (d.mail_le ? ligne('<span class="etiquette vert">📧 Mail envoyé le ' + albEchapper(dateLisible(d.mail_le)) + '</span>') : '') +
     (d.note ? ligne('📝 ' + albEchapper(d.note)) : '') +
@@ -87,7 +86,7 @@ function afficherDepotsCourtiers() {
   const faits = depotsCourtiers.filter(function (d) { return d.deposes_le || d.appel_fait_le; });
   if (!depotsCourtiers.length) { zone.innerHTML = ''; return; }
   zone.innerHTML = '<h2 class="titre-section">📂 Documents pour les courtiers' + (aAppeler.length ? ' (' + aAppeler.length + ' à appeler)' : '') + '</h2>' +
-    '<p class="aide">48 h après qu\'un courtier a accepté une demande, appelle le particulier : a-t-il déposé ses documents ? Sinon, envoie-lui le SMS ou le mail prêt (c\'est toi qui l\'envoies). ALB ne voit pas les documents, c\'est ton appel qui le dit.</p>' +
+    '<p class="aide">48 h après qu\'un courtier a accepté une demande, appelle le particulier : le courtier l\'a-t-il contacté, a-t-il déposé ses documents ? Sinon, envoie-lui le SMS ou le mail prêt avec la liste des documents (c\'est toi qui l\'envoies). ALB ne voit pas les documents, c\'est ton appel qui le dit.</p>' +
     '<div class="liste-fiches">' + aAppeler.concat(bientot).map(carteDepotCourtier).join('') + '</div>' +
     (faits.length ? '<details class="historique"><summary>✅ Déjà faits (' + faits.length + ')</summary><div class="liste-fiches" style="margin-top:8px;">' + faits.map(carteDepotCourtier).join('') + '</div></details>' : '');
 }
