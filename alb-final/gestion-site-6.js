@@ -42,6 +42,7 @@ function dessinerFormulairePrevisionnel() {
   const h = f.hypotheses || {};
   document.getElementById('prev-general').innerHTML =
     champPrev('prev-debut', '📅 Premier mois', String(f.debut || '2027-01-01').slice(0, 7), '', 'month') +
+    champPrev('prev-demarrage', '🌱 Premières rentrées à partir de', h.demarrage || String(f.debut || '2027-01-01').slice(0, 7), 'Avant ce mois : 0 € de chiffre d\'affaires (les charges, elles, sont bien comptées).', 'month') +
     champPrev('prev-tresorerie', '🏦 Argent sur le compte au départ (€)', f.tresorerie_depart || 0, 'Ce qu\'il y a sur Qonto au début du premier mois.') +
     champPrev('prev-objectif-bas', '🎯 Objectif par mois, minimum (€)', f.objectif_bas != null ? f.objectif_bas : 1000, 'Ce qu\'il doit rester après les charges.') +
     champPrev('prev-objectif-haut', '🎯 Objectif par mois, idéal (€)', f.objectif_haut != null ? f.objectif_haut : 2000, '');
@@ -86,6 +87,8 @@ function lireHypotheses() {
   });
   h.montant_chantier = nombre(document.getElementById('prev-montant-chantier').value);
   h.taux_chantier = document.getElementById('prev-taux-chantier').value;
+  const dem = document.getElementById('prev-demarrage');
+  if (dem && dem.value) h.demarrage = dem.value;
   return h;
 }
 
@@ -116,12 +119,15 @@ function calculerPrevisionnel() {
   for (let i = 0; i < 12; i++) {
     const m = new Date(debut.getFullYear(), debut.getMonth() + i, 1);
     const cle = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
-    const offert = offertJusquAu && m <= offertJusquAu;
+    const demarrage = h.demarrage ? new Date(Number(h.demarrage.slice(0, 4)), Number(h.demarrage.slice(5, 7)) - 1, 1) : debut;
+    const avantDemarrage = m < demarrage;
+    const iDem = (m.getFullYear() - demarrage.getFullYear()) * 12 + m.getMonth() - demarrage.getMonth();  // mois depuis les premières rentrées
+    const offert = (offertJusquAu && m <= offertJusquAu) || avantDemarrage;
     const parSource = {};
     let ca = 0;
     SOURCES_PREV.forEach(function (s) {
       const v = h[s[0]] || { depart: 0, hausse: 0 };
-      const n = Math.max(0, v.depart + v.hausse * i);
+      const n = avantDemarrage ? 0 : Math.max(0, v.depart + v.hausse * iDem);
       const montant = offert ? 0 : n * prix[s[0]];
       parSource[s[0]] = { n: n, montant: montant };
       ca += montant;
@@ -130,7 +136,7 @@ function calculerPrevisionnel() {
     tresorerie += resultat;
     const r = reel[cle];
     const caReel = r ? Object.keys(r).reduce(function (t, k) { return t + r[k]; }, 0) : null;
-    mois.push({ cle: cle, date: m, offert: offert, parSource: parSource, ca: ca, charges: totalCharges, resultat: resultat, tresorerie: tresorerie, reel: r, caReel: caReel });
+    mois.push({ cle: cle, date: m, offert: offert, avant: avantDemarrage, parSource: parSource, ca: ca, charges: totalCharges, resultat: resultat, tresorerie: tresorerie, reel: r, caReel: caReel });
   }
   dessinerResultatsPrevisionnel(mois, objBas, objHaut, totalCharges, prix);
 }
@@ -166,7 +172,7 @@ function dessinerResultatsPrevisionnel(mois, objBas, objHaut, totalCharges, prix
     const manque = objBas - mois[0].resultat;
     if (manque > 0) phrases.push('💡 Pour atteindre l\'objectif minimum dès ' + nomMois(mois[0].date) + ', il manque ' + eurosRonds(manque) + ' par mois, soit environ ' + Math.ceil(manque / prix.prets) + ' prêt(s) signé(s) en plus.');
   }
-  if (mois.some(function (m) { return m.offert; })) phrases.push('🎁 Les mois offerts (jusqu\'au ' + new Date(previsionnel.offert_jusqu_au + 'T12:00:00').toLocaleDateString('fr-FR') + ') ne rapportent rien.');
+  if (mois.some(function (m) { return m.offert && !m.avant; })) phrases.push('🎁 Les mois offerts (jusqu\'au ' + new Date(previsionnel.offert_jusqu_au + 'T12:00:00').toLocaleDateString('fr-FR') + ') ne rapportent rien.');
   document.getElementById('prev-bilan').innerHTML = phrases.map(function (p) { return '<p class="ligne-info">' + p + '</p>'; }).join('');
 
   const aDuReel = mois.some(function (m) { return m.caReel != null; });
@@ -177,7 +183,7 @@ function dessinerResultatsPrevisionnel(mois, objBas, objHaut, totalCharges, prix
     (aDuReel ? '<th>Réel facturé (HT)</th>' : '') + '</tr></thead><tbody>' +
     mois.map(function (m) {
       const ok = m.resultat >= objBas && objBas > 0;
-      return '<tr><td>' + nomMois(m.date, true) + (m.offert ? ' <span class="etiquette vert">offert</span>' : '') + '</td>' +
+      return '<tr><td>' + nomMois(m.date, true) + (m.avant ? ' <span class="etiquette">pas encore de rentrées</span>' : m.offert ? ' <span class="etiquette vert">offert</span>' : '') + '</td>' +
         '<td>' + eurosRonds(m.ca) + '</td>' +
         '<td>' + eurosRonds(m.encaisseTtc) + (m.tvaEncaissee ? '<span class="aide" style="display:block;">dont ' + eurosRonds(m.tvaEncaissee) + ' de TVA à reverser</span>' : '') + '</td>' +
         '<td>' + eurosRonds(m.charges) + '</td>' +
