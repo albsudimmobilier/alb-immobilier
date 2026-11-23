@@ -177,7 +177,7 @@
   function estRouge(texteUn) { return LIGNES_ROUGES.some(function (r) { return r.test(texteUn || ''); }); }
 
   // ----- Fins de mandat (15 jours avant) -----
-  const REPONSES_FIN = { renouvele: 'mandat renouvelé', sous_offre: 'sous offre / sous compromis : mets l\u2019annonce à jour', vendu: 'vendu : mets l\u2019annonce à jour', non_renouvele: 'mandat non renouvelé : annonce mise en pause', autre: 'autre réponse' };
+  const REPONSES_FIN = { renouvele: 'mandat renouvelé', sous_offre: 'sous offre / sous compromis : annonce passée « Sous offre »', vendu: 'vendu : annonce passée « Vendu »', non_renouvele: 'mandat non renouvelé : annonce retirée de la diffusion', autre: 'autre réponse' };
   function dateFrCourte(iso) { return iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-FR') : ''; }
   function smsFinMandat(f) {
     return 'Bonjour ' + (f.prenom || '') + ', c\u2019est Jocelyne d\u2019ALB Sud Immobilier. Le mandat de votre bien réf. ' + f.ref + ' se termine le ' + dateFrCourte(f.fin_mandat).slice(0, 5) +
@@ -188,10 +188,12 @@
     const qui = echapper(f.nom || 'Le pro') + ' – réf. ' + echapper(f.ref) + ' (' + echapper(bien) + ')';
     const voir = ' <a href="annonce-detail.html?id=' + echapper(f.annonce_id) + '" target="_blank" rel="noopener">Voir l\u2019annonce</a>';
     const vu = ' <button type="button" class="alerte-bouton" data-fin="vu" data-id="' + echapper(f.id) + '">👁 Vu</button>';
+    if (f.retire_le) return '<li>📤 ' + qui + ' : annonce <b>retirée de la diffusion</b> (fin du mois, ' + echapper(REPONSES_FIN[f.reponse] || '') + ')' + voir + vu + '</li>';
     if (f.reponse) {
       const d = f.reponse_detail || {};
       return '<li>✅ ' + qui + ' a répondu : <b>' + echapper(REPONSES_FIN[f.reponse] || f.reponse) + '</b>' +
-        (f.reponse === 'renouvele' && d.fin ? ' jusqu\u2019au ' + echapper(dateFrCourte(d.fin)) : '') + (d.detail ? ' – « ' + echapper(d.detail) + ' »' : '') + voir + vu + '</li>';
+        (f.reponse === 'renouvele' && d.fin ? ' jusqu\u2019au ' + echapper(dateFrCourte(d.fin)) : '') + (d.detail ? ' – « ' + echapper(d.detail) + ' »' : '') +
+        (f.retrait_prevu_le ? ' · retrait de la diffusion le ' + echapper(dateFrCourte(f.retrait_prevu_le)) + ' au soir' : '') + voir + vu + '</li>';
     }
     if (f.pause_auto_le) return '<li>⏸️ ' + qui + ' : mandat terminé le ' + echapper(dateFrCourte(f.fin_mandat)) + ' sans réponse, <b>annonce mise en pause automatiquement</b>' + voir + vu + '</li>';
     const mail = f.mail_envoye_le

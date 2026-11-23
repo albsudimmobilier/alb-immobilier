@@ -580,10 +580,10 @@
   };
   const MERCI = {
     renouvele: 'Votre nouveau mandat est enregistré. L\'annonce reste en ligne (ou y revient si elle était en pause). Jocelyne est prévenue.',
-    sous_offre: 'Jocelyne est prévenue et met l\'annonce à jour.',
-    vendu: 'Félicitations pour cette vente ! Jocelyne est prévenue et met l\'annonce à jour.',
-    non_renouvele: 'L\'annonce est mise en pause : elle n\'est plus visible sur le site. Jocelyne est prévenue.',
-    autre: 'Jocelyne est prévenue et revient vers vous.'
+    sous_offre: 'L\'annonce indique maintenant « Sous offre ». Elle restera visible jusqu\'à la fin du mois, puis sera retirée du site. Jocelyne est prévenue.',
+    vendu: 'Félicitations pour cette vente ! L\'annonce indique maintenant « Vendu » jusqu\'à la fin du mois, puis sera retirée du site. Jocelyne est prévenue.',
+    non_renouvele: 'L\'annonce est retirée du site dès maintenant. Jocelyne est prévenue.',
+    autre: 'Jocelyne est prévenue et revient vers vous. L\'annonce sera retirée du site à la fin du mois.'
   };
   function el(id) { return document.getElementById(id); }
   function montrer(id) { ['chargement', 'invalide', 'question', 'merci'].forEach(function (x) { el(x).classList.toggle('cache', x !== id); }); }
