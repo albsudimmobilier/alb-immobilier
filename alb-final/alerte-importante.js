@@ -6,7 +6,8 @@
 //    et demandes de modification d'annonces en ligne (bouton « Fait »).
 //  • Le doré montre aussi les changements faits par les vendeurs (prix, description, photos — bouton « Vu »).
 //  • Bandeau DORÉ : ce qui attend ta validation (demandes de projet, annonces, avis,
-//    pros à valider, photos, demandes de rappel, questionnaires de biens reçus, accès).
+//    pros à valider, photos, demandes de rappel, questionnaires de biens reçus, accès,
+//    relances de devis des artisans, papiers de pros à vérifier ou qui expirent).
 //  • Bandeau VERT « Tout est ok » : quand il n'y a rien du tout.
 (function () {
   'use strict';
@@ -45,6 +46,22 @@
     return Math.floor((Date.now() - new Date(dateIso).getTime()) / 86400000);
   }
 
+  // Relances de devis (artisans) : mêmes règles que l'onglet Devis — J+2, J+7, J+14 ou l'action notée
+  function jourIsoDecale(iso, plus) { const d = iso ? new Date(iso) : new Date(); d.setDate(d.getDate() + (plus || 0)); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function devisARelancer(d) {
+    if (d.statut === 'remplace' || !(d.suivi === 'envoye' || d.suivi === 'en_discussion')) return false;
+    const auj = jourIsoDecale(null, 0);
+    if (d.prochaine_action) return (d.prochaine_action_le || auj) <= auj;
+    const etape = [[2, 'j2_fait_le'], [7, 'j7_fait_le'], [14, 'j14_fait_le']].find(function (x) { return !d[x[1]]; });
+    return !!etape && jourIsoDecale(d.cree_le, etape[0]) <= auj;
+  }
+  // Papiers des pros qui expirent : mêmes règles que Gestion du site (mail à 15 j, SMS à 5 j, retrait à expiration)
+  function joursAvantPapier(iso) { const fin = new Date(iso + 'T12:00:00'); const auj = new Date(); auj.setHours(12, 0, 0, 0); return Math.round((fin - auj) / 86400000); }
+  function papierSuivi(x) { return x.expire && x.expire_le && x.statut !== 'refuse'; }
+  function papierMailAFaire(x) { return papierSuivi(x) && joursAvantPapier(x.expire_le) <= 15 && joursAvantPapier(x.expire_le) > 5 && !x.relance_mail_le; }
+  function papierSmsAFaire(x) { return papierSuivi(x) && joursAvantPapier(x.expire_le) <= 5 && joursAvantPapier(x.expire_le) > 0 && !x.relance_sms_le; }
+  function papierRetraitAFaire(x) { return papierSuivi(x) && joursAvantPapier(x.expire_le) <= 0 && x.pro_en_ligne; }
+
   function liste(r) { return r && !r.error && Array.isArray(r.data) ? r.data : []; }
   function pluriel(n, mot, mots) { return n + ' ' + (n > 1 ? mots : mot); }
 
@@ -58,7 +75,9 @@
       albSupabase.rpc('alb_gestion_photos_a_valider'),
       albSupabase.rpc('alb_gestion_demandes_rappel'),
       albSupabase.rpc('alb_gestion_questionnaires_biens'),
-      albSupabase.rpc('alb_gestion_demandes_acces')
+      albSupabase.rpc('alb_gestion_demandes_acces'),
+      albSupabase.rpc('alb_gestion_devis'),
+      albSupabase.rpc('alb_gestion_papiers')
     ]);
     r.forEach(function (x, i) { if (x.error) console.log('[ALB DEBUG] bandeau doré, source ' + i + ' :', x.error); });
     const nProjets = liste(r[0]).filter(function (p) { return p.statut === 'a_verifier' || p.statut === 'a_orienter' || p.statut === 'sans_suite'; }).length;
@@ -74,6 +93,10 @@
     const modifies = aTraiterQ.filter(enRouge);
     const nQuest = aTraiterQ.filter(function (q) { return !enRouge(q); }).length;
     const nAcces = liste(r[7]).length;
+    const nDevis = liste(r[8]).filter(devisARelancer).length;
+    const papiers = liste(r[9]);
+    const nPapiersAVerifier = papiers.filter(function (x) { return x.statut === 'a_verifier'; }).length;
+    const nPapiersRelance = papiers.filter(function (x) { return papierMailAFaire(x) || papierSmsAFaire(x) || papierRetraitAFaire(x); }).length;
 
     const items = [];
     if (nProjets) items.push(['🤝 ' + pluriel(nProjets, 'demande de projet', 'demandes de projet') + ' à traiter', GS + '#projets']);
@@ -83,6 +106,9 @@
     if (nPhotos) items.push(['🖼️ ' + pluriel(nPhotos, 'photo', 'photos') + ' à valider', GS]);
     if (nRappels) items.push(['☎️ ' + pluriel(nRappels, 'demande de rappel', 'demandes de rappel') + ' en attente', 'calendrier.html']);
     if (nQuest) items.push(['📝 ' + pluriel(nQuest, 'questionnaire de bien reçu', 'questionnaires de biens reçus') + ' à traiter', 'questionnaires-biens.html']);
+    if (nDevis) items.push(['📄 ' + pluriel(nDevis, 'relance de devis', 'relances de devis') + ' à faire (artisans)', GS + '#projets']);
+    if (nPapiersAVerifier) items.push(['🗂️ ' + pluriel(nPapiersAVerifier, 'papier de pro', 'papiers de pros') + ' à vérifier', GS + '#valides']);
+    if (nPapiersRelance) items.push(['⏰ ' + pluriel(nPapiersRelance, 'relance de papier', 'relances de papiers') + ' à faire (papier qui expire bientôt)', GS + '#valides']);
     if (nAcces) items.push(['🔑 ' + pluriel(nAcces, 'demande d’accès', 'demandes d’accès') + ' en attente', GS + '#acces']);
     return { items: items, modifies: modifies };
   }
