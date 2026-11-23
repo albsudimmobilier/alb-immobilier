@@ -35,7 +35,7 @@
   const CUISINE_DEDANS = ['Plaque gaz', 'Plaque induction', 'Plaque électrique, vitrocéramique', 'Four', 'Four micro-ondes', 'Hotte', 'Réfrigérateur', 'Congélateur', 'Lave-vaisselle', 'Lave-linge', 'Meubles hauts et bas', 'Plan de travail', 'Évier', 'Cellier, arrière-cuisine'];
   const SALLES = ['Baignoire', 'Douche', "Douche à l'italienne", 'Lavabo', 'Double vasque', 'Meuble vasque', 'WC', 'Bidet', 'Sèche-serviettes'];
   const DISTANCES = ['À pied, moins de 5 min', 'À pied, moins de 15 min', 'En voiture, moins de 10 min', 'Plus loin'];
-  const ORDRE_NIVEAUX = ['Sous-sol', 'RDC', 'Niveau 1', '1er étage', 'Niveau 2', '2e étage', '3e étage', 'Mezzanine', 'Duplex'];
+  const ORDRE_NIVEAUX = ['Sous-sol', 'RDC', 'Niveau 1', '1er étage', 'Niveau 2', '2e étage', 'Niveau 3', '3e étage', 'Mezzanine', 'Duplex'];
   const NOM_NIVEAU = { 'RDC': 'Rez-de-chaussée' };
 
   const TYPES_BIEN = { appartement: 'Appartement', maison: 'Maison', village: 'Maison de village' };

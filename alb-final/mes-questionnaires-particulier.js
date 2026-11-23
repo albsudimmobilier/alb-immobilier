@@ -28,6 +28,10 @@
   const NIV_APPART = ['Niveau 1', 'Niveau 2', 'Mezzanine', 'Duplex'];
   const TYPES_PIECES = ['Entrée', 'Séjour, salon', 'Cuisine', 'Chambre', 'Bureau', 'Salle de bains', "Salle d'eau", 'WC', 'Dressing', 'Buanderie, cellier', 'Couloir, palier', 'Balcon, terrasse', 'Cave', 'Garage', 'Véranda', 'Mezzanine', 'Combles, grenier', 'Toit-terrasse', 'Autre (à préciser)'];
   const NUMEROTEES = ['Chambre', 'Salle de bains', "Salle d'eau", 'WC'];
+  // Niveaux proposés pour chaque pièce, les mêmes pour tous les biens
+  const NIVEAUX_PIECES = ['Sous-sol', 'RDC', 'Niveau 1', 'Niveau 2', 'Niveau 3', 'Mezzanine', 'Duplex'];
+  // Anciens niveaux : gardés pour relire les brouillons déjà enregistrés
+  const NIVEAUX_ANCIENS = ['1er étage', '2e étage', '3e étage'];
   const SEC_PIECES = 'Pièce par pièce';
 
   const MSG_MANDAT = 'Un bien sous mandat exclusif ne peut pas être présenté ici. Vos réponses restent enregistrées : vous pourrez envoyer le questionnaire plus tard.';
@@ -331,31 +335,51 @@
     return '';
   }
 
-  // Une carte de pièce
+  // Les cases propres à la pièce : cuisine (type, équipement, contenu) ou salle de bains / salle d'eau
+  function groupeCases(titre, liste) {
+    return '<div class="mqp-sous">' + e(titre) + '</div><div class="mqp-cases">' + liste.map(function (v) {
+      return '<label class="mqp-case"><input type="checkbox" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
+    }).join('') + '</div>';
+  }
+  function htmlCasesDeLaPiece(type) {
+    if (type === 'Cuisine') return groupeCases('Type de cuisine', CUISINE_TYPE) + groupeCases('Équipement de la cuisine', CUISINE_EQ) + groupeCases("Ce qu'il y a dedans", CUISINE_DEDANS);
+    if (type === 'Salle de bains' || type === "Salle d'eau") return groupeCases("Ce qu'il y a dedans", SALLES);
+    return '';
+  }
+
+  // Une carte de pièce : on choisit la pièce et le niveau dans des listes, puis on complète
   function htmlCarte(nom, type, niveau, ouverte) {
-    const niveaux = CFG[etat.type].niveaux;
-    function groupe(titre, liste) {
-      return '<div class="mqp-sous">' + e(titre) + '</div><div class="mqp-cases">' + liste.map(function (v) {
-        return '<label class="mqp-case"><input type="checkbox" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
-      }).join('') + '</div>';
-    }
-    let extra = '';
-    if (type === 'Cuisine') {
-      extra = groupe('Type de cuisine', CUISINE_TYPE) + groupe('Équipement de la cuisine', CUISINE_EQ) + groupe("Ce qu'il y a dedans", CUISINE_DEDANS);
-    } else if (type === 'Salle de bains' || type === "Salle d'eau") {
-      extra = groupe("Ce qu'il y a dedans", SALLES);
-    }
+    const niveaux = NIVEAUX_PIECES.slice();
+    if (niveau && niveaux.indexOf(niveau) === -1) niveaux.push(niveau);
+    const estAutre = type === 'Autre (à préciser)';
     return '<details class="mqp-piece" data-type="' + e(type) + '" data-nom="' + e(nom) + '"' + (ouverte ? ' open' : '') + '>' +
       '<summary><span class="mqp-piece-nom">' + e(nom || 'Nouvelle pièce') + '</span><span class="mqp-resume"></span></summary>' +
       '<div class="mqp-piece-corps">' +
-        (type === 'Autre (à préciser)' ? '<div class="mqp-champ"><label>Nom de la pièce</label><input type="text" class="mqp-nom" maxlength="60" value="' + e(nom === 'Autre pièce' ? '' : nom) + '"></div>' : '') +
-        '<div class="mqp-grille"><div class="mqp-champ"><label>Niveau</label><select class="mqp-niv"><option value="">—</option>' +
-          niveaux.map(function (n) { return '<option value="' + e(n) + '"' + (n === niveau ? ' selected' : '') + '>' + e(n) + '</option>'; }).join('') + '</select></div>' +
-        '<div class="mqp-champ"><label>Surface (m²)</label><input type="text" class="mqp-m2" inputmode="decimal" maxlength="8"></div></div>' +
-        groupe('Sol', SOL) + groupe('Équipement', EQUIP) + groupe('Fenêtres', FENETRES) + extra +
+        '<div class="mqp-grille"><div class="mqp-champ"><label>Pièce</label><select class="mqp-type"><option value="">— Choisir —</option>' +
+          typesDisponibles().map(function (t) { return '<option value="' + e(t) + '"' + (t === type ? ' selected' : '') + '>' + e(t) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="mqp-champ"><label>Niveau</label><select class="mqp-niv"><option value="">—</option>' +
+          niveaux.map(function (n) { return '<option value="' + e(n) + '"' + (n === niveau ? ' selected' : '') + '>' + e(n) + '</option>'; }).join('') + '</select></div></div>' +
+        '<div class="mqp-champ mqp-nom-bloc"' + (estAutre ? '' : ' hidden') + '><label>Nom de la pièce</label><input type="text" class="mqp-nom" maxlength="60" value="' + e(estAutre && nom !== 'Autre pièce' ? nom : '') + '"></div>' +
+        '<div class="mqp-champ"><label>Surface (m²)</label><input type="text" class="mqp-m2" inputmode="decimal" maxlength="8"></div>' +
+        groupeCases('Sol', SOL) + groupeCases('Équipement', EQUIP) + groupeCases('Fenêtres', FENETRES) +
+        '<div class="mqp-cases-piece">' + htmlCasesDeLaPiece(type) + '</div>' +
         '<div class="mqp-champ"><label>Notes</label><input type="text" class="mqp-notes" maxlength="200"></div>' +
         '<button type="button" class="mqp-supprimer" data-mqp-act="retirer-piece">Supprimer cette pièce</button>' +
       '</div></details>';
+  }
+
+  // Quand on change la pièce dans la liste : nom automatique, case « nom » pour « Autre », cases de la cuisine ou de la salle de bains
+  function changerTypePiece(d, type) {
+    if (d.dataset.type === type) return;
+    d.dataset.type = '';
+    const nom = type ? nomSuivant(type) : '';
+    d.dataset.type = type;
+    d.dataset.nom = nom;
+    const estAutre = type === 'Autre (à préciser)';
+    d.querySelector('.mqp-nom-bloc').hidden = !estAutre;
+    if (!estAutre) d.querySelector('.mqp-nom').value = '';
+    d.querySelector('.mqp-cases-piece').innerHTML = htmlCasesDeLaPiece(type);
+    d.querySelector('.mqp-piece-nom').textContent = (estAutre ? nettoyer(d.querySelector('.mqp-nom').value) : nom) || 'Nouvelle pièce';
   }
 
   function typesDisponibles() {
@@ -450,6 +474,7 @@
   }
   function lirePiece(d) {
     const t = [];
+    if (!d.dataset.type) return { nom: '', valeur: '' }; // pièce pas encore choisie : rien d'enregistré
     const niv = d.querySelector('.mqp-niv').value; if (niv) t.push(niv);
     const m2 = nettoyer(d.querySelector('.mqp-m2').value); if (m2) t.push(m2 + ' m²');
     d.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { if (cb.checked) t.push(cb.dataset.v); });
@@ -465,7 +490,12 @@
     jetons.forEach(function (j) {
       if (/^[\d.,]+ m²$/.test(j)) d.querySelector('.mqp-m2').value = j.replace(' m²', '');
       else if (j.indexOf('Notes : ') === 0) d.querySelector('.mqp-notes').value = j.slice(8);
-      else if (CFG[etat.type].niveaux.indexOf(j) !== -1) d.querySelector('.mqp-niv').value = j;
+      else if (NIVEAUX_PIECES.indexOf(j) !== -1 || NIVEAUX_ANCIENS.indexOf(j) !== -1 || CFG[etat.type].niveaux.indexOf(j) !== -1) {
+        const sel = d.querySelector('.mqp-niv');
+        // Un ancien niveau (ex. « 1er étage ») est ajouté à la liste pour ne pas le perdre
+        if (!Array.prototype.some.call(sel.options, function (o) { return o.value === j; })) sel.insertAdjacentHTML('beforeend', '<option value="' + e(j) + '">' + e(j) + '</option>');
+        sel.value = j;
+      }
     });
     majResume(d);
   }
@@ -771,6 +801,7 @@
     if (!etat || !racine || !racine.querySelector('.mqp-formulaire')) return;
     if (ev.target.closest && ev.target.closest('.mqp-ajout-panneau')) return; // le choix d'une pièce n'est pas une réponse
     const d = ev.target.closest && ev.target.closest('.mqp-piece');
+    if (d && ev.target.classList && ev.target.classList.contains('mqp-type')) changerTypePiece(d, ev.target.value);
     if (d) majResume(d);
     majConditions();
     majEnvoi();
@@ -809,10 +840,12 @@
       afficherFormulaire(t.value);
     }
     else if (act === 'ouvrir-ajout') {
-      const p = racine.querySelector('.mqp-ajout-panneau');
-      p.innerHTML = htmlPanneauAjout();
-      p.hidden = false;
-      p.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const conteneur = racine.querySelector('.mqp-pieces');
+      conteneur.insertAdjacentHTML('beforeend', htmlCarte('', '', '', true));
+      const carte = conteneur.lastElementChild;
+      majVide();
+      carte.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const liste = carte.querySelector('.mqp-type'); if (liste) liste.focus();
     }
     else if (act === 'annuler-ajout') {
       const p = racine.querySelector('.mqp-ajout-panneau');

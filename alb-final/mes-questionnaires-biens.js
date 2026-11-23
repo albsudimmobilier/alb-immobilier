@@ -30,6 +30,10 @@
   const CUISINE_DEDANS = ['Plaque gaz', 'Plaque induction', 'Plaque électrique, vitrocéramique', 'Four', 'Four micro-ondes', 'Hotte', 'Réfrigérateur', 'Congélateur', 'Lave-vaisselle', 'Lave-linge', 'Meubles hauts et bas', 'Plan de travail', 'Évier', 'Cellier, arrière-cuisine'];
   const TYPES_PIECES = ['Entrée', 'Séjour, salon', 'Cuisine', 'Chambre', 'Bureau', 'Salle de bains', "Salle d'eau", 'WC', 'Dressing', 'Buanderie, cellier', 'Couloir, palier', 'Balcon, terrasse', 'Cave', 'Garage', 'Véranda', 'Mezzanine', 'Combles, grenier', 'Toit-terrasse', 'Autre (à préciser)'];
   const NUMEROTEES = ['Chambre', 'Salle de bains', "Salle d'eau", 'WC'];
+  // Niveaux proposés pour chaque pièce, les mêmes pour tous les biens
+  const NIVEAUX_PIECES = ['Sous-sol', 'RDC', 'Niveau 1', 'Niveau 2', 'Niveau 3', 'Mezzanine', 'Duplex'];
+  // Anciens niveaux : gardés pour relire les brouillons déjà enregistrés
+  const NIVEAUX_ANCIENS = ['1er étage', '2e étage', '3e étage'];
   const SEC_PIECES = 'Pièce par pièce';
   const MSG_RECONTACT = 'Pour vous accompagner, nous devons pouvoir vous recontacter : merci de cocher la case prévue.';
   const TEXTE_RECONTACT = "Je souhaite être recontacté(e) par Jocelyne, d'ALB Sud Immobilier.";
@@ -346,31 +350,51 @@
     return '';
   }
 
-  // Une carte de pièce
+  // Les cases propres à la pièce : cuisine (type, équipement, contenu) ou salle de bains / salle d'eau
+  function groupeCases(titre, liste) {
+    return '<div class="mqb-sous">' + e(titre) + '</div><div class="mqb-cases">' + liste.map(function (v) {
+      return '<label class="mqb-case"><input type="checkbox" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
+    }).join('') + '</div>';
+  }
+  function htmlCasesDeLaPiece(type) {
+    if (type === 'Cuisine') return groupeCases('Type de cuisine', CUISINE_TYPE) + groupeCases('Équipement de la cuisine', CUISINE_EQ) + groupeCases("Ce qu'il y a dedans", CUISINE_DEDANS);
+    if (type === 'Salle de bains' || type === "Salle d'eau") return groupeCases("Ce qu'il y a dedans", SALLES);
+    return '';
+  }
+
+  // Une carte de pièce : on choisit la pièce et le niveau dans des listes, puis on complète
   function htmlCarte(nom, type, niveau, ouverte) {
-    const niveaux = CFG[etat.type].niveaux;
-    function groupe(titre, liste) {
-      return '<div class="mqb-sous">' + e(titre) + '</div><div class="mqb-cases">' + liste.map(function (v) {
-        return '<label class="mqb-case"><input type="checkbox" data-v="' + e(v) + '"><span>' + e(v) + '</span></label>';
-      }).join('') + '</div>';
-    }
-    let extra = '';
-    if (type === 'Cuisine') {
-      extra = groupe('Type de cuisine', CUISINE_TYPE) + groupe('Équipement de la cuisine', CUISINE_EQ) + groupe("Ce qu'il y a dedans", CUISINE_DEDANS);
-    } else if (type === 'Salle de bains' || type === "Salle d'eau") {
-      extra = groupe("Ce qu'il y a dedans", SALLES);
-    }
+    const niveaux = NIVEAUX_PIECES.slice();
+    if (niveau && niveaux.indexOf(niveau) === -1) niveaux.push(niveau);
+    const estAutre = type === 'Autre (à préciser)';
     return '<details class="mqb-piece" data-type="' + e(type) + '" data-nom="' + e(nom) + '"' + (ouverte ? ' open' : '') + '>' +
       '<summary><span class="mqb-piece-nom">' + e(nom || 'Nouvelle pièce') + '</span><span class="mqb-resume"></span></summary>' +
       '<div class="mqb-piece-corps">' +
-        (type === 'Autre (à préciser)' ? '<div class="mqb-champ"><label>Nom de la pièce</label><input type="text" class="mqb-nom" maxlength="60" value="' + e(nom === 'Autre pièce' ? '' : nom) + '"></div>' : '') +
-        '<div class="mqb-grille"><div class="mqb-champ"><label>Niveau</label><select class="mqb-niv"><option value="">—</option>' +
-          niveaux.map(function (n) { return '<option value="' + e(n) + '"' + (n === niveau ? ' selected' : '') + '>' + e(n) + '</option>'; }).join('') + '</select></div>' +
-        '<div class="mqb-champ"><label>Surface (m²)</label><input type="text" class="mqb-m2" inputmode="decimal" maxlength="8"></div></div>' +
-        groupe('Sol', SOL) + groupe('Équipement', EQUIP) + groupe('Fenêtres', FENETRES) + extra +
+        '<div class="mqb-grille"><div class="mqb-champ"><label>Pièce</label><select class="mqb-type"><option value="">— Choisir —</option>' +
+          typesDisponibles().map(function (t) { return '<option value="' + e(t) + '"' + (t === type ? ' selected' : '') + '>' + e(t) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="mqb-champ"><label>Niveau</label><select class="mqb-niv"><option value="">—</option>' +
+          niveaux.map(function (n) { return '<option value="' + e(n) + '"' + (n === niveau ? ' selected' : '') + '>' + e(n) + '</option>'; }).join('') + '</select></div></div>' +
+        '<div class="mqb-champ mqb-nom-bloc"' + (estAutre ? '' : ' hidden') + '><label>Nom de la pièce</label><input type="text" class="mqb-nom" maxlength="60" value="' + e(estAutre && nom !== 'Autre pièce' ? nom : '') + '"></div>' +
+        '<div class="mqb-champ"><label>Surface (m²)</label><input type="text" class="mqb-m2" inputmode="decimal" maxlength="8"></div>' +
+        groupeCases('Sol', SOL) + groupeCases('Équipement', EQUIP) + groupeCases('Fenêtres', FENETRES) +
+        '<div class="mqb-cases-piece">' + htmlCasesDeLaPiece(type) + '</div>' +
         '<div class="mqb-champ"><label>Notes</label><input type="text" class="mqb-notes" maxlength="200"></div>' +
         '<button type="button" class="mqb-supprimer" data-mqb-act="retirer-piece">Supprimer cette pièce</button>' +
       '</div></details>';
+  }
+
+  // Quand on change la pièce dans la liste : nom automatique, case « nom » pour « Autre », cases de la cuisine ou de la salle de bains
+  function changerTypePiece(d, type) {
+    if (d.dataset.type === type) return;
+    d.dataset.type = '';
+    const nom = type ? nomSuivant(type) : '';
+    d.dataset.type = type;
+    d.dataset.nom = nom;
+    const estAutre = type === 'Autre (à préciser)';
+    d.querySelector('.mqb-nom-bloc').hidden = !estAutre;
+    if (!estAutre) d.querySelector('.mqb-nom').value = '';
+    d.querySelector('.mqb-cases-piece').innerHTML = htmlCasesDeLaPiece(type);
+    d.querySelector('.mqb-piece-nom').textContent = (estAutre ? nettoyer(d.querySelector('.mqb-nom').value) : nom) || 'Nouvelle pièce';
   }
 
   function typesDisponibles() {
@@ -479,6 +503,7 @@
   }
   function lirePiece(d) {
     const t = [];
+    if (!d.dataset.type) return { nom: '', valeur: '' }; // pièce pas encore choisie : rien d'enregistré
     const niv = d.querySelector('.mqb-niv').value; if (niv) t.push(niv);
     const m2 = nettoyer(d.querySelector('.mqb-m2').value); if (m2) t.push(m2 + ' m²');
     d.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { if (cb.checked) t.push(cb.dataset.v); });
@@ -494,7 +519,12 @@
     jetons.forEach(function (j) {
       if (/^[\d.,]+ m²$/.test(j)) d.querySelector('.mqb-m2').value = j.replace(' m²', '');
       else if (j.indexOf('Notes : ') === 0) d.querySelector('.mqb-notes').value = j.slice(8);
-      else if (CFG[etat.type].niveaux.indexOf(j) !== -1) d.querySelector('.mqb-niv').value = j;
+      else if (NIVEAUX_PIECES.indexOf(j) !== -1 || NIVEAUX_ANCIENS.indexOf(j) !== -1 || CFG[etat.type].niveaux.indexOf(j) !== -1) {
+        const sel = d.querySelector('.mqb-niv');
+        // Un ancien niveau (ex. « 1er étage ») est ajouté à la liste pour ne pas le perdre
+        if (!Array.prototype.some.call(sel.options, function (o) { return o.value === j; })) sel.insertAdjacentHTML('beforeend', '<option value="' + e(j) + '">' + e(j) + '</option>');
+        sel.value = j;
+      }
     });
     majResume(d);
   }
@@ -779,6 +809,7 @@
     if (!etat || !racine || !racine.querySelector('.mqb-formulaire')) return;
     if (ev.target.closest && ev.target.closest('.mqb-ajout-panneau')) return; // le choix d'une pièce n'est pas une réponse
     const d = ev.target.closest && ev.target.closest('.mqb-piece');
+    if (d && ev.target.classList && ev.target.classList.contains('mqb-type')) changerTypePiece(d, ev.target.value);
     if (d) majResume(d);
     majAccord();
     majMarques();
@@ -798,10 +829,12 @@
     else if (act === 'type-maison') afficherFormulaire('maison');
     else if (act === 'type-village') afficherFormulaire('village');
     else if (act === 'ouvrir-ajout') {
-      const pa = racine.querySelector('.mqb-ajout-panneau');
-      pa.innerHTML = htmlPanneauAjout();
-      pa.hidden = false;
-      pa.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const conteneur = racine.querySelector('.mqb-pieces');
+      conteneur.insertAdjacentHTML('beforeend', htmlCarte('', '', '', true));
+      const carte = conteneur.lastElementChild;
+      majVide();
+      carte.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const liste = carte.querySelector('.mqb-type'); if (liste) liste.focus();
     }
     else if (act === 'annuler-ajout') {
       const pa = racine.querySelector('.mqb-ajout-panneau');
