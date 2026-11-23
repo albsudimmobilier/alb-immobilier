@@ -56,6 +56,15 @@ function aRelancer(m) {
   const s = suiviDe(m);
   return !estSuspendu(m) && !!s.relancer_le && s.relancer_le <= aujourdhuiIso() && s.etape !== 'ok' && s.etape !== 'pause';
 }
+// Sans nouvelles depuis 1 mois : aucun contact noté dans son suivi depuis 30 jours (ou depuis son inscription)
+const JOURS_SANS_NOUVELLES = 30;
+function sansNouvelles(m) {
+  const s = suiviDe(m);
+  if (estSuspendu(m) || s.etape === 'pause' || aRelancer(m)) return false;
+  const depuis = dernierContact(m) || m.date_creation || m.created_at;
+  if (!depuis) return false;
+  return (Date.now() - new Date(depuis).getTime()) / 86400000 >= JOURS_SANS_NOUVELLES;
+}
 function membresAffichables() { return membres.filter(function (m) { return !m.est_admin; }); }
 
 const SOUS_FILTRES = {
@@ -102,9 +111,10 @@ afficherMembres = function () {
   const nbPros = tous.length - nbPart;
   const nbRelance = tous.filter(aRelancer).length;
   const nbSusp = tous.filter(estSuspendu).length;
+  const nbSansNouvelles = tous.filter(sansNouvelles).length;
   if (filtreQui === 'suspendus' && !nbSusp) filtreQui = 'tous';
   document.getElementById('filtres-membres').innerHTML =
-    boutonsFiltre('qui', [['tous', '👥 Tous', tous.length], ['particuliers', '🙋 Particuliers', nbPart], ['pros', '🧑‍💼 Professionnels', nbPros], ['relancer', '⏰ À relancer', nbRelance]]
+    boutonsFiltre('qui', [['tous', '👥 Tous', tous.length], ['particuliers', '🙋 Particuliers', nbPart], ['pros', '🧑‍💼 Professionnels', nbPros], ['relancer', '⏰ À relancer', nbRelance], ['sans_nouvelles', '📵 Sans nouvelles depuis 1 mois', nbSansNouvelles]]
       .concat(nbSusp ? [['suspendus', '⛔ Suspendus', nbSusp]] : []), filtreQui);
   document.getElementById('filtres-membres-sous').innerHTML = SOUS_FILTRES[filtreQui] ? boutonsFiltre('sous', SOUS_FILTRES[filtreQui], filtreSous) : '';
   // L'étape : une simple liste déroulante (moins de boutons, moins de pièges)
@@ -120,6 +130,7 @@ afficherMembres = function () {
     if (filtreQui === 'particuliers' && estPro(m)) return false;
     if (filtreQui === 'pros' && !estPro(m)) return false;
     if (filtreQui === 'relancer' && !aRelancer(m)) return false;
+    if (filtreQui === 'sans_nouvelles' && !sansNouvelles(m)) return false;
     if (filtreQui === 'suspendus' && !estSuspendu(m)) return false;
     if (!passeSousFiltre(m)) return false;
     if (filtreEtape !== 'toutes' && suiviDe(m).etape !== filtreEtape) return false;
@@ -453,6 +464,12 @@ LIGNES_A_FAIRE.push({
   calcul: function () { return membresAffichables().filter(aRelancer).length; },
   un: 'membre à relancer aujourd\'hui', plusieurs: 'membres à relancer aujourd\'hui', emoji: '⏰', onglet: 'membres',
   filtre: function () { choisirFiltreMembres('qui', 'relancer'); }
+});
+// « À faire aujourd'hui » : les membres sans nouvelles depuis 1 mois (un appel pour prendre des nouvelles)
+LIGNES_A_FAIRE.push({
+  calcul: function () { return membresAffichables().filter(sansNouvelles).length; },
+  un: 'membre sans nouvelles depuis 1 mois : appelle-le pour prendre des nouvelles', plusieurs: 'membres sans nouvelles depuis 1 mois : appelle-les pour prendre des nouvelles', emoji: '📵', onglet: 'membres',
+  filtre: function () { choisirFiltreMembres('qui', 'sans_nouvelles'); }
 });
 
 (function () {
