@@ -170,12 +170,17 @@ function dessinerResultatsPrevisionnel(mois, objBas, objHaut, totalCharges, prix
   document.getElementById('prev-bilan').innerHTML = phrases.map(function (p) { return '<p class="ligne-info">' + p + '</p>'; }).join('');
 
   const aDuReel = mois.some(function (m) { return m.caReel != null; });
-  document.getElementById('prev-tableau').innerHTML = '<table class="tableau-prev"><thead><tr><th>Mois</th><th>Chiffre d\'affaires prévu (HT)</th><th>Charges</th><th>Résultat</th><th>Sur le compte</th>' +
+  // Encaissement prévu : ce qui est facturé à la fin d'un mois est payé le 1er du mois suivant, TVA comprise
+  const tauxTva = tarifPrev('taux_tva', 20) / 100;
+  mois.forEach(function (m, i) { const avant = i > 0 ? mois[i - 1].ca : 0; m.encaisseTtc = avant * (1 + tauxTva); m.tvaEncaissee = avant * tauxTva; });
+  document.getElementById('prev-tableau').innerHTML = '<table class="tableau-prev"><thead><tr><th>Mois</th><th>Chiffre d\'affaires prévu (HT)</th><th>📥 Encaissé ce mois-ci (TTC)</th><th>Charges</th><th>Résultat</th><th>Sur le compte</th>' +
     (aDuReel ? '<th>Réel facturé (HT)</th>' : '') + '</tr></thead><tbody>' +
     mois.map(function (m) {
       const ok = m.resultat >= objBas && objBas > 0;
       return '<tr><td>' + nomMois(m.date, true) + (m.offert ? ' <span class="etiquette vert">offert</span>' : '') + '</td>' +
-        '<td>' + eurosRonds(m.ca) + '</td><td>' + eurosRonds(m.charges) + '</td>' +
+        '<td>' + eurosRonds(m.ca) + '</td>' +
+        '<td>' + eurosRonds(m.encaisseTtc) + (m.tvaEncaissee ? '<span class="aide" style="display:block;">dont ' + eurosRonds(m.tvaEncaissee) + ' de TVA à reverser</span>' : '') + '</td>' +
+        '<td>' + eurosRonds(m.charges) + '</td>' +
         '<td style="font-weight:700;' + couleur(m.resultat) + (ok ? 'color:#2E6B34;' : '') + '">' + eurosRonds(m.resultat) + (ok ? ' 🎯' : '') + '</td>' +
         '<td style="' + couleur(m.tresorerie) + '">' + eurosRonds(m.tresorerie) + '</td>' +
         (aDuReel ? '<td>' + (m.caReel == null ? '—' : eurosRonds(m.caReel) + '<span class="aide" style="display:block;">' + (m.caReel >= m.ca ? '+' : '') + eurosRonds(m.caReel - m.ca) + ' / prévu</span>') + '</td>' : '') + '</tr>';
