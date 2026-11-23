@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votre taxe foncière — ALB Sud Immobilier</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="polices/polices.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="alb-connexion.js"></script>
+  <style>
+    /* ========== Page « Votre taxe foncière » (lien envoyé au vendeur en septembre et octobre) ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.6; min-height: 100vh; }
+    h1 { font-family: 'Playfair Display', serif; color: #5A3A6A; font-size: 1.6rem; margin-bottom: 8px; }
+    .entete { background: #fff; border-bottom: 1px solid #E8E6E0; padding: 12px 16px; text-align: center; }
+    .entete img { height: 56px; }
+    .carte { background: #fff; max-width: 520px; margin: 24px auto; padding: 24px 20px; border-radius: 12px; border: 1px solid #E8E6E0; }
+    .bien { margin-bottom: 14px; }
+    label { display: block; font-weight: 600; color: #5A3A6A; margin: 16px 0 6px; }
+    input { width: 100%; padding: 12px; font: inherit; font-size: 1.1rem; border: 1px solid #D8D5CE; border-radius: 8px; }
+    .bouton { display: block; width: 100%; margin-top: 16px; padding: 14px 20px; border: none; border-radius: 8px; background: #B28E3D; color: #fff; font: inherit; font-weight: 600; font-size: 1rem; cursor: pointer; }
+    .bouton:hover { background: #5A3A6A; }
+    .bouton:disabled { opacity: 0.6; cursor: wait; }
+    .aide { font-size: 0.85rem; color: #7a7a75; margin-top: 8px; }
+    .confidentialite { font-size: 0.8rem; color: #7a7a75; margin-top: 18px; }
+    .erreur { color: #8A2D2D; font-size: 0.9rem; margin-top: 8px; min-height: 1em; }
+    .info { background: #F4EEF6; border: 1px solid #E2D6E8; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.92rem; }
+    .signature { margin-top: 14px; font-style: italic; color: #5A3A6A; }
+    a { color: #5A3A6A; }
+  </style>
+</head>
+<body>
+  <div class="entete"><img src="LOGO.png" alt="ALB Sud Immobilier"></div>
+  <main class="carte" id="contenu"><p>Chargement…</p></main>
+
+  <script>
+  (function () {
+    'use strict';
+    const TEL = '07 45 60 28 05';
+    const zone = document.getElementById('contenu');
+    const jeton = new URLSearchParams(window.location.search).get('j') || '';
+
+    function echapper(t) {
+      return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+    }
+    function milliers(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+
+    // Lien faux ou abîmé
+    function afficherLienInvalide() {
+      zone.innerHTML = '<h1>Ce lien ne fonctionne pas</h1>' +
+        '<p>Contactez Jocelyne au <a href="tel:0745602805">' + TEL + '</a> ou à <a href="mailto:contact@albimmobilier.fr">contact@albimmobilier.fr</a>.</p>';
+    }
+
+    // Le formulaire avec une seule case
+    function afficherFormulaire(d) {
+      const bien = [d.titre, d.ville ? 'à ' + d.ville : ''].filter(Boolean).join(' ');
+      zone.innerHTML =
+        '<h1>Votre taxe foncière ' + echapper(d.annee) + '</h1>' +
+        (bien ? '<p class="bien">Pour votre annonce : <strong>' + echapper(bien) + '</strong></p>' : '') +
+        (d.deja_repondu ? '<p class="info">Vous nous avez déjà indiqué votre taxe foncière ' + echapper(d.annee) + ', merci ! Votre annonce est à jour. Vous pouvez corriger le montant ci-dessous si besoin.</p>' : '') +
+        '<p>Indiquez simplement le montant de votre avis de taxe foncière ' + echapper(d.annee) + '. Nous mettons votre annonce à jour aussitôt.</p>' +
+        '<label for="montant">Montant de votre taxe foncière ' + echapper(d.annee) + ' (€ par an)</label>' +
+        '<input id="montant" type="text" inputmode="numeric" maxlength="7" autocomplete="off">' +
+        '<p class="aide">Le montant figure en haut de votre avis, à la ligne « Montant de votre impôt ».</p>' +
+        '<p class="erreur" id="erreur" aria-live="polite"></p>' +
+        '<button type="button" class="bouton" id="envoyer">Envoyer</button>' +
+        '<p class="confidentialite">Vos réponses sont lues uniquement par l’équipe ALB Sud Immobilier.</p>';
+      document.getElementById('envoyer').addEventListener('click', function () { envoyerMontant(d.annee); });
+    }
+
+    // Merci
+    function afficherMerci(annee, montant) {
+      zone.innerHTML = '<h1>✅ Merci beaucoup !</h1>' +
+        '<p>Votre annonce affiche maintenant « Taxe foncière ' + echapper(annee) + ' : ' + milliers(montant) + ' € par an ».</p>' +
+        '<p>Une question ? Jocelyne vous répond au <a href="tel:0745602805">' + TEL + '</a>, du lundi au samedi de 9h à 18h.</p>' +
+        '<p class="signature">À la bien, toujours ✨</p>';
+    }
+
+    async function envoyerMontant(annee) {
+      const champ = document.getElementById('montant');
+      const erreur = document.getElementById('erreur');
+      const bouton = document.getElementById('envoyer');
+      const montant = Number(String(champ.value).replace(/[\s  €]/g, '').replace(/[.,]\d{1,2}$/, ''));
+      if (!Number.isInteger(montant) || montant < 1 || montant > 100000) {
+        erreur.textContent = 'Indiquez le montant en euros, sans centimes (par exemple 900).';
+        return;
+      }
+      erreur.textContent = '';
+      bouton.disabled = true;
+      const { data, error } = await albSupabase.rpc('alb_taxe_repondre', { p_jeton: jeton, p_montant: montant });
+      bouton.disabled = false;
+      if (error) {
+        console.log('[ALB DEBUG] taxe foncière : envoi impossible', error);
+        if (/LIEN_INVALIDE/.test(error.message || '')) { afficherLienInvalide(); return; }
+        erreur.textContent = 'L’envoi n’a pas marché. Réessayez dans un instant ou appelez Jocelyne au ' + TEL + '.';
+        return;
+      }
+      afficherMerci((data && data.annee) || annee, montant);
+    }
+
+    async function demarrer() {
+      if (!/^[0-9a-f]{20,}$/i.test(jeton)) { afficherLienInvalide(); return; }
+      const { data, error } = await albSupabase.rpc('alb_taxe_lire', { p_jeton: jeton });
+      if (error || !data) { console.log('[ALB DEBUG] taxe foncière : lien non reconnu', error); afficherLienInvalide(); return; }
+      afficherFormulaire(data);
+    }
+    demarrer();
+  })();
+  </script>
+</body>
+</html>
