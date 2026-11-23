@@ -42,6 +42,9 @@ async function chargerSuiviMembres() {
   if (susp.error) console.error('[ALB DEBUG] suspensions :', susp.error);
   else { suspensions = {}; (susp.data || []).forEach(function (x) { suspensions[x.id] = x; }); }
   afficherMembres();
+  // Les suspensions connues : on recompte les pros validés et « À faire aujourd'hui »
+  if (typeof afficherValides === 'function') afficherValides();
+  if (typeof afficherAFaire === 'function') afficherAFaire();
 }
 
 // ----- Qui est qui -----

@@ -595,7 +595,8 @@ async function verifierPapier(id, decision, bouton) {
 // ---------- Pros validés ----------
 function afficherValides() {
   // Les pros validés mais pas encore en ligne passent en premier
-  const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie; })
+  // Un pro suspendu ou dont le compte est fermé ne compte plus parmi les pros validés
+  const liste = membres.filter(function (m) { return metierDe(m) && m.statut_verifie && !(typeof estSuspendu === 'function' && estSuspendu(m)); })
     .sort(function (a, b) { return (a.profil_mis_en_ligne ? 1 : 0) - (b.profil_mis_en_ligne ? 1 : 0); });
   const pasEnLigne = liste.filter(function (m) { return !m.profil_mis_en_ligne; }).length;
   const compteur = document.getElementById('c-pas-en-ligne');
