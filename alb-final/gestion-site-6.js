@@ -176,9 +176,9 @@ function dessinerResultatsPrevisionnel(mois, objBas, objHaut, totalCharges, prix
   document.getElementById('prev-bilan').innerHTML = phrases.map(function (p) { return '<p class="ligne-info">' + p + '</p>'; }).join('');
 
   const aDuReel = mois.some(function (m) { return m.caReel != null; });
-  // Encaissement prévu : ce qui est facturé à la fin d'un mois est payé le 1er du mois suivant, TVA comprise
+  // Encaissement prévu : l'affaire d'un mois est facturée début du mois suivant, payable à 30 jours (contrats) : arrive 2 mois après, TVA comprise
   const tauxTva = tarifPrev('taux_tva', 20) / 100;
-  mois.forEach(function (m, i) { const avant = i > 0 ? mois[i - 1].ca : 0; m.encaisseTtc = avant * (1 + tauxTva); m.tvaEncaissee = avant * tauxTva; });
+  mois.forEach(function (m, i) { const avant = i > 1 ? mois[i - 2].ca : 0; m.encaisseTtc = avant * (1 + tauxTva); m.tvaEncaissee = avant * tauxTva; });
   document.getElementById('prev-tableau').innerHTML = '<table class="tableau-prev"><thead><tr><th>Mois</th><th>Chiffre d\'affaires prévu (HT)</th><th>📥 Encaissé ce mois-ci (TTC)</th><th>Charges</th><th>Résultat</th><th>Sur le compte</th>' +
     (aDuReel ? '<th>Réel facturé (HT)</th>' : '') + '</tr></thead><tbody>' +
     mois.map(function (m) {
