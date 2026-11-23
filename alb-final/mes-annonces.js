@@ -24,6 +24,8 @@
 
   const ERREURS = {
     ANNONCE_VENDUE: 'Ce bien est vendu : l’annonce ne se modifie plus.',
+    CHAMP_VERROUILLE: 'Votre annonce est en ligne : pour modifier cette information, utilisez « Demander une modification ».',
+    MESSAGE_MANQUANT: 'Écrivez ce qu’il faut changer.',
     VIDEOS_MAX_2: 'Deux vidéos au maximum.',
     VIDEO_YOUTUBE_SEULEMENT: 'Les vidéos doivent être des liens YouTube.',
     ACCES_REFUSE: 'Cette annonce ne vous appartient pas.',
@@ -217,30 +219,47 @@
     return '<div class="champ"><label for="' + id + '">' + label + '</label><input type="' + (type || 'text') + '" id="' + id + '" value="' + e(valeur ?? '') + '"' + (extra || '') + '></div>';
   }
 
+  // Une fois l'annonce validée par Jocelyne, seuls le prix, les honoraires, le titre, la description,
+  // les photos, les vidéos et le téléphone se modifient directement. Le reste passe par une demande.
+  function annonceVerrouillee(a) { return a.statut !== 'en_attente' && a.statut !== 'refusee'; }
+  function blocDemandeModif(a) {
+    return '<div class="ma-prive"><div class="ma-prive-titre">🔒 Votre annonce est en ligne</div>' +
+      '<p class="ma-petit">Pour modifier les informations grisées, envoyez une demande à Jocelyne : elle s’en occupe et vous prévient.</p>' +
+      '<button type="button" class="bouton bouton-discret" data-action="demande-modif-ouvrir" data-id="' + e(a.id) + '">✉️ Demander une modification</button>' +
+      '<div id="ma-demande-' + e(a.id) + '" class="cache" style="margin-top:10px;">' +
+        '<div class="champ"><label for="ma-demande-texte-' + e(a.id) + '">Que faut-il changer ?</label>' +
+        '<textarea id="ma-demande-texte-' + e(a.id) + '" rows="3" maxlength="2000" placeholder="Ex. : la surface est de 92 m², il manque la cave…"></textarea></div>' +
+        '<button type="button" class="bouton" data-action="demande-modif-envoyer" data-id="' + e(a.id) + '">Envoyer ma demande</button>' +
+      '</div></div>';
+  }
+
   function panneauModifier(x) {
     const a = x.a, p = x.prive, v = p.videos || [];
     const pro = a.type_vente === 'accompagnee';
+    const verrou = annonceVerrouillee(a);
+    const g = verrou ? ' disabled' : '';   // champs grisés une fois en ligne
     return '<form class="ma-panneau" data-id="' + e(a.id) + '" data-form="modifier" novalidate>' +
       '<h3>✏️ Modifier mon annonce</h3>' +
-      '<p class="ma-petit">Vos changements sont en ligne dès l’enregistrement. Jocelyne est simplement prévenue.</p>' +
+      '<p class="ma-petit">' + (verrou ? 'Le prix, le titre, la description, les photos et les vidéos se modifient directement : vos changements sont en ligne dès l’enregistrement, et Jocelyne est simplement prévenue.' : 'Vos changements sont enregistrés dès que vous cliquez sur « Enregistrer ». Jocelyne les voit avant la mise en ligne.') + '</p>' +
+      (verrou ? blocDemandeModif(a) : '') +
       '<div class="deux-colonnes">' +
-        '<div class="champ"><label for="m-type">Type de bien</label><select id="m-type">' + option('maison', 'Maison', a.type_bien) + option('appartement', 'Appartement', a.type_bien) + '</select></div>' +
+        '<div class="champ"><label for="m-type">Type de bien</label><select id="m-type"' + g + '>' + option('maison', 'Maison', a.type_bien) + option('appartement', 'Appartement', a.type_bien) + '</select></div>' +
         champ('m-prix', 'Prix (€)', a.prix, 'number', ' min="1000" step="1" inputmode="numeric"') +
-        champ('m-surface', 'Surface habitable (m²)', a.surface_m2, 'number', ' min="5" step="0.5" inputmode="decimal"') +
-        champ('m-pieces', 'Nombre de pièces', a.nb_pieces, 'number', ' min="1" max="50" step="1" inputmode="numeric"') +
-        champ('m-terrain', 'Terrain (m²) — facultatif', a.surface_terrain_m2, 'number', ' min="0" step="1" inputmode="numeric"') +
-        champ('m-cp', 'Code postal', a.code_postal, 'text', ' maxlength="5" inputmode="numeric"') +
-        champ('m-ville', 'Ville', a.ville) +
-        '<div class="champ"><label for="m-dpe">DPE</label><select id="m-dpe">' + lettres(a.dpe) + '</select></div>' +
-        '<div class="champ"><label for="m-ges">GES</label><select id="m-ges">' + lettres(a.ges) + '</select></div>' +
-        champ('m-dep-min', 'Dépenses d’énergie mini (€/an) — facultatif', a.depenses_energie_min, 'number', ' min="0" step="1" inputmode="numeric"') +
-        champ('m-dep-max', 'Dépenses d’énergie maxi (€/an) — facultatif', a.depenses_energie_max, 'number', ' min="0" step="1" inputmode="numeric"') +
+        champ('m-surface', 'Surface habitable (m²)', a.surface_m2, 'number', ' min="5" step="0.5" inputmode="decimal"' + g) +
+        champ('m-pieces', 'Nombre de pièces', a.nb_pieces, 'number', ' min="1" max="50" step="1" inputmode="numeric"' + g) +
+        champ('m-terrain', 'Terrain (m²) — facultatif', a.surface_terrain_m2, 'number', ' min="0" step="1" inputmode="numeric"' + g) +
+        champ('m-cp', 'Code postal', a.code_postal, 'text', ' maxlength="5" inputmode="numeric"' + g) +
+        champ('m-ville', 'Ville', a.ville, 'text', g) +
+        '<div class="champ"><label for="m-dpe">DPE</label><select id="m-dpe"' + g + '>' + lettres(a.dpe) + '</select></div>' +
+        '<div class="champ"><label for="m-ges">GES</label><select id="m-ges"' + g + '>' + lettres(a.ges) + '</select></div>' +
+        champ('m-dep-min', 'Dépenses d’énergie mini (€/an) — facultatif', a.depenses_energie_min, 'number', ' min="0" step="1" inputmode="numeric"' + g) +
+        champ('m-dep-max', 'Dépenses d’énergie maxi (€/an) — facultatif', a.depenses_energie_max, 'number', ' min="0" step="1" inputmode="numeric"' + g) +
       '</div>' +
       champ('m-titre', 'Titre de l’annonce', a.titre, 'text', ' maxlength="120"') +
       '<div class="champ"><label for="m-description">Description</label><textarea id="m-description" rows="7" maxlength="5000">' + e(a.description || '') + '</textarea></div>' +
-      (pro ? '<div class="deux-colonnes">' + champ('m-agence', 'Agence ou réseau', a.agence_nom, 'text', ' maxlength="120"') + champ('m-honoraires', 'Honoraires', a.honoraires_texte, 'text', ' maxlength="200"') + '</div>' : '') +
+      (pro ? '<div class="deux-colonnes">' + champ('m-agence', 'Agence ou réseau', a.agence_nom, 'text', ' maxlength="120"' + g) + champ('m-honoraires', 'Honoraires', a.honoraires_texte, 'text', ' maxlength="200"') + '</div>' : '') +
       '<div class="ma-prive"><div class="ma-prive-titre">🔒 Jamais affiché sur le site</div>' +
-        champ('m-adresse', 'Adresse du bien', p.adresse, 'text', ' maxlength="200" autocomplete="street-address"') +
+        champ('m-adresse', 'Adresse du bien', p.adresse, 'text', ' maxlength="200" autocomplete="street-address"' + g) +
         champ('m-tel', 'Téléphone pour cette annonce', p.telephone, 'tel', ' maxlength="20" autocomplete="tel"') +
         '<div class="champ"><label for="m-video1">Vidéos YouTube — facultatif (2 au maximum)</label>' +
           '<input type="url" id="m-video1" value="' + e(v[0] || '') + '" placeholder="https://youtu.be/…" style="margin-bottom:8px;">' +
@@ -330,6 +349,20 @@
       bouton.disabled = false;
       bouton.textContent = 'Enregistrer';
     }
+  }
+
+  // ----- Demande de modification (annonce en ligne) -----
+  async function envoyerDemandeModif(id, bouton) {
+    const champ = el('ma-demande-texte-' + id);
+    const message = String((champ && champ.value) || '').trim();
+    if (message.length < 3) { montrerMessage('ma-msg-' + id, 'erreur', ERREURS.MESSAGE_MANQUANT); return; }
+    bouton.disabled = true;
+    const { error } = await albSupabase.rpc('alb_annonce_demander_modif', { p_annonce: id, p_message: message });
+    bouton.disabled = false;
+    if (error) { console.error('[ALB DEBUG] demande de modification :', error); montrerMessage('ma-msg-' + id, 'erreur', messageErreur(error)); return; }
+    champ.value = '';
+    el('ma-demande-' + id).classList.add('cache');
+    montrerMessage('ma-msg-' + id, 'succes', 'Votre demande est bien envoyée. Jocelyne s’en occupe et vous tient au courant.');
   }
 
   // ----- Photos -----
@@ -647,6 +680,11 @@
           await rafraichir();
           montrerMessage('ma-msg-' + id, 'succes', 'C’est fait ✅ Votre annonce est en ligne 90 jours de plus.');
         });
+      } else if (action === 'demande-modif-ouvrir') {
+        const bloc = el('ma-demande-' + id);
+        if (bloc) bloc.classList.toggle('cache');
+      } else if (action === 'demande-modif-envoyer') {
+        envoyerDemandeModif(id, cible);
       } else if (action === 'retirer-dispo') {
         retirerDispo(id, Number(cible.dataset.index));
       }

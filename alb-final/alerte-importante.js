@@ -2,7 +2,9 @@
 // (Gestion du site, Calendrier, Questionnaires de biens). Visible uniquement par Jocelyne :
 // les fonctions refusent les autres comptes, et dans ce cas rien ne s'affiche.
 //  • Bandeau ROUGE « IMPORTANT » : relances de questionnaires du bien restés en brouillon
-//    (SMS ou mail pas encore marqué « fait ») et questionnaires modifiés après l'envoi.
+//    (SMS ou mail pas encore marqué « fait »), questionnaires modifiés après l'envoi,
+//    et demandes de modification d'annonces en ligne (bouton « Fait »).
+//  • Le doré montre aussi les changements faits par les vendeurs (prix, description, photos — bouton « Vu »).
 //  • Bandeau DORÉ : ce qui attend ta validation (demandes de projet, annonces, avis,
 //    pros à valider, photos, demandes de rappel, questionnaires de biens reçus, accès).
 //  • Bandeau VERT « Tout est ok » : quand il n'y a rien du tout.
@@ -25,6 +27,7 @@
       '.alerte-importante.alerte-doree ul { list-style:none; margin-left:0; }' +
       '.alerte-importante.alerte-doree li { margin:4px 0; }' +
       '.alerte-importante.alerte-doree a { background:#2B2100; color:#F5E3A3; padding:3px 10px; margin-left:6px; font-size:0.85rem; }' +
+      '.alerte-importante .alerte-bouton { border:0; border-radius:6px; padding:3px 10px; margin-left:6px; font-weight:700; cursor:pointer; background:#fff; color:#2B2100; font-size:0.85rem; }' +
       '.alerte-importante.alerte-ok { background:#2E6B34; }' +
       '.alerte-importante.alerte-ok strong { margin-bottom:0; }';
     document.head.appendChild(st);
@@ -90,10 +93,14 @@
 
   async function afficherAlertes() {
     if (typeof albSupabase === 'undefined') return;
-    const [rel, charge] = await Promise.all([
+    const [rel, charge, ann] = await Promise.all([
       albSupabase.rpc('alb_gestion_alertes_questionnaires'),
-      chargerAValider()
+      chargerAValider(),
+      albSupabase.rpc('alb_gestion_alertes_annonces')
     ]);
+    if (ann.error) console.log('[ALB DEBUG] alertes annonces :', ann.error);
+    const demandes = (ann.data && Array.isArray(ann.data.demandes)) ? ann.data.demandes : [];
+    const modifsAnn = (ann.data && Array.isArray(ann.data.modifs)) ? ann.data.modifs : [];
     if (rel.error) { console.log('[ALB DEBUG] alertes questionnaires :', rel.error); return; }  // pas Jocelyne : rien
     const relances = Array.isArray(rel.data) ? rel.data : [];
     const aValider = charge.items, modifies = charge.modifies;
@@ -105,35 +112,55 @@
     zone.id = 'alerte-importante';
 
     // Rouge : relances de questionnaires
-    if (relances.length || modifies.length) {
+    if (relances.length || modifies.length || demandes.length) {
+      const lignesDemandes = demandes.map(function (d) {
+        return '<li>' + echapper(d.nom || 'Membre') + ' demande une modification' + (d.ville ? ' (' + echapper(d.ville) + ')' : '') + ' : « ' + echapper(d.message) + ' » ' +
+          '<a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="demande" data-id="' + echapper(d.id) + '">✓ Fait</button></li>';
+      }).join('');
       const lignesModif = modifies.map(function (q) {
         return '<li>' + echapper(q.pro || [q.pro_prenom, q.pro_nom].filter(Boolean).join(' ') || 'Membre') + ' a modifié son questionnaire après l\u2019envoi' + (q.adresse ? ' (' + echapper(q.adresse) + ')' : '') + '</li>';
       }).join('');
-      const lignes = lignesModif + relances.map(function (a) {
+      const lignes = lignesDemandes + lignesModif + relances.map(function (a) {
         const quoi = a.quoi === 'mail' ? 'mail à envoyer' : 'SMS à envoyer';
         const j = joursDepuis(a.depuis);
         return '<li>' + echapper(a.nom || 'Membre') + ' – questionnaire en brouillon – <em>' + quoi + '</em>' +
           (j >= 2 ? ' (en attente depuis ' + j + ' jours)' : '') + '</li>';
       }).join('');
-      const n = relances.length + modifies.length;
+      const n = relances.length + modifies.length + demandes.length;
       zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + pluriel(n, 'point', 'points') + ' à voir</strong>' +
         '<ul>' + lignes + '</ul>' + (modifies.length ? '<a href="questionnaires-biens.html">Voir les questionnaires</a> ' : '') + (relances.length ? '<a href="calendrier.html">Voir dans le Calendrier</a>' : '')));
     }
 
-    // Doré : ce qui attend ta validation
-    if (aValider.length) {
-      const lignes = aValider.map(function (it) {
+    // Doré : ce qui attend ta validation, et les changements faits par les vendeurs
+    const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
+    if (aValider.length || modifsAnn.length) {
+      const lignes = modifsAnn.map(function (m) {
+        const quoi = (m.quoi || []).map(function (q) { return NOMS_MODIF[q] || q; });
+        const texte = quoi.length > 1 ? quoi.slice(0, -1).join(', ') + ' et ' + quoi[quoi.length - 1] : (quoi[0] || 'son annonce');
+        return '<li>✏️ ' + echapper(m.nom || 'Membre') + ' a modifié ' + echapper(texte) + (m.ville ? ' (' + echapper(m.ville) + ')' : '') +
+          ' <a href="' + GS + '#annonces">Voir</a> <button type="button" class="alerte-bouton" data-alerte-faite="modif" data-id="' + echapper(m.id) + '">👁 Vu</button></li>';
+      }).join('') + aValider.map(function (it) {
         return '<li>' + echapper(it[0]) + ' <a href="' + echapper(it[1]) + '">Voir</a></li>';
       }).join('');
       zone.appendChild(creer('alerte-doree', '<strong>✨ À valider</strong><ul>' + lignes + '</ul>'));
     }
 
     // Vert : rien du tout
-    if (!relances.length && !modifies.length && !aValider.length) {
+    if (!relances.length && !modifies.length && !demandes.length && !aValider.length && !modifsAnn.length) {
       zone.appendChild(creer('alerte-ok', '<strong>✅ Tout est ok – rien à valider ni à relancer</strong>'));
     }
     placer(zone);
   }
+
+  // Boutons « Fait » (demande de modification traitée) et « Vu » (changement du vendeur)
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest && ev.target.closest('[data-alerte-faite]');
+    if (!b) return;
+    b.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_alerte_annonce_faite', { p_quoi: b.dataset.alerteFaite, p_id: b.dataset.id });
+    if (error) { console.log('[ALB DEBUG] alerte faite :', error); b.disabled = false; return; }
+    afficherAlertes();
+  });
 
   // Place les bandeaux juste sous l'en-tête de la page
   function placer(z) {
