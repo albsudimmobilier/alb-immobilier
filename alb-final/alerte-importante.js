@@ -132,7 +132,7 @@
   }
 
   // Dernières données, pour redessiner le doré sans tout recharger
-  const dernier = { pret: false, modifsAnn: [], aValider: [], relances: [], demandes: [], modifies: [], papiers: [] };
+  const dernier = { pret: false, modifsAnn: [], aValider: [], relances: [], demandes: [], modifies: [], papiers: [], fins: [] };
   const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
 
   // Dans Gestion du site : la liste complète « À faire aujourd'hui » (même calcul, même ordre)
@@ -176,13 +176,67 @@
     /^visite contestée/, /^désaccord entre/, /^pro dont le papier a expiré/, /^membre qui demande à quitter/];
   function estRouge(texteUn) { return LIGNES_ROUGES.some(function (r) { return r.test(texteUn || ''); }); }
 
+  // ----- Fins de mandat (15 jours avant) -----
+  const REPONSES_FIN = { renouvele: 'mandat renouvelé', sous_offre: 'sous offre / sous compromis : mets l\u2019annonce à jour', vendu: 'vendu : mets l\u2019annonce à jour', non_renouvele: 'mandat non renouvelé : annonce mise en pause', autre: 'autre réponse' };
+  function dateFrCourte(iso) { return iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-FR') : ''; }
+  function smsFinMandat(f) {
+    return 'Bonjour ' + (f.prenom || '') + ', c\u2019est Jocelyne d\u2019ALB Sud Immobilier. Le mandat de votre bien réf. ' + f.ref + ' se termine le ' + dateFrCourte(f.fin_mandat).slice(0, 5) +
+      '. Je vous ai envoyé un e-mail à ' + (f.email || 'votre adresse') + ' : un clic suffit pour me dire où vous en êtes. Merci ! À la bien, toujours ✨';
+  }
+  function ligneFinMandat(f) {
+    const bien = (f.type_bien === 'appartement' ? 'appartement' : 'maison') + (f.ville ? ' à ' + f.ville : '');
+    const qui = echapper(f.nom || 'Le pro') + ' – réf. ' + echapper(f.ref) + ' (' + echapper(bien) + ')';
+    const voir = ' <a href="annonce-detail.html?id=' + echapper(f.annonce_id) + '" target="_blank" rel="noopener">Voir l\u2019annonce</a>';
+    const vu = ' <button type="button" class="alerte-bouton" data-fin="vu" data-id="' + echapper(f.id) + '">👁 Vu</button>';
+    if (f.reponse) {
+      const d = f.reponse_detail || {};
+      return '<li>✅ ' + qui + ' a répondu : <b>' + echapper(REPONSES_FIN[f.reponse] || f.reponse) + '</b>' +
+        (f.reponse === 'renouvele' && d.fin ? ' jusqu\u2019au ' + echapper(dateFrCourte(d.fin)) : '') + (d.detail ? ' – « ' + echapper(d.detail) + ' »' : '') + voir + vu + '</li>';
+    }
+    if (f.pause_auto_le) return '<li>⏸️ ' + qui + ' : mandat terminé le ' + echapper(dateFrCourte(f.fin_mandat)) + ' sans réponse, <b>annonce mise en pause automatiquement</b>' + voir + vu + '</li>';
+    const mail = f.mail_envoye_le
+      ? ' <span>(mail envoyé le ' + echapper(dateFrCourte(f.mail_envoye_le)) + ')</span>'
+      : ' <button type="button" class="alerte-bouton" data-fin="mail" data-id="' + echapper(f.id) + '">✉️ Envoyer le mail</button>';
+    const sms = f.sms_envoye_le ? ' <span>(SMS fait)</span>'
+      : ' <button type="button" class="alerte-bouton" data-fin="copier-sms" data-id="' + echapper(f.id) + '">📋 Copier le SMS</button>' +
+        (f.telephone ? ' <a href="sms:' + echapper(String(f.telephone).replace(/\s/g, '')) + '?body=' + encodeURIComponent(smsFinMandat(f)) + '">📱 Ouvrir le SMS</a>' : '') +
+        ' <button type="button" class="alerte-bouton" data-fin="sms" data-id="' + echapper(f.id) + '">✓ SMS fait</button>';
+    return '<li>⏰ Fin de mandat le <b>' + echapper(dateFrCourte(f.fin_mandat)) + '</b> : ' + qui + voir + mail + sms + '</li>';
+  }
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest && ev.target.closest('[data-fin]');
+    if (!b) return;
+    const f = (dernier.fins || []).find(function (x) { return x.id === b.dataset.id; });
+    if (!f) return;
+    const quoi = b.dataset.fin;
+    if (quoi === 'copier-sms') {
+      try { await navigator.clipboard.writeText(smsFinMandat(f)); b.textContent = '✓ SMS copié'; } catch (ex) { window.prompt('Copie ce SMS :', smsFinMandat(f)); }
+      return;
+    }
+    if (quoi === 'mail') {
+      if (!window.confirm('Envoyer l\u2019e-mail de fin de mandat à ' + (f.nom || 'ce pro') + ' (' + (f.email || 'sans e-mail') + ') ?')) return;
+      b.disabled = true; b.textContent = 'Envoi…';
+      const r = await albSupabase.functions.invoke('alb-fin-mandat', { body: { action: 'envoyer', fin_id: f.id } });
+      if (r.error || !r.data || !r.data.ok) { console.log('[ALB DEBUG] mail fin de mandat :', r.error || r.data); b.disabled = false; b.textContent = '⚠️ Mail non envoyé, réessaie'; return; }
+      afficherAlertes();
+      return;
+    }
+    b.disabled = true;
+    const { error } = await albSupabase.rpc('alb_gestion_fin_mandat_marquer', { p_id: f.id, p_quoi: quoi });
+    if (error) { console.log('[ALB DEBUG] fin de mandat :', error); b.disabled = false; return; }
+    afficherAlertes();
+  });
+
   async function afficherAlertes() {
     if (typeof albSupabase === 'undefined') return;
-    const [rel, charge, ann] = await Promise.all([
+    const [rel, charge, ann, fins] = await Promise.all([
       albSupabase.rpc('alb_gestion_alertes_questionnaires'),
       chargerAValider(),
-      albSupabase.rpc('alb_gestion_alertes_annonces')
+      albSupabase.rpc('alb_gestion_alertes_annonces'),
+      albSupabase.rpc('alb_gestion_fins_mandat')
     ]);
+    if (fins.error) console.log('[ALB DEBUG] fins de mandat :', fins.error);
+    dernier.fins = Array.isArray(fins.data) ? fins.data : [];
     if (rel.error) { console.log('[ALB DEBUG] alertes questionnaires :', rel.error); return; }  // pas Jocelyne : rien
     if (ann.error) console.log('[ALB DEBUG] alertes annonces :', ann.error);
     dernier.pret = true;
@@ -213,7 +267,9 @@
     // Documents déposés par les pros (à voir, enregistrer sur ton PC, puis vérifier)
     const papiersR = dernier.papiers || [];
     // Dans Gestion du site, la ligne « papiers à vérifier » de « À faire aujourd'hui » est remplacée par le détail rouge
-    if (relances.length || modifies.length || demandes.length || rouges.length || papiersR.length) {
+    const fins = dernier.fins || [];
+    if (relances.length || modifies.length || demandes.length || rouges.length || papiersR.length || fins.length) {
+      const lignesFins = fins.map(ligneFinMandat).join('');
       const lignesPapiers = papiersR.map(function (x) {
         return '<li>📎 ' + echapper(x.pro || 'Un pro') + ' a déposé : <b>' + echapper(x.libelle || 'un document') + '</b>' +
           (x.envoye_le ? ' (le ' + echapper(new Date(x.envoye_le).toLocaleDateString('fr-FR')) + ')' : '') +
@@ -245,9 +301,9 @@
         return '<li>' + echapper(a.nom || 'Membre') + ' – questionnaire en brouillon – <em>' + quoi + '</em>' +
           (j >= 2 ? ' (en attente depuis ' + j + ' jours)' : '') + ' <a href="calendrier.html">Voir</a></li>';
       }).join('');
-      const n = papiersR.length + relances.length + modifies.length + demandes.length + rouges.reduce(function (t, it) { return t + it.n; }, 0);
+      const n = fins.length + papiersR.length + relances.length + modifies.length + demandes.length + rouges.reduce(function (t, it) { return t + it.n; }, 0);
       zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + n + ' à faire tout de suite</strong>' +
-        '<ul>' + lignesPapiers + lignesRouges + lignesDemandes + lignesModif + lignesRelances + '</ul>'));
+        '<ul>' + lignesFins + lignesPapiers + lignesRouges + lignesDemandes + lignesModif + lignesRelances + '</ul>'));
     }
 
     // Doré : à faire dans la journée (toutes les lignes, même à 0)
