@@ -140,6 +140,10 @@
     <p class="aide">Les charges viennent de tes factures fournisseurs, ajoutées dans Gestion du site → 💶 Factures → « 🧾 Mes charges » (selon leur date). Un mois sans facture fournisseur compte tes charges prévues (en gris).</p>
     <div class="carte tableau-conteneur" id="t-mois"></div>
 
+    <h2 class="titre-section">🧾 TVA (20 %)</h2>
+    <p class="aide">Un repère pour savoir combien mettre de côté : la TVA que tu as encaissée sur tes factures payées, moins la TVA de tes dépenses (« Mes charges », avec leur montant TTC). Pour tes services, la TVA est due quand le pro t'a payée. La déclaration officielle reste faite ou vérifiée par ton expert-comptable.</p>
+    <div class="carte tableau-conteneur" id="t-tva"></div>
+
     <h2 class="titre-section">🧑‍💼 Par type de revenu</h2>
     <div class="carte tableau-conteneur" id="t-types"></div>
 
@@ -297,7 +301,29 @@
       : '<p class="vide">Pas encore de visites enregistrées.</p>';
   }
 
+  // ----- TVA -----
+  async function chargerTva() {
+    const z = el('t-tva');
+    const { data, error } = await albSupabase.rpc('alb_gestion_tva', { p_annee: annee });
+    if (error || !data) { console.error('[ALB DEBUG] TVA :', error); z.innerHTML = '<p class="vide">La TVA n\'a pas pu être calculée.</p>'; return; }
+    const NOMS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const e2 = v => Number(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    let h = '<table><thead><tr><th>Mois</th><th>TVA encaissée</th><th>TVA sur tes dépenses</th><th>À reverser</th></tr></thead><tbody>';
+    let tc = 0, td = 0, trim = { c: 0, d: 0 };
+    data.mois.forEach((m, i) => {
+      const c = Number(m.collectee), dd = Number(m.deductible), s = c - dd;
+      tc += c; td += dd; trim.c += c; trim.d += dd;
+      h += '<tr><td>' + NOMS[i] + '</td><td>' + e2(c) + '</td><td>' + e2(dd) + '</td><td><strong>' + e2(s) + '</strong></td></tr>';
+      if (i % 3 === 2) { h += '<tr style="background:#F4EEF6;"><td><strong>Trimestre ' + ((i + 1) / 3) + '</strong></td><td>' + e2(trim.c) + '</td><td>' + e2(trim.d) + '</td><td><strong>' + e2(trim.c - trim.d) + '</strong></td></tr>'; trim = { c: 0, d: 0 }; }
+    });
+    h += '<tr style="background:#FBF5E8;"><td><strong>Année ' + annee + '</strong></td><td><strong>' + e2(tc) + '</strong></td><td><strong>' + e2(td) + '</strong></td><td><strong>' + e2(tc - td) + '</strong></td></tr></tbody></table>';
+    if (Number(data.en_attente) > 0) h += '<p class="aide">⏳ ' + e2(data.en_attente) + ' de TVA sur des factures pas encore payées : elle comptera le mois où le pro te paiera.</p>';
+    h += '<p class="aide">Un chiffre négatif = crédit de TVA (l\'État te doit de l\'argent).</p>';
+    z.innerHTML = h;
+  }
+
   async function charger() {
+    chargerTva();
     const { data, error } = await albSupabase.rpc('alb_gestion_chiffres', { p_annee: annee });
     if (error) { console.error('[ALB DEBUG] chiffres :', error); el('etat').className = 'message erreur'; el('etat').textContent = 'Les chiffres n\'ont pas pu être chargés. Recharge la page dans un instant.'; el('etat').classList.remove('cache'); return; }
     d = data; dessiner();
