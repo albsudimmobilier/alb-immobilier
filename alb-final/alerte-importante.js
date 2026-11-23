@@ -82,7 +82,8 @@
       albSupabase.rpc('alb_gestion_questionnaires_biens'),
       albSupabase.rpc('alb_gestion_demandes_acces'),
       albSupabase.rpc('alb_gestion_devis'),
-      albSupabase.rpc('alb_gestion_papiers')
+      albSupabase.rpc('alb_gestion_papiers'),
+      albSupabase.rpc('alb_gestion_depots')
     ]);
     r.forEach(function (x, i) { if (x.error) console.log('[ALB DEBUG] bandeau doré, source ' + i + ' :', x.error); });
     const nProjets = liste(r[0]).filter(function (p) { return p.statut === 'a_verifier' || p.statut === 'a_orienter' || p.statut === 'sans_suite'; }).length;
@@ -98,6 +99,8 @@
     const modifies = aTraiterQ.filter(enRouge);
     const nQuest = aTraiterQ.filter(function (q) { return !enRouge(q); }).length;
     const nAcces = liste(r[7]).length;
+    // Courtiers : 48 h après l'acceptation, appeler le particulier pour ses documents (même règle que l'onglet Projets)
+    const nDepots = liste(r[10]).filter(function (d) { return !d.deposes_le && !d.appel_fait_le && d.a_appeler_le && new Date(d.a_appeler_le) <= new Date(); }).length;
     const nDevis = liste(r[8]).filter(devisARelancer).length;
     const papiers = liste(r[9]);
     const nPapiersAVerifier = papiers.filter(function (x) { return x.statut === 'a_verifier'; }).length;
@@ -112,6 +115,7 @@
       ['🖼️', nPhotos, 'photo', 'photos', 'à valider', GS],
       ['☎️', nRappels, 'demande de rappel', 'demandes de rappel', 'en attente', 'calendrier.html'],
       ['📝', nQuest, 'questionnaire de bien reçu', 'questionnaires de biens reçus', 'à traiter', 'questionnaires-biens.html'],
+      ['📂', nDepots, 'relance de documents pour un courtier', 'relances de documents pour les courtiers', 'à faire (appeler le particulier)', GS + '#projets'],
       ['📄', nDevis, 'relance de devis', 'relances de devis', 'à faire (artisans)', GS + '#projets'],
       ['🗂️', nPapiersAVerifier, 'papier de pro', 'papiers de pros', 'à vérifier', GS + '#valides'],
       ['⏰', nPapiersRelance, 'relance de papier', 'relances de papiers', 'à faire (papier qui expire bientôt)', GS + '#valides'],
