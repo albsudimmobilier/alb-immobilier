@@ -74,6 +74,8 @@
     .creneau.fait { opacity: 0.55; text-decoration: line-through; }
     .creneau.retard { box-shadow: inset 3px 0 0 #D93025; }
     .creneau .h { font-weight: 700; display: block; font-size: 0.72rem; }
+    .creneau.rdvg { background: #5A3A6A !important; color: #fff !important; border-color: #5A3A6A !important; z-index: 3; font-weight: 600; }
+    .creneau.rdvg .h { color: #F3E3B5 !important; }
 
     .ligne { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border: 1px solid #E8E6E1; border-left-width: 4px; border-radius: 8px; background: #fff; cursor: pointer; font-size: 0.88rem; }
     .ligne.fait { opacity: 0.55; text-decoration: line-through; }
@@ -192,7 +194,8 @@
   const THEMES = {
     'Pros': '#1E88E5', 'Particuliers': '#D81B60', 'Réseau et prospection': '#C78A00', 'Compta et factures': '#2E7D32',
     'Banque et trésorerie': '#00838F', 'TVA et impôts': '#827717', 'Juridique et administratif': '#5E35B1', 'Assurances': '#3949AB',
-    'Site ALB Immobilier': '#546E7A', 'Communication et réseaux sociaux': '#EC407A', 'Accompagnement et formation': '#7E57C2', 'Organisation et perso': '#78909C'
+    'Site ALB Immobilier': '#546E7A', 'Communication et réseaux sociaux': '#EC407A', 'Accompagnement et formation': '#7E57C2', 'Organisation et perso': '#78909C',
+    'Rendez-vous réservés': '#5A3A6A'
   };
   const MOTS_THEMES = [
     ['TVA et impôts', /(tva|impôt|impot|cfe|urssaf)/i], ['Compta et factures', /(pennylane|factur|compta|advyse|justificatif|fournisseur)/i],
@@ -280,7 +283,7 @@
       const debut = r.heure ? (+r.heure.slice(0, 2)) * 60 + (+r.heure.slice(3, 5)) : null;
       const fin = r.fin ? (+r.fin.slice(0, 2)) * 60 + (+r.fin.slice(3, 5)) : null;
       liste.push({ cle: 'g' + r.id, le: r.jour, debut: debut, duree: (debut !== null && fin !== null && fin > debut) ? fin - debut : 30,
-        titre: '📞 Appeler ' + r.nom + (r.telephone ? ' · ' + r.telephone : ''), theme: 'Réseau et prospection', genre: 'rdvgoogle', fait: false,
+        titre: '📞 Appeler ' + r.nom + (r.telephone ? ' · ' + r.telephone : ''), theme: 'Rendez-vous réservés', genre: 'rdvgoogle', fait: false,
         lieu: '', note: 'Rendez-vous réservé sur ta page de réservation Google' + (r.email ? ' · ' + r.email : ''), retard: false, cochable: false, rdvg: r });
     });
     if (el('opt-site').checked) {
@@ -377,8 +380,8 @@
     }
     avecHeure.forEach(function (x) {
       const c = THEMES[x.theme] || '#78909C';
-      const hauteur = Math.max(x.duree / 60 * PX - 2, 24);
-      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + (x.genre === 'rappel' ? ' rappel' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
+      const hauteur = Math.max(x.duree / 60 * PX - 2, x.genre === 'rdvgoogle' ? 52 : 24);
+      grille += '<div class="creneau' + (x.fait ? ' fait' : '') + (x.retard ? ' retard' : '') + (x.genre === 'rappel' ? ' rappel' : '') + (x.genre === 'rdvgoogle' ? ' rdvg' : '') + '" data-action="ouvrir" data-cle="' + e(x.cle) + '" style="top:' + ((x.debut - min) / 60 * PX) + 'px;height:' + hauteur + 'px;' +
         'left:calc(' + (x.col * 100 / x.cols) + '% + 2px);width:calc(' + (100 / x.cols) + '% - 4px);border-color:' + c + ';background:' + c + '1A;color:#3a3a37;">' +
         '<span class="h" style="color:' + c + ';">' + hCourte(x.debut) + '</span>' + e(x.titre) + (x.decalage ? '<span class="decale">décalé de ' + x.decalage + ' min</span>' : '') + '</div>';
     });
@@ -980,7 +983,7 @@
     if (a === 'aujourdhui') { allerAuJour(iso(new Date())); return; }
     if (a === 'mois-moins') { mois = mois.m === 0 ? { a: mois.a - 1, m: 11 } : { a: mois.a, m: mois.m - 1 }; dessinerMois(); return; }
     if (a === 'mois-plus') { mois = mois.m === 11 ? { a: mois.a + 1, m: 0 } : { a: mois.a, m: mois.m + 1 }; dessinerMois(); return; }
-    if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); return; }
+    if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); if (ouvert) el('detail').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (a === 'fermer-detail') { ouvert = null; dessinerDetail(); return; }
     if (a === 'fait') { await cocher(b.dataset.id, b.dataset.fait === '1', b); return; }
     if (a === 'rappel-fait') { await rappelFait(b.dataset.id, b); return; }
