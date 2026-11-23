@@ -552,7 +552,7 @@ function blocPapiersPro(proId) {
       return '<div class="' + (x.statut === 'a_verifier' ? 'point-a-faire' : 'ligne-info') + '" style="margin:6px 0;">' +
         '<strong>' + albEchapper(x.libelle) + '</strong> ' + (STATUTS_PAPIER_GESTION[x.statut] || '') + '<br>' +
         (x.chemin
-          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>'
+          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>' + ' <button type="button" class="bouton discret" style="margin-top:6px;" onclick="telechargerPapier(\'' + x.id + '\')">⬇️ Enregistrer sur mon PC</button>'
           : '<span style="font-size:1rem;">' + albEchapper(x.valeur || '') + '</span>') +
         '<br><span style="color:#7a7a75;">Envoyé le ' + dateLisible(x.envoye_le) + (x.verifie_le ? ' · traité le ' + dateLisible(x.verifie_le) : '') + '</span>' +
         (x.statut === 'refuse' && x.note ? '<br><span class="mot">💬 « ' + albEchapper(x.note) + ' »</span>' : '') +
@@ -564,6 +564,14 @@ function blocPapiersPro(proId) {
     }).join('') + '</details>';
 }
 // Le fichier est privé : on crée un lien valable 10 minutes
+// Télécharge le document du pro sur l'ordinateur (lien valable 10 minutes)
+async function telechargerPapier(id) {
+  const x = papiersPros.find(function (p) { return p.id === id; });
+  if (!x || !x.chemin) return;
+  const { data, error } = await albSupabase.storage.from('pro-documents').createSignedUrl(x.chemin, 600, { download: x.nom_fichier || true });
+  if (error || !data) { afficherMessage('message-general', 'erreur', 'Le document n\'a pas pu être téléchargé. Réessaie dans un instant.'); return; }
+  window.location.href = data.signedUrl;
+}
 async function ouvrirPapier(id) {
   const x = papiersPros.find(function (y) { return y.id === id; });
   if (!x || !x.chemin) return;

@@ -103,7 +103,8 @@
     const nDepots = liste(r[10]).filter(function (d) { return !d.deposes_le && !d.appel_fait_le && d.a_appeler_le && new Date(d.a_appeler_le) <= new Date(); }).length;
     const nDevis = liste(r[8]).filter(devisARelancer).length;
     const papiers = liste(r[9]);
-    const nPapiersAVerifier = papiers.filter(function (x) { return x.statut === 'a_verifier'; }).length;
+    const papiersAVerifier = papiers.filter(function (x) { return x.statut === 'a_verifier'; });
+    const nPapiersAVerifier = papiersAVerifier.length;
     const nPapiersRelance = papiers.filter(function (x) { return papierMailAFaire(x) || papierSmsAFaire(x) || papierRetraitAFaire(x); }).length;
 
     // Toutes les lignes sont affichées, même à 0 : le chiffre monte dès qu'il y a quelque chose
@@ -117,11 +118,10 @@
       ['📝', nQuest, 'questionnaire de bien reçu', 'questionnaires de biens reçus', 'à traiter', 'questionnaires-biens.html'],
       ['📂', nDepots, 'relance de documents pour un courtier', 'relances de documents pour les courtiers', 'à faire (appeler le particulier)', GS + '#projets'],
       ['📄', nDevis, 'relance de devis', 'relances de devis', 'à faire (artisans)', GS + '#projets'],
-      ['🗂️', nPapiersAVerifier, 'papier de pro', 'papiers de pros', 'à vérifier', GS + '#valides'],
       ['⏰', nPapiersRelance, 'relance de papier', 'relances de papiers', 'à faire (papier qui expire bientôt)', GS + '#valides'],
       ['🔑', nAcces, 'demande d\u2019accès', 'demandes d\u2019accès', 'en attente', GS + '#acces']
     ].map(function (x) { return { emoji: x[0], n: x[1], texte: (x[1] > 1 ? x[3] : x[2]) + ' ' + x[4], lien: x[5], rouge: x[0] === '☎️' }; });
-    return { items: items, modifies: modifies };
+    return { items: items, modifies: modifies, papiers: papiersAVerifier };
   }
 
   function creer(classe, html) {
@@ -132,7 +132,7 @@
   }
 
   // Dernières données, pour redessiner le doré sans tout recharger
-  const dernier = { pret: false, modifsAnn: [], aValider: [], relances: [], demandes: [], modifies: [] };
+  const dernier = { pret: false, modifsAnn: [], aValider: [], relances: [], demandes: [], modifies: [], papiers: [] };
   const NOMS_MODIF = { prix: 'son prix', honoraires: 'ses honoraires', description: 'sa description', photos: 'ses photos' };
 
   // Dans Gestion du site : la liste complète « À faire aujourd'hui » (même calcul, même ordre)
@@ -191,6 +191,7 @@
     dernier.modifsAnn = (ann.data && Array.isArray(ann.data.modifs)) ? ann.data.modifs : [];
     dernier.modifies = charge.modifies;
     dernier.aValider = charge.items;
+    dernier.papiers = charge.papiers || [];
     dessiner();
   }
 
@@ -201,7 +202,7 @@
     const relances = dernier.relances, demandes = dernier.demandes, modifies = dernier.modifies;
     const toutes = lignesDorees();
     const rouges = toutes.filter(function (it) { return it.rouge && it.n > 0; });
-    const dorees = toutes.filter(function (it) { return !it.rouge; });
+    const dorees = toutes.filter(function (it) { return !it.rouge && !/^papiers? de pros? à vérifier/.test(it.texte || ''); });
 
     const ancien = document.getElementById('alerte-importante');
     ajouterStyle();
@@ -209,7 +210,16 @@
     zone.id = 'alerte-importante';
 
     // Rouge : hyper important
-    if (relances.length || modifies.length || demandes.length || rouges.length) {
+    // Documents déposés par les pros (à voir, enregistrer sur ton PC, puis vérifier)
+    const papiersR = dernier.papiers || [];
+    // Dans Gestion du site, la ligne « papiers à vérifier » de « À faire aujourd'hui » est remplacée par le détail rouge
+    if (relances.length || modifies.length || demandes.length || rouges.length || papiersR.length) {
+      const lignesPapiers = papiersR.map(function (x) {
+        return '<li>📎 ' + echapper(x.pro || 'Un pro') + ' a déposé : <b>' + echapper(x.libelle || 'un document') + '</b>' +
+          (x.envoye_le ? ' (le ' + echapper(new Date(x.envoye_le).toLocaleDateString('fr-FR')) + ')' : '') +
+          (x.chemin ? ' <button type="button" class="alerte-bouton" data-papier-telecharger="' + echapper(x.chemin) + '" data-nom="' + echapper(x.nom_fichier || 'document') + '">⬇️ Enregistrer sur mon PC</button>' : (x.valeur ? ' : ' + echapper(x.valeur) : '')) +
+          ' <a href="' + GS + '#valides">Vérifier</a></li>';
+      }).join('');
       const lignesRouges = rouges.map(function (it) {
         const voir = it.aFaire !== undefined
           ? ' <button type="button" class="alerte-bouton" data-alerte-ouvrir="' + it.aFaire + '">Voir</button>'
@@ -235,9 +245,9 @@
         return '<li>' + echapper(a.nom || 'Membre') + ' – questionnaire en brouillon – <em>' + quoi + '</em>' +
           (j >= 2 ? ' (en attente depuis ' + j + ' jours)' : '') + ' <a href="calendrier.html">Voir</a></li>';
       }).join('');
-      const n = relances.length + modifies.length + demandes.length + rouges.reduce(function (t, it) { return t + it.n; }, 0);
+      const n = papiersR.length + relances.length + modifies.length + demandes.length + rouges.reduce(function (t, it) { return t + it.n; }, 0);
       zone.appendChild(creer('', '<strong>🔴 IMPORTANT – ' + n + ' à faire tout de suite</strong>' +
-        '<ul>' + lignesRouges + lignesDemandes + lignesModif + lignesRelances + '</ul>'));
+        '<ul>' + lignesPapiers + lignesRouges + lignesDemandes + lignesModif + lignesRelances + '</ul>'));
     }
 
     // Doré : à faire dans la journée (toutes les lignes, même à 0)
@@ -250,6 +260,17 @@
     }
     if (ancien) ancien.replaceWith(zone); else placer(zone);
   }
+
+  // « Enregistrer sur mon PC » : télécharge le document déposé par le pro (lien valable 10 minutes)
+  document.addEventListener('click', async function (ev) {
+    const b = ev.target.closest && ev.target.closest('[data-papier-telecharger]');
+    if (!b) return;
+    b.disabled = true;
+    const { data, error } = await albSupabase.storage.from('pro-documents').createSignedUrl(b.dataset.papierTelecharger, 600, { download: b.dataset.nom || true });
+    b.disabled = false;
+    if (error || !data) { console.log('[ALB DEBUG] téléchargement papier :', error); alert('Le document n\u2019a pas pu être téléchargé. Réessaie dans un instant.'); return; }
+    window.location.href = data.signedUrl;
+  });
 
   // Boutons « Fait » (demande de modification traitée) et « Vu » (changement du vendeur)
   document.addEventListener('click', async function (ev) {

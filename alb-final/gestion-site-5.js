@@ -375,7 +375,7 @@ blocPapiersPro = function (proId) {
       return '<div class="' + (x.statut === 'a_verifier' || papierExpireBientot(x) ? 'point-a-faire' : 'ligne-info') + '" style="margin:6px 0;">' +
         '<strong>' + albEchapper(x.libelle) + '</strong> ' + (STATUTS_PAPIER_GESTION[x.statut] || '') + etatValidite(x) + '<br>' +
         (x.chemin
-          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>'
+          ? '<button type="button" class="bouton discret" style="margin-top:6px;" onclick="ouvrirPapier(\'' + x.id + '\')">📎 Ouvrir ' + albEchapper(x.nom_fichier || 'le fichier') + '</button>' + ' <button type="button" class="bouton discret" style="margin-top:6px;" onclick="telechargerPapier(\'' + x.id + '\')">⬇️ Enregistrer sur mon PC</button>'
           : '<span style="font-size:1rem;">' + albEchapper(x.valeur || '') + '</span>') +
         '<br><span style="color:#7a7a75;">Envoyé le ' + dateLisible(x.envoye_le) + (x.verifie_le ? ' · traité le ' + dateLisible(x.verifie_le) : '') + '</span>' +
         (x.statut === 'refuse' && x.note ? '<br><span class="mot">💬 « ' + albEchapper(x.note) + ' »</span>' : '') +
