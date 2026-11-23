@@ -212,6 +212,7 @@
   let ouvert = null;        // le créneau dont on voit le détail
   let membres = [], rappels = [], questionnaires = [], fichesPart = [];
   let filtre = { cat: 'tout', sous: '' };
+  let rdvGoogle = [];      // rendez-vous réservés sur la page de réservation Google (lus par alb-rdv-google)
   let appelEnCours = null;  // la personne qu'on est en train d'appeler
   let noterOuvert = null;   // la personne pour qui on est en train d'écrire une note
   const METIERS_PROS = ['courtier', 'artisan', 'agent', 'mandataire', 'autre_pro'];
@@ -258,6 +259,12 @@
     rappels = r.data || [];
     questionnaires = q.data || [];
     fichesPart = qp.error ? [] : (qp.data || []);
+    // Rendez-vous réservés sur Google : s'ils ne se chargent pas, le Calendrier marche quand même
+    try {
+      const g = await albSupabase.functions.invoke('alb-rdv-google', { body: {} });
+      rdvGoogle = (g.data && g.data.ok && g.data.rdv) || [];
+      if (g.error || (g.data && !g.data.ok)) console.log('[ALB DEBUG] rendez-vous Google :', g.error || g.data);
+    } catch (err) { console.log('[ALB DEBUG] rendez-vous Google :', err); rdvGoogle = []; }
     return true;
   }
 
@@ -268,6 +275,13 @@
       const minutes = r.heure ? (+String(r.heure).slice(0, 2)) * 60 + (+String(r.heure).slice(3, 5)) : null;
       liste.push({ cle: 'a' + r.id, id: r.id, le: r.le, debut: minutes, duree: plageDuTitre(r.titre) || 45, titre: r.titre, theme: themeDe(r),
         genre: r.genre, fait: !!r.fait_le, lieu: r.lieu || '', note: r.note || '', retard: r.genre === 'tache' && !r.fait_le && r.le < iso(new Date()), cochable: true });
+    });
+    rdvGoogle.forEach(function (r) {
+      const debut = r.heure ? (+r.heure.slice(0, 2)) * 60 + (+r.heure.slice(3, 5)) : null;
+      const fin = r.fin ? (+r.fin.slice(0, 2)) * 60 + (+r.fin.slice(3, 5)) : null;
+      liste.push({ cle: 'g' + r.id, le: r.jour, debut: debut, duree: (debut !== null && fin !== null && fin > debut) ? fin - debut : 30,
+        titre: '📞 Appeler ' + r.nom + (r.telephone ? ' · ' + r.telephone : ''), theme: 'Réseau et prospection', genre: 'rdvgoogle', fait: false,
+        lieu: '', note: 'Rendez-vous réservé sur ta page de réservation Google' + (r.email ? ' · ' + r.email : ''), retard: false, cochable: false, rdvg: r });
     });
     if (el('opt-site').checked) {
       (agenda.rappels || []).forEach(function (r) {
@@ -402,6 +416,9 @@
       (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? '<p>' + e(x.note) + '</p>' : '') +
       (x.decalage ? '<p>⏩ Décalé de ' + x.decalage + ' min pour faire de la place à un rappel. Ton Agenda n\'a pas changé.</p>' : '') +
       '<div class="actions">' +
+      (x.rdvg && tel(x.rdvg.telephone) ? '<a class="bouton plein" href="tel:' + e(tel(x.rdvg.telephone)) + '">📞 Appeler ' + e(x.rdvg.telephone) + '</a>' : '') +
+      (x.rdvg && x.rdvg.email ? '<a class="bouton" href="mailto:' + e(x.rdvg.email) + '">✉️ Écrire</a>' : '') +
+      (x.rdvg ? '<a class="bouton" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">📅 Ouvrir Google Agenda</a>' : '') +
       (x.rappel ? (tel(x.rappel.telephone) ? '<a class="bouton" href="tel:' + e(tel(x.rappel.telephone)) + '">📞 Appeler</a>' : '') +
         '<a class="bouton plein" href="questionnaires.html?commencer=rappel:' + e(x.rappel.id) + '">🧭 Accueil</a>' +
         '<button type="button" class="bouton vert" data-action="rappel-fait" data-id="' + e(x.rappel.id) + '">✓ C\'est fait</button>' : '') +
@@ -714,6 +731,7 @@
     const t = x.titre || '', cats = [];
     if (x.genre === 'rappel' || x.theme === 'Particuliers' || /particulier|accueil/i.test(t)) cats.push('particuliers');
     if (x.theme === 'Pros' || /courtier|agent|mandataire|artisan|\bpros?\b/i.test(t)) cats.push('pros');
+    if (x.genre === 'rdvgoogle') { cats.push('pros'); cats.push('particuliers'); }
     if (/relanc/i.test(t)) cats.push('relances');
     if (THEMES_ADMIN.indexOf(x.theme) !== -1 || /administratif|compta|factur/i.test(t)) cats.push('admin');
     if (/salon|\brent\b|belvaux/i.test(t)) cats.push('salon');
