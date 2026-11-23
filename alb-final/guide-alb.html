@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide ALB — Gestion du site</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="polices/polices.css">
+  <style>
+    /* ========== Guide ALB : « comment je fais si… », avec recherche ========== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #F5F3F0; color: #4A4A47; line-height: 1.55; }
+    h1, h2 { font-family: 'Playfair Display', serif; color: #5A3A6A; }
+    .bandeau { background: #4B1A3E; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .bandeau-gauche { display: flex; align-items: center; gap: 10px; }
+    .bandeau img { height: 38px; background: #fff; border-radius: 6px; padding: 3px 6px; }
+    .bandeau-titre { font-weight: 700; font-size: 1rem; }
+    .bandeau-droite { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 8px; }
+    .bandeau a { color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 7px 10px; font-size: 0.8rem; text-decoration: none; }
+    .bandeau a:hover { background: #B28E3D; border-color: #B28E3D; }
+    .contenu { max-width: 860px; margin: 0 auto; padding: 22px 16px 60px; }
+    .aide { font-size: 0.88rem; color: #7a7a75; margin: 6px 0 14px; }
+    .recherche { position: sticky; top: 62px; z-index: 50; background: #F5F3F0; padding: 8px 0 10px; }
+    .recherche input { width: 100%; font: inherit; font-size: 1.05rem; padding: 14px 16px 14px 46px; border: 2px solid #B28E3D; border-radius: 10px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%235A3A6A' stroke-width='2.4'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 14px center; }
+    .recherche input:focus { outline: none; border-color: #5A3A6A; }
+    .themes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .themes button { font: inherit; font-size: 0.8rem; font-weight: 600; padding: 6px 12px; border-radius: 20px; border: 1px solid #E2D6E8; background: #fff; color: #5A3A6A; cursor: pointer; }
+    .themes button.actif { background: #5A3A6A; color: #fff; border-color: #5A3A6A; }
+    .compte { font-size: 0.85rem; color: #7a7a75; margin: 10px 0 4px; }
+    .fiche { background: #fff; border: 1px solid #E8E6E1; border-radius: 10px; margin: 12px 0; overflow: hidden; }
+    .fiche summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .fiche summary::-webkit-details-marker { display: none; }
+    .fiche-titre { font-weight: 700; color: #4B1A3E; font-size: 1rem; }
+    .fiche-theme { font-size: 0.72rem; font-weight: 600; color: #8a6d2c; background: #FBF5E8; border-radius: 12px; padding: 3px 9px; white-space: nowrap; }
+    .fiche-corps { padding: 0 16px 16px; border-top: 1px solid #F0EEE9; }
+    .fiche-corps p { margin: 10px 0 6px; }
+    .fiche-corps ol, .fiche-corps ul { margin: 8px 0 8px 22px; }
+    .fiche-corps li { margin: 5px 0; }
+    .astuce { background: #F4EEF6; border-radius: 8px; padding: 9px 12px; font-size: 0.88rem; margin-top: 10px; }
+    .aller { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .aller a { font-size: 0.85rem; font-weight: 600; padding: 9px 14px; border-radius: 8px; background: #B28E3D; color: #fff; text-decoration: none; }
+    .aller a:hover { background: #5A3A6A; }
+    mark { background: #FBE7B0; color: inherit; border-radius: 3px; padding: 0 2px; }
+    .rien { text-align: center; color: #7a7a75; background: #fff; border-radius: 10px; padding: 30px; margin-top: 12px; }
+    b { color: #4B1A3E; }
+  </style>
+</head>
+<body>
+
+<header class="bandeau">
+  <div class="bandeau-gauche">
+    <img src="logo-signature.png" alt="ALB Sud Immobilier">
+    <span class="bandeau-titre">📘 Guide ALB</span>
+  </div>
+  <div class="bandeau-droite">
+    <a href="gestion-site.html">← Gestion du site</a>
+    <a href="calendrier.html">📅 Calendrier</a>
+    <a href="statistiques.html">📈 Statistiques</a>
+  </div>
+</header>
+
+<main class="contenu">
+  <h1>📘 Guide ALB — comment je fais si…</h1>
+  <p class="aide">Tape ce que tu cherches (par exemple « inscription par téléphone », « facture », « code perdu »). Clique sur une fiche pour l'ouvrir, puis sur le bouton doré pour aller directement au bon endroit.</p>
+
+  <div class="recherche">
+    <input id="champ" type="search" placeholder="Que veux-tu faire ? Ex. : inscrire quelqu'un au téléphone" autocomplete="off" autofocus>
+    <div class="themes" id="themes"></div>
+  </div>
+
+  <p class="compte" id="compte"></p>
+  <div id="liste"></div>
+</main>
+
+<script>
+// ============================================================
+// Les fiches du guide. Pour en ajouter une : copier un bloc { … },
+// le coller à la suite et changer les textes.
+// t = titre · theme = rubrique · mots = autres façons de le dire
+// etapes = les étapes · astuce = facultatif · aller = boutons
+// ============================================================
+const GS = 'gestion-site.html';
+const FICHES = [
+  { theme: 'Tous les jours', t: 'Le matin : par où je commence ?', mots: 'debut journee tableau de bord a faire aujourd hui retard',
+    etapes: ['Ouvre l\'onglet <b>📊 Tableau de bord</b> : il liste ce que tu as à faire aujourd\'hui, de la plus urgente à la moins urgente.', 'Clique sur une ligne (la flèche →) pour aller directement à la bonne rubrique.', 'Puis onglet <b>📅 Agenda</b> : le bandeau <b>⚠️ en retard</b> montre ce qui a dépassé sa date.', 'Pour chaque tâche : <b>✓ Fait</b> puis <b>✓ Valider « fait »</b>, ou <b>✏️ Modifier</b>, ou <b>🗑️ Retirer</b>.'],
+    aller: [['Tableau de bord', GS + '#accueil'], ['Agenda', GS + '#agenda']] },
+  { theme: 'Tous les jours', t: 'Ajouter un rendez-vous ou une tâche', mots: 'agenda tache rdv noter rappel relance calendrier',
+    etapes: ['Onglet <b>📅 Agenda</b> → bouton vert <b>➕ Ajouter un rendez-vous ou une tâche</b>.', 'Remplis, choisis le thème, puis <b>💾 Enregistrer</b>.', 'Pour voir ta semaine comme un agenda papier : bouton du haut <b>📅 Calendrier</b>.'],
+    astuce: 'Rien n\'est envoyé à personne depuis l\'Agenda : c\'est ton carnet à toi.',
+    aller: [['Agenda', GS + '#agenda'], ['Calendrier', 'calendrier.html']] },
+  { theme: 'Tous les jours', t: 'Mes rendez-vous réservés en ligne (Google Agenda)', mots: 'reservation rendez-vous google agenda prise de rdv',
+    etapes: ['Bouton du haut <b>📅 Mes rendez-vous</b>.', '<b>Ouvrir mon agenda</b> : tu vois les personnes qui ont réservé, avec leurs coordonnées.', '<b>Voir ma page de réservation</b> : la page que voient les gens pour réserver (à partager).'],
+    aller: [['Gestion du site', GS]] },
+
+  { theme: 'Inscriptions', t: 'J\'ai quelqu\'un au téléphone qui veut s\'inscrire (créer son espace)', mots: 'inscription telephone inscrire creer espace compte nouveau membre ajouter un membre appel particulier pro',
+    etapes: ['Onglet <b>👥 Suivi des membres</b> → bouton vert <b>➕ Ajouter un membre</b>.', 'Choisis <b>particulier</b> (acheteur, vendeur et/ou besoin d\'un pro) ou <b>pro</b> (métier + nom de l\'entreprise).', 'Remplis prénom, nom, e-mail, téléphone (10 chiffres), puis clique <b>✅ Créer son espace</b>.', 'Un SMS et un e-mail déjà écrits s\'affichent avec son <b>lien d\'activation (valable 7 jours)</b> : clique <b>📱 Ouvrir le SMS</b>, <b>📧 Ouvrir le mail</b> ou <b>📋 Copier</b>.', 'La personne ouvre le lien, choisit son code à 4 chiffres et accepte les conditions générales. Elle reçoit alors ton e-mail de bienvenue.'],
+    astuce: 'Pas encore activé ? Il reste dans « Espaces créés, pas encore activés », en bas de Suivi des membres : tu peux y préparer un nouveau lien.',
+    aller: [['Suivi des membres', GS + '#membres']] },
+  { theme: 'Inscriptions', t: 'Créer l\'espace d\'un contact du Carnet, du salon ou d\'une demande de rappel', mots: 'inscription carnet salon rappel inscrire sur alb creer son espace',
+    etapes: ['<b>📇 Carnet</b> : sur sa carte, <b>✅ L\'inscrire sur ALB</b> → formulaire déjà rempli → <b>✅ Créer son espace</b>. Pense ensuite à le passer en « Inscrit sur ALB ».', '<b>Contacts du salon</b> : <b>👤 Créer son espace</b> sur sa carte.', '<b>🤝 Projets → Demandes de rappel</b> : <b>👤 Créer son espace</b> pendant l\'appel.', '<b>📝 Questionnaires</b> : depuis sa fiche.'],
+    aller: [['Carnet', GS + '#carnet'], ['Contacts du salon', 'contacts-salon.html'], ['Projets', GS + '#projets']] },
+  { theme: 'Inscriptions', t: 'Un pro s\'est inscrit tout seul : le valider', mots: 'pro a valider inscription validation siret appel questionnaire',
+    etapes: ['Onglet <b>📞 Pros à valider</b>.', 'Appelle-le et note ses réponses dans la page <b>📝 Questionnaires</b> (onglet de son métier → <b>Ouvrir la fiche</b>).', 'Vérifie ses pièces (<b>Point des pièces</b>) et complète <b>Infos administratives</b> : le <b>SIRET est obligatoire</b>.', 'Clique <b>✓ Valider</b> (il reçoit son e-mail de bienvenue) ou <b>✗ Refuser</b>.'],
+    aller: [['Pros à valider', GS + '#a-valider'], ['Questionnaires', 'questionnaires.html']] },
+  { theme: 'Inscriptions', t: 'Faire le questionnaire d\'entrée (appel d\'accueil)', mots: 'questionnaire entree accueil appel pro particulier fiche',
+    etapes: ['Bouton du haut <b>📝 Questionnaires</b>.', 'Choisis l\'onglet : <b>Agents / mandataires</b>, <b>Artisans</b>, <b>Courtiers</b> ou <b>Particuliers</b>.', '<b>Ouvrir la fiche</b> (ou <b>➕ Ajouter un pro</b>), note pendant l\'appel, <b>💾 Enregistrer</b>.', 'Pour un particulier : <b>🧭 Commencer l\'accueil</b>, puis ajoute le bon questionnaire avec les boutons <b>➕</b>.'],
+    astuce: 'Rien n\'est validé ni envoyé sans ton clic.',
+    aller: [['Questionnaires', 'questionnaires.html']] },
+  { theme: 'Inscriptions', t: 'Quelqu\'un a écrit à un pro sans avoir d\'espace', mots: 'nouveau venu nos pros alb bienvenue message',
+    etapes: ['Onglet <b>🤝 Projets</b> → <b>« Nouveaux venus via Nos pros ALB »</b>.', 'Il n\'a reçu <b>aucun</b> e-mail : envoie-lui ton message de bienvenue (prêt à copier).', 'Clique <b>✓ C\'est fait, bienvenue envoyée</b>.'],
+    aller: [['Projets', GS + '#projets']] },
+
+  { theme: 'Pros', t: 'Mettre un pro en ligne sur « Nos pros ALB »', mots: 'pro valide en ligne vitrine nos pros papiers pieces orias carte t assurance',
+    etapes: ['Onglet <b>✅ Pros validés</b> → sa carte.', 'Vérifie ses papiers : <b>✓ Vérifié</b> ou <b>✗ À renvoyer</b>. Il manque une pièce : <b>📅 Prévoir une relance</b>.', 'Si besoin : <b>✏️ Compléter la fiche</b>.', 'Clique <b>🌐 Mettre en ligne</b>. Pour l\'enlever : <b>🙈 Retirer de Nos pros ALB</b>.'],
+    astuce: 'Un numéro ORIAS ou de carte T n\'apparaît sur la fiche publique qu\'une fois vérifié par toi.',
+    aller: [['Pros validés', GS + '#valides']] },
+  { theme: 'Pros', t: 'Un pro a envoyé une nouvelle photo ou un logo', mots: 'photo logo pro valider image',
+    etapes: ['Ça apparaît dans le <b>Tableau de bord</b> et sur sa carte dans <b>✅ Pros validés</b>.', 'Regarde-la (<b>⬇️ Télécharger la photo</b> pour la voir en grand).', '<b>✓ Mettre en ligne</b> ou <b>✗ Refuser (l\'ancienne reste)</b>.'],
+    aller: [['Pros validés', GS + '#valides']] },
+  { theme: 'Pros', t: 'Un avis a été déposé sur un pro', mots: 'avis note etoiles publier moderer badge',
+    etapes: ['Onglet <b>⭐ Avis</b> → filtre <b>À relire</b>.', 'Lis-le, puis <b>✓ Publier</b> ou <b>✗ Ne pas publier</b>.', 'Déjà publié et tu veux l\'enlever : <b>Retirer de la fiche</b>.'],
+    astuce: 'Le badge « Validé ALB » se met à jour tout seul (note de 4 et plus).',
+    aller: [['Avis', GS + '#avis']] },
+  { theme: 'Pros', t: 'Le point du mois des pros (le 25) et les désaccords', mots: 'point du mois 25 desaccord visite contestee vente a confirmer',
+    etapes: ['Onglet <b>📆 Points des pros</b>.', 'Regarde <b>⚠️ Désaccords</b>, <b>🏠 Visites contestées</b>, <b>🎉 Ventes à confirmer</b>.', 'Appelle le pro et le particulier, note ta décision, puis <b>✓ C\'est réglé</b>.'],
+    astuce: 'Rien n\'est facturé tant que tu n\'as pas tranché.',
+    aller: [['Points des pros', GS + '#points']] },
+  { theme: 'Pros', t: 'Un pro est remplacé par un confrère', mots: 'remplacement absent indisponible confrere',
+    etapes: ['Onglet <b>✅ Pros validés</b> → en haut, <b>🔁 Remplacements entre pros</b>.', 'C\'est pour info : rien à faire de ton côté.'],
+    aller: [['Pros validés', GS + '#valides']] },
+
+  { theme: 'Annonces et visites', t: 'Une nouvelle annonce attend', mots: 'annonce mettre en ligne valider refuser corriger description bien',
+    etapes: ['Onglet <b>🏡 Annonces</b> → filtre <b>⏳ À étudier</b>.', 'Appelle le vendeur ou l\'agent. Si besoin <b>✏️ Corriger</b> → <b>💾 Enregistrer</b>.', '<b>🌐 Mettre en ligne</b>. Pour refuser : <b>✗ Refuser</b> → motif (facultatif) → <b>Confirmer le refus</b>.'],
+    aller: [['Annonces', GS + '#annonces']] },
+  { theme: 'Annonces et visites', t: 'Le point mensuel avec un vendeur (pause, offre, compromis, vendu)', mots: 'point mensuel pause compromis offre vendu reprendre continuer 90 jours',
+    etapes: ['Onglet <b>🏡 Annonces</b> → filtre <b>📅 Points à faire</b> (ou <b>📞 Appels des 90 jours</b>).', 'Appelle, puis dans <b>📞 Après ton appel</b> clique : <b>✓ On continue</b>, <b>⏸️ Mettre en pause</b>, <b>▶️ Reprendre la diffusion</b>, <b>🤝 Sous offre</b>, <b>✍️ Sous compromis</b> (avec la date chez le notaire) ou <b>🎉 Vendu</b>.'],
+    astuce: 'Rien n\'est jamais supprimé : une annonce vendue quitte le site mais reste ici.',
+    aller: [['Annonces', GS + '#annonces']] },
+  { theme: 'Annonces et visites', t: 'Questionnaire de bien (aider à écrire l\'annonce)', mots: 'questionnaire bien description annonce fin de mandat agent mandataire vendeur',
+    etapes: ['Bouton du haut <b>🏠 Questionnaires de biens</b>.', 'Filtre <b>À traiter</b> : lis le questionnaire, rappelle la personne, puis <b>J\'ai traité</b>.', '<b>➕ Nouveau questionnaire pour un membre</b> : tu le remplis avec lui au téléphone ; il le vérifie et l\'envoie lui-même.', '<b>⏰ Fin de mandat proche</b> : les mandats qui finissent dans moins de 60 jours.'],
+    aller: [['Questionnaires de biens', 'questionnaires-biens.html']] },
+  { theme: 'Annonces et visites', t: 'Suivre les visites (et le SMS de la veille)', mots: 'visite demande sms demain confirmee courtier facturer 2 euros',
+    etapes: ['Onglet <b>📅 Visites</b> : filtres <b>📱 Demain (SMS)</b>, <b>⏳ En attente de réponse</b>, <b>✅ Confirmées à venir</b>, <b>🏦 Courtier demandé</b>…', 'Visite prévue demain : ouvre la page sur ton téléphone, le bouton 📱 ouvre le SMS déjà prêt.', 'Visite d\'agent faite : <b>✓ Visite faite : la facturer (2 € HT)</b> ou <b>✗ Ne pas la facturer</b>.'],
+    aller: [['Visites', GS + '#visites']] },
+  { theme: 'Annonces et visites', t: 'Relance de la taxe foncière (20 septembre et 15 octobre)', mots: 'taxe fonciere relance septembre octobre',
+    etapes: ['Bouton du haut <b>🏠 Taxe foncière</b>.', 'Choisis l\'<b>Année de la taxe</b> et l\'<b>Étape</b> → <b>📋 Afficher la liste</b> (rien ne part encore).', 'Envoie les e-mails, envoie les SMS de ton téléphone, puis coche « SMS fait » / « Mail fait ».', 'Pour vérifier avant : <b>✉️ M\'envoyer un e-mail de test</b>.'],
+    aller: [['Taxe foncière', 'taxe-fonciere-gestion.html']] },
+
+  { theme: 'Projets', t: 'Un particulier a laissé son numéro (être rappelé)', mots: 'demande de rappel rappeler projets alb telephone',
+    etapes: ['Onglet <b>🤝 Projets</b> → <b>📞 Demandes de rappel</b>.', 'Appelle-le ; s\'il veut un espace : <b>👤 Créer son espace</b>.', 'Écris ce que vous vous êtes dit, puis <b>✓ C\'est fait, je l\'ai rappelé</b>.'],
+    aller: [['Projets', GS + '#projets']] },
+  { theme: 'Projets', t: 'Une demande de projet à envoyer aux pros', mots: 'projet travaux financement accompagnement a traiter envoyer pros',
+    etapes: ['Onglet <b>🤝 Projets</b> → filtre <b>📞 À traiter</b>.', 'Choisis les pros concernés, ajoute ton mot, puis <b>📨 Envoyer la demande</b>.'],
+    astuce: 'Les pros ne voient jamais les coordonnées du particulier : les premiers qui acceptent lui écrivent dans sa messagerie ALB.',
+    aller: [['Projets', GS + '#projets']] },
+  { theme: 'Projets', t: 'Suivre les devis des artisans', mots: 'devis artisan relance signe perdu',
+    etapes: ['Onglet <b>📄 Devis</b>, rangés <b>Par particulier</b> ou <b>Par artisan</b>.', 'Les relances J+2, J+7 et J+14 se proposent toutes seules avec le SMS prêt : envoie-le, puis <b>✓ Relance faite</b>.'],
+    aller: [['Devis', GS + '#devis']] },
+
+  { theme: 'Membres', t: 'Contacter un membre ou noter un échange', mots: 'appel sms mail whatsapp note relancer membre suivi',
+    etapes: ['Onglet <b>👥 Suivi des membres</b> → cherche-le.', 'Sur sa carte : <b>📞 Appel</b>, <b>📱 SMS</b>, <b>📧 Mail</b>, <b>💬 WhatsApp</b>, <b>📝 Note</b>, <b>📋 Où j\'en suis</b>.', 'Indique une date de relance : il apparaîtra ce jour-là dans « À faire aujourd\'hui ».'],
+    aller: [['Suivi des membres', GS + '#membres']] },
+  { theme: 'Membres', t: 'Corriger le profil d\'un membre', mots: 'corriger profil erreur metier nom telephone',
+    etapes: ['Onglet <b>👥 Suivi des membres</b> → sa carte → <b>✏️ Corriger son profil</b>.'],
+    aller: [['Suivi des membres', GS + '#membres']] },
+  { theme: 'Membres', t: 'Code perdu ou changement d\'e-mail', mots: 'code pin perdu oublie mot de passe acces email changer connexion',
+    etapes: ['Onglet <b>👥 Suivi des membres</b> → sa carte → <b>🔑 Accès</b>.', '<b>Il est au téléphone ?</b> Tape son nouveau code, confirme-le → <b>🔑 Enregistrer ce code</b>.', 'Sinon : nouvelle adresse e-mail (laisse vide pour un simple nouveau code) → <b>✅ C\'est bien lui : préparer le lien</b> → envoie-lui le lien.'],
+    astuce: 'L\'onglet 🔑 Accès liste aussi les demandes envoyées depuis le site.',
+    aller: [['Suivi des membres', GS + '#membres'], ['Accès', GS + '#acces']] },
+  { theme: 'Membres', t: 'Suspendre un membre', mots: 'suspendre bloquer probleme',
+    etapes: ['<b>👥 Suivi des membres</b> → sa carte → <b>⛔ Suspendre</b> → <b>⛔ Oui, suspendre</b>.', 'Pour annuler : <b>▶️ Remettre ce membre</b>.'],
+    aller: [['Suivi des membres', GS + '#membres']] },
+  { theme: 'Membres', t: 'Un membre veut partir (fermer un compte)', mots: 'depart quitter fermer compte resilier',
+    etapes: ['Onglet <b>🚪 Départs</b> : les demandes de départ.', 'Il change d\'avis : <b>↩️ Il reste sur ALB</b>.', 'Pour fermer toi-même : <b>👥 Suivi des membres</b> → sa carte → <b>🚪 Fermer son compte</b>.'],
+    aller: [['Départs', GS + '#departs']] },
+  { theme: 'Membres', t: 'Lire les conversations entre membres', mots: 'messages conversation messagerie lire',
+    etapes: ['Onglet <b>💬 Messages</b> (lecture seule).', 'Un pro ne peut jamais écrire en premier à un particulier : le site le bloque.'],
+    aller: [['Messages', GS + '#messages']] },
+
+  { theme: 'Prospection', t: 'Ajouter un contact au Carnet (prospection)', mots: 'carnet contact prospection pro rencontre relance proposition contrat',
+    etapes: ['Onglet <b>📇 Carnet</b> → <b>➕ Ajouter un contact</b> → <b>💾 Enregistrer</b>.', 'Sur sa carte : <b>📱 SMS</b>, <b>📧 Mail</b>, <b>💬 WhatsApp</b>, <b>📝 Ajouter une note</b>, <b>📅 Prévoir une relance</b>.', 'Ton avancée : <b>📨 Proposition envoyée</b> → <b>✍️ Contrat signé</b> → <b>✅ L\'inscrire sur ALB</b>.'],
+    aller: [['Carnet', GS + '#carnet']] },
+  { theme: 'Prospection', t: 'Rappeler les contacts du salon', mots: 'salon rent qr code rappeler',
+    etapes: ['Bouton du haut <b>📇 Contacts du salon</b>, filtre <b>À rappeler</b> (<b>⭐ Veulent tester</b> en premier).', 'Note, <b>💾 Enregistrer la note</b>, puis <b>✅ J\'ai rappelé</b>.'],
+    aller: [['Contacts du salon', 'contacts-salon.html']] },
+
+  { theme: 'Compta', t: 'Faire les factures du mois (le 1er)', mots: 'facture facturer brouillon valider pennylane paye encaisser',
+    etapes: ['Onglet <b>💶 Factures</b> → filtre <b>📝 Brouillons</b> (sinon <b>🔄 Préparer le mois dernier</b>).', 'Vérifie : <b>✏️ Corriger le montant</b> ou <b>✗ Retirer</b> une ligne, puis valide.', 'Filtre <b>⏳ À saisir sur Pennylane</b> : crée-la sur Pennylane, note son numéro → <b>✓ Enregistrer le numéro</b>.', 'Le pro a payé (filtre <b>À encaisser</b>) : <b>✓ Elle est payée</b>.'],
+    astuce: 'Jusqu\'au 31 décembre 2026 tout est offert (factures « à blanc »). Rien n\'est jamais envoyé ni prélevé automatiquement.',
+    aller: [['Factures', GS + '#factures']] },
+  { theme: 'Compta', t: 'Noter une dépense (Mes charges)', mots: 'charge depense fournisseur advyse comptable assurance netlify payer',
+    etapes: ['Onglet <b>💶 Factures</b> → en bas, <b>🧾 Mes charges</b>.', 'Fournisseur, pour quoi, montant HT, date → <b>➕ Ajouter la facture</b>.', 'Une fois réglée : <b>✓ Payée aujourd\'hui</b>.'],
+    astuce: 'Elles comptent toutes seules dans Mes chiffres.',
+    aller: [['Factures', GS + '#factures']] },
+  { theme: 'Compta', t: 'Voir ce que je gagne vraiment (Mes chiffres)', mots: 'mes chiffres argent gagne encaisse facture reste objectif visiteurs reseaux',
+    etapes: ['Bouton du haut <b>💶 Mes chiffres</b>, choisis l\'année.', 'Tu y vois ce qu\'il te reste après charges, le facturé, l\'encaissé, d\'où viennent tes visiteurs, et le détail par pro et par secteur.'],
+    aller: [['Mes chiffres', 'mes-chiffres.html']] },
+  { theme: 'Compta', t: 'Faire mon prévisionnel', mots: 'previsionnel prevision hypotheses chiffre d affaires 12 mois',
+    etapes: ['Onglet <b>📈 Prévisionnel</b>.', 'Change tes chiffres dans <b>✏️ Tes hypothèses</b> et <b>🧾 Tes charges par mois</b> : tout se recalcule.', '<b>💾 Enregistrer</b>. Dès qu\'il y a de vraies factures, le réel s\'affiche à côté.'],
+    astuce: 'C\'est avant impôt et avant ta rémunération : à affiner avec ton expert-comptable.',
+    aller: [['Prévisionnel', GS + '#previsionnel']] },
+  { theme: 'Compta', t: 'Modifier un tarif', mots: 'tarif prix changer',
+    etapes: ['Onglet <b>💶 Factures</b> → les tarifs → modifie → <b>Enregistrer</b>.'],
+    astuce: 'Un tarif modifié vaut pour les prochains brouillons ; une facture déjà validée ne change jamais.',
+    aller: [['Factures', GS + '#factures']] },
+
+  { theme: 'Statistiques', t: 'Voir les statistiques du site', mots: 'statistiques stats chiffres visites ventes inscriptions resultats frequentation',
+    etapes: ['Bouton du haut <b>📈 Statistiques</b>.', 'En haut, choisis la <b>Période</b>, le <b>Département</b>, le <b>Bien</b> et la <b>Vente</b>.', 'Rubriques utiles : <b>Vue d\'ensemble</b>, <b>Suivi commercial</b>, <b>Temps de vente</b>, <b>Prix au m²</b>, <b>Résultats concrets</b> (à montrer aux pros et dans tes posts), <b>Les pros</b>.'],
+    aller: [['Statistiques', 'statistiques.html']] },
+  { theme: 'Statistiques', t: 'Savoir quel réseau social m\'amène des visiteurs', mots: 'facebook linkedin instagram utm lien source reseaux',
+    etapes: ['Dans tes posts, ajoute la fin de lien : <b>https://albimmobilier.fr/?utm_source=linkedin</b> (ou facebook, facebook-groupes, instagram, whatsapp).', 'Puis regarde <b>💶 Mes chiffres → D\'où viennent tes visiteurs</b>.'],
+    aller: [['Mes chiffres', 'mes-chiffres.html']] },
+
+  { theme: 'Chaque mois', t: 'Ce qui revient chaque mois et chaque année', mots: 'maintenance taux credit simulateur 1er du mois mensuel annuel',
+    etapes: ['<b>Le 1er du mois</b> : factures, point maintenance du site, taux de crédit du simulateur (dans ton Agenda).', '<b>Le 25</b> : points des pros.', '<b>20 septembre / 15 octobre</b> : taxe foncière.'],
+    aller: [['Agenda', GS + '#agenda']] }
+];
+
+// ---------- Recherche (sans accents, tous les mots) ----------
+const sansAccent = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const texteFiche = f => sansAccent(f.t + ' ' + f.theme + ' ' + f.mots + ' ' + f.etapes.join(' ').replace(/<[^>]+>/g, ' ') + ' ' + (f.astuce || ''));
+const VIDES = new Set(['je', 'j', 'un', 'une', 'le', 'la', 'les', 'de', 'des', 'du', 'd', 'l', 'a', 'au', 'par', 'pour', 'comment', 'faire', 'quelqu', 'qu', 'un', 'et', 'en', 'mon', 'ma', 'mes']);
+let themeChoisi = 'Tout';
+
+function surligner(html, mots) {
+  if (!mots.length) return html;
+  return html.replace(/>([^<]+)</g, (m, txt) => '>' + txt.replace(/[^\s,.;:!?()«»'’]+/g, w => mots.some(x => sansAccent(w).startsWith(x)) ? '<mark>' + w + '</mark>' : w) + '<');
+}
+
+function afficher() {
+  const brut = document.getElementById('champ').value;
+  const mots = sansAccent(brut).split(/[^a-z0-9]+/).filter(m => m && !VIDES.has(m));
+  let res = FICHES.map(f => {
+    const tx = texteFiche(f), titre = sansAccent(f.t + ' ' + f.mots);
+    let score = 0;
+    for (const m of mots) {
+      const racine = m.length > 5 ? m.slice(0, m.length - 2) : m;   // inscription ≈ inscrire
+      if (titre.includes(racine)) score += 3; else if (tx.includes(racine)) score += 1; else return null;
+    }
+    return { f, score };
+  }).filter(Boolean);
+  if (themeChoisi !== 'Tout' && !mots.length) res = res.filter(r => r.f.theme === themeChoisi);
+  res.sort((a, b) => b.score - a.score);
+
+  document.getElementById('compte').textContent = mots.length ? res.length + ' fiche(s) trouvée(s)' : res.length + ' fiches';
+  const liste = document.getElementById('liste');
+  if (!res.length) { liste.innerHTML = '<div class="rien">Rien trouvé 🌿 Essaie un autre mot (par exemple « facture », « code », « annonce »).</div>'; return; }
+  const racines = mots.map(m => m.length > 5 ? m.slice(0, m.length - 2) : m);
+  liste.innerHTML = res.map((r, i) => {
+    const f = r.f;
+    const corps = '<ol>' + f.etapes.map(e => '<li>' + e + '</li>').join('') + '</ol>' +
+      (f.astuce ? '<div class="astuce">💡 ' + f.astuce + '</div>' : '') +
+      '<div class="aller">' + f.aller.map(a => '<a href="' + a[1] + '">' + a[0] + ' →</a>').join('') + '</div>';
+    return '<details class="fiche"' + (mots.length && i < 2 ? ' open' : '') + '><summary><span class="fiche-titre">' + surligner('>' + f.t + '<', racines).slice(1, -1) + '</span><span class="fiche-theme">' + f.theme + '</span></summary>' +
+      '<div class="fiche-corps">' + surligner(corps, racines) + '</div></details>';
+  }).join('');
+}
+
+// ---------- Rubriques ----------
+const themes = ['Tout', ...new Set(FICHES.map(f => f.theme))];
+document.getElementById('themes').innerHTML = themes.map(t => '<button type="button" data-t="' + t + '"' + (t === 'Tout' ? ' class="actif"' : '') + '>' + t + '</button>').join('');
+document.getElementById('themes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  themeChoisi = b.dataset.t;
+  document.getElementById('champ').value = '';
+  document.querySelectorAll('#themes button').forEach(x => x.classList.toggle('actif', x === b));
+  afficher();
+});
+document.getElementById('champ').addEventListener('input', afficher);
+afficher();
+</script>
+</body>
+</html>
