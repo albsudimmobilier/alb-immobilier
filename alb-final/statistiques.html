@@ -178,6 +178,11 @@
     <p class="aide">Artisan par artisan :</p>
     <div class="carte tableau-conteneur" id="t-devis"></div>
 
+    <h2 class="titre-section">⏰ Fins de mandat des pros</h2>
+    <p class="aide">Toutes les fins de mandat suivies depuis le début (alerte 15 jours avant). « Taux de réponse » = pros qui ont répondu ÷ fins de mandat arrivées à échéance ou déjà répondues.</p>
+    <div class="compteurs" id="c-fins-mandat"></div>
+    <div class="carte tableau-conteneur" id="t-fins-mandat"></div>
+
     <h2 class="titre-section">✅ Résultats concrets</h2>
     <p class="aide">Ce qu'ALB Immobilier a réellement fait aboutir sur la période. C'est ce qui parle aux pros et aux particuliers.</p>
     <div class="compteurs" id="c-resultats"></div>
@@ -956,6 +961,40 @@
     etat.classList.add('cache');
     el('page').classList.remove('cache');
     dessinerTout();
+    afficherFinsMandat();
+  }
+
+  // ---------- ⏰ Fins de mandat des pros (chargées à part, sur toute la durée) ----------
+  async function afficherFinsMandat() {
+    const { data, error } = await albSupabase.rpc('alb_gestion_fins_mandat_stats');
+    if (error) { console.error('[ALB DEBUG] fins de mandat :', error); return; }
+    const l = Array.isArray(data) ? data : [];
+    const auj = new Date().toISOString().slice(0, 10);
+    const nb = function (r) { return l.filter(function (f) { return f.reponse === r; }).length; };
+    const repondues = l.filter(function (f) { return f.reponse; });
+    const echues = l.filter(function (f) { return f.reponse || f.fin_mandat <= auj; }).length;
+    const pauses = l.filter(function (f) { return f.pause_auto_le; }).length;
+    const delais = repondues.filter(function (f) { return f.mail_envoye_le && f.repondu_le; })
+      .map(function (f) { return (new Date(f.repondu_le) - new Date(f.mail_envoye_le)) / 86400000; });
+    const delai = delais.length ? Math.round(delais.reduce(function (a, b) { return a + b; }, 0) / delais.length * 10) / 10 : null;
+    el('c-fins-mandat').innerHTML =
+      compteur(l.length, 'Fins de mandat suivies', l.filter(function (f) { return !f.reponse && !f.pause_auto_le; }).length + ' en attente de réponse') +
+      compteur(echues ? Math.round(repondues.length / echues * 100) + ' %' : '–', 'Taux de réponse', delai !== null ? 'réponse en ' + String(delai).replace('.', ',') + ' j en moyenne' : '', true) +
+      compteur(nb('renouvele'), '🔁 Renouvelés') +
+      compteur(nb('sous_offre'), '🤝 Sous offre') +
+      compteur(nb('vendu'), '🏡 Vendus') +
+      compteur(nb('non_renouvele'), '🚫 Non renouvelés') +
+      compteur(nb('autre'), '💬 Autre') +
+      compteur(pauses, '⏸️ Mis en pause sans réponse');
+    const parPro = {};
+    l.forEach(function (f) {
+      const k = f.pro || '—';
+      parPro[k] = parPro[k] || { total: 0, rep: 0, renouv: 0, pause: 0 };
+      parPro[k].total++; if (f.reponse) parPro[k].rep++; if (f.reponse === 'renouvele') parPro[k].renouv++; if (f.pause_auto_le) parPro[k].pause++;
+    });
+    el('t-fins-mandat').innerHTML = tableau(['Pro', 'Fins de mandat', 'Réponses', 'Renouvelés', 'Pauses sans réponse'],
+      Object.keys(parPro).sort().map(function (k) { const x = parPro[k]; return [albEchapper(k), x.total, x.rep, x.renouv, x.pause]; }),
+      'Aucune fin de mandat suivie pour le moment. Elles apparaîtront ici 15 jours avant chaque date de fin. 🌿');
   }
 
   document.addEventListener('DOMContentLoaded', demarrer);
