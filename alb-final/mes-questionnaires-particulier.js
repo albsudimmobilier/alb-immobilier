@@ -831,6 +831,7 @@
     const b = ev.target.closest('[data-mqp-act]');
     if (!b) return;
     const act = b.dataset.mqpAct;
+    if (act === 'rouvrir') { rouvrirQuestionnaire(b.dataset.qid); return; }
     if (act === 'fermer' || act === 'plus-tard') fermer();
     else if (act === 'enregistrer-fermer') sauvegarder(false, false).then(function (ok) { if (ok) fermer(); });
     else if (act === 'envoyer') { b.disabled = true; envoyer().finally(function () { if (racine) majEnvoi(); }); }
@@ -872,9 +873,43 @@
       '<button type="button" class="bouton" data-mqp-act="commencer">Commencer</button></div>');
   }
 
-  function afficherEnvoye() {
-    creerFenetre('Questionnaire envoyé', TEXTE_ENVOYE,
-      '<button type="button" class="bouton" data-mqp-act="fermer">Fermer</button>');
+
+  // Après l'envoi : modifiable tant que l'annonce n'est pas en ligne (pas d'annonce, « à étudier » ou refusée)
+  function peutEncoreModifier(q) {
+    if (!q || !q.annonce_id) return true;
+    const a = annonces.find(function (x) { return x.id === q.annonce_id; });
+    return !a || a.statut === 'en_attente' || a.statut === 'refusee';
+  }
+  function texteApresEnvoi(q) {
+    const quand = q && q.envoye_le ? ' le ' + e(new Date(q.envoye_le).toLocaleDateString('fr-FR')) : '';
+    if (peutEncoreModifier(q)) {
+      return '<p>Questionnaire envoyé' + quand + '. Vous avez oublié quelque chose ? Vous pouvez encore le modifier tant que votre annonce n\u2019est pas en ligne : Jocelyne sera prévenue de vos changements.</p>';
+    }
+    return '<p>Votre annonce est en ligne. Vous avez oublié quelque chose ou un détail a changé ? Appelez Jocelyne au 07 45 60 28 05 ou écrivez à contact@albimmobilier.fr. Nous mettrons votre annonce à jour.</p>';
+  }
+  function boutonsApresEnvoi(q) {
+    return (peutEncoreModifier(q) && q && q.id ? '<button type="button" class="bouton" data-mqp-act="rouvrir" data-qid="' + e(q.id) + '">✏️ Modifier mon questionnaire</button> ' : '') +
+      '<button type="button" class="bouton bouton-discret" data-mqp-act="fermer">Fermer</button>';
+  }
+  // Rouvre le questionnaire envoyé, puis l'affiche à nouveau pour le compléter
+  async function rouvrirQuestionnaire(qid) {
+    const q = questionnaires.find(function (x) { return x.id === qid; });
+    const { error } = await albSupabase.rpc('alb_questionnaire_rouvrir', { p_id: qid });
+    if (error) {
+      console.log('[ALB DEBUG] rouvrir questionnaire :', error);
+      const msg = /ANNONCE_EN_LIGNE/.test(error.message || '') ? 'Votre annonce est déjà en ligne : appelez Jocelyne au 07 45 60 28 05 pour la mettre à jour.' : 'Ça n\u2019a pas marché. Réessayez dans un instant.';
+      const c = racine && racine.querySelector('.mqp-corps');
+      if (c) c.insertAdjacentHTML('beforeend', '<p class="mqp-msg erreur">' + e(msg) + '</p>');
+      return;
+    }
+    fermer();
+    await rafraichir();
+    if (q && q.annonce_id) await ouvrir(q.annonce_id); else await ouvrirSansAnnonce(qid);
+  }
+
+  function afficherEnvoye(q) {
+    creerFenetre('Questionnaire envoyé', '<div class="mqp-fin"><h3>Votre questionnaire est bien envoyé.</h3>' + texteApresEnvoi(q) + '<p class="mqp-signature">À la bien, toujours ✨</p></div>',
+      boutonsApresEnvoi(q));
   }
 
   async function afficherFormulaire(type, brouillon) {
@@ -919,7 +954,7 @@
     if (!a) return;
     etat = { annonce: a, qid: null, type: null, modifie: false, defauts: {} };
     const existant = questionnaires.find(function (q) { return q.annonce_id === annonceId; });
-    if (existant && existant.statut === 'envoye') { afficherEnvoye(); return; }
+    if (existant && existant.statut === 'envoye') { afficherEnvoye(existant); return; }
 
     // Les informations de l'annonce et du compte, pour éviter de tout retaper
     const [rAnn, rPrive, rProfil] = await Promise.all([
@@ -998,7 +1033,7 @@
     const existant = questionnaires.find(function (q) { return q.id === qid; });
     if (!existant) return;
     etat = { annonce: { id: null }, qid: null, type: null, modifie: false, defauts: {} };
-    if (existant.statut === 'envoye') { afficherEnvoye(); return; }
+    if (existant.statut === 'envoye') { afficherEnvoye(existant); return; }
     const rProfil = await albSupabase.from('profiles').select('prenom, nom, email, telephone').eq('id', monId).maybeSingle();
     etat.defauts = defautsCompte(rProfil.data || {});
     const { data, error } = await albSupabase.rpc('alb_part_questionnaire_lire_id', { p_id: qid });

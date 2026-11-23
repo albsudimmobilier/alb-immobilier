@@ -822,6 +822,7 @@
     const b = ev.target.closest('[data-mqb-act]');
     if (!b) return;
     const act = b.dataset.mqbAct;
+    if (act === 'rouvrir') { rouvrirQuestionnaire(b.dataset.qid); return; }
     if (act === 'fermer' || act === 'plus-tard') fermer();
     else if (act === 'brouillon') sauvegarder(false, false);
     else if (act === 'envoyer') { b.disabled = true; envoyer().finally(function () { b.disabled = false; }); }
@@ -873,10 +874,42 @@
       '<button type="button" class="bouton bouton-discret" data-mqb-act="plus-tard">Plus tard</button>');
   }
 
+
+  // Après l'envoi : modifiable tant que l'annonce n'est pas en ligne (pas d'annonce, « à étudier » ou refusée)
+  function peutEncoreModifier(q) {
+    if (!q || !q.annonce_id) return true;
+    const a = annonces.find(function (x) { return x.id === q.annonce_id; });
+    return !a || a.statut === 'en_attente' || a.statut === 'refusee';
+  }
+  function texteApresEnvoi(q) {
+    const quand = q && q.envoye_le ? ' le ' + e(new Date(q.envoye_le).toLocaleDateString('fr-FR')) : '';
+    if (peutEncoreModifier(q)) {
+      return '<p>Questionnaire envoyé' + quand + '. Vous avez oublié quelque chose ? Vous pouvez encore le modifier tant que votre annonce n\u2019est pas en ligne : Jocelyne sera prévenue de vos changements.</p>';
+    }
+    return '<p>Votre annonce est en ligne. Vous avez oublié quelque chose ou un détail a changé ? Appelez Jocelyne au 07 45 60 28 05 ou écrivez à contact@albimmobilier.fr. Nous mettrons votre annonce à jour.</p>';
+  }
+  function boutonsApresEnvoi(q) {
+    return (peutEncoreModifier(q) && q && q.id ? '<button type="button" class="bouton" data-mqb-act="rouvrir" data-qid="' + e(q.id) + '">✏️ Modifier mon questionnaire</button> ' : '') +
+      '<button type="button" class="bouton bouton-discret" data-mqb-act="fermer">Fermer</button>';
+  }
+  // Rouvre le questionnaire envoyé, puis l'affiche à nouveau pour le compléter
+  async function rouvrirQuestionnaire(qid) {
+    const q = questionnaires.find(function (x) { return x.id === qid; });
+    const { error } = await albSupabase.rpc('alb_questionnaire_rouvrir', { p_id: qid });
+    if (error) {
+      console.log('[ALB DEBUG] rouvrir questionnaire :', error);
+      const msg = /ANNONCE_EN_LIGNE/.test(error.message || '') ? 'Votre annonce est déjà en ligne : appelez Jocelyne au 07 45 60 28 05 pour la mettre à jour.' : 'Ça n\u2019a pas marché. Réessayez dans un instant.';
+      const c = racine && racine.querySelector('.mqb-corps');
+      if (c) c.insertAdjacentHTML('beforeend', '<p class="mqb-msg erreur">' + e(msg) + '</p>');
+      return;
+    }
+    fermer();
+    await rafraichir();
+    if (q && q.annonce_id) await ouvrir(q.annonce_id); else await ouvrirSansAnnonce(qid);
+  }
+
   function afficherEnvoye(q) {
-    creerFenetre('Questionnaire du bien',
-      '<div class="mqb-fin"><h3>Questionnaire envoyé</h3><p>Questionnaire envoyé le ' + e(dateCourte(q.envoye_le) || 'jour de l’envoi') + '. Une précision à ajouter ? Appelez Jocelyne au 07 45 60 28 05.</p></div>',
-      '<button type="button" class="bouton" data-mqb-act="fermer">Fermer</button>');
+    creerFenetre('Questionnaire du bien', '<div class="mqb-fin"><h3>Questionnaire envoyé</h3>' + texteApresEnvoi(q) + '</div>', boutonsApresEnvoi(q));
   }
 
   async function afficherFormulaire(type, brouillon) {
