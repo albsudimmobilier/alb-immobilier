@@ -604,8 +604,10 @@
         <h2><span class="numero">2</span> Votre secteur</h2>
         <div class="deux-colonnes">
           <div class="champ"><label for="p-cp">Code postal du bien (ou du secteur recherché)</label><input type="text" id="p-cp" inputmode="numeric" maxlength="5" placeholder="Ex. : 83000"></div>
-          <div class="champ"><label for="p-zone">Secteur</label><select id="p-zone"><option value="">Tout le département</option></select></div>
+          <div class="champ"><label for="p-ville">Commune</label><select id="p-ville" disabled><option value="">Tapez d'abord le code postal</option></select></div>
         </div>
+        <p class="petit" id="p-secteur-info" style="margin-top:8px;"></p>
+        <div class="champ cache" id="champ-zone"><label for="p-zone">Secteur</label><select id="p-zone"><option value="">Tout le département</option></select></div>
       </section>
 
       <!-- 3. Les pros -->
@@ -1001,7 +1003,46 @@
     el('bouton-envoyer').disabled = exclusif;
   }
 
-  // ----- Le secteur -----
+  // ----- Le secteur : code postal → communes → secteur -----
+  let cpCharge = '';
+  async function majVilles() {
+    const cp = el('p-cp').value.trim();
+    if (!/^[0-9]{5}$/.test(cp)) { cpCharge = ''; el('p-ville').innerHTML = '<option value="">Tapez d\'abord le code postal</option>'; el('p-ville').disabled = true; majSecteur(''); return; }
+    if (cp === cpCharge) return;
+    cpCharge = cp;
+    let villes = [];
+    try {
+      const r = await fetch('https://geo.api.gouv.fr/communes?codePostal=' + cp + '&fields=nom');
+      villes = (await r.json()).map(function (v) { return v.nom; }).sort();
+    } catch (err) { console.error('[ALB DEBUG] communes :', err); }
+    if (cp !== el('p-cp').value.trim()) return;
+    el('p-ville').innerHTML = villes.length
+      ? (villes.length > 1 ? '<option value="">Choisissez votre commune</option>' : '') + villes.map(function (v) { return '<option value="' + e(v) + '">' + e(v) + '</option>'; }).join('')
+      : '<option value="">Code postal inconnu</option>';
+    el('p-ville').disabled = !villes.length;
+    await majSecteur(villes.length === 1 ? villes[0] : '');
+  }
+  async function majSecteur(ville) {
+    let secteur = null;
+    if (ville) {
+      const { data } = await albSupabase.rpc('alb_secteur_commune', { p_ville: ville });
+      secteur = data || null;
+    }
+    majZones();
+    const cp = el('p-cp').value.trim();
+    if (secteur) {
+      el('p-zone').value = secteur;
+      el('champ-zone').classList.add('cache');
+      el('p-secteur-info').innerHTML = '📍 Votre secteur : <strong>' + e(secteur.replace('/', ' / ')) + '</strong>';
+    } else {
+      el('p-zone').value = '';
+      const zonesConnues = /^[0-9]{5}$/.test(cp) && (ZONES[cp.slice(0, 2)] || []).length;
+      el('champ-zone').classList.toggle('cache', !(ville && zonesConnues));
+      el('p-secteur-info').textContent = ville && !zonesConnues ? 'ALB n\'a pas encore de pros dans ce département, mais vous pouvez envoyer votre demande.' : '';
+    }
+    if (module) chargerPros();
+  }
+
   function majZones() {
     const cp = el('p-cp').value.trim();
     const zones = /^[0-9]{5}$/.test(cp) ? (ZONES[cp.slice(0, 2)] || []) : [];
@@ -1054,7 +1095,7 @@
           (p.zones && p.zones.length ? '<br><span class="pro-infos">🗺️ ' + e(p.zones.join(', ')) + '</span>' : '') +
           (rdv ? '<br><span class="pro-infos">Rendez-vous : ' + e(rdv) + '</span>' : '') +
           (indispo ? '<br><span class="pro-hors">Indisponible en ce moment' + (p.remplace_par ? ' · remplacé par ' + e(p.remplace_par) : '') + '</span>' : '') +
-          (!indispo && !p.dans_secteur ? '<br><span class="pro-hors">Hors de votre secteur</span>' : '') +
+          (!indispo && !p.dans_secteur && el('p-zone').value ? '<br><span class="pro-hors">Hors de votre secteur</span>' : '') +
           (p.presentation ? '<div class="pro-texte">' + e(p.presentation) + '</div>' : '') +
           '</span></label>';
       }).join('');
@@ -1144,7 +1185,7 @@
   // ----- 5. Envoi -----
   function donneesProjet() {
     const d = { module: module, mode: mode, quota: quota, pros: mode === 'direct' ? choisis : [],
-      code_postal: el('p-cp').value.trim(), zone: el('p-zone').value, description: el('p-description').value.trim() };
+      code_postal: el('p-cp').value.trim(), ville: el('p-ville').value, zone: el('p-zone').value, description: el('p-description').value.trim() };
     if (module === 'financement') {
       Object.assign(d, { objet: el('f-objet').value, type_bien: el('f-type').value, prix_vise: el('f-prix').value, delai: el('f-delai').value,
         situation: el('f-situation').value, primo: el('f-primo').value,
@@ -1236,6 +1277,7 @@
     const cp = params.get('cp') || '';
     if (/^[0-9]{5}$/.test(cp)) el('p-cp').value = cp;
     majZones();
+    majVilles();
     const objet = params.get('objet') || '';
     const moduleChoisi = params.get('module') || '';
     if (moduleChoisi === 'financement') {
@@ -1265,7 +1307,8 @@
     ['s-revenus', 's-credits', 's-apport', 's-taux', 'f-prix', 'a-budget'].forEach(function (i) { el(i).addEventListener('input', majBudget); });
     ['a-projet', 'a-mandat'].forEach(function (i) { el(i).addEventListener('change', majAccompagnement); });
     el('c-courtier').addEventListener('change', function () { majCourtier(); if (this.checked) { majBudget(); el('c-appel').checked = true; } });
-    el('p-cp').addEventListener('input', function () { majZones(); if (module) chargerPros(); });
+    el('p-cp').addEventListener('input', function () { majVilles(); });
+    el('p-ville').addEventListener('change', function () { majSecteur(el('p-ville').value); });
     el('p-fichiers').addEventListener('change', function () { ajouterFichiers(this.files); this.value = ''; });
     el('p-zone').addEventListener('change', function () { if (module) chargerPros(); });
 

@@ -707,9 +707,10 @@
         <label class="case"><input type="radio" name="type-bien" value="appartement" onchange="afficherTerrain()"> 🏢 Un appartement</label>
       </div>
       <div class="deux-colonnes">
-        <div class="champ"><label for="b-ville">Ville</label><input type="text" id="b-ville" autocomplete="address-level2"></div>
-        <div class="champ"><label for="b-cp">Code postal</label><input type="text" id="b-cp" inputmode="numeric" maxlength="5" autocomplete="postal-code"></div>
+        <div class="champ"><label for="b-cp">Code postal</label><input type="text" id="b-cp" inputmode="numeric" maxlength="5" autocomplete="postal-code" oninput="majVillesBien()"></div>
+        <div class="champ"><label for="b-ville">Commune</label><select id="b-ville" disabled onchange="majSecteurBien()"><option value="">Tapez d'abord le code postal</option></select></div>
       </div>
+      <p class="leger" id="b-secteur-info" style="margin:-4px 0 12px;"></p>
       <div class="champ">
         <label for="b-adresse">Adresse du bien <span class="leger">(facultatif)</span></label>
         <input type="text" id="b-adresse" autocomplete="street-address">
@@ -1299,6 +1300,36 @@
   }
 
   // ---------- Au chargement ----------
+  // Code postal → communes → secteur
+  let cpBienCharge = '';
+  async function majVillesBien() {
+    const cp = valeur('b-cp');
+    const liste = document.getElementById('b-ville');
+    if (!/^[0-9]{5}$/.test(cp)) { cpBienCharge = ''; liste.innerHTML = '<option value="">Tapez d\'abord le code postal</option>'; liste.disabled = true; majSecteurBien(); return; }
+    if (cp === cpBienCharge) return;
+    cpBienCharge = cp;
+    let villes = [];
+    try {
+      const r = await fetch('https://geo.api.gouv.fr/communes?codePostal=' + cp + '&fields=nom');
+      villes = (await r.json()).map(function (v) { return v.nom; }).sort();
+    } catch (err) { console.error('[ALB DEBUG] communes :', err); }
+    if (cp !== valeur('b-cp')) return;
+    const ech = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    liste.innerHTML = villes.length
+      ? (villes.length > 1 ? '<option value="">Choisissez votre commune</option>' : '') + villes.map(function (v) { return '<option value="' + ech(v) + '">' + ech(v) + '</option>'; }).join('')
+      : '<option value="">Code postal inconnu</option>';
+    liste.disabled = !villes.length;
+    majSecteurBien();
+  }
+  async function majSecteurBien() {
+    const info = document.getElementById('b-secteur-info');
+    const ville = valeur('b-ville');
+    if (!ville) { info.textContent = ''; return; }
+    const { data } = await albSupabase.rpc('alb_secteur_commune', { p_ville: ville });
+    if (ville !== valeur('b-ville')) return;
+    info.innerHTML = data ? '📍 Secteur : <strong>' + String(data).replace('/', ' / ') + '</strong>' : '';
+  }
+
   document.addEventListener('DOMContentLoaded', async function () {
     await chargerProfil();
     // Un agent ou mandataire connecté va directement au formulaire pro
