@@ -134,9 +134,10 @@
         '<div class="pp-champ"><label for="pp-dispo">Ma disponibilité</label><select id="pp-dispo">' +
           Object.keys(DISPOS).map(function (k) { return '<option value="' + e(k) + '"' + (f.disponibilite === k ? ' selected' : '') + '>' + e(DISPOS[k]) + '</option>'; }).join('') +
         '</select><div class="pp-aide">« Indisponible » : vous ne recevez plus de nouvelles demandes (ou votre remplaçant les reçoit, voir plus bas).</div></div>' +
-        '<div class="pp-champ"><label for="pp-horaires">Mes horaires de disponibilité <span class="pp-leger">(facultatif)</span></label>' +
+        '<div class="pp-champ"><label for="pp-horaires">🕒 Mes horaires de disponibilité <span class="pp-leger">(facultatif)</span></label>' +
+          '<div class="pp-aide">Indiquez les jours et les plages où vous répondez aux particuliers. Ils s’affichent sur votre fiche « Nos pros ALB », pour que les particuliers sachent quand vous joindre. Exemple : lundi au vendredi 9h-12h et 14h-18h. Pas de téléphone ni d’e-mail ici : les particuliers vous contactent par la messagerie ALB.</div>' +
           '<input id="pp-horaires" maxlength="200" value="' + e(f.horaires || '') + '" placeholder="ex. Lun-ven 9h-12h et 14h-18h">' +
-          '<div class="pp-aide">Affichés sur votre fiche « Nos pros ALB ». Pas de téléphone ni d’e-mail ici.</div></div>' +
+          '</div>' +
         '<div class="pp-champ"><span class="pp-label">Les rendez-vous que je propose</span><div class="pp-cases">' +
           '<label><input type="checkbox" id="pp-tel"' + (modes.telephone ? ' checked' : '') + '> 📞 Par téléphone</label>' +
           '<label><input type="checkbox" id="pp-visio"' + (modes.visio ? ' checked' : '') + '> 💻 En visio</label>' +
