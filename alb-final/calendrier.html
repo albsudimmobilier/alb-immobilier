@@ -883,7 +883,16 @@
   // ---------- Vue « Par membre » : toutes les tâches ouvertes d'un membre au même endroit ----------
   function dessinerMembre() {
     el('titre-jour').textContent = 'Tâches par membre';
-    const ouvertes = elements().filter(function (x) { return x.cochable && x.lienId && x.genre === 'tache' && !x.fait; });
+    const aujourdhuiIso = iso(new Date());
+    const tout = elements();
+    // Rendez-vous du jour en premier (pris via la réservation ou saisis dans l'agenda)
+    const rdvDuJour = tout.filter(function (x) { return (x.genre === 'rdv' || x.genre === 'rdvgoogle') && x.le === aujourdhuiIso && !x.fait; })
+      .sort(function (a, b) { return (a.debut === null ? 9999 : a.debut) - (b.debut === null ? 9999 : b.debut); });
+    const blocRdv = rdvDuJour.length ? '<div style="margin:12px 0;padding:10px 12px;border:1px solid #B28E3D;border-radius:10px;background:#FBF3E4">' +
+      '<div style="font-weight:700;margin-bottom:8px">📅 Rendez-vous d’aujourd’hui (' + rdvDuJour.length + ')</div>' +
+      rdvDuJour.map(function (x) { return '<div style="padding:6px 0;border-top:1px solid #eee">' + (x.debut !== null ? e(hCourte(x.debut)) + ' · ' : '') + e(x.titre) + '</div>'; }).join('') + '</div>' : '';
+    // Tâches à faire aujourd'hui (et celles en retard), par membre
+    const ouvertes = tout.filter(function (x) { return x.cochable && x.lienId && x.genre === 'tache' && !x.fait && x.le <= aujourdhuiIso; });
     const groupes = {};
     ouvertes.forEach(function (x) {
       if (!groupes[x.lienId]) groupes[x.lienId] = { nom: x.lienNom || 'Sans membre', taches: [] };
@@ -891,9 +900,9 @@
     });
     const liste = Object.keys(groupes).map(function (id) { return groupes[id]; })
       .sort(function (a, b) { return a.nom.localeCompare(b.nom, 'fr'); });
-    if (!liste.length) { el('zone').innerHTML = '<div class="liste"><p class="petit">Aucune tâche ouverte pour un membre.</p></div>'; return; }
-    el('zone').innerHTML = liste.map(function (g) {
-      g.taches.sort(function (a, b) { return a.le < b.le ? -1 : a.le > b.le ? 1 : 0; });
+    if (!liste.length) { el('zone').innerHTML = blocRdv + '<div class="liste"><p class="petit">Rien à faire aujourd’hui pour les membres.</p></div>'; return; }
+    el('zone').innerHTML = blocRdv + liste.map(function (g) {
+      g.taches.sort(function (a, b) { return (a.debut === null ? 9999 : a.debut) - (b.debut === null ? 9999 : b.debut) || (a.le < b.le ? -1 : a.le > b.le ? 1 : 0); });
       return '<div style="margin:12px 0;padding:10px 12px;border:1px solid #e5e0d8;border-radius:10px;background:#fff">' +
         '<div style="font-weight:700;margin-bottom:8px">👤 ' + e(g.nom) + ' <span class="petit">(' + g.taches.length + ' à faire)</span></div>' +
         g.taches.map(function (x) {
