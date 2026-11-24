@@ -449,7 +449,7 @@
     const texte = (annoncesTextes[q.id] !== undefined) ? annoncesTextes[q.id] : annonce.texte;
     const sauve = q.annonce && q.annonce.id ? textesSauves[q.annonce.id] : null;
     const infoSauve = sauve && sauve.modifie_le
-      ? '<p class="aide">💾 Dernière modification enregistrée : ' + e(new Date(sauve.modifie_le).toLocaleString('fr-FR')) + '.</p>'
+      ? '<div role="status" style="margin:8px 0;padding:10px 12px;border:2px solid #2e7d32;background:#e8f5e9;color:#1b5e20;border-radius:8px;font-weight:600;">✅ Enregistrement fait le ' + e(new Date(sauve.modifie_le).toLocaleString('fr-FR')) + '</div>'
       : '';
     const bloquee = !annonce.diffusable;
 
