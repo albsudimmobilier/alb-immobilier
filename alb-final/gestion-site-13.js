@@ -34,7 +34,7 @@ function blocInfosAdmin(m) {
   let anniv = '';
   if (jours === 0) anniv = ' <span class="etiquette or">🎂 C\'est son anniversaire aujourd\'hui !</span>';
   else if (jours !== null && jours <= 7) anniv = ' <span class="etiquette">🎂 anniversaire dans ' + jours + ' jour' + (jours > 1 ? 's' : '') + '</span>';
-  const manque = !i.siret || !i.adresse_complete || !i.date_naissance;
+  const manque = !i.siret || !i.adresse_complete;
   return '<details class="historique" style="margin:6px 0;"' + (jours === 0 ? ' open' : '') + '>' +
     '<summary style="font-weight:600;color:#5A3A6A;cursor:pointer;">🪪 Infos administratives' +
       (manque ? ' <span class="etiquette or">à compléter</span>' : ' <span class="etiquette vert">complètes</span>') + anniv + '</summary>' +
@@ -42,7 +42,7 @@ function blocInfosAdmin(m) {
       '<label class="petit-champ">SIRET (14 chiffres)<input id="adm-siret-' + m.id + '" inputmode="numeric" maxlength="17" value="' + albEchapper(i.siret || '') + '"></label>' +
       '<label class="petit-champ">N° RSAC <span style="font-weight:400;color:#7a7a75;">(si agent commercial : numéro et greffe)</span><input id="adm-rsac-' + m.id + '" maxlength="80" value="' + albEchapper(i.numero_rsac || '') + '" placeholder="ex. : 123 456 789 — greffe de Draguignan" style="width:100%;max-width:420px;"></label>' +
       '<label class="petit-champ">Adresse<input id="adm-adresse-' + m.id + '" maxlength="250" value="' + albEchapper(i.adresse_complete || '') + '" placeholder="Numéro, rue, code postal, ville" style="width:100%;max-width:420px;"></label>' +
-      '<label class="petit-champ">Date de naissance <span style="font-weight:400;color:#7a7a75;">(uniquement pour lui souhaiter son anniversaire)</span><input type="date" id="adm-naissance-' + m.id + '" value="' + albEchapper(i.date_naissance || '') + '"></label>' +
+      '<label class="petit-champ">Date de naissance <span style="font-weight:400;color:#7a7a75;">(facultatif)</span><input type="date" id="adm-naissance-' + m.id + '" value="' + albEchapper(i.date_naissance || '') + '"></label>' +
       (i.date_naissance ? '<p class="ligne-info" style="margin:0;">🎂 Son anniversaire : le ' + albEchapper(anniversaireLisible(i.date_naissance)) + '</p>' : '') +
       '<button type="button" class="bouton vert" onclick="enregistrerInfosAdmin(\'' + m.id + '\', this)">💾 Enregistrer</button>' +
     '</div></details>';
