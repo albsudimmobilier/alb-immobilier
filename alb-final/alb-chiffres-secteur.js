@@ -8,6 +8,7 @@
   const CLE = 'sb_publishable_wXbJu1TP2jZ05TcuMOut9Q_NcumnpIQ';
   const PAGES = {
     'Toulon et environs': 'immobilier-ancien-toulon', 'Centre Var': 'immobilier-ancien-centre-var',
+    'Dracénie': 'immobilier-ancien-dracenie', 'Est Var/Golfe': 'immobilier-ancien-est-var-golfe', 'Haut Var/Verdon': 'immobilier-ancien-haut-var-verdon',
     'Marseille et environs': 'immobilier-ancien-marseille', "Pays d'Aix": 'immobilier-ancien-pays-d-aix',
     'Aubagne/La Ciotat': 'immobilier-ancien-aubagne-la-ciotat', 'Étang de Berre/Martigues': 'immobilier-ancien-etang-de-berre',
     "Salon/Pays d'Arles": 'immobilier-ancien-salon-arles'
