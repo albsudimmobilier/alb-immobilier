@@ -454,6 +454,59 @@
   function lienClaude(texte) { return 'https://claude.ai/new?q=' + encodeURIComponent(texte); }
   function tacheClaude(x) { return x.genre === 'tache' ? TACHES_CLAUDE.find(function (t) { return t.debut.test(x.titre || ''); }) : null; }
 
+  // ---------- Textes à copier : chaque partie (adresse, objet, message, SMS) a son bouton ----------
+  function boutonCopie(libelle, texte) {
+    return '<button type="button" class="bouton" data-action="copier-texte" data-texte="' + encodeURIComponent(texte) + '">' + libelle + '</button>';
+  }
+  function blocsNote(note) {
+    const lignes = String(note || '').split('\n');
+    const idxObjet = lignes.findIndex(function (l) { return /^Objet :/.test(l); });
+    const idxSms = lignes.findIndex(function (l) { return /^———\s*SMS/.test(l); });
+    const idxFin = lignes.findIndex(function (l) { return /^\(Quand /.test(l); });
+    const adresse = lignes.find(function (l) { return /^À :/.test(l); });
+    if (!adresse && idxObjet < 0 && idxSms < 0) {
+      return '<p>' + e(note) + '</p><div style="margin:6px 0">' + boutonCopie('📋 Copier le texte', note) + '</div>';
+    }
+    let h = '<div style="margin:6px 0;display:flex;flex-direction:column;gap:8px">';
+    if (adresse) {
+      const v = adresse.replace(/^À :\s*/, '');
+      h += '<div>' + boutonCopie('📋 Copier l’adresse', v) + ' <span class="petit">' + e(v) + '</span></div>';
+    }
+    if (idxObjet >= 0) {
+      const v = lignes[idxObjet].replace(/^Objet :\s*/, '');
+      h += '<div>' + boutonCopie('📋 Copier l’objet', v) + ' <span class="petit">' + e(v) + '</span></div>';
+    }
+    const finCorps = idxSms >= 0 ? idxSms : (idxFin >= 0 ? idxFin : lignes.length);
+    const debutCorps = idxObjet >= 0 ? idxObjet + 1 : 0;
+    const corps = lignes.slice(debutCorps, finCorps)
+      .filter(function (l) { return !/^(Pièces? à joindre|Pièce jointe|📎|À :|Objet :)/.test(l); }).join('\n').trim();
+    if (corps) {
+      h += '<div>' + boutonCopie('📋 Copier le message', corps) + '<div style="white-space:pre-wrap;font-size:0.85rem;color:#555;margin-top:4px;background:#faf8f5;border-radius:8px;padding:8px">' + e(corps) + '</div></div>';
+    }
+    lignes.filter(function (l) { return /^📎/.test(l); }).forEach(function (l) {
+      const url = (l.match(/https?:\/\/\S+/) || [''])[0];
+      if (url) h += '<div><a class="bouton" target="_blank" rel="noopener" href="' + e(url) + '">📎 Télécharger la pièce jointe</a></div>';
+    });
+    lignes.filter(function (l) { return /^Pièces? à joindre|^Pièce jointe/.test(l); }).forEach(function (l) {
+      h += '<div class="petit">' + e(l) + '</div>';
+    });
+    if (idxSms >= 0) {
+      const sms = lignes.slice(idxSms + 1, idxFin > idxSms ? idxFin : lignes.length).join('\n').trim();
+      if (sms) h += '<div>' + boutonCopie('📱 Copier le SMS', sms) + '<div style="white-space:pre-wrap;font-size:0.85rem;color:#555;margin-top:4px;background:#faf8f5;border-radius:8px;padding:8px">' + e(sms) + '</div></div>';
+    }
+    if (idxFin >= 0) h += '<div class="petit">' + e(lignes[idxFin]) + '</div>';
+    return h + '</div>';
+  }
+  async function copierTexte(b) {
+    const t = decodeURIComponent(b.dataset.texte || '');
+    try { await navigator.clipboard.writeText(t); } catch (x) {
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    const ancien = b.textContent;
+    b.textContent = '✓ Copié';
+    setTimeout(function () { b.textContent = ancien; }, 1500);
+  }
+
   function dessinerDetail() {
     const z = el('detail');
     const x = ouvert ? elementsAffiches().find(function (y) { return y.cle === ouvert; }) : null;
@@ -461,7 +514,7 @@
     z.classList.remove('cache');
     z.innerHTML = '<div class="detail-titre">' + e(x.titre) + '</div>' +
       '<p>' + (x.debut !== null ? '🕐 ' + hCourte(x.debut) + (plageDuTitre(x.titre) ? ' (' + plageDuTitre(x.titre) + ' min)' : '') + ' · ' : '') + e(x.theme) + (x.genre === 'tache' ? ' · 📝 tâche' : '') + '</p>' +
-      (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? '<p>' + e(x.note) + '</p>' : '') +
+      (x.lieu ? '<p>📍 ' + e(x.lieu) + '</p>' : '') + (x.note ? blocsNote(x.note) : '') +
       (x.decalage ? '<p>⏩ Décalé de ' + x.decalage + ' min pour faire de la place à un rappel. Ton Agenda n\'a pas changé.</p>' : '') +
       '<div class="actions">' +
       (x.rdvg && tel(x.rdvg.telephone) ? '<a class="bouton plein" href="tel:' + e(tel(x.rdvg.telephone)) + '">📞 Appeler ' + e(x.rdvg.telephone) + '</a>' : '') +
@@ -933,7 +986,7 @@
           return '<div style="padding:8px 0;border-top:1px solid #eee">' +
             '<div class="petit">' + e(x.le.split('-').reverse().join('/')) + (x.retard ? ' · <strong>en retard</strong>' : '') + '</div>' +
             '<div style="margin:2px 0 6px">' + e(x.titre) + '</div>' +
-            (x.note ? '<textarea readonly onclick="this.select()" rows="' + Math.min(20, x.note.split('\n').length + 1) + '" style="width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px;border:1px solid #e5e0d8;border-radius:8px;background:#faf8f5;margin-bottom:6px">' + e(x.note) + '</textarea>' : '') +
+            (x.note ? blocsNote(x.note) : '') +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' + boutonRelanceQuestionnaire(x) +
             '<button type="button" class="bouton vert" data-action="fait" data-id="' + e(x.id) + '" data-fait="1">✓ Fait</button></div></div>';
         }).join('') + '</div>';
@@ -1092,6 +1145,7 @@
     if (a === 'sms-fermer') { delete smsOuverts[b.dataset.cle]; dessiner(); return; }
     if (a === 'sms-ouvrir') { const c = carnet.find(function (x) { return 'c-' + x.id === b.dataset.cle; }); const t = el('sms-texte-' + b.dataset.cle); if (c && t) window.location.href = 'sms:' + tel(c.telephone) + '?&body=' + encodeURIComponent(t.value); return; }
     if (a === 'sms-copier') { await copierSms(b); return; }
+    if (a === 'copier-texte') { await copierTexte(b); return; }
     if (a === 'sms-envoye') { await smsEnvoye(b); return; }
     if (a === 'ns-creer') { await nouveauSms(b); return; }
     if (a === 'noter') { noterOuvert = (noterOuvert === b.dataset.cle) ? null : b.dataset.cle; dessinerPanneauFiltre(); dessinerDetail(); return; }
