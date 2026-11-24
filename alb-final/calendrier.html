@@ -216,6 +216,7 @@
   let ouvert = null;        // le créneau dont on voit le détail
   let membres = [], rappels = [], questionnaires = [], fichesPart = [];
   let filtre = { cat: 'tout', sous: '' };
+  let membreFiltre = null;  // id du membre affiché seul dans la vue « Par membre » (depuis la journée)
   let vue = 'jour';         // 'jour' (l'Agenda par jour) ou 'membre' (toutes les tâches de chaque membre)
   let rdvGoogle = [];      // rendez-vous réservés sur la page de réservation Google (lus par alb-rdv-google)
   let appelEnCours = null;  // la personne qu'on est en train d'appeler
@@ -351,10 +352,31 @@
     return (x.debut !== null ? hCourte(x.debut) + ' ' : '') + x.titre;
   }
 
+  // Une seule ligne par membre dans la journée : ses tâches ouvertes sont regroupées
+  function regrouperMembres(liste) {
+    const groupes = {};
+    const resultat = [];
+    liste.forEach(function (x) {
+      if (x.cochable && x.lienId && x.genre === 'tache' && !x.fait) {
+        if (!groupes[x.lienId]) { groupes[x.lienId] = { id: x.lienId, nom: x.lienNom || 'Sans membre', le: x.le, debut: null, n: 0 }; resultat.push(groupes[x.lienId]); }
+        const g = groupes[x.lienId];
+        g.n++;
+        if (x.debut !== null && (g.debut === null || x.debut < g.debut)) g.debut = x.debut;
+      } else {
+        resultat.push(x);
+      }
+    });
+    return resultat.map(function (x) {
+      if (!(x.n && x.id && !x.cle)) return x;
+      return { cle: 'm-' + x.id, le: x.le, debut: x.debut, titre: '👤 ' + x.nom + ' · ' + x.n + ' tâche' + (x.n > 1 ? 's' : '') + ' à faire',
+        theme: 'Pros', genre: 'membre', fait: false, cochable: false, retard: false, lienId: x.id, lienNom: x.nom };
+    });
+  }
+
   function dessinerJour() {
     const d = dateDe(jour);
     el('titre-jour').textContent = (jour === iso(new Date()) ? 'Aujourd\'hui · ' : '') + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const duJour = elementsAffiches().filter(function (x) { return x.le === jour; }).filter(garder);
+    const duJour = regrouperMembres(elementsAffiches().filter(function (x) { return x.le === jour; }).filter(garder));
     const avecHeure = duJour.filter(function (x) { return x.debut !== null; }).sort(function (a, b) { return a.debut - b.debut; });
     const sansHeure = duJour.filter(function (x) { return x.debut === null; });
     if (!duJour.length) { el('zone').innerHTML = '<div class="vide">' + (filtre.cat === 'tout' ? 'Rien de prévu ce jour-là. 🌿' : 'Aucun créneau dans ce filtre ce jour-là. Choisis « Tout » pour voir toute la journée.') + '</div>'; return; }
@@ -894,14 +916,16 @@
     // Tâches à faire aujourd'hui (et celles en retard), par membre
     const ouvertes = tout.filter(function (x) { return x.cochable && x.lienId && x.genre === 'tache' && !x.fait && x.le <= aujourdhuiIso; });
     const groupes = {};
-    ouvertes.forEach(function (x) {
+    const ouvertesFiltrees = membreFiltre ? ouvertes.filter(function (x) { return x.lienId === membreFiltre; }) : ouvertes;
+    ouvertesFiltrees.forEach(function (x) {
       if (!groupes[x.lienId]) groupes[x.lienId] = { nom: x.lienNom || 'Sans membre', taches: [] };
       groupes[x.lienId].taches.push(x);
     });
     const liste = Object.keys(groupes).map(function (id) { return groupes[id]; })
       .sort(function (a, b) { return a.nom.localeCompare(b.nom, 'fr'); });
-    if (!liste.length) { el('zone').innerHTML = blocRdv + '<div class="liste"><p class="petit">Rien à faire aujourd’hui pour les membres.</p></div>'; return; }
-    el('zone').innerHTML = blocRdv + liste.map(function (g) {
+    const retourTous = membreFiltre ? '<div style="margin:8px 0"><button type="button" class="bouton" data-action="tous-membres">← Tous les membres</button></div>' : '';
+    if (!liste.length) { el('zone').innerHTML = retourTous + blocRdv + '<div class="liste"><p class="petit">Rien à faire aujourd’hui pour les membres.</p></div>'; return; }
+    el('zone').innerHTML = retourTous + blocRdv + liste.map(function (g) {
       g.taches.sort(function (a, b) { return (a.debut === null ? 9999 : a.debut) - (b.debut === null ? 9999 : b.debut) || (a.le < b.le ? -1 : a.le > b.le ? 1 : 0); });
       return '<div style="margin:12px 0;padding:10px 12px;border:1px solid #e5e0d8;border-radius:10px;background:#fff">' +
         '<div style="font-weight:700;margin-bottom:8px">👤 ' + e(g.nom) + ' <span class="petit">(' + g.taches.length + ' à faire)</span></div>' +
@@ -1046,9 +1070,11 @@
     if (a === 'jour-moins') { allerAuJour(ajouterJours(jour, -1)); return; }
     if (a === 'jour-plus') { allerAuJour(ajouterJours(jour, 1)); return; }
     if (a === 'aujourdhui') { allerAuJour(iso(new Date())); return; }
-    if (a === 'vue') { vue = vue === 'membre' ? 'jour' : 'membre'; ouvert = null; dessiner(); return; }
+    if (a === 'vue') { vue = vue === 'membre' ? 'jour' : 'membre'; membreFiltre = null; ouvert = null; dessiner(); return; }
     if (a === 'mois-moins') { mois = mois.m === 0 ? { a: mois.a - 1, m: 11 } : { a: mois.a, m: mois.m - 1 }; dessinerMois(); return; }
     if (a === 'mois-plus') { mois = mois.m === 11 ? { a: mois.a + 1, m: 0 } : { a: mois.a, m: mois.m + 1 }; dessinerMois(); return; }
+    if (a === 'ouvrir' && String(b.dataset.cle).indexOf('m-') === 0) { membreFiltre = b.dataset.cle.slice(2); vue = 'membre'; ouvert = null; dessiner(); return; }
+    if (a === 'tous-membres') { membreFiltre = null; dessiner(); return; }
     if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); if (ouvert) el('detail').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (a === 'fermer-detail') { ouvert = null; dessinerDetail(); return; }
     if (a === 'fait') { await cocher(b.dataset.id, b.dataset.fait === '1', b); return; }
