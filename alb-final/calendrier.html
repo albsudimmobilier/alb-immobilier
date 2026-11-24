@@ -173,6 +173,7 @@
           <button type="button" class="bouton" data-action="jour-moins" aria-label="Jour précédent">‹</button>
           <button type="button" class="bouton" data-action="jour-plus" aria-label="Jour suivant">›</button>
           <button type="button" class="bouton plein" data-action="aujourdhui">Aujourd'hui</button>
+          <button type="button" class="bouton" data-action="vue" id="btn-vue">👥 Par membre</button>
         </div>
         <div id="filtres"></div>
         <div id="prioritaire"></div>
@@ -215,6 +216,7 @@
   let ouvert = null;        // le créneau dont on voit le détail
   let membres = [], rappels = [], questionnaires = [], fichesPart = [];
   let filtre = { cat: 'tout', sous: '' };
+  let vue = 'jour';         // 'jour' (l'Agenda par jour) ou 'membre' (toutes les tâches de chaque membre)
   let rdvGoogle = [];      // rendez-vous réservés sur la page de réservation Google (lus par alb-rdv-google)
   let appelEnCours = null;  // la personne qu'on est en train d'appeler
   let noterOuvert = null;   // la personne pour qui on est en train d'écrire une note
@@ -298,7 +300,7 @@
     (agenda.rdv || []).forEach(function (r) {
       const minutes = r.heure ? (+String(r.heure).slice(0, 2)) * 60 + (+String(r.heure).slice(3, 5)) : null;
       liste.push({ cle: 'a' + r.id, id: r.id, le: r.le, debut: minutes, duree: plageDuTitre(r.titre) || 45, titre: r.titre, theme: themeDe(r),
-        genre: r.genre, fait: !!r.fait_le, lieu: r.lieu || '', note: r.note || '', retard: r.genre === 'tache' && !r.fait_le && r.le < iso(new Date()), cochable: true, lienId: r.lien_id || '' });
+        genre: r.genre, fait: !!r.fait_le, lieu: r.lieu || '', note: r.note || '', retard: r.genre === 'tache' && !r.fait_le && r.le < iso(new Date()), cochable: true, lienId: r.lien_id || '', lienNom: r.lien_nom || '' });
     });
     rdvGoogle.forEach(function (r) {
       const debut = r.heure ? (+r.heure.slice(0, 2)) * 60 + (+r.heure.slice(3, 5)) : null;
@@ -878,7 +880,38 @@
     z.innerHTML = '<div class="panneau-filtre"><h2>' + titre + '</h2>' + h + '</div>';
   }
 
-  function dessiner() { dessinerMois(); elementsAffiches(); dessinerFiltres(); dessinerPrioritaire(); dessinerPanneauFiltre(); dessinerJour(); dessinerDetail(); }
+  // ---------- Vue « Par membre » : toutes les tâches ouvertes d'un membre au même endroit ----------
+  function dessinerMembre() {
+    el('titre-jour').textContent = 'Tâches par membre';
+    const ouvertes = elements().filter(function (x) { return x.cochable && x.lienId && x.genre === 'tache' && !x.fait; });
+    const groupes = {};
+    ouvertes.forEach(function (x) {
+      if (!groupes[x.lienId]) groupes[x.lienId] = { nom: x.lienNom || 'Sans membre', taches: [] };
+      groupes[x.lienId].taches.push(x);
+    });
+    const liste = Object.keys(groupes).map(function (id) { return groupes[id]; })
+      .sort(function (a, b) { return a.nom.localeCompare(b.nom, 'fr'); });
+    if (!liste.length) { el('zone').innerHTML = '<div class="liste"><p class="petit">Aucune tâche ouverte pour un membre.</p></div>'; return; }
+    el('zone').innerHTML = liste.map(function (g) {
+      g.taches.sort(function (a, b) { return a.le < b.le ? -1 : a.le > b.le ? 1 : 0; });
+      return '<div style="margin:12px 0;padding:10px 12px;border:1px solid #e5e0d8;border-radius:10px;background:#fff">' +
+        '<div style="font-weight:700;margin-bottom:8px">👤 ' + e(g.nom) + ' <span class="petit">(' + g.taches.length + ' à faire)</span></div>' +
+        g.taches.map(function (x) {
+          return '<div style="padding:8px 0;border-top:1px solid #eee">' +
+            '<div class="petit">' + e(x.le.split('-').reverse().join('/')) + (x.retard ? ' · <strong>en retard</strong>' : '') + '</div>' +
+            '<div style="margin:2px 0 6px">' + e(x.titre) + '</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' + boutonRelanceQuestionnaire(x) +
+            '<button type="button" class="bouton vert" data-action="fait" data-id="' + e(x.id) + '" data-fait="1">✓ Fait</button></div></div>';
+        }).join('') + '</div>';
+    }).join('');
+  }
+
+  function dessiner() {
+    dessinerMois(); elementsAffiches(); dessinerFiltres(); dessinerPrioritaire(); dessinerPanneauFiltre();
+    el('btn-vue').textContent = vue === 'membre' ? '📅 Par jour' : '👥 Par membre';
+    if (vue === 'membre') dessinerMembre(); else dessinerJour();
+    dessinerDetail();
+  }
 
   function allerAuJour(s) {
     jour = s; const d = dateDe(s); mois = { a: d.getFullYear(), m: d.getMonth() }; ouvert = null; dessiner();
@@ -1003,6 +1036,7 @@
     if (a === 'jour-moins') { allerAuJour(ajouterJours(jour, -1)); return; }
     if (a === 'jour-plus') { allerAuJour(ajouterJours(jour, 1)); return; }
     if (a === 'aujourdhui') { allerAuJour(iso(new Date())); return; }
+    if (a === 'vue') { vue = vue === 'membre' ? 'jour' : 'membre'; ouvert = null; dessiner(); return; }
     if (a === 'mois-moins') { mois = mois.m === 0 ? { a: mois.a - 1, m: 11 } : { a: mois.a, m: mois.m - 1 }; dessinerMois(); return; }
     if (a === 'mois-plus') { mois = mois.m === 11 ? { a: mois.a + 1, m: 0 } : { a: mois.a, m: mois.m + 1 }; dessinerMois(); return; }
     if (a === 'ouvrir') { ouvert = (ouvert === b.dataset.cle) ? null : b.dataset.cle; dessinerDetail(); if (ouvert) el('detail').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
