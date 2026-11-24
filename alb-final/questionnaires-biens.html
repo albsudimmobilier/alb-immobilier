@@ -188,6 +188,8 @@
   const notesEnCours = {};   // notes tapées mais pas encore enregistrées
   const annoncesOuvertes = {}; // id du questionnaire -> true si l'annonce proposée est dépliée
   const annoncesTextes = {};   // texte de l'annonce, avec tes corrections (gardé quand la liste se redessine)
+  const textesSauves = {};     // annonce id -> { texte, modifie_le } enregistré en base (null si rien d'enregistré)
+  const textesEnCours = {};    // annonce id -> true pendant le chargement du texte enregistré
 
   function e(texte) { return albEchapper(texte); }
   function el(id) { return document.getElementById(id); }
@@ -232,6 +234,45 @@
   function estBrouillon(q) { return q.statut === 'brouillon'; }
 
   function telephonePropre(texte) { return String(texte || '').replace(/[^\d+]/g, ''); }
+
+  // Charge, une seule fois, le texte enregistré de l'annonce (s'il existe)
+  function chargerTexteSauve(annonceId) {
+    if (!annonceId || textesSauves[annonceId] !== undefined || textesEnCours[annonceId]) { return; }
+    textesEnCours[annonceId] = true;
+    albSupabase.rpc('alb_texte_annonce_lire', { p_annonce: annonceId }).then(function (r) {
+      textesEnCours[annonceId] = false;
+      if (r.error) { console.error('[ALB DEBUG] texte enregistré : lecture impossible', r.error); textesSauves[annonceId] = null; }
+      else { textesSauves[annonceId] = r.data || null; }
+      memoriserNotes();
+      // Le texte enregistré remplace la version générée pour les questionnaires de cette annonce
+      if (textesSauves[annonceId]) {
+        questionnaires.forEach(function (q) {
+          if (q.annonce && q.annonce.id === annonceId) { annoncesTextes[q.id] = textesSauves[annonceId].texte; }
+        });
+      }
+      dessinerListe();
+    });
+  }
+
+  // Enregistre le texte corrigé de l'annonce (il reste en base, même après rechargement)
+  async function enregistrerTexte(q, bouton) {
+    const zone = document.getElementById('annonce-texte-' + q.id);
+    const aid = q.annonce && q.annonce.id;
+    if (!zone || !aid) { return; }
+    const texte = zone.value.trim();
+    if (texte.length < 50) { alert('Le texte est trop court pour être enregistré.'); return; }
+    bouton.disabled = true;
+    const { data, error } = await albSupabase.rpc('alb_texte_annonce_enregistrer', { p_annonce: aid, p_texte: texte });
+    bouton.disabled = false;
+    if (error || !data || !data.ok) {
+      console.error('[ALB DEBUG] texte enregistré : écriture impossible', error);
+      alert('Le texte n’a pas pu être enregistré. Réessaie dans un instant.');
+      return;
+    }
+    textesSauves[aid] = { texte: texte, modifie_le: data.modifie_le };
+    annoncesTextes[q.id] = texte;
+    dessinerListe();
+  }
 
   // Retient les notes déjà tapées, pour ne pas les perdre quand la liste se redessine
   function memoriserNotes() {
@@ -404,7 +445,12 @@
     if (!annonce || !annonce.texte) {
       return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée</div><p class="aide">Ce questionnaire ne contient pas encore assez de réponses pour composer une annonce.</p></div>';
     }
+    chargerTexteSauve(q.annonce && q.annonce.id);
     const texte = (annoncesTextes[q.id] !== undefined) ? annoncesTextes[q.id] : annonce.texte;
+    const sauve = q.annonce && q.annonce.id ? textesSauves[q.annonce.id] : null;
+    const infoSauve = sauve && sauve.modifie_le
+      ? '<p class="aide">💾 Dernière modification enregistrée : ' + e(new Date(sauve.modifie_le).toLocaleString('fr-FR')) + '.</p>'
+      : '';
     const bloquee = !annonce.diffusable;
 
     // Sans DPE et GES, l'annonce ne peut pas être diffusée : on le dit clairement et on bloque la copie
@@ -421,8 +467,10 @@
     return '<div class="annonce-proposee"><div class="annonce-proposee-titre">📝 Annonce proposée' + (q.sans_mandat ? ' (aperçu)' : '') + '</div>' + apercu + alerte +
       '<p class="aide">' + (bloquee ? 'Tu peux lire le texte, mais pas le copier.' : 'Toutes les réponses du bien, dans l\'ordre. Relis, corrige directement dans le texte si besoin, puis copie.') +
       ' Aucune information privée du vendeur n\'y figure, et rien n\'est envoyé tant que tu ne l\'as pas décidé.</p>' +
+      infoSauve +
       '<textarea id="annonce-texte-' + e(q.id) + '" spellcheck="true"' + (bloquee ? ' readonly' : '') + '>' + e(texte) + '</textarea>' +
       '<div class="contact-actions">' +
+        '<button type="button" class="bouton-petit or" data-action="enregistrer-texte" data-id="' + e(q.id) + '">💾 Enregistrer la modification</button>' +
         '<button type="button" class="bouton-petit or" data-action="copier-annonce" data-id="' + e(q.id) + '"' + (bloquee ? ' disabled title="DPE, GES et dépenses d’énergie obligatoires"' : '') + '>📋 Copier l\'annonce</button>' +
         (q.annonce && q.annonce.id ? '<button type="button" class="bouton-petit or" data-action="envoyer-vendeur" data-id="' + e(q.id) + '"' + (bloquee ? ' disabled title="DPE, GES et dépenses d’énergie obligatoires"' : '') + '>✉️ Envoyer au vendeur</button>' : '') +
         '<button type="button" class="bouton-petit clair" data-action="refaire-annonce" data-id="' + e(q.id) + '">↺ Recomposer depuis le questionnaire</button></div>' +
@@ -729,6 +777,11 @@
         delete annoncesTextes[id];
         dessinerListe();
       }
+      return;
+    }
+    if (bouton.dataset.action === 'enregistrer-texte') {
+      const qEnreg = questionnaires.find(function (x) { return x.id === id; });
+      if (qEnreg) { await enregistrerTexte(qEnreg, bouton); }
       return;
     }
     if (bouton.dataset.action === 'copier-annonce') {
