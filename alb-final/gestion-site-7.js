@@ -238,6 +238,10 @@ function carteMembre(m) {
     blocAcces(m.id, '') +
     journalDe(m) +
     historiqueDe(m) +
+    (estPro(m) ? '<div class="actions" style="margin-top:10px;">' +
+      (s.dossier_drive ? '<a class="bouton discret" href="' + albEchapper(s.dossier_drive) + '" target="_blank" rel="noopener">📂 Dossier Drive</a>' : '') +
+      '<button type="button" class="bouton discret" onclick="ouvrirDepotSuivi(\'' + m.id + '\')">⬆ Déposer un document</button></div>' +
+      '<div id="depot-' + m.id + '"></div>' : '') +
   '</div>';
 }
 
@@ -479,3 +483,43 @@ LIGNES_A_FAIRE.push({
     afficherAFaire();
   };
 })();
+
+// ----- Déposer un document dans l'espace d'un pro, depuis le suivi membres -----
+function ouvrirDepotSuivi(id) {
+  const m = membres.find(function (x) { return x.id === id; });
+  const zone = document.getElementById('depot-' + id);
+  if (!m || !zone) return;
+  if (zone.dataset.ouvert === '1') { zone.dataset.ouvert = ''; zone.innerHTML = ''; return; }
+  zone.dataset.ouvert = '1';
+  zone.innerHTML = '<p class="aide">Chargement des types de documents…</p>';
+  Promise.resolve(typeof chargerPapiersAttendus === 'function' ? chargerPapiersAttendus() : null).then(function () {
+    const types = typeof typesPourPro === 'function' ? typesPourPro(m) : [];
+    const opts = types.map(function (t) { return '<option value="' + albEchapper(t.type) + '">' + albEchapper(t.libelle) + '</option>'; }).join('');
+    zone.innerHTML = '<div class="decision" style="margin-top:8px;"><div class="decision-titre">⬆ Déposer dans l\'espace ALB de ' + albEchapper(m.prenom || 'ce pro') + '</div>' +
+      '<label class="petit-champ">Le fichier (PDF ou photo)<input type="file" id="depot-fichier-' + id + '" accept="application/pdf,image/*"></label>' +
+      '<label class="petit-champ">C\'est quoi ?<select id="depot-type-' + id + '">' + opts + '</select></label>' +
+      '<label class="petit-champ">Valable jusqu\'au (facultatif)<input type="date" id="depot-date-' + id + '"></label>' +
+      '<div class="actions"><button type="button" class="bouton vert" onclick="envoyerDepotSuivi(\'' + id + '\', this)">💾 Envoyer dans son espace</button>' +
+      '<button type="button" class="bouton discret" onclick="ouvrirDepotSuivi(\'' + id + '\')">Annuler</button></div></div>';
+  });
+}
+async function envoyerDepotSuivi(id, bouton) {
+  const fichier = (document.getElementById('depot-fichier-' + id).files || [])[0];
+  const type = document.getElementById('depot-type-' + id).value;
+  const date = document.getElementById('depot-date-' + id).value || null;
+  if (!fichier) { afficherMessage('message-general', 'erreur', 'Choisis un fichier.'); return; }
+  if (fichier.size > 10 * 1024 * 1024) { afficherMessage('message-general', 'erreur', 'Ce fichier est trop lourd : 10 Mo au plus.'); return; }
+  if (!/^image\//.test(fichier.type) && fichier.type !== 'application/pdf') { afficherMessage('message-general', 'erreur', 'Choisis un PDF ou une photo.'); return; }
+  if (!type) { afficherMessage('message-general', 'erreur', 'Choisis ce que c\'est.'); return; }
+  bouton.disabled = true;
+  const extension = fichier.type === 'application/pdf' ? 'pdf' : ((fichier.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+  const chemin = id + '/' + type + '-' + Date.now() + '.' + extension;
+  const envoi = await albSupabase.storage.from('pro-documents').upload(chemin, fichier, { contentType: fichier.type || 'application/octet-stream', upsert: false });
+  if (envoi.error) { bouton.disabled = false; console.error('[ALB DEBUG] dépôt suivi :', envoi.error); afficherMessage('message-general', 'erreur', 'Le fichier n\'a pas pu être envoyé. Réessaie.'); return; }
+  const { error } = await albSupabase.rpc('alb_gestion_papier_ajouter', { p_pro: id, p_type: type, p_valeur: null, p_chemin: chemin, p_nom: fichier.name, p_expire_le: date });
+  bouton.disabled = false;
+  if (error) { console.error('[ALB DEBUG] dépôt suivi :', error); afficherMessage('message-general', 'erreur', 'Le document n\'a pas pu être enregistré : ' + (error.message || 'erreur')); return; }
+  afficherMessage('message-general', 'succes', 'Document envoyé dans son espace ALB ✓');
+  const zone = document.getElementById('depot-' + id);
+  if (zone) { zone.dataset.ouvert = ''; zone.innerHTML = ''; }
+}
