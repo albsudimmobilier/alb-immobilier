@@ -134,6 +134,9 @@
         '<div class="pp-champ"><label for="pp-dispo">Ma disponibilité</label><select id="pp-dispo">' +
           Object.keys(DISPOS).map(function (k) { return '<option value="' + e(k) + '"' + (f.disponibilite === k ? ' selected' : '') + '>' + e(DISPOS[k]) + '</option>'; }).join('') +
         '</select><div class="pp-aide">« Indisponible » : vous ne recevez plus de nouvelles demandes (ou votre remplaçant les reçoit, voir plus bas).</div></div>' +
+        '<div class="pp-champ"><label for="pp-horaires">Mes horaires de disponibilité <span class="pp-leger">(facultatif)</span></label>' +
+          '<input id="pp-horaires" maxlength="200" value="' + e(f.horaires || '') + '" placeholder="ex. Lun-ven 9h-12h et 14h-18h">' +
+          '<div class="pp-aide">Affichés sur votre fiche « Nos pros ALB ». Pas de téléphone ni d’e-mail ici.</div></div>' +
         '<div class="pp-champ"><span class="pp-label">Les rendez-vous que je propose</span><div class="pp-cases">' +
           '<label><input type="checkbox" id="pp-tel"' + (modes.telephone ? ' checked' : '') + '> 📞 Par téléphone</label>' +
           '<label><input type="checkbox" id="pp-visio"' + (modes.visio ? ' checked' : '') + '> 💻 En visio</label>' +
@@ -325,14 +328,14 @@
   function lireBrouillon() {
     if (!el('pp-form')) return null;
     return {
-      dispo: el('pp-dispo').value, tel: el('pp-tel').checked, visio: el('pp-visio').checked, physique: el('pp-physique').checked,
+      dispo: el('pp-dispo').value, horaires: el('pp-horaires').value, tel: el('pp-tel').checked, visio: el('pp-visio').checked, physique: el('pp-physique').checked,
       presentation: el('pp-presentation').value, ville: el('pp-ville').value, cp: el('pp-cp').value, autres: el('pp-autres').value,
       zones: Array.from(document.querySelectorAll('.pp-zone')).map(function (c) { return [c.value, c.checked]; })
     };
   }
   function remettreBrouillon(b) {
     if (!b || !el('pp-form')) return;
-    el('pp-dispo').value = b.dispo; el('pp-tel').checked = b.tel; el('pp-visio').checked = b.visio; el('pp-physique').checked = b.physique;
+    el('pp-dispo').value = b.dispo; el('pp-horaires').value = b.horaires; el('pp-tel').checked = b.tel; el('pp-visio').checked = b.visio; el('pp-physique').checked = b.physique;
     el('pp-presentation').value = b.presentation; el('pp-ville').value = b.ville; el('pp-cp').value = b.cp; el('pp-autres').value = b.autres;
     const cases = {};
     b.zones.forEach(function (z) { cases[z[0]] = z[1]; });
@@ -389,6 +392,8 @@
     enregistrementEnCours = false;
     if (error) { console.error('[ALB DEBUG] fiche pro :', error); message('pp-msg-fiche', 'erreur', erreurDe(error)); return; }
     photoEnAttente = null;
+    const { error: errHoraires } = await albSupabase.rpc('alb_pro_modifier_horaires', { p_horaires: el('pp-horaires').value.trim() });
+    if (errHoraires) { console.error('[ALB DEBUG] horaires :', errHoraires); message('pp-msg-fiche', 'erreur', erreurDe(errHoraires)); return; }
     await charger();
     // La page ne se redessine que si la photo a changé (pour ne pas couper le pro en pleine saisie)
     if ((fiche.photo_a_valider || null) !== photoAvant) dessiner(profilId);

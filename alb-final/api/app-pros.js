@@ -434,6 +434,7 @@ function viewProfile(proIdEncode) {
     ${zones ? `<p class="fiche-ligne">🗺️ <strong>Intervient :</strong> ${echapper(zones)}</p>` : ''}
     ${rendezVous(pro).length ? `<p class="fiche-ligne">🗓️ <strong>Rendez-vous :</strong> ${echapper(rendezVous(pro).join(' · '))}</p>` : ''}
     <p class="fiche-ligne">🕒 ${echapper(LIBELLES_DISPONIBILITE[pro.status_disponibilite] || 'Disponible')}</p>
+    ${pro.horaires_disponibilite ? `<p class="fiche-ligne">🗓️ <strong>Horaires :</strong> ${echapper(pro.horaires_disponibilite)}</p>` : ''}
     ${remplacantHtml(pro, 'fiche-ligne')}
     ${numeros.length ? `<div class="fiche-numeros">${numeros.join('')}</div>` : ''}
     ${lienAvisGoogle(pro)}
