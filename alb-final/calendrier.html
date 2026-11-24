@@ -900,6 +900,7 @@
           return '<div style="padding:8px 0;border-top:1px solid #eee">' +
             '<div class="petit">' + e(x.le.split('-').reverse().join('/')) + (x.retard ? ' · <strong>en retard</strong>' : '') + '</div>' +
             '<div style="margin:2px 0 6px">' + e(x.titre) + '</div>' +
+            (x.note ? '<textarea readonly onclick="this.select()" rows="' + Math.min(20, x.note.split('\n').length + 1) + '" style="width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px;border:1px solid #e5e0d8;border-radius:8px;background:#faf8f5;margin-bottom:6px">' + e(x.note) + '</textarea>' : '') +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' + boutonRelanceQuestionnaire(x) +
             '<button type="button" class="bouton vert" data-action="fait" data-id="' + e(x.id) + '" data-fait="1">✓ Fait</button></div></div>';
         }).join('') + '</div>';
